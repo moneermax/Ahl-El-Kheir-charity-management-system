@@ -2325,7 +2325,7 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 
 ### 2026-10-25 — Mobile project milestone ID defect
-Source audit found the project detail API selected milestone IDs but omitted them from its JSON response, preventing the Flutter milestone maintenance actions from using the required identifier. Added the ID to the response in `20631106ae8fe9f8267779faf4c6e9a1d7608057`. Verification is pending; continue from CI/endpoint verification, then resume the mobile API role/record-scope audit. Live local Apache/MariaDB acceptance remains outstanding.
+Source audit found the project detail API selected milestone IDs but omitted them from its JSON response, preventing the Flutter milestone maintenance actions from using the required identifier. Added the ID to the response in `20631106ae8fe9f8267779faf4c6e9a1d7608057`. Focused endpoint verification passed in disposable-database run `40160569643`; ended-assignment and cross-project no-mutation assertions passed in run `40160867381`. Continue the mobile API role/record-scope audit. Live local Apache/MariaDB acceptance remains outstanding.
 
 
 ### 2026-10-25 — Mobile milestone response verification
