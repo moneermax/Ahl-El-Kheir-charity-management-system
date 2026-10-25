@@ -52,8 +52,8 @@ function mobileApiRequest(string $path, string $method = 'GET', ?array $body = n
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
-if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'])) {
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'])) {
     throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff, project_supervisor and financial_manager roles.');
 }
 $user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
@@ -76,6 +76,7 @@ $testNotificationId = 0;
 $testSponsorRequestId = 0;
 $testNannyFamilyId = 0;
 $testForeignNannyFamilyId = 0;
+$testSponsorId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -247,6 +248,35 @@ try {
         && (string)$sponsorRequestStatus->fetchColumn() === 'contacted',
         'sponsor request rejects a repeated contacted transition without mutation'
     );
+
+    $unassignedLetter = $pdo->prepare('SELECT l.id FROM letters l WHERE l.is_active=1 AND NOT EXISTS (SELECT 1 FROM supervisor_letters sl WHERE sl.supervisor_id=? AND sl.letter_id=l.id) ORDER BY l.id LIMIT 1');
+    $unassignedLetter->execute([$userId]);
+    $unassignedLetterId = (int)$unassignedLetter->fetchColumn();
+    if ($unassignedLetterId < 1) throw new RuntimeException('Supervisor-scope test requires an active letter outside the test user\'s responsibility matrix.');
+    $testSponsorCode = 'MOBILE-SPONSOR-CI-' . bin2hex(random_bytes(5));
+    $testSponsorName = 'Mobile API out-of-scope sponsor ' . bin2hex(random_bytes(5));
+    $pdo->prepare('INSERT INTO sponsors (full_name, first_letter_id, gender, status, supervisor_id, sponsor_code, created_by) VALUES (?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$testSponsorName, $unassignedLetterId, 'female', 'active', $userId, $testSponsorCode, $userId]);
+    $testSponsorId = (int)$pdo->lastInsertId();
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['supervisor'], $userId]);
+    $r = mobileApiRequest('/api/v1/sponsors/detail.php?id=' . $testSponsorId, 'GET', null, $token);
+    mobileApiExpect(
+        $r['status'] === 403
+        && ($r['json']['error']['code'] ?? '') === 'forbidden',
+        'direct sponsor supervisor_id does not bypass the letter-and-gender responsibility matrix'
+    );
+    $r = mobileApiRequest('/api/v1/sponsors/index.php', 'GET', null, $token);
+    $listedSponsorIds = array_map(
+        static fn(array $item): int => (int)($item['id'] ?? 0),
+        $r['json']['data']['items'] ?? []
+    );
+    mobileApiExpect(
+        $r['status'] === 200
+        && !in_array($testSponsorId, $listedSponsorIds, true),
+        'supervisor sponsor listing excludes a sponsor outside the letter-and-gender matrix'
+    );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $r = mobileApiRequest('/api/v1/projects/index.php', 'GET', null, $token);
     $portfolioItems = $r['json']['data']['items'] ?? [];
     $fixture = null;
@@ -437,6 +467,9 @@ try {
     }
     if ($testForeignNannyFamilyId > 0) {
         $pdo->prepare('DELETE FROM families WHERE id=?')->execute([$testForeignNannyFamilyId]);
+    }
+    if ($testSponsorId > 0) {
+        $pdo->prepare('DELETE FROM sponsors WHERE id=?')->execute([$testSponsorId]);
     }
     if (isset($testTokenHashes) && $testTokenHashes) {
         $marks = implode(',', array_fill(0, count($testTokenHashes), '?'));
