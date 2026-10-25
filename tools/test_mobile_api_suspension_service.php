@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/api/v1/_bootstrap.php';
 require_once dirname(__DIR__) . '/api/v1/age_alerts/suspension_service.php';
+require_once dirname(__DIR__) . '/api/v1/suspensions/case_service.php';
 
 $pdo = db();
 $assert = static function (bool $condition, string $message): void {
@@ -120,6 +121,41 @@ try {
     }
     $assert($gmRejected, 'General Manager was incorrectly permitted to initiate suspension.');
 
+    $liftForbidden = false;
+    try {
+        ak_api_lift_suspension_case($nannyId, 'nanny', $caseId);
+    } catch (AkSuspensionLiftForbidden $e) {
+        $liftForbidden = true;
+    }
+    $assert($liftForbidden, 'Nanny was incorrectly permitted to lift a suspension.');
+
+    $lifted = ak_api_lift_suspension_case($actorId, 'admin', $caseId);
+    $assert((int)$lifted['case_id'] === $caseId, 'Lift response did not return the case ID.');
+    $assert((int)$lifted['sponsorships_reactivated'] === $activeBefore, 'Lifting did not resume every sponsorship paused by the case.');
+
+    $liftedCase = dbFetchOne(
+        "SELECT status, lifted_by FROM suspension_cases WHERE id = ?",
+        [$caseId]
+    );
+    $assert($liftedCase !== null && $liftedCase['status'] === 'lifted', 'Suspension case was not marked lifted.');
+    $assert($liftedCase !== null && (int)$liftedCase['lifted_by'] === $actorId, 'Lift actor was not recorded.');
+
+    $restoredChildInTransaction = dbFetchOne(
+        'SELECT is_active, disqualified_at, disqualification_reason FROM family_children WHERE id = ?',
+        [$childId]
+    );
+    $assert($restoredChildInTransaction !== null && (int)$restoredChildInTransaction['is_active'] === 1, 'Lifting did not reactivate the child.');
+    $assert($restoredChildInTransaction !== null && $restoredChildInTransaction['disqualified_at'] === null, 'Lifting did not clear the disqualification date.');
+    $assert($restoredChildInTransaction !== null && $restoredChildInTransaction['disqualification_reason'] === null, 'Lifting did not clear the disqualification reason.');
+
+    $activeAfterLift = (int)(dbFetchOne(
+        "SELECT COUNT(*) AS c FROM sponsorship_children sc
+         JOIN sponsorships sp ON sp.id = sc.sponsorship_id
+         WHERE sc.family_child_id = ? AND sp.status = 'active'",
+        [$childId]
+    )['c'] ?? 0);
+    $assert($activeAfterLift === $activeBefore, 'Linked sponsorships were not fully restored by lifting.');
+
     $pdo->rollBack();
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
@@ -151,4 +187,4 @@ $assert($restoredFamily !== null && (int)($restoredFamily['nanny_id'] ?? 0) === 
 $assert($restoredActive === $activeBefore, 'Rollback did not restore linked sponsorship statuses.');
 $assert($remainingCase === null, 'Rollback left an active suspension case behind.');
 
-echo 'PASS | mobile legal-age suspension service | success, linked sponsorship pause, duplicate guard, role/scope guards, rollback' . PHP_EOL;
+echo 'PASS | mobile legal-age suspension service | suspend/lift, linked sponsorship pause/resume, duplicate guard, role/scope guards, rollback' . PHP_EOL;
