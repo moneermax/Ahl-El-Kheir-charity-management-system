@@ -1294,12 +1294,10 @@ class NotificationDetailPage extends StatelessWidget {
     super.key,
     required this.english,
     required this.item,
-    required this.openRelatedLink,
   });
 
   final bool english;
   final Map<String, dynamic> item;
-  final Future<void> Function(String url) openRelatedLink;
 
   @override
   Widget build(BuildContext context) {
