@@ -1079,6 +1079,70 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     ))),
                     ],
                   ),
+                  const SizedBox(height: 22),
+                  _HomeSectionTitle(
+                    title: english ? 'My employment' : 'خدماتي الوظيفية',
+                    subtitle: english
+                        ? 'Personal leave requests and finalized salary statements'
+                        : 'طلبات الإجازة الشخصية وكشوف الرواتب المعتمدة',
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
+                      SizedBox(
+                        width: moduleCardWidth,
+                        child: Card(
+                          child: ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: Color(0xFFEAF3FF),
+                              child: Icon(Icons.event_available_rounded, color: Color(0xFF1F4E8C)),
+                            ),
+                            title: Text(english ? 'My leave requests' : 'طلبات إجازاتي'),
+                            subtitle: Text(english
+                                ? 'Submit and track your own leave requests; authorized HR and GM users also see their approval queue.'
+                                : 'تقديم ومتابعة طلبات إجازتك؛ ويظهر طابور الاعتماد للمخولين من الموارد البشرية والمدير العام.'),
+                            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                            onTap: () => navigatorKey.currentState?.push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => LeaveRequestsPage(
+                                  english: english,
+                                  roleCode: roleCode,
+                                  loadLeaves: loadLeaves,
+                                  submitAction: submitLeaveAction,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(
+                        width: moduleCardWidth,
+                        child: Card(
+                          child: ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: Color(0xFFE8F8F1),
+                              child: Icon(Icons.receipt_long_rounded, color: Color(0xFF16845B)),
+                            ),
+                            title: Text(english ? 'My salary statements' : 'كشوف رواتبي'),
+                            subtitle: Text(english
+                                ? 'View only paid payrolls already posted to accounting.'
+                                : 'عرض الرواتب المصروفة والمرحّلة محاسبياً فقط.'),
+                            trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                            onTap: () => navigatorKey.currentState?.push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => MySalaryStatementsPage(
+                                  english: english,
+                                  loadPage: loadMySalaryStatements,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                 ],
               );
