@@ -769,3 +769,10 @@ The app now has a clearer pale-blue surface, larger rounded cards, a role-colore
 Verification status at this note: GitHub Actions run for commit `0253a88d3a6201c9a279b879dd2e5fa0fcfe1a46` was observed in progress. Flutter analyze/tests/APK and PHP endpoint lint have not yet been confirmed green. No local XAMPP/database runtime test has been performed. Do not mark the mobile redesign or feature parity complete on source changes alone.
 
 Remaining major gaps: the sudo/admin native tools dashboard is still not feature-equivalent to `dashboard/admin_dashboard.php`; other role dashboards still need a documented feature-by-feature parity matrix; transaction date-range behavior remains unverified end-to-end; age-alert suspension action is not native yet; physical-device acceptance remains pending.
+
+
+## 2026-10-25 — Dedicated administrator dashboard implementation
+
+Commits on `main` add `api/v1/admin/overview.php`, a new `mobile/ahl_el_kheir_app/lib/admin_dashboard_page.dart`, and route `admin`/`sudo`/`super_admin` to this dedicated dashboard instead of the shared role-card list. The dashboard has its own violet/navy/teal theme, administrator overview metrics, recent audit activity, and separate System Administration, Core Records, Operations & People, Finance, and Protection & Maintenance groups. Native routes are connected for sponsors, families, sponsorships, transactions, projects, employees, attendance, supervisors, sponsor requests, financial review queue, and legal-age alerts. The website's users/departments/settings/reports/finance account/disbursement/Fina collection/backup/database/audit pages are surfaced but currently open in the external browser; they are not represented as native implementations.
+
+Added `docs/MOBILE_ROLE_FEATURE_PARITY.md` as the explicit gap matrix. CI verification for the current changes is pending; no Flutter analysis/tests/APK or local runtime success is claimed yet. Other role dashboards and end-to-end date-range acceptance remain open.
