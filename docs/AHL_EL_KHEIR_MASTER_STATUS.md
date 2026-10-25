@@ -4640,4 +4640,9 @@ Source change: `f627d130fe36b4bfe4232891aff521f63af1b518` updates `mobile/ahl_el
 ## Mobile app — 2026-10-25 dashboard/login follow-up
 
 User-selected visual direction is a modern professional dashboard with existing navy/blue branding. Changes on `main` now include responsive two-column work-area tiles, removal of the visible role pill, a 56-pixel app bar, password reveal and forgot-password actions, account-sheet navigator-context correction, notification details/related-page support, and access to the existing web orphan form from child records. See `docs/MOBILE_APP_CONTINUATION.md` for commit-level detail. Latest source commit at this checkpoint: `ca16265515612bfa18442dcd59a987baaa303e0e`. Flutter CI and physical-device verification are pending; these changes are not yet runtime-accepted.
+### CI correction follow-up — 2026-10-25
+
+The first Flutter analyzer run for this work exposed concrete integration errors: a duplicate notification-tile `onTap` and required callbacks missing from the existing widget tests after constructor changes. The notification tap now uses one handler, mark-read failure stops navigation (preserving the prior error behavior), and tests provide explicit no-op callbacks where external navigation is not under test.
+
+Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification handler) and test callback updates through `c30c10b8e1a6df3f9ac2e197dc4363748419df22`. The new Flutter workflow runs for these commits are still pending/in progress at documentation time. Do not claim analysis, tests, or APK build passed until the latest run confirms it.
 
