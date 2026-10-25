@@ -73,6 +73,21 @@ void main() {
     expect(find.text('My profile'), findsNothing);
   });
 
+  testWidgets('supervisor tools do not offer the FM-only Fina collection creation page', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'supervisor',
+          english: true,
+          onOpen: (_) {},
+        ),
+      ),
+    ));
+
+    expect(find.text('Review Fina collections'), findsOneWidget);
+    expect(find.text('Record Fina collection'), findsNothing);
+  });
+
   testWidgets('roles without extra website tools render no empty section', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
