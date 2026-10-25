@@ -572,3 +572,12 @@ A targeted source audit found `api/v1/projects/detail.php` selected `project_mil
 - Test commit: `f0dfa70a376771cbceeae04e73b57f2e6e40cb89`.
 - Runtime result: PASS in [Mobile API auth integration run 40161801824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161801824). The workflow imported the checked-in schema and exercised the real PHP endpoints against disposable MariaDB.
 - Cleanup deletes only the exact temporary sponsor-request row. No production code/schema change. Local XAMPP migration-state confirmation and broader local API authorization/record-scope/action acceptance remain open.
+
+
+## 2026-10-25 — Nanny family record-scope integration coverage
+
+- Added two temporary family fixtures to `tools/test_mobile_api_auth_integration.php`, one assigned to the authenticated nanny and one assigned to a different existing user.
+- Live HTTP assertions pass for viewing the assigned family, denial of the foreign family (403), and family-list scoping (assigned fixture included; foreign fixture excluded).
+- The first run failed because the harness's five-second HTTP timeout expired on the full family-list query across the checked-in schema's 2,208 families. Source evidence did not establish an endpoint defect. The request helper now supports a per-request timeout and only the family-list test uses 20 seconds.
+- Updated test commit: `9312a7118ebe7876986dcecfda0bdcd0e3e594d9`; [Mobile API auth integration run 40162023286](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162023286) passed. Cleanup deletes the two exact family fixtures. No production code/schema change.
+- Local XAMPP migration-state confirmation and broader local API authorization/record-scope/action acceptance remain open. Never run this harness against `ahl_el_kheir`.
