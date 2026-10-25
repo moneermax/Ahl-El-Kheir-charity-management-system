@@ -140,6 +140,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         builder: (_) => AdminUsersPage(
           english: english,
           loadPage: loadAdminUsers,
+          loadOptions: loadAdminUserOptions,
           currentUserId: int.tryParse(user?['id']?.toString() ?? '') ?? 0,
           submitAction: submitAdminUserAction,
         ),
@@ -387,6 +388,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('POST', 'admin/users_action.php', token: token, body: payload);
+  }
+
+  Future<Map<String, dynamic>> loadAdminUserOptions() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'admin/users.php?options=1', token: token);
   }
 
   Future<Map<String, dynamic>> loadAdminUsers(String query, int page) async {
