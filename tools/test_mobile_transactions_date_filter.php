@@ -17,9 +17,9 @@ $assert(count($fixtures) === 3, 'At least three existing transaction records are
 
 $ids = array_map(static fn(array $row): int => (int)$row['id'], $fixtures);
 $beforeDates = array_map(static fn(array $row): string => (string)$row['transaction_date'], $fixtures);
-$fromDate = '2026-01-10';
-$insideDate = '2026-01-11';
-$toDate = '2026-01-12';
+$fromDate = '2099-01-10';
+$insideDate = '2099-01-11';
+$toDate = '2099-01-12';
 
 $pdo->beginTransaction();
 try {
