@@ -20,10 +20,14 @@ void main() {
     expect(find.text('Reports center'), findsOneWidget);
     expect(find.text('1,500.50'), findsNothing);
     expect(find.text('1500.50'), findsOneWidget);
+    await tester.ensureVisible(find.text('Uncovered families report'));
+    await tester.pumpAndSettle();
     expect(find.text('Uncovered families report'), findsOneWidget);
-    expect(find.text('Not implemented natively yet'), findsOneWidget);
     await tester.tap(find.text('Uncovered families report'));
     expect(opened, 'orphaned');
+    await tester.ensureVisible(find.text('Not implemented natively yet'));
+    await tester.pumpAndSettle();
+    expect(find.text('Not implemented natively yet'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
