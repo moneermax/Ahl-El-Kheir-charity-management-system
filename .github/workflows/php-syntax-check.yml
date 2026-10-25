@@ -79,6 +79,9 @@ jobs:
             api/v1/admin/recovery_action.php
             api/v1/admin/recovery_service.php
             tools/test_mobile_admin_recovery_service.php
+            api/v1/admin/users_action.php
+            api/v1/admin/users_action_service.php
+            tools/test_mobile_admin_users_action_service.php
             api/v1/dashboard/overview.php
             api/v1/dashboard/overview_service.php
             api/v1/transactions/index.php
