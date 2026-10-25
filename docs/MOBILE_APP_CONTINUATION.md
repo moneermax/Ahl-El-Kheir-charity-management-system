@@ -545,3 +545,12 @@ A targeted source audit found `api/v1/projects/detail.php` selected `project_mil
 - Runtime result: PASS in [Mobile API auth integration run 40160569643](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160569643). The workflow imported the checked-in schema, applied the mobile-session migration, and exercised live PHP endpoints against disposable MariaDB. This is CI evidence only; it does not establish local XAMPP migration state or local runtime behavior.
 - Source review also compared the milestone mutation API with modules/projects/view.php: project and milestone IDs are jointly scoped; supervisor mutations require an active primary-supervisor or operations assignment; closed projects are blocked, consistent with the web edit/delete gate. No new production authorization defect was established in this pass.
 - Latest source audit checkpoint: milestone response ID defect corrected and CI-tested; broad live local API authorization/record-isolation/action acceptance remains open. Do not run the integration harness against ahl_el_kheir; it is gated for the disposable mobile_api_auth_test database.
+
+
+## 2026-10-25 — Cross-project milestone isolation integration test
+
+- Extended `tools/test_mobile_api_auth_integration.php` to create a second temporary project and milestone, then attempt to edit that milestone while supplying the assigned project ID. The assertion requires HTTP 404 `milestone_not_found` and verifies the foreign milestone title is unchanged.
+- Test commit: `bc67997093d15fd616ac95ac4ead566840004883`.
+- Verification: [Mobile API auth integration run 40160867381](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160867381) completed successfully. Its live PHP API test step and full workflow passed against disposable MariaDB.
+- Cleanup removes the foreign milestone and temporary project. No schema/migration or production endpoint code changed in this checkpoint.
+- Confirmed scope coverage now includes milestone ID serialization, ended-assignment denial with no mutation, and cross-project milestone mutation denial with no mutation. Local XAMPP runtime/migration state and broader mobile API release acceptance remain open.
