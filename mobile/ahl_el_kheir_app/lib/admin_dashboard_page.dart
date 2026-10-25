@@ -108,6 +108,8 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                         style: const TextStyle(color: Color(0xFFE9D9A8), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.1))),
                       IconButton(
                         tooltip: t('تحديث البيانات', 'Refresh data'),
+                        constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+                        padding: EdgeInsets.zero,
                         onPressed: refresh,
                         color: Colors.white,
                         icon: const Icon(Icons.refresh_rounded),
