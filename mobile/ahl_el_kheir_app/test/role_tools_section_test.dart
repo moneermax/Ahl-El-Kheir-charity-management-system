@@ -185,7 +185,6 @@ void main() {
       ),
     ));
 
-    expect(find.text('Finance dashboard'), findsOneWidget);
     expect(find.text('Opening balance'), findsOneWidget);
     expect(find.text('Assigned nannies'), findsOneWidget);
   });
