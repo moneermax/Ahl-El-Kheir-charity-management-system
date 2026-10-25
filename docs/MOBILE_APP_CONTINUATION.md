@@ -719,3 +719,12 @@ Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification han
 
 The next analyzer pass isolated one remaining Dart error: the notification mark-read helper returned without a boolean when the widget was unmounted during an error. Corrected to return `false` explicitly so the detail route is not opened after an unsuccessful mark-read operation. Source commit: `b572e49403805f3057e4830c211002c0d4fbd0e6`. The matching Flutter workflow run `40183286267` is queued; analysis/tests/APK status remain unverified.
 
+## 2026-10-25 — Mobile dashboard rollback and notification navigation correction
+
+User feedback rejected the recent two-column dashboard redesign and requested the prior single-column operational-card layout. The dashboard cards are now full-width again while preserving the existing module entries, role visibility, routes, and navy branding. Sign-out is a dedicated icon in the signed-in app bar beside notifications, account, and language; it is no longer buried in the account sheet.
+
+Notification details remain a native Flutter screen. The external “Open related page” action and its URL-launch path have been removed from notification details; a linked notification now displays an in-app explanation that the related website destination is not yet available inside the app. This change intentionally avoids launching a browser from notification details. It does not convert arbitrary website workflows into native mobile screens.
+
+Source commits: `92738fdb45ee6b6906555d8e4b0461caaaa556a0`, `b9d3c6fad0ff530dd6568b1a8279d8fcd452afee`. Widget regression test added in `64b140356a8d494ca667a2d264d6413c83d9fbbf`.
+
+Verification: GitHub Actions for the new checkpoint is pending. Do not claim the APK is ready until the workflow for the latest source/test commit completes successfully and publishes the artifact. Physical-device visual acceptance remains with the user.
