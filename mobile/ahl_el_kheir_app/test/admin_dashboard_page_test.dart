@@ -3,7 +3,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/admin_dashboard_page.dart';
 
 void main() {
-  testWidgets('admin dashboard exposes native recovery route without duplicate dashboard link', (tester) async {
+  testWidgets('admin dashboard fits a narrow phone viewport and exposes native recovery route', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     String? openedTool;
 
     await tester.pumpWidget(MaterialApp(
@@ -27,6 +29,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
+    expect(tester.takeException(), isNull, reason: 'Dashboard metric cards must not overflow on a narrow phone.');
     expect(find.text('Administration dashboard'), findsNothing);
 
     await tester.scrollUntilVisible(
@@ -36,5 +39,6 @@ void main() {
     );
     await tester.tap(find.text('Password recovery requests'));
     expect(openedTool, 'recovery');
+    expect(tester.takeException(), isNull);
   });
 }
