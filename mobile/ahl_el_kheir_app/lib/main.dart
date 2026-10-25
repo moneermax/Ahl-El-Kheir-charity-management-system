@@ -285,12 +285,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'suspensions/index.php', token: token);
   }
 
-  Future<void> liftSuspensionCase(int caseId) async {
+  Future<Map<String, dynamic>> liftSuspensionCase(int caseId) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
-    await call('POST', 'suspensions/lift.php', token: token, body: {'case_id': caseId});
+    return call('POST', 'suspensions/lift.php', token: token, body: {'case_id': caseId});
   }
 
   void openSuspensionCases() {
