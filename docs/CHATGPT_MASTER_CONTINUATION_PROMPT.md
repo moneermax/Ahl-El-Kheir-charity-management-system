@@ -2623,3 +2623,12 @@ The disposable MariaDB/PHP integration harness now additionally proves that an e
 A deliberate exception is retained for `modules/users/password_recovery_request.php`: it is public and must remain openable from the logged-out mobile screen, so that one route opens directly without a bearer handoff. All protected website routes use the one-time handoff. This prevents the new authentication bridge from breaking the forgotten-password path.
 
 Flutter analyze and widget tests passed on source commit `a00ec31729ff3c983838b7224e75ea80c00972f0`. The debug APK build/publish step is still in progress at this checkpoint. No local XAMPP migration or physical-device test has been performed from this environment.
+
+
+## 2026-10-25 — Original role dashboards reachable from the mobile workspace
+
+The role-specific mobile summary remains native, but users now also have a direct, clearly labelled WEB action to open their existing role-specific website dashboard with its complete original controls. The route map is sourced from `includes/sidebar.php` and verified against the target dashboard guards: Admin/Sudo, GM, VGM, FM, Accountant/Accountant Staff, Supervisor, Nanny, Administration/Staff/Social Media, HR Manager/HR Staff, and Projects Manager/Project Supervisor. Sudo/admin has the equivalent action in its dedicated control dashboard. Unknown role codes do not receive a guessed dashboard route.
+
+The one-time website handoff normalizes legacy aliases (`sudo/super_admin`, `gm`, `vgm`, `fm/finance`) to the same canonical role codes as the mobile API before creating the PHP session. The public password-recovery page remains directly accessible from the logged-out screen.
+
+Automated evidence: role-dashboard route mapping tests and the expanded mobile widget suite pass on the latest dashboard-link test run `40203004193` (commit `0fc03d7e2593f424fbe951e319f6d6dbbc47aa99`). The debug APK build step is in progress. The latest mobile API handoff integration run `40202879178` passed, including expired/revoked-token rejection and replay protection. Local migration/device acceptance remains outstanding.
