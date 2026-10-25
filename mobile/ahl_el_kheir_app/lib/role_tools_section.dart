@@ -89,6 +89,7 @@ class RoleToolsSection extends StatelessWidget {
             t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة الحملات المفتوحة', 'Review open win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
             t('سياسة الحوافز', 'Incentive policy', 'مراجعة واعتماد سياسة الحوافز', 'Review and approve incentive policy', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
             t('سجل فترات الرواتب', 'Payroll period history', 'مراجعة سجل فترات الرواتب', 'Review payroll period history', 'modules/hr/gm_payroll_period_history.php', Icons.payments_outlined),
+            t('سجل تعليقات الكفالات', 'Sponsorship suspension cases', 'عرض حالات تعليق الكفالات', 'View sponsorship suspension cases', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
         ];
       case 'vice_general_manager':
@@ -97,6 +98,7 @@ class RoleToolsSection extends StatelessWidget {
           g('الإشراف والتوزيع', 'Supervision and assignment', [
             t('إسناد الكفلاء للمشرفين', 'Assign sponsors to supervisors', 'إدارة توزيع المسؤوليات حسب قواعد النظام', 'Manage assignments under the existing system rules', 'modules/sponsors/assign.php', Icons.assignment_ind_outlined),
             t('مركز التقارير', 'Report center', 'تقارير التشغيل المتاحة للدور', 'Operational reports available to this role', 'modules/reports/index.php', Icons.assessment_outlined),
+            t('إدارة تعليق الكفالات', 'Manage sponsorship suspensions', 'تعليق أو رفع التعليق وفق الصلاحيات', 'Suspend or lift suspensions within your permissions', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
         ];
       case 'financial_manager':
@@ -138,6 +140,7 @@ class RoleToolsSection extends StatelessWidget {
             t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة دفعات المجموعات', 'Review group payments', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
             t('إعادة صرف المبالغ المرتجعة', 'Reissue returned funds', 'معالجة المبالغ المرتجعة وفق صلاحيات الحاضنة', 'Handle returned funds within nanny permissions', 'modules/accounting/returned_funds_nanny.php', Icons.currency_exchange_rounded),
             t('مركز التقارير', 'Report center', 'تقارير المتابعة', 'Follow-up reports', 'modules/reports/index.php', Icons.assessment_outlined),
+            t('تعليق الكفالات', 'Sponsorship suspensions', 'إدارة التعليقات ضمن الأسر المسندة إليك', 'Manage suspensions within your assigned families', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
         ];
       case 'administration':
