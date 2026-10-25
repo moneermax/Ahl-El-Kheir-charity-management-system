@@ -50,7 +50,7 @@ function mobileApiRequest(string $path, string $method = 'GET', ?array $body = n
         if (preg_match('/^HTTP\/\S+\s+(\d{3})/', $header, $m)) $status = (int)$m[1];
     }
     $json = is_string($raw) ? json_decode($raw, true) : null;
-    return ['status' => $status, 'json' => is_array($json) ? $json : [], 'raw' => (string)$raw];
+    return ['status' => $status, 'json' => is_array($json) ? $json : [], 'raw' => (string)$raw, 'headers' => $responseHeaders];
 }
 
 $roles = [];
@@ -170,7 +170,7 @@ try {
     $r = mobileApiRequest('/mobile_web_handoff.php?token=' . rawurlencode($handoffToken), 'GET', null, null, 5, false);
     $location = '';
     $setCookie = '';
-    foreach (($http_response_header ?? []) as $header) {
+    foreach (($r['headers'] ?? []) as $header) {
         if (stripos($header, 'Location:') === 0) $location = trim(substr($header, strlen('Location:')));
         if (stripos($header, 'Set-Cookie: AhlElKheirSession=') === 0) $setCookie = $header;
     }
@@ -187,7 +187,7 @@ try {
 
     $r = mobileApiRequest('/mobile_web_handoff.php?token=' . rawurlencode($handoffToken), 'GET', null, null, 5, false);
     $replayLocation = '';
-    foreach (($http_response_header ?? []) as $header) {
+    foreach (($r['headers'] ?? []) as $header) {
         if (stripos($header, 'Location:') === 0) $replayLocation = trim(substr($header, strlen('Location:')));
     }
     mobileApiExpect(
