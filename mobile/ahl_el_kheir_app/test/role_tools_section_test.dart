@@ -18,7 +18,8 @@ void main() {
     expect(find.text('Report center'), findsOneWidget);
     expect(find.text('Incentive policy'), findsOneWidget);
     expect(find.text('GM reconciliation'), findsOneWidget);
-    expect(find.text('WEB'), findsWidgets);
+    expect(find.text('IN APP'), findsWidgets);
+    expect(find.text('WEB'), findsNothing);
   });
 
   testWidgets('nanny tools expose returned-fund follow-up but not HR controls', (tester) async {
