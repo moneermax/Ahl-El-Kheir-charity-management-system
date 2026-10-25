@@ -5037,3 +5037,12 @@ Source audit: the web dashboard router defines distinct dashboard destinations f
 A role-tool authorization defect was found and corrected: `modules/transactions/fina_payment_create.php` is restricted to financial_manager/fm/admin, so it was removed from the Supervisor's mobile tools. The repository tree confirmed the surfaced tool paths exist, but file existence alone is not treated as proof of role authorization.
 
 Evidence still required: final CI for the combined revision, API execution against the full schema and intended local database, role-by-role local authenticated smoke checks, physical-device UI check, and complete date-filter boundary/pagination/refresh acceptance. Do not label the mobile feature-parity work closed.
+
+## 2026-10-25 — Role-tool authorization follow-up
+
+A second guard-level review corrected additional mobile quick-tool visibility:
+- HR Manager-only pages (employment states, incentive verification, payroll reversal, attendance policy, payroll integrity, and incentive policy management) are now shown only to `hr_manager`; HR Staff retain pages whose real web guards permit them.
+- Accountant-only role cards no longer surface monthly/group disbursement pages whose existing web guards deny the `accountant` role. Those links remain available to `accountant_staff`.
+- Regression tests cover the HR Manager/HR Staff split, accountant disbursement restrictions, and the Supervisor Fina-creation restriction.
+
+Commits: `98e2e48a724b0b403a8795988005f5c4f30cd311`, `d845ec9a67a6540d9f5764c54f6096c9bfceaf5a`, `07a8d34ca187a9b6c28692e32c813a0cc76e2166`, `7532b0f63fc24d7916003f54d8bfee9860ed72d9`. Latest tests/build after these changes are still pending. Continue auditing role tools against actual page guards; repository file existence alone is not sufficient.
