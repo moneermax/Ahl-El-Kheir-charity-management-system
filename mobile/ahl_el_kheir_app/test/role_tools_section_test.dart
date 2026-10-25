@@ -70,6 +70,7 @@ void main() {
 
     expect(find.text('Report center'), findsOneWidget);
     expect(find.text('Payroll integrity'), findsOneWidget);
+    expect(find.text('Password recovery requests'), findsOneWidget);
     expect(find.text('Contract builder'), findsOneWidget);
     expect(find.text('My profile'), findsNothing);
   });
@@ -109,6 +110,7 @@ void main() {
     expect(find.text('Incentive verification'), findsNothing);
     expect(find.text('Attendance policy'), findsNothing);
     expect(find.text('Payroll integrity'), findsNothing);
+    expect(find.text('Password recovery requests'), findsNothing);
   });
 
   testWidgets('supervisor tools do not offer the FM-only Fina collection creation page', (tester) async {
