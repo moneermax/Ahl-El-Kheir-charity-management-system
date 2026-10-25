@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 class FamilyDetailPage extends StatefulWidget {
- const FamilyDetailPage({super.key,required this.familyId,required this.english,required this.loadDetail});
- final int familyId;final bool english;final Future<Map<String,dynamic>> Function(int id) loadDetail;
+ const FamilyDetailPage({super.key,required this.familyId,required this.english,required this.loadDetail,required this.openOrphanForm});
+ final int familyId;final bool english;final Future<Map<String,dynamic>> Function(int id) loadDetail;final Future<void> Function(int childId) openOrphanForm;
  @override State<FamilyDetailPage> createState()=>_FamilyDetailPageState();
 }
 class _FamilyDetailPageState extends State<FamilyDetailPage>{
@@ -54,7 +54,10 @@ class _FamilyDetailPageState extends State<FamilyDetailPage>{
   title: Text(c['child_name']?.toString() ?? ''),
   subtitle: Text((c['birth_date']?.toString() ?? '') + '\n' + match(c['match_status']?.toString() ?? 'unmatched')),
   isThreeLine: true,
-  trailing: c['is_critical'] == true ? Chip(label: Text(en ? 'Critical' : 'حالة حرجة')) : null,
+  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+   if (c['is_critical'] == true) Chip(label: Text(en ? 'Critical' : 'حالة حرجة')),
+   IconButton(tooltip: en ? 'Open orphan form' : 'فتح استمارة اليتيم', icon: const Icon(Icons.description_outlined), onPressed: () { final childId = int.tryParse(c['id']?.toString() ?? ''); if (childId != null && childId > 0) widget.openOrphanForm(childId); }),
+  ]),
 ))),
  Padding(padding:const EdgeInsets.fromLTRB(4,14,4,6),child:Text(en?'Sponsorships':'الكفالات',style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800))),
  if(ships.isEmpty)Padding(padding:const EdgeInsets.all(16),child:Text(en?'No sponsorships recorded.':'لا توجد كفالات مسجلة.'))
