@@ -42,7 +42,11 @@ try {
     $assert((int)$saved['is_manual_override'] === 1, 'Manual assignment override was not recorded.');
     $assert((int)$saved['assigned_by'] === $actorId && (int)$saved['updated_by'] === $actorId, 'Assignment actor was not recorded.');
     $activeHistory = (int)(dbFetchOne('SELECT COUNT(*) c FROM sponsor_supervisor_assignments WHERE sponsor_id=? AND supervisor_id=? AND ended_at IS NULL', [$sponsorId, $supervisorId])['c'] ?? 0);
-    $assert($activeHistory > 0, 'Assignment history row was not recorded.');
+    if ((int)($original['supervisor_id'] ?? 0) !== $supervisorId) {
+        $assert($activeHistory > 0, 'Assignment history row was not recorded.');
+    } else {
+        $assert($activeHistory === $originalHistory, 'A same-supervisor update unexpectedly changed assignment history.');
+    }
 
     $invalidRejected = false;
     try {
