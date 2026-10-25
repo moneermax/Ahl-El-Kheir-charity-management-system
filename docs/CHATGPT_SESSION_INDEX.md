@@ -2330,3 +2330,7 @@ Source audit found the project detail API selected milestone IDs but omitted the
 
 ### 2026-10-25 — Mobile milestone response verification
 The milestone ID response correction has focused CI endpoint coverage. The assignment-revocation milestone mutation assertion and the complete mobile auth integration harness passed in run 40160569643 on commit eebe53983eed73e9899ca9cf5d85754497e3e092. CI used disposable MariaDB only. Continue the source/schema-led mobile API authorization and record-scope audit; local XAMPP migration state and runtime acceptance remain open. Never run the harness against ahl_el_kheir.
+
+
+### 2026-10-25 — Cross-project milestone isolation verified in CI
+Commit `bc67997093d15fd616ac95ac4ead566840004883` adds a second-project/foreign-milestone fixture to the disposable mobile API integration harness. Attempting to edit the foreign milestone using the assigned project ID must return 404 `milestone_not_found` and leave the stored title unchanged. [Run 40160867381](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160867381) completed successfully. This adds record-isolation evidence but does not close the broad authorization audit or prove local XAMPP runtime/migration state. Do not run the harness against `ahl_el_kheir`.
