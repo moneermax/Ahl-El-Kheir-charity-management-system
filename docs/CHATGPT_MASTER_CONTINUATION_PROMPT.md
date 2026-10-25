@@ -2257,7 +2257,7 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 
 ## 2026-10-25 — Latest mobile API audit checkpoint
-A concrete API/UI contract defect was corrected on `main`: `api/v1/projects/detail.php` selected project milestone IDs but omitted them from the response, while Flutter edit/delete actions require `milestone_id`. Commit `20631106ae8fe9f8267779faf4c6e9a1d7608057` adds the ID to each serialized milestone. Verification is pending. Next, confirm relevant CI and add/execute a schema-grounded endpoint response assertion without inventing schema or using the canonical DB; then continue mobile API role/record-scope review. Do not reopen closed payroll/attendance/waiver tests. Local Apache/MariaDB authorization/action acceptance and an HTTPS PHP/MariaDB host remain open release gates.
+A concrete API/UI contract defect was corrected on `main`: `api/v1/projects/detail.php` selected project milestone IDs but omitted them from the response, while Flutter edit/delete actions require `milestone_id`. Commit `20631106ae8fe9f8267779faf4c6e9a1d7608057` adds the ID to each serialized milestone. Focused disposable-database endpoint coverage passed in run `40160569643`; ended-assignment and cross-project no-mutation assertions passed in run `40160867381`. Continue mobile API role/record-scope review. Do not reopen closed payroll/attendance/waiver tests. Local Apache/MariaDB authorization/action acceptance and an HTTPS PHP/MariaDB host remain open release gates.
 
 
 ## 2026-10-25 — Mobile API milestone CI verification
