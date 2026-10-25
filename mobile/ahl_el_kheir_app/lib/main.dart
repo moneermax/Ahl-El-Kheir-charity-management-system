@@ -151,6 +151,108 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       return;
     }
 
+    if (relativePath == 'modules/hr/employees.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => EmployeesPage(
+          english: english,
+          loadPage: loadEmployees,
+          openDetail: (employee) {
+            final id = int.tryParse(employee['id']?.toString() ?? '');
+            if (id == null || id < 1) return;
+            navigatorKey.currentState?.push(MaterialPageRoute<void>(
+              builder: (_) => EmployeeDetailPage(employeeId: id, english: english, loadDetail: loadEmployeeDetail),
+            ));
+          },
+        ),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/hr/attendance.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => AttendancePage(english: english, loadAttendance: loadAttendance),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/hr/leaves.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => LeaveRequestsPage(
+          english: english,
+          roleCode: user?['role_code']?.toString() ?? '',
+          loadLeaves: loadLeaves,
+          submitAction: submitLeaveAction,
+        ),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/projects/index.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => ProjectsPage(
+          english: english,
+          loadPage: loadProjects,
+          loadDetail: loadProjectDetail,
+          submitProgress: submitProjectProgressUpdate,
+          createMilestone: createProjectMilestone,
+          actOnMilestone: actOnProjectMilestone,
+        ),
+      ));
+      return;
+    }
+    if ([
+      'modules/sponsors/new_requests.php',
+      'modules/sponsors/contacted_requests.php',
+      'modules/sponsor_requests/index.php',
+    ].contains(relativePath)) {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => SponsorRequestsPage(
+          english: english,
+          loadRequests: loadSponsorRequests,
+          submitAction: submitSponsorRequestAction,
+        ),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/sponsors/index.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/families/index.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => FamiliesPage(
+          english: english,
+          loadFamilies: loadFamilies,
+          loadDetail: loadFamilyDetail,
+          openOrphanForm: (childId) => openNativeTool('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()}),
+        ),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/sponsorships/index.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships, loadDetail: loadSponsorshipDetail),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/transactions/index.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => TransactionsPage(english: english, loadTransactions: loadTransactions),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/accounting/fm_review_queue.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => FmReviewQueuePage(english: english, loadQueue: loadFmReviewQueue, submitAction: submitFmReviewQueueAction),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/hr/my_salary_statements.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => MySalaryStatementsPage(english: english, loadPage: loadMySalaryStatements),
+      ));
+      return;
+    }
+
     final titles = <String, List<String>>{
       'modules/families/orphan_form.php': ['نموذج اليتيم', 'Orphan form'],
       'modules/users/password_recovery_request.php': ['استعادة كلمة المرور', 'Password recovery'],
