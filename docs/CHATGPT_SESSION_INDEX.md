@@ -2514,3 +2514,11 @@ Remaining acceptance boundary: these CI checks use disposable databases and cann
 Latest mobile work adds `api/v1/dashboard/overview.php` plus native role-specific metric cards for GM, VGM, FM, accountant roles, supervisor, nanny, administration/staff/social media, HR, and project roles. Admin/sudo/super_admin keep the separate native system-control dashboard. Route-tree audit was performed; the Supervisor-only Fina collection creation link was removed because the real page denies that role. Source commits: API `f6ac0b4`, Flutter integration `7c96953`, PHP CI lint update `4fe6df0`; widget and role-permission tests were added.
 
 **Current gate:** verify the latest combined GitHub Actions runs and their APK artifact, then perform authenticated API/database acceptance on local XAMPP. Do not report dashboard query runtime success from PHP lint or APK build alone. Transaction date filtering is implemented in the mobile UI and API, but full boundary, empty-result, reversed-date and pagination/refresh acceptance remains open. Website-only links are navigation only, not native parity.
+
+## 2026-10-25 — Empty transaction results can now refresh
+
+The transaction list's empty-result branch previously used a plain `ListView` without `AlwaysScrollableScrollPhysics`, while it is wrapped in a `RefreshIndicator`. When date/status/search filters returned no records, the short empty list could not reliably be pulled to refresh. The empty branch now uses `AlwaysScrollableScrollPhysics`, matching the populated list's refresh behavior.
+
+Added widget coverage for multi-day inclusive date bounds persisting through pagination and refresh, and for rejecting a reversed range before making another request. The existing same-day range test remains. Source commits: `fa96f3a8451b86fc47b037d431bcc1bc23ec8a5e` and `64da0db9eef605a8a1442e9c623e1fa3a85f80e7`.
+
+The mobile API already validates `YYYY-MM-DD`, rejects invalid calendar dates and reversed ranges, and applies inclusive SQL bounds (`transaction_date >= from`, `transaction_date <= to`). These source-level checks and widget tests do not replace a real authenticated API/database test with boundary records. Latest Flutter CI for this exact test revision is pending.
