@@ -5,10 +5,14 @@ class SupervisorsPage extends StatefulWidget {
     super.key,
     required this.english,
     required this.loadPage,
+    required this.canManage,
+    required this.submitStatusAction,
   });
 
   final bool english;
+  final bool canManage;
   final Future<Map<String, dynamic>> Function(String query, bool showArchived, int page) loadPage;
+  final Future<Map<String, dynamic>> Function(int supervisorId, String action) submitStatusAction;
 
   @override
   State<SupervisorsPage> createState() => _SupervisorsPageState();
@@ -21,6 +25,7 @@ class _SupervisorsPageState extends State<SupervisorsPage> {
   String? error;
   List<Map<String, dynamic>> items = [];
   int total = 0, page = 1, pages = 1;
+  final Set<int> savingStatusIds = <int>{};
 
   @override
   void initState() {
@@ -33,6 +38,41 @@ class _SupervisorsPageState extends State<SupervisorsPage> {
     search.dispose();
     super.dispose();
   }
+
+  Future<void> toggleSupervisorStatus(Map<String, dynamic> item) async {
+    final id = int.tryParse(item['id']?.toString() ?? '') ?? 0;
+    if (!widget.canManage || id < 1 || savingStatusIds.contains(id) || (item['supervisor_status']?.toString() == 'archived')) return;
+    final en = widget.english;
+    final isActive = item['is_active'] == true || item['is_active']?.toString() == '1';
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(en ? (isActive ? 'Suspend supervisor?' : 'Activate supervisor?') : (isActive ? 'هل تريد إيقاف المشرف؟' : 'هل تريد تفعيل المشرف؟')),
+        content: Text(en
+            ? (isActive ? 'The supervisor will no longer be able to sign in until reactivated.' : 'The supervisor account will be activated.')
+            : (isActive ? 'لن يتمكن المشرف من تسجيل الدخول حتى إعادة تفعيله.' : 'سيتم تفعيل حساب المشرف.')),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(en ? 'Cancel' : 'إلغاء')),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(en ? 'Confirm' : 'تأكيد')),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+    setState(() => savingStatusIds.add(id));
+    try {
+      await widget.submitStatusAction(id, 'toggle_status');
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(en ? 'Supervisor status updated.' : 'تم تحديث حالة المشرف.'),
+      ));
+      await load();
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => savingStatusIds.remove(id));
+    }
+  }
+
 
   Future<void> load() async {
     setState(() {
@@ -180,7 +220,24 @@ class _SupervisorsPageState extends State<SupervisorsPage> {
                                       title: Text(item['full_name']?.toString() ?? ''),
                                       subtitle: Text(subtitle.isEmpty ? '@${item['username'] ?? ''}' : '@${item['username'] ?? ''}\n$subtitle'),
                                       isThreeLine: subtitle.isNotEmpty,
-                                      trailing: Text(statusLabel(status), textAlign: TextAlign.end),
+                                      trailing: widget.canManage && status != 'archived'
+                                          ? Row(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                Text(statusLabel(status), textAlign: TextAlign.end),
+                                                const SizedBox(width: 4),
+                                                IconButton(
+                                                  tooltip: en ? (item['is_active'] == true ? 'Suspend supervisor' : 'Activate supervisor') : (item['is_active'] == true ? 'إيقاف المشرف' : 'تفعيل المشرف'),
+                                                  onPressed: savingStatusIds.contains(int.tryParse(item['id']?.toString() ?? '') ?? 0)
+                                                      ? null
+                                                      : () => toggleSupervisorStatus(item),
+                                                  icon: savingStatusIds.contains(int.tryParse(item['id']?.toString() ?? '') ?? 0)
+                                                      ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                                                      : Icon(item['is_active'] == true ? Icons.pause_circle_outline_rounded : Icons.play_circle_outline_rounded),
+                                                ),
+                                              ],
+                                            )
+                                          : Text(statusLabel(status), textAlign: TextAlign.end),
                                     ),
                                   );
                                 },
