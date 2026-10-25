@@ -28,6 +28,7 @@ import 'native_tool_page.dart';
 import 'audit_log_page.dart';
 import 'admin_users_page.dart';
 import 'admin_departments_page.dart';
+import 'admin_recovery_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -146,6 +147,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
           english: english,
           loadDepartments: loadAdminDepartments,
           submitAction: submitAdminDepartmentAction,
+        ),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/users/recovery.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => AdminRecoveryPage(
+          english: english,
+          loadRequests: loadAdminRecovery,
+          submitAction: submitAdminRecoveryAction,
         ),
       ));
       return;
@@ -347,6 +358,22 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('POST', 'admin/departments_action.php', token: token, body: payload);
+  }
+
+  Future<Map<String, dynamic>> loadAdminRecovery() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'admin/recovery.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitAdminRecoveryAction(Map<String, dynamic> payload) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'admin/recovery_action.php', token: token, body: payload);
   }
 
   Future<Map<String, dynamic>> loadAdminUsers(String query, int page) async {
