@@ -4683,3 +4683,8 @@ Next priority: comprehensive role-aware dashboard and design pass, including the
 ## Mobile app checkpoint — 2026-10-25 (partial implementation; verification pending)
 
 Commits `1c51846a9c348f5fb09fd5fb9d551f10edf7cd62`, `9ddf86df2a145f18a553ab452e7577723408c71d`, `0253a88d3a6201c9a279b879dd2e5fa0fcfe1a46`, and `17af21974b9decf913954f4b7d96127ac34704b1` update the Flutter shell, add role-specific dashboard hero styling, add a bearer-authenticated legal-age alerts endpoint and native alert sheet, and include the endpoint in PHP lint CI. The endpoint mirrors the existing web alert's active-child/date window and nanny assignment filter. CI was observed in progress; no green build or runtime verification is claimed yet. Admin tool parity, native suspension action, full role-by-role dashboard parity, date-filter acceptance and physical-device testing remain open.
+
+
+## Mobile administrator dashboard — 2026-10-25 (implementation committed; verification pending)
+
+A dedicated Flutter dashboard now replaces the common role-card list for `admin`, `sudo`, and `super_admin`. New authenticated overview endpoint: `api/v1/admin/overview.php`; new screen: `mobile/ahl_el_kheir_app/lib/admin_dashboard_page.dart`. It includes role-specific visual design, real record-count metrics, recent audit activity, and categorized administration/core-record/operations/finance/protection tool groups. Native links are wired where native screens exist; system administration and other web-only tools currently open the existing website pages externally. This is not full native parity. See `docs/MOBILE_ROLE_FEATURE_PARITY.md`. Flutter CI/APK and PHP lint results for this latest change are pending; local runtime and device verification are not claimed.
