@@ -27,7 +27,11 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.ensureVisible(find.text('Full website dashboard'));
+    await tester.scrollUntilVisible(
+      find.text('Full website dashboard'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(find.text('Full website dashboard'));
     expect(openedTool, 'web_dashboard');
 
