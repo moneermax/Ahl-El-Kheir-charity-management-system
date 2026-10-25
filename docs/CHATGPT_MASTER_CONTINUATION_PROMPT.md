@@ -2262,3 +2262,7 @@ A concrete API/UI contract defect was corrected on `main`: `api/v1/projects/deta
 
 ## 2026-10-25 — Mobile API milestone CI verification
 The focused project-detail milestone ID assertion and ended-assignment mutation denial both passed in [Mobile API auth integration run 40160569643](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160569643), source test commit eebe53983eed73e9899ca9cf5d85754497e3e092. The job used the checked-in schema and disposable MariaDB; it does not prove local migration state or local Apache/MariaDB acceptance. Continue reviewing remaining API role and record boundaries. Do not run the harness against ahl_el_kheir or reopen closed unrelated modules.
+
+
+## 2026-10-25 — Mobile notification isolation test passed
+Commit `ab2a6173e596f88ed4e7c2fb6e962e40e5429192` adds a disposable-CI fixture proving another account's notification is excluded from the authenticated user's list and cannot have its read state changed through the API. [Mobile API auth integration run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591) passed against the checked-in schema and disposable MariaDB. Continue the remaining source/schema-led API authorization audit; local XAMPP migration state and live local role/record-scope/action acceptance remain unverified. Never run the harness against `ahl_el_kheir`.
