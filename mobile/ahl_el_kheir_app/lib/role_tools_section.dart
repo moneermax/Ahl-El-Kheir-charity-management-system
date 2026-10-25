@@ -192,6 +192,7 @@ class RoleToolsSection extends StatelessWidget {
               t('التحقق من الحوافز', 'Incentive verification', 'مراجعة الحوافز', 'Review incentives', 'modules/hr/incentive_verification.php', Icons.verified_outlined),
               t('سياسة الحضور', 'Attendance policy', 'قواعد الحضور الفعالة', 'Effective attendance rules', 'modules/hr/attendance_policy.php', Icons.schedule_outlined),
               t('سلامة الرواتب', 'Payroll integrity', 'أدوات تدقيق سلامة الرواتب', 'Payroll integrity tools', 'modules/hr/payroll_integrity.php', Icons.shield_outlined),
+              t('طلبات استعادة كلمة المرور', 'Password recovery requests', 'مراجعة طلبات استعادة الحسابات المعلقة', 'Review pending account recovery requests', 'modules/users/recovery.php', Icons.password_rounded),
             ],
           ]),
         ];
