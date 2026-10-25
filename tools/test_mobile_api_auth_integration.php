@@ -70,6 +70,7 @@ $failure = null;
 $testProjectId = 0;
 $testPaymentId = 0;
 $testMilestoneId = 0;
+$testDraftMilestoneId = 0;
 $testForeignProjectId = 0;
 $testForeignMilestoneId = 0;
 $testNotificationId = 0;
@@ -293,6 +294,27 @@ try {
         && ($fixture['approval_status'] ?? '') === 'draft',
         'project portfolio defaults a missing approval row to draft'
     );
+
+    $pdo->prepare('INSERT INTO project_milestones (project_id, title, description, planned_date, status, completion_percent, notes, created_by) VALUES (?,?,?,?,?,?,?,?)')
+        ->execute([$testProjectId, 'Draft milestone must remain unchanged', 'Integration test only', date('Y-m-d'), 'in_progress', 10, null, $userId]);
+    $testDraftMilestoneId = (int)$pdo->lastInsertId();
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['project_supervisor'], $userId]);
+    $r = mobileApiRequest('/api/v1/projects/milestone_action.php', 'POST', [
+        'action' => 'edit',
+        'project_id' => $testProjectId,
+        'milestone_id' => $testDraftMilestoneId,
+        'title' => 'Unauthorized draft milestone edit',
+        'completion_percent' => 80,
+    ], $token);
+    $draftMilestoneTitle = $pdo->prepare('SELECT title FROM project_milestones WHERE id=? AND project_id=?');
+    $draftMilestoneTitle->execute([$testDraftMilestoneId, $testProjectId]);
+    mobileApiExpect(
+        $r['status'] === 409
+        && ($r['json']['error']['code'] ?? '') === 'project_not_operational'
+        && (string)$draftMilestoneTitle->fetchColumn() === 'Draft milestone must remain unchanged',
+        'project supervisor cannot edit milestones before project approval and operational launch'
+    );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
     $pdo->prepare("INSERT INTO project_approval (project_id, approval_status) VALUES (?, 'approved')")->execute([$testProjectId]);
     $pdo->prepare("INSERT INTO project_lifecycle (project_id, lifecycle_status) VALUES (?, 'active')")->execute([$testProjectId]);
