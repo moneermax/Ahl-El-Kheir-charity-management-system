@@ -92,7 +92,7 @@ ak_api_json(200, ['ok'=>true,'data'=>[
   'closure_summary'=>(string)($project['closure_summary'] ?? ''),'supervisor_name'=>(string)($supervisor['full_name'] ?? '—'),'can_add_progress'=>$canAddProgress,'can_add_milestone'=>$canAddMilestone,'can_manage_milestones'=>$canManageMilestones
  ],
  'team'=>array_map(static fn(array $r): array=>['full_name'=>(string)$r['full_name'],'section_code'=>(string)$r['section_code'],'is_lead'=>(int)$r['is_lead']===1],$team),
- 'milestones'=>array_map(static fn(array $r): array=>['title'=>(string)$r['title'],'description'=>(string)($r['description'] ?? ''),'planned_date'=>(string)($r['planned_date'] ?? ''),'completion_percent'=>(float)($r['completion_percent'] ?? 0)],$milestones),
+ 'milestones'=>array_map(static fn(array $r): array=>['id'=>(int)$r['id'],'title'=>(string)$r['title'],'description'=>(string)($r['description'] ?? ''),'planned_date'=>(string)($r['planned_date'] ?? ''),'completion_percent'=>(float)($r['completion_percent'] ?? 0)],$milestones),
  'progress_updates'=>array_map(static fn(array $r): array=>['update_date'=>(string)($r['update_date'] ?? ''),'completion_percent'=>(float)($r['completion_percent'] ?? 0),'summary'=>(string)($r['summary'] ?? ''),'achievements'=>(string)($r['achievements'] ?? ''),'issues'=>(string)($r['issues'] ?? ''),'next_steps'=>(string)($r['next_steps'] ?? ''),'submitter_name'=>(string)($r['submitter_name'] ?? '—')],$progressUpdates),
  'history'=>array_map(static fn(array $r): array=>['old_status'=>(string)($r['old_status'] ?? ''),'new_status'=>(string)($r['new_status'] ?? ''),'reason'=>(string)($r['reason'] ?? ''),'created_at'=>(string)($r['created_at'] ?? ''),'actor_name'=>(string)($r['full_name'] ?? '—')],$history)
 ]]);
