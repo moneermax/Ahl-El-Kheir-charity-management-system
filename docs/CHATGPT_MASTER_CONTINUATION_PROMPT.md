@@ -2614,3 +2614,12 @@ Integration evidence from GitHub Actions run `40201983559` (`d82559e9b3495233b0f
 **Required local deployment step after pulling:** apply `database/migrations/2026-10-25_mobile_web_handoffs.sql` to `ahl_el_kheir` before testing WEB links. Without the migration, handoff creation fails safely and the app displays an error. Do not run DDL from PHP requests.
 
 Role-sidebar parity updates in this continuation also restore GM salary-advance waivers, VGM orphan-group management, FM finance dashboard/opening balance/assigned nannies, permitted accountant tools, and orphan forms for Supervisor/Nanny. Admin/Sudo now has a direct password-recovery tool, and global search, profile, settings, salary-advance request, and internal messages are discoverable. Website-only tools remain labelled WEB; full native workflow parity is still not complete.
+
+
+## 2026-10-25 — Handoff negative-path stress tests and public recovery exception
+
+The disposable MariaDB/PHP integration harness now additionally proves that an expired handoff token is rejected and a handoff issued by a mobile session is rejected after that session is revoked. Latest integration run `40202292241` on test commit `3140502d1a7596ab2ece0e099e7bdcef86de0fe8` completed **successfully**; output explicitly passed external-target rejection, one-time token issuance/hash storage, HttpOnly session creation, target redirect, consumed-token replay rejection, expiry rejection, revoked-session rejection, and the complete mobile API auth integration.
+
+A deliberate exception is retained for `modules/users/password_recovery_request.php`: it is public and must remain openable from the logged-out mobile screen, so that one route opens directly without a bearer handoff. All protected website routes use the one-time handoff. This prevents the new authentication bridge from breaking the forgotten-password path.
+
+Flutter analyze and widget tests passed on source commit `a00ec31729ff3c983838b7224e75ea80c00972f0`. The debug APK build/publish step is still in progress at this checkpoint. No local XAMPP migration or physical-device test has been performed from this environment.
