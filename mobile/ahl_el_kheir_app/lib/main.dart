@@ -13,6 +13,7 @@ import 'sponsors_page.dart';
 import 'supervisors_page.dart';
 import 'families_page.dart';
 import 'admin_dashboard_page.dart';
+import 'role_dashboard_page.dart';
 import 'family_detail_page.dart';
 import 'fm_review_queue_page.dart';
 import 'transactions_page.dart';
@@ -155,6 +156,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('GET', 'admin/overview.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadRoleDashboard() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'dashboard/overview.php', token: token);
   }
 
   void openAdminTool(String tool) {
@@ -991,6 +998,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 24),
+                  RoleDashboardPage(
+                    key: ValueKey('role-dashboard-$roleCode'),
+                    english: english,
+                    roleCode: roleCode,
+                    loadOverview: loadRoleDashboard,
                   ),
                   const SizedBox(height: 24),
                   _HomeSectionTitle(
