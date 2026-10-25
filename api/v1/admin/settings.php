@@ -126,15 +126,18 @@ if ($method === 'POST') {
     }
 }
 
-$current = [];
+$stored = [];
 foreach (dbFetchAll('SELECT setting_key, setting_value FROM settings') as $row) {
-    $current[(string)$row['setting_key']] = (string)($row['setting_value'] ?? '');
+    $stored[(string)$row['setting_key']] = (string)($row['setting_value'] ?? '');
 }
-$current['smtp_password_configured'] = isset($current['smtp_password']) && $current['smtp_password'] !== '';
-$current['smtp_password'] = '';
+$safeValues = [];
+foreach ($allowed as $key => $_definition) {
+    $safeValues[$key] = $key === 'smtp_password' ? '' : ($stored[$key] ?? '');
+}
+$safeValues['smtp_password_configured'] = isset($stored['smtp_password']) && $stored['smtp_password'] !== '';
 
 ak_api_json(200, ['ok' => true, 'data' => [
     'groups' => $definitions,
-    'values' => $current,
+    'values' => $safeValues,
     'can_upload_logo' => false,
 ]]);
