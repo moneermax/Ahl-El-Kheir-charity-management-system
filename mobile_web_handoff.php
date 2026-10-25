@@ -42,6 +42,12 @@ try {
          JOIN users u ON u.id = h.user_id
          JOIN roles r ON r.id = u.role_id
          WHERE h.token_hash = ?
+           AND h.consumed_at IS NULL
+           AND h.expires_at > NOW()
+           AND ms.revoked_at IS NULL
+           AND ms.expires_at > NOW()
+           AND u.is_active = 1
+           AND u.password_change_required = 0
          LIMIT 1 FOR UPDATE',
         [hash('sha256', $rawToken)]
     );
@@ -49,9 +55,7 @@ try {
     if (
         !$handoff
         || !empty($handoff['consumed_at'])
-        || (string)$handoff['expires_at'] <= date('Y-m-d H:i:s')
         || !empty($handoff['revoked_at'])
-        || (string)$handoff['mobile_expires_at'] <= date('Y-m-d H:i:s')
         || (int)$handoff['is_active'] !== 1
         || (int)$handoff['password_change_required'] === 1
     ) {
