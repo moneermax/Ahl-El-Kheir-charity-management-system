@@ -3,6 +3,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/main.dart';
 
 void main() {
+  test('validates and normalizes the full API base URL', () {
+    expect(
+      normalizeApiBaseUrl(' http://192.168.1.10:8081/AhlElKheir/api/v1/ '),
+      'http://192.168.1.10:8081/AhlElKheir/api/v1',
+    );
+    expect(normalizeApiBaseUrl('192.168.1.10:8081/AhlElKheir/api/v1'), isNull);
+    expect(normalizeApiBaseUrl('http://192.168.1.10:8081/AhlElKheir'), isNull);
+    expect(normalizeApiBaseUrl('https://example.com/api/v1?redirect=bad'), isNull);
+  });
+
   testWidgets('shows the Arabic sign-in form', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
