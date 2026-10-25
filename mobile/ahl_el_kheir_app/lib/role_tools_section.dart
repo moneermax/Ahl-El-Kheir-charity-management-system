@@ -131,7 +131,6 @@ class RoleToolsSection extends StatelessWidget {
             t('مراجعة تحصيلات فينا', 'Review Fina collections', 'فتح صفحة مراجعة التحصيلات', 'Open the collection review page', 'modules/accounting/fina_payment_review.php', Icons.fact_check_outlined),
             t('سجل تحصيلات فينا', 'Fina collection history', 'متابعة سجل التحصيلات', 'Review collection history', 'modules/accounting/fina_payment_history.php', Icons.history_rounded),
             t('تقرير تحصيلات فينا', 'Fina collection report', 'تقارير التحصيلات الخاصة بالدور', 'Collection reports for this role', 'modules/accounting/fina_payment_report.php', Icons.summarize_outlined),
-            t('تسجيل تحصيل فينا', 'Record Fina collection', 'تسجيل تحصيل وفق نموذج النظام الحالي', 'Record a collection using the existing workflow', 'modules/transactions/fina_payment_create.php', Icons.add_card_outlined),
           ]),
         ];
       case 'nanny':
