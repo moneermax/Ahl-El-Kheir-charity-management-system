@@ -577,7 +577,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openNativeTool('modules/departments/index.php');
         return;
       case 'settings':
-        if (user?['raw_role_code']?.toString() != 'admin') {
+        if (user?['role_code']?.toString() != 'admin') {
           ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
             SnackBar(content: Text(english
                 ? 'System settings are restricted to the administrator role.'
