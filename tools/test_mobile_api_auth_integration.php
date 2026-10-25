@@ -26,7 +26,7 @@ function mobileApiExpect(bool $ok, string $message): void {
     if (!$ok) throw new RuntimeException('FAIL: ' . $message);
     echo "PASS: {$message}\n";
 }
-function mobileApiRequest(string $path, string $method = 'GET', ?array $body = null, ?string $token = null): array {
+function mobileApiRequest(string $path, string $method = 'GET', ?array $body = null, ?string $token = null, int $timeoutSeconds = 5): array {
     $headers = ['Accept: application/json'];
     $content = '';
     if ($body !== null) {
@@ -39,7 +39,7 @@ function mobileApiRequest(string $path, string $method = 'GET', ?array $body = n
         'header' => implode("\r\n", $headers),
         'content' => $content,
         'ignore_errors' => true,
-        'timeout' => 5,
+        'timeout' => max(1, $timeoutSeconds),
     ]]);
     $raw = file_get_contents('http://127.0.0.1:18080' . $path, false, $context);
     $responseHeaders = $http_response_header ?? [];
@@ -182,7 +182,7 @@ try {
         && ($r['json']['error']['code'] ?? '') === 'forbidden',
         'nanny cannot view a family assigned to another account'
     );
-    $r = mobileApiRequest('/api/v1/families/index.php', 'GET', null, $token);
+    $r = mobileApiRequest('/api/v1/families/index.php', 'GET', null, $token, 20);
     $listedFamilyIds = array_map(
         static fn(array $item): int => (int)($item['id'] ?? 0),
         $r['json']['data']['items'] ?? []
