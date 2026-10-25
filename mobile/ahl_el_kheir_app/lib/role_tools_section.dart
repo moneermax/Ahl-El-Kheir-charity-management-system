@@ -98,6 +98,7 @@ class RoleToolsSection extends StatelessWidget {
           g('المتابعة والاعتماد', 'Follow-up and approvals', [
             t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة الحملات المفتوحة', 'Review open win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
             t('سياسة الحوافز', 'Incentive policy', 'مراجعة واعتماد سياسة الحوافز', 'Review and approve incentive policy', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
+            t('إعفاء السلف', 'Salary advance waivers', 'مراجعة قرارات إعفاء السلف واعتمادها', 'Review and approve salary-advance waiver decisions', 'modules/hr/salary_advance_waiver_gm.php', Icons.handshake_outlined),
             t('سجل فترات الرواتب', 'Payroll period history', 'مراجعة سجل فترات الرواتب', 'Review payroll period history', 'modules/hr/gm_payroll_period_history.php', Icons.payments_outlined),
             t('سجل تعليقات الكفالات', 'Sponsorship suspension cases', 'عرض حالات تعليق الكفالات', 'View sponsorship suspension cases', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
@@ -106,6 +107,7 @@ class RoleToolsSection extends StatelessWidget {
       case 'vgm':
         return [
           g('الإشراف والتوزيع', 'Supervision and assignment', [
+            t('إدارة مجموعات الأيتام', 'Orphan groups', 'إدارة المجموعات ودورة حياتها', 'Manage orphan groups and their lifecycle', 'modules/deputy_gm/groups.php', Icons.groups_outlined),
             t('مركز التقارير', 'Report center', 'تقارير التشغيل المتاحة للدور', 'Operational reports available to this role', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة تعليق الكفالات', 'Manage sponsorship suspensions', 'تعليق أو رفع التعليق وفق الصلاحيات', 'Suspend or lift suspensions within your permissions', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
@@ -115,6 +117,8 @@ class RoleToolsSection extends StatelessWidget {
       case 'finance':
         return [
           g('العمليات المالية', 'Financial operations', [
+            t('الرصيد الافتتاحي', 'Opening balance', 'إدارة الرصيد الافتتاحي وسياسة الرسوم الإدارية', 'Manage opening balance and administrative-fee policy', 'modules/accounting/opening_balance.php', Icons.account_balance_outlined),
+            t('الحاضنات المعيّنات', 'Assigned nannies', 'متابعة الحاضنات المعيّنات والتحقق', 'Review assigned nannies and verification', 'modules/accounting/my_nannies.php', Icons.support_agent_outlined),
             t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات والصرف', 'Review monthly transfers and disbursements', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
             t('دليل الحسابات', 'Chart of accounts', 'الحسابات المحاسبية', 'Accounting accounts', 'modules/accounting/accounts.php', Icons.account_tree_outlined),
             t('دفتر اليومية', 'Journal', 'قيود اليومية المحاسبية', 'Accounting journal entries', 'modules/accounting/journal.php', Icons.menu_book_outlined),
@@ -131,12 +135,17 @@ class RoleToolsSection extends StatelessWidget {
           g('المحاسبة والتوزيعات', 'Accounting and disbursements', [
             if (role == 'accountant_staff') t('صرف مجموعات الكفالات', 'Group disbursements', 'إدارة عمليات الصرف ضمن الصلاحيات الحالية', 'Manage disbursements within existing permissions', 'modules/accounting/group_disbursements.php', Icons.groups_outlined),
             if (role == 'accountant_staff') t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات المسموح بها للدور', 'Review disbursements available to this role', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
+            t('السندات', 'Vouchers', 'عرض سندات القبض والصرف', 'View receipt and payment vouchers', 'modules/accounting/vouchers.php', Icons.receipt_long_outlined),
+            t('الحاضنات المعيّنات', 'Assigned nannies', 'متابعة الحاضنات المعيّنات والتحقق', 'Review assigned nannies and verification', 'modules/accounting/my_nannies.php', Icons.support_agent_outlined),
+            if (role == 'accountant_staff') t('استمارات الأيتام', 'Orphan forms', 'عرض استمارات الأيتام وفق الصلاحيات', 'View orphan forms within your permissions', 'modules/families/orphan_forms_index.php', Icons.assignment_outlined),
+            if (role == 'accountant') t('مطابقة المدير العام', 'GM reconciliation', 'عرض تقرير المطابقة المالية', 'View the financial reconciliation report', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
             t('مركز التقارير', 'Report center', 'التقارير المتاحة للمحاسبة', 'Reports available to accounting staff', 'modules/reports/index.php', Icons.assessment_outlined),
           ]),
         ];
       case 'supervisor':
         return [
           g('متابعة تحصيلات فينا الخير', 'Fina Al-Khair collections', [
+            t('استمارات الأيتام', 'Orphan forms', 'عرض استمارات الأيتام ضمن نطاق الصلاحيات', 'View orphan forms within your role scope', 'modules/families/orphan_forms_index.php', Icons.assignment_outlined),
             t('مراجعة تحصيلات فينا', 'Review Fina collections', 'فتح صفحة مراجعة التحصيلات', 'Open the collection review page', 'modules/accounting/fina_payment_review.php', Icons.fact_check_outlined),
             t('سجل تحصيلات فينا', 'Fina collection history', 'متابعة سجل التحصيلات', 'Review collection history', 'modules/accounting/fina_payment_history.php', Icons.history_rounded),
             t('تقرير تحصيلات فينا', 'Fina collection report', 'تقارير التحصيلات الخاصة بالدور', 'Collection reports for this role', 'modules/accounting/fina_payment_report.php', Icons.summarize_outlined),
@@ -149,6 +158,7 @@ class RoleToolsSection extends StatelessWidget {
             t('إعادة صرف المبالغ المرتجعة', 'Reissue returned funds', 'معالجة المبالغ المرتجعة وفق صلاحيات الحاضنة', 'Handle returned funds within nanny permissions', 'modules/accounting/returned_funds_nanny.php', Icons.currency_exchange_rounded),
             t('مركز التقارير', 'Report center', 'تقارير المتابعة', 'Follow-up reports', 'modules/reports/index.php', Icons.assessment_outlined),
             t('تعليق الكفالات', 'Sponsorship suspensions', 'إدارة التعليقات ضمن الأسر المسندة إليك', 'Manage suspensions within your assigned families', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
+            t('استمارات الأيتام', 'Orphan forms', 'عرض استمارات الأيتام ضمن نطاق الصلاحيات', 'View orphan forms within your role scope', 'modules/families/orphan_forms_index.php', Icons.assignment_outlined),
           ]),
         ];
       case 'administration':
