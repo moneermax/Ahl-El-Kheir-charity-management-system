@@ -135,7 +135,7 @@ class RoleToolsSection extends StatelessWidget {
           g('المحاسبة والتوزيعات', 'Accounting and disbursements', [
             if (role == 'accountant_staff') t('صرف مجموعات الكفالات', 'Group disbursements', 'إدارة عمليات الصرف ضمن الصلاحيات الحالية', 'Manage disbursements within existing permissions', 'modules/accounting/group_disbursements.php', Icons.groups_outlined),
             if (role == 'accountant_staff') t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات المسموح بها للدور', 'Review disbursements available to this role', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
-            t('السندات', 'Vouchers', 'عرض سندات القبض والصرف', 'View receipt and payment vouchers', 'modules/accounting/vouchers.php', Icons.receipt_long_outlined),
+            if (role == 'accountant_staff') t('السندات', 'Vouchers', 'عرض سندات القبض والصرف', 'View receipt and payment vouchers', 'modules/accounting/vouchers.php', Icons.receipt_long_outlined),
             t('الحاضنات المعيّنات', 'Assigned nannies', 'متابعة الحاضنات المعيّنات والتحقق', 'Review assigned nannies and verification', 'modules/accounting/my_nannies.php', Icons.support_agent_outlined),
             if (role == 'accountant_staff') t('استمارات الأيتام', 'Orphan forms', 'عرض استمارات الأيتام وفق الصلاحيات', 'View orphan forms within your permissions', 'modules/families/orphan_forms_index.php', Icons.assignment_outlined),
             if (role == 'accountant') t('مطابقة المدير العام', 'GM reconciliation', 'عرض تقرير المطابقة المالية', 'View the financial reconciliation report', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
