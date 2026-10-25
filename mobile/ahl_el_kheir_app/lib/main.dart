@@ -782,7 +782,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       subtitle: Text(english ? 'Browse families within your role scope' : 'استعراض الأسر وفق صلاحيات حسابك'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
-                        builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail),
+                        builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openWebPage('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()})),
                       )),
                     ))),
                   if (user?['role_code']?.toString() == 'nanny')
@@ -916,6 +916,18 @@ class _NotificationPageState extends State<NotificationPage> {
     }
   }
 
+  Future<void> openNotification(Map<String, dynamic> item) async {
+    await markNotification(item);
+    if (!mounted) return;
+    await Navigator.of(context).push(MaterialPageRoute<void>(
+      builder: (_) => NotificationDetailPage(
+        english: widget.english,
+        item: item,
+        openRelatedLink: widget.openRelatedLink,
+      ),
+    ));
+  }
+
   Future<void> markNotification(Map<String, dynamic> item) async {
     final isRead = item['is_read'] == true || item['is_read'] == 1;
     if (isRead) return;
@@ -1007,6 +1019,7 @@ class _NotificationPageState extends State<NotificationPage> {
                                           ? Colors.grey
                                           : const Color(0xFF1F4E8C),
                                     ),
+                                    onTap: () => openNotification(item),
                                     title: Text(
                                       item['title']?.toString() ?? '',
                                       style: TextStyle(
@@ -1299,6 +1312,71 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+
+class NotificationDetailPage extends StatelessWidget {
+  const NotificationDetailPage({
+    super.key,
+    required this.english,
+    required this.item,
+    required this.openRelatedLink,
+  });
+
+  final bool english;
+  final Map<String, dynamic> item;
+  final Future<void> Function(String url) openRelatedLink;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = item['title']?.toString() ?? '';
+    final body = item['body']?.toString() ?? '';
+    final createdAt = item['created_at']?.toString() ?? '';
+    final link = item['link']?.toString() ?? '';
+    return Scaffold(
+      appBar: AppBar(title: Text(english ? 'Notification details' : 'تفاصيل الإشعار')),
+      body: ListView(
+        padding: const EdgeInsets.all(20),
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: AlignmentDirectional.topStart,
+                end: AlignmentDirectional.bottomEnd,
+                colors: [Color(0xFF0A1F44), Color(0xFF1F4E8C)],
+              ),
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: const Icon(Icons.notifications_active_rounded, size: 36, color: Colors.white),
+          ),
+          const SizedBox(height: 18),
+          Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: const Color(0xFF0A1F44), fontWeight: FontWeight.w800,
+          )),
+          if (createdAt.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            Text(createdAt, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B))),
+          ],
+          const SizedBox(height: 18),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(18),
+              child: SelectableText(body, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.6)),
+            ),
+          ),
+          if (link.isNotEmpty) ...[
+            const SizedBox(height: 18),
+            FilledButton.icon(
+              onPressed: () => openRelatedLink(link),
+              icon: const Icon(Icons.open_in_new_rounded),
+              label: Text(english ? 'Open related page' : 'فتح الصفحة المرتبطة'),
+            ),
+          ],
+        ],
       ),
     );
   }
