@@ -53,14 +53,14 @@ class RoleToolsSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        tool.path == 'modules/families/suspensions.php'
+                        _isNativePath(tool.path)
                             ? Icons.phone_android_rounded
                             : Icons.open_in_new_rounded,
                         size: 18,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        tool.path == 'modules/families/suspensions.php'
+                        _isNativePath(tool.path)
                             ? (english ? 'APP' : 'تطبيق')
                             : 'WEB',
                         style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
@@ -75,6 +75,12 @@ class RoleToolsSection extends StatelessWidget {
       ],
     );
   }
+
+  bool _isNativePath(String path) => const {
+        'modules/families/suspensions.php',
+        'modules/sponsors/assign.php',
+        'modules/supervisors/index.php',
+      }.contains(path);
 
   List<_ToolGroup> _groups(String role, bool en) {
     _Tool t(String ar, String eng, String arSub, String enSub, String path, IconData icon) =>
@@ -96,6 +102,8 @@ class RoleToolsSection extends StatelessWidget {
             t('مطابقة المدير العام', 'GM reconciliation', 'مراجعة المطابقة المالية المتاحة للمدير العام', 'Review reconciliation available to the General Manager', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
           ]),
           g('المتابعة والاعتماد', 'Follow-up and approvals', [
+            t('إسناد الكفلاء', 'Sponsor assignment', 'إسناد الكفلاء للمشرفين النشطين', 'Assign sponsors to active supervisors', 'modules/sponsors/assign.php', Icons.assignment_ind_outlined),
+            t('طلبات الرعاية', 'Sponsor requests', 'مراجعة مسار طلبات الكفالة بالكامل', 'Review the complete sponsor-request pipeline', 'modules/sponsors/requests.php', Icons.campaign_outlined),
             t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة الحملات المفتوحة', 'Review open win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
             t('سياسة الحوافز', 'Incentive policy', 'مراجعة واعتماد سياسة الحوافز', 'Review and approve incentive policy', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
             t('سجل فترات الرواتب', 'Payroll period history', 'مراجعة سجل فترات الرواتب', 'Review payroll period history', 'modules/hr/gm_payroll_period_history.php', Icons.payments_outlined),
@@ -106,6 +114,8 @@ class RoleToolsSection extends StatelessWidget {
       case 'vgm':
         return [
           g('الإشراف والتوزيع', 'Supervision and assignment', [
+            t('إسناد الكفلاء', 'Sponsor assignment', 'إسناد الكفلاء للمشرفين النشطين', 'Assign sponsors to active supervisors', 'modules/sponsors/assign.php', Icons.assignment_ind_outlined),
+            t('إدارة المشرفين', 'Supervisor management', 'مراجعة المشرفين وتكليفاتهم وحالتهم', 'Review supervisors, assignments and status', 'modules/supervisors/index.php', Icons.supervisor_account_outlined),
             t('مركز التقارير', 'Report center', 'تقارير التشغيل المتاحة للدور', 'Operational reports available to this role', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة تعليق الكفالات', 'Manage sponsorship suspensions', 'تعليق أو رفع التعليق وفق الصلاحيات', 'Suspend or lift suspensions within your permissions', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
@@ -156,6 +166,7 @@ class RoleToolsSection extends StatelessWidget {
       case 'social_media':
         return [
           g('خدمة المستفيدين والمتابعة', 'Sponsor service and follow-up', [
+            t('مسار طلبات الرعاية', 'Sponsor requests pipeline', 'عرض وإدارة جميع طلبات الرعاية وحالاتها', 'View and manage all sponsor requests and statuses', 'modules/sponsors/requests.php', Icons.campaign_outlined),
             t('الطلبات الجديدة', 'New sponsor requests', 'مراجعة الطلبات الجديدة الواردة', 'Review newly received sponsor requests', 'modules/sponsors/new_requests.php', Icons.mark_email_unread_outlined),
             t('الطلبات التي تمت متابعتها', 'Contacted sponsor requests', 'متابعة الطلبات التي تم التواصل بشأنها', 'Review sponsor requests already contacted', 'modules/sponsors/contacted_requests.php', Icons.mark_email_read_outlined),
             if (role == 'administration') t('الأسر المتاحة للكفالة', 'Families available for sponsorship', 'متابعة الأسر غير المغطاة', 'Review families without active sponsorship', 'modules/administration/available_families.php', Icons.home_work_outlined),
