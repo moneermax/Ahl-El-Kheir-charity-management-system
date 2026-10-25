@@ -26,6 +26,7 @@ import 'role_tools_section.dart';
 import 'suspension_cases_page.dart';
 import 'native_tool_page.dart';
 import 'audit_log_page.dart';
+import 'admin_users_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -132,6 +133,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       openAuditLogPage();
       return;
     }
+    if (relativePath == 'modules/users/index.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => AdminUsersPage(english: english, loadPage: loadAdminUsers),
+      ));
+      return;
+    }
 
     final titles = <String, List<String>>{
       'modules/families/orphan_form.php': ['نموذج اليتيم', 'Orphan form'],
@@ -211,6 +218,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('GET', 'admin/overview.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadAdminUsers(String query, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    final encodedQuery = Uri.encodeQueryComponent(query);
+    return call('GET', 'admin/users.php?q=$encodedQuery&page=$page', token: token);
   }
 
   void openAuditLogPage() {
