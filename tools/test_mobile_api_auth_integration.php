@@ -73,6 +73,7 @@ $testMilestoneId = 0;
 $testForeignProjectId = 0;
 $testForeignMilestoneId = 0;
 $testNotificationId = 0;
+$testSponsorRequestId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -158,6 +159,24 @@ try {
         'mark-read cannot change another account\'s notification'
     );
 
+    $sponsorRequestName = 'Mobile API CI sponsor request ' . bin2hex(random_bytes(6));
+    $pdo->prepare('INSERT INTO sponsor_requests (sponsor_name, phone, gender, source, brought_by, brought_by_name, notes, status) VALUES (?, ?, ?, ?, ?, ?, ?, \'new\')')
+        ->execute([$sponsorRequestName, null, 'female', 'integration_test', (string)$userId, 'Disposable CI fixture', 'Authorization integration fixture']);
+    $testSponsorRequestId = (int)$pdo->lastInsertId();
+
+    $r = mobileApiRequest('/api/v1/sponsor_requests/index.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny cannot list sponsor requests');
+    $r = mobileApiRequest('/api/v1/sponsor_requests/action.php', 'POST', [
+        'request_id' => $testSponsorRequestId,
+        'action' => 'mark_contacted',
+    ], $token);
+    $sponsorRequestStatus = $pdo->prepare('SELECT status FROM sponsor_requests WHERE id=?');
+    $sponsorRequestStatus->execute([$testSponsorRequestId]);
+    mobileApiExpect(
+        $r['status'] === 403 && (string)$sponsorRequestStatus->fetchColumn() === 'new',
+        'nanny cannot change sponsor request status'
+    );
+
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 200 && ($r['json']['data']['user']['role_code'] ?? '') === 'nanny', '/me accepts a valid token and returns the live role');
     $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
@@ -170,6 +189,29 @@ try {
     mobileApiExpect($r['status'] === 200 && ($r['json']['ok'] ?? false) === true, 'HR staff can access the HR employee directory');
 
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+
+    $r = mobileApiRequest('/api/v1/sponsor_requests/action.php', 'POST', [
+        'request_id' => $testSponsorRequestId,
+        'action' => 'mark_contacted',
+    ], $token);
+    $sponsorRequestStatus->execute([$testSponsorRequestId]);
+    mobileApiExpect(
+        $r['status'] === 200
+        && ($r['json']['data']['status'] ?? '') === 'contacted'
+        && (string)$sponsorRequestStatus->fetchColumn() === 'contacted',
+        'authorized admin can make the new-to-contacted sponsor request transition'
+    );
+    $r = mobileApiRequest('/api/v1/sponsor_requests/action.php', 'POST', [
+        'request_id' => $testSponsorRequestId,
+        'action' => 'mark_contacted',
+    ], $token);
+    $sponsorRequestStatus->execute([$testSponsorRequestId]);
+    mobileApiExpect(
+        $r['status'] === 409
+        && ($r['json']['error']['code'] ?? '') === 'invalid_transition'
+        && (string)$sponsorRequestStatus->fetchColumn() === 'contacted',
+        'sponsor request rejects a repeated contacted transition without mutation'
+    );
     $r = mobileApiRequest('/api/v1/projects/index.php', 'GET', null, $token);
     $portfolioItems = $r['json']['data']['items'] ?? [];
     $fixture = null;
@@ -351,6 +393,9 @@ try {
     foreach ($serverPipes as $pipe) if (is_resource($pipe)) fclose($pipe);
     if ($testNotificationId > 0) {
         $pdo->prepare('DELETE FROM notifications WHERE id=?')->execute([$testNotificationId]);
+    }
+    if ($testSponsorRequestId > 0) {
+        $pdo->prepare('DELETE FROM sponsor_requests WHERE id=?')->execute([$testSponsorRequestId]);
     }
     if (isset($testTokenHashes) && $testTokenHashes) {
         $marks = implode(',', array_fill(0, count($testTokenHashes), '?'));
