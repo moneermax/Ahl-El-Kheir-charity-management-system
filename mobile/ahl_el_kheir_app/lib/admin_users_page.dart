@@ -5,10 +5,14 @@ class AdminUsersPage extends StatefulWidget {
     super.key,
     required this.english,
     required this.loadPage,
+    required this.currentUserId,
+    required this.submitAction,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function(String query, int page) loadPage;
+  final int currentUserId;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> payload) submitAction;
 
   @override
   State<AdminUsersPage> createState() => _AdminUsersPageState();
@@ -17,6 +21,7 @@ class AdminUsersPage extends StatefulWidget {
 class _AdminUsersPageState extends State<AdminUsersPage> {
   final searchController = TextEditingController();
   bool loading = true;
+  bool saving = false;
   String? error;
   int page = 1;
   int pages = 1;
@@ -59,6 +64,77 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       if (mounted) setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> act(Map<String, dynamic> item, String action) async {
+    final en = widget.english;
+    final id = int.tryParse(item['id']?.toString() ?? '');
+    if (id == null || id < 1 || id == widget.currentUserId) return;
+
+    Map<String, dynamic>? payload;
+    if (action == 'toggle') {
+      final active = item['is_active'] == true;
+      final confirmed = await showDialog<bool>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(active ? (en ? 'Disable account?' : 'إيقاف الحساب؟') : (en ? 'Enable account?' : 'تفعيل الحساب؟')),
+          content: Text((en ? 'Account: ' : 'الحساب: ') + (item['username']?.toString() ?? '—')),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: Text(en ? 'Cancel' : 'إلغاء')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, true), child: Text(active ? (en ? 'Disable' : 'إيقاف') : (en ? 'Enable' : 'تفعيل'))),
+          ],
+        ),
+      );
+      if (confirmed != true) return;
+      payload = {'action': 'toggle', 'user_id': id};
+    } else if (action == 'reset_password') {
+      final passwordController = TextEditingController();
+      final password = await showDialog<String>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(en ? 'Reset password' : 'إعادة تعيين كلمة المرور'),
+          content: TextField(
+            controller: passwordController,
+            obscureText: true,
+            textDirection: TextDirection.ltr,
+            decoration: InputDecoration(
+              labelText: en ? 'New password (min 6 characters)' : 'كلمة المرور الجديدة (6 أحرف على الأقل)',
+              border: const OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(en ? 'Cancel' : 'إلغاء')),
+            FilledButton(onPressed: () => Navigator.pop(dialogContext, passwordController.text), child: Text(en ? 'Reset' : 'إعادة التعيين')),
+          ],
+        ),
+      );
+      passwordController.dispose();
+      if (password == null) return;
+      if (password.length < 6) {
+        setState(() => error = en ? 'The password must contain at least 6 characters.' : 'يجب ألا تقل كلمة المرور عن 6 أحرف.');
+        return;
+      }
+      payload = {'action': 'reset_password', 'user_id': id, 'new_password': password};
+    }
+    if (payload == null) return;
+
+    setState(() {
+      saving = true;
+      error = null;
+    });
+    try {
+      final result = await widget.submitAction(payload);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(result['message']?.toString() ??
+            (en ? 'User account updated.' : 'تم تحديث حساب المستخدم.')),
+      ));
+      await refresh(requestedPage: page);
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => saving = false);
     }
   }
 
@@ -206,6 +282,25 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                   _InfoLine(icon: Icons.supervisor_account_outlined, text: '${en ? 'Manager' : 'المسؤول'}: ${item['manager_name']}'),
                                 if ((item['last_login_at']?.toString() ?? '').isNotEmpty)
                                   _InfoLine(icon: Icons.access_time_rounded, text: '${en ? 'Last login' : 'آخر دخول'}: ${item['last_login_at']}'),
+                                if (int.tryParse(item['id']?.toString() ?? '') != widget.currentUserId) ...[
+                                  const SizedBox(height: 8),
+                                  Wrap(
+                                    spacing: 8,
+                                    runSpacing: 4,
+                                    children: [
+                                      OutlinedButton.icon(
+                                        onPressed: saving ? null : () => act(item, 'toggle'),
+                                        icon: Icon(active ? Icons.pause_circle_outline_rounded : Icons.play_circle_outline_rounded),
+                                        label: Text(active ? (en ? 'Disable' : 'إيقاف') : (en ? 'Enable' : 'تفعيل')),
+                                      ),
+                                      OutlinedButton.icon(
+                                        onPressed: saving ? null : () => act(item, 'reset_password'),
+                                        icon: const Icon(Icons.password_rounded),
+                                        label: Text(en ? 'Reset password' : 'إعادة تعيين كلمة المرور'),
+                                      ),
+                                    ],
+                                  ),
+                                ],
                               ],
                             ),
                           ),
