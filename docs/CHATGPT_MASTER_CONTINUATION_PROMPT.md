@@ -2258,3 +2258,7 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 ## 2026-10-25 — Latest mobile API audit checkpoint
 A concrete API/UI contract defect was corrected on `main`: `api/v1/projects/detail.php` selected project milestone IDs but omitted them from the response, while Flutter edit/delete actions require `milestone_id`. Commit `20631106ae8fe9f8267779faf4c6e9a1d7608057` adds the ID to each serialized milestone. Verification is pending. Next, confirm relevant CI and add/execute a schema-grounded endpoint response assertion without inventing schema or using the canonical DB; then continue mobile API role/record-scope review. Do not reopen closed payroll/attendance/waiver tests. Local Apache/MariaDB authorization/action acceptance and an HTTPS PHP/MariaDB host remain open release gates.
+
+
+## 2026-10-25 — Mobile API milestone CI verification
+The focused project-detail milestone ID assertion and ended-assignment mutation denial both passed in [Mobile API auth integration run 40160569643](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160569643), source test commit eebe53983eed73e9899ca9cf5d85754497e3e092. The job used the checked-in schema and disposable MariaDB; it does not prove local migration state or local Apache/MariaDB acceptance. Continue reviewing remaining API role and record boundaries. Do not run the harness against ahl_el_kheir or reopen closed unrelated modules.
