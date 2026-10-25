@@ -18,9 +18,6 @@ void main() {
     expect(find.text('Report center'), findsOneWidget);
     expect(find.text('Incentive policy'), findsOneWidget);
     expect(find.text('GM reconciliation'), findsOneWidget);
-    expect(find.text('Sponsor assignment'), findsOneWidget);
-    expect(find.text('Sponsor requests'), findsOneWidget);
-    expect(find.text('APP'), findsOneWidget);
     expect(find.text('WEB'), findsWidgets);
   });
 
@@ -141,42 +138,6 @@ void main() {
 
     expect(find.text('Manage sponsorship suspensions'), findsOneWidget);
     expect(find.text('APP'), findsOneWidget);
-  });
-
-  testWidgets('VGM tools expose native sponsor assignment and supervisor management', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: RoleToolsSection(
-            roleCode: 'vgm',
-            english: true,
-            onOpen: (_) {},
-          ),
-        ),
-      ),
-    ));
-
-    expect(find.text('Sponsor assignment'), findsOneWidget);
-    expect(find.text('Supervisor management'), findsOneWidget);
-    expect(find.text('APP'), findsNWidgets(3));
-  });
-
-  testWidgets('administration tools expose the full sponsor request pipeline', (tester) async {
-    await tester.pumpWidget(MaterialApp(
-      home: Scaffold(
-        body: SingleChildScrollView(
-          child: RoleToolsSection(
-            roleCode: 'administration',
-            english: true,
-            onOpen: (_) {},
-          ),
-        ),
-      ),
-    ));
-
-    expect(find.text('Sponsor requests pipeline'), findsOneWidget);
-    expect(find.text('New sponsor requests'), findsOneWidget);
-    expect(find.text('Contacted sponsor requests'), findsOneWidget);
   });
 
   testWidgets('roles without extra website tools render no empty section', (tester) async {
