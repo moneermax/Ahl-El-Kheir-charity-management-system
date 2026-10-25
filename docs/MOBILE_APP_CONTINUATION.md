@@ -563,3 +563,12 @@ A targeted source audit found `api/v1/projects/detail.php` selected `project_mil
 - Test commit: `ab2a6173e596f88ed4e7c2fb6e962e40e5429192`.
 - Runtime result: PASS in [Mobile API auth integration run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591). The workflow imported the checked-in schema, applied the mobile-session migration, and ran live PHP endpoints against disposable MariaDB.
 - No production endpoint or schema change. Local XAMPP migration-state confirmation and broader local API authorization/record-scope/action acceptance remain open. Never run this harness against `ahl_el_kheir`.
+
+
+## 2026-10-25 — Sponsor-request authorization integration coverage
+
+- Added a temporary sponsor-request fixture using the checked-in schema to `tools/test_mobile_api_auth_integration.php`.
+- Assertions prove `nanny` cannot list requests or change a request's status; the fixture remains `new`. After the live user's role changes to `admin`, `new` → `contacted` succeeds, while a repeated `mark_contacted` returns HTTP 409 `invalid_transition` and preserves `contacted`.
+- Test commit: `f0dfa70a376771cbceeae04e73b57f2e6e40cb89`.
+- Runtime result: PASS in [Mobile API auth integration run 40161801824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161801824). The workflow imported the checked-in schema and exercised the real PHP endpoints against disposable MariaDB.
+- Cleanup deletes only the exact temporary sponsor-request row. No production code/schema change. Local XAMPP migration-state confirmation and broader local API authorization/record-scope/action acceptance remain open.
