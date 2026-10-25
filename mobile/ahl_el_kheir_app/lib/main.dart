@@ -31,7 +31,21 @@ import 'admin_recovery_page.dart';
 void main() => runApp(const AhlElKheirApp());
 
 String? normalizeApiBaseUrl(String value) {
-  final normalized = value.trim().replaceAll(RegExp(r'/+
+  final normalized = value.trim().replaceAll(RegExp(r'/+$'), '');
+  final uri = Uri.tryParse(normalized);
+  if (uri == null ||
+      !['http', 'https'].contains(uri.scheme) ||
+      uri.host.isEmpty ||
+      uri.userInfo.isNotEmpty ||
+      uri.hasQuery ||
+      uri.hasFragment ||
+      !uri.path.replaceAll(RegExp(r'/+$'), '').endsWith('/api/v1')) {
+    return null;
+  }
+  return normalized;
+}
+
+class ApiFailure implements Exception {
   const ApiFailure(this.message, {this.statusCode});
   final String message;
   final int? statusCode;
@@ -65,7 +79,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     if (body != null) headers['Content-Type'] = 'application/json';
     if (token != null) headers['Authorization'] = 'Bearer $token';
     try {
-      final uri = Uri.parse('${apiBaseUrl.replaceFirst(RegExp(r'/+
+      final uri = Uri.parse('${apiBaseUrl.replaceFirst(RegExp(r'/+$'), '')}/$path');
       final response = method == 'GET'
           ? await http.get(uri, headers: headers).timeout(const Duration(seconds: 20))
           : await http.post(uri, headers: headers,
