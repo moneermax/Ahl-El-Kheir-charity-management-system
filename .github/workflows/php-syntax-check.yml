@@ -66,6 +66,9 @@ jobs:
             api/v1/age_alerts/index.php
             api/v1/age_alerts/suspend_child.php
             api/v1/age_alerts/suspension_service.php
+            api/v1/suspensions/index.php
+            api/v1/suspensions/lift.php
+            api/v1/suspensions/case_service.php
             api/v1/admin/overview.php
             api/v1/dashboard/overview.php
             api/v1/dashboard/overview_service.php
