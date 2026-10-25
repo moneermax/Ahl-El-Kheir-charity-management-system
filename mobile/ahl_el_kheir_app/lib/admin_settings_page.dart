@@ -135,7 +135,7 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
       return Padding(
         padding: const EdgeInsets.only(bottom: 14),
         child: DropdownButtonFormField<String>(
-          value: options.contains(encryption) ? encryption : options.first,
+          initialValue: options.contains(encryption) ? encryption : options.first,
           decoration: InputDecoration(labelText: fieldLabel(key, def), border: const OutlineInputBorder()),
           items: options.map((option) => DropdownMenuItem(value: option, child: Text(option))).toList(),
           onChanged: saving ? null : (value) { if (value != null) setState(() => encryption = value); },
