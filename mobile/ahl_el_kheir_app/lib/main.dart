@@ -161,27 +161,6 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     );
   }
 
-  Future<void> openNotificationLink(String storedLink) async {
-    final target = Uri.tryParse(storedLink);
-    final apiUri = Uri.parse(baseUrl);
-    if (target == null || !target.hasAuthority || target.path.isEmpty) return;
-    final appSegments = apiUri.pathSegments.where((part) => part.isNotEmpty).toList();
-    if (appSegments.length >= 2) appSegments.removeRange(appSegments.length - 2, appSegments.length);
-    final targetSegments = target.pathSegments.where((part) => part.isNotEmpty).toList();
-    if (targetSegments.length < appSegments.length ||
-        !List.generate(appSegments.length, (i) => targetSegments[i] == appSegments[i]).every((same) => same)) {
-      final context = navigatorKey.currentContext;
-      if (context != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(english ? 'This link is outside the Ahl El Kheir website.' : 'هذا الرابط خارج موقع أهل الخير.')),
-        );
-      }
-      return;
-    }
-    final relative = targetSegments.skip(appSegments.length).join('/');
-    await openWebPage(relative, queryParameters: target.queryParameters.isEmpty ? null : target.queryParameters);
-  }
-
   Future<Map<String, dynamic>> loadNannyPreVerification(String month) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -496,7 +475,6 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           english: english,
                           loadPage: loadNotifications,
                           markRead: markNotificationRead,
-                          openRelatedLink: (url) => openNotificationLink(url),
                         ),
                       ),
                     ),
@@ -855,13 +833,11 @@ class NotificationPage extends StatefulWidget {
     required this.english,
     required this.loadPage,
     required this.markRead,
-    required this.openRelatedLink,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function(int page) loadPage;
   final Future<void> Function(int notificationId) markRead;
-  final Future<void> Function(String url) openRelatedLink;
 
   @override
   State<NotificationPage> createState() => _NotificationPageState();
@@ -918,7 +894,6 @@ class _NotificationPageState extends State<NotificationPage> {
       builder: (_) => NotificationDetailPage(
         english: widget.english,
         item: item,
-        openRelatedLink: widget.openRelatedLink,
       ),
     ));
   }
