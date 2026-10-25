@@ -1148,8 +1148,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                         ListTile(
                                           leading: const Icon(Icons.person_outline_rounded),
                                           title: Text(english ? 'My profile' : 'ملفي الشخصي'),
-                                          subtitle: Text(english ? 'WEB · website sign-in may be required' : 'ويب · قد يُطلب تسجيل الدخول للموقع'),
-                                          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                                          subtitle: Text(english ? 'Native workflow pending' : 'لم تُنفذ داخل التطبيق بعد'),
+                                          trailing: const Icon(Icons.phone_android_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
                                             openNativeTool('modules/users/profile.php');
@@ -1158,8 +1158,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                         ListTile(
                                           leading: const Icon(Icons.settings_outlined),
                                           title: Text(english ? 'Account settings' : 'إعدادات الحساب'),
-                                          subtitle: Text(english ? 'WEB · website sign-in may be required' : 'ويب · قد يُطلب تسجيل الدخول للموقع'),
-                                          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                                          subtitle: Text(english ? 'Native workflow pending' : 'لم تُنفذ داخل التطبيق بعد'),
+                                          trailing: const Icon(Icons.phone_android_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
                                             openNativeTool('modules/users/settings.php');
@@ -1168,8 +1168,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                         ListTile(
                                           leading: const Icon(Icons.request_quote_outlined),
                                           title: Text(english ? 'Salary advance request' : 'طلب سلفة راتب'),
-                                          subtitle: Text(english ? 'WEB · requires an employee profile' : 'ويب · يتطلب وجود ملف موظف'),
-                                          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                                          subtitle: Text(english ? 'Native workflow pending · employee profile required' : 'لم تُنفذ داخل التطبيق بعد · يتطلب ملف موظف'),
+                                          trailing: const Icon(Icons.phone_android_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
                                             openNativeTool('modules/hr/salary_advance_request.php');
@@ -1178,8 +1178,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                         ListTile(
                                           leading: const Icon(Icons.chat_bubble_outline_rounded),
                                           title: Text(english ? 'Internal messages' : 'الرسائل الداخلية'),
-                                          subtitle: Text(english ? 'WEB · website sign-in may be required' : 'ويب · قد يُطلب تسجيل الدخول للموقع'),
-                                          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                                          subtitle: Text(english ? 'Native workflow pending' : 'لم تُنفذ داخل التطبيق بعد'),
+                                          trailing: const Icon(Icons.phone_android_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
                                             openNativeTool('modules/messages/index.php');
@@ -1326,7 +1326,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           children: [
                             const Text('WEB'),
                             const SizedBox(width: 6),
-                            const Icon(Icons.open_in_new_rounded, size: 18),
+                            const Icon(Icons.phone_android_rounded, size: 18),
                           ],
                         ),
                         onTap: () => openNativeTool(fullDashboardPath),
