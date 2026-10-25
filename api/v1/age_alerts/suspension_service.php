@@ -12,8 +12,19 @@ final class AkLegalAgeSuspensionForbidden extends RuntimeException
 {
 }
 
+function ak_api_normalize_legal_age_role(string $role): string
+{
+    return [
+        'sudo' => 'admin',
+        'super_admin' => 'admin',
+        'vgm' => 'vice_general_manager',
+        'gm' => 'general_manager',
+    ][$role] ?? $role;
+}
+
 function ak_api_suspend_legal_age_child(int $userId, string $role, int $childId, string $notes): array
 {
+    $role = ak_api_normalize_legal_age_role($role);
     if (!in_array($role, ['admin', 'vice_general_manager', 'nanny'], true)) {
         throw new AkLegalAgeSuspensionForbidden('This account cannot suspend sponsorships from legal-age alerts.');
     }
