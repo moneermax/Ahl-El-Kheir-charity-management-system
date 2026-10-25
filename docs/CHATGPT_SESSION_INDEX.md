@@ -2508,3 +2508,9 @@ This corrects concrete native-screen/API mismatches where the UI offered role-ap
 - Role-alias regression: `PASS | mobile API role normalization | 14 cases` in PHP workflow `40192899764`.
 
 Remaining acceptance boundary: these CI checks use disposable databases and cannot verify the user's running XAMPP server, actual local `ahl_el_kheir` schema alignment, the phone's network route, or a live authenticated session. The mobile API session migration must be applied to the intended local database before first use if it has not already been applied. Website-only tools remain labelled WEB and need a valid website session; they are not native parity claims.
+
+## 2026-10-25 — Mobile role dashboard continuation
+
+Latest mobile work adds `api/v1/dashboard/overview.php` plus native role-specific metric cards for GM, VGM, FM, accountant roles, supervisor, nanny, administration/staff/social media, HR, and project roles. Admin/sudo/super_admin keep the separate native system-control dashboard. Route-tree audit was performed; the Supervisor-only Fina collection creation link was removed because the real page denies that role. Source commits: API `f6ac0b4`, Flutter integration `7c96953`, PHP CI lint update `4fe6df0`; widget and role-permission tests were added.
+
+**Current gate:** verify the latest combined GitHub Actions runs and their APK artifact, then perform authenticated API/database acceptance on local XAMPP. Do not report dashboard query runtime success from PHP lint or APK build alone. Transaction date filtering is implemented in the mobile UI and API, but full boundary, empty-result, reversed-date and pagination/refresh acceptance remains open. Website-only links are navigation only, not native parity.
