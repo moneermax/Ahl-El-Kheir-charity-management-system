@@ -288,6 +288,15 @@ try {
     $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 200 && ($r['json']['ok'] ?? false) === true, 'HR staff can access the HR employee directory');
 
+    $r = mobileApiRequest('/api/v1/nanny/group_verification.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'HR staff cannot access nanny group verification');
+    $r = mobileApiRequest('/api/v1/nanny/pre_verification.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'HR staff cannot access nanny preliminary verification');
+    $r = mobileApiRequest('/api/v1/nanny/group_verification_action.php', 'POST', ['action' => 'bulk_verify'], $token);
+    mobileApiExpect($r['status'] === 403, 'HR staff cannot submit nanny group verification actions');
+    $r = mobileApiRequest('/api/v1/nanny/pre_verification_action.php', 'POST', ['action' => 'bulk_verify'], $token);
+    mobileApiExpect($r['status'] === 403, 'HR staff cannot submit nanny preliminary verification actions');
+
     $r = mobileApiRequest('/api/v1/hr/leaves/action.php', 'POST', [
         'action' => 'approve',
         'leave_id' => $testLeaveId,
