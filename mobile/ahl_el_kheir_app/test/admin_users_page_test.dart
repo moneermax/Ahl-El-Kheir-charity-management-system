@@ -7,6 +7,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: AdminUsersPage(
         english: true,
+        currentUserId: 1,
+        submitAction: (_) async => {'message': 'Saved'},
         loadPage: (query, page) async => {
           'items': [
             {
@@ -48,6 +50,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: AdminUsersPage(
         english: true,
+        currentUserId: 1,
+        submitAction: (_) async => {'message': 'Saved'},
         loadPage: (query, page) async {
           submittedQuery = query;
           submittedPage = page;
