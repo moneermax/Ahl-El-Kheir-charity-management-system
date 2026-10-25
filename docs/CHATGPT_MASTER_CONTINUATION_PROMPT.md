@@ -2389,3 +2389,8 @@ Next priority: comprehensive role-aware dashboard and design pass, including the
 ## Mobile app continuation — 2026-10-25
 
 Recent main commits added a coordinated shell styling pass, role-specific dashboard hero presentation, and native legal-age alert display backed by authenticated `api/v1/age_alerts/index.php`; PHP lint CI now includes that endpoint. The alert uses the existing web rule and nanny assignment scope. Verification was pending when documented. Next, inspect the exact GitHub Actions results before claiming success, then continue the broader role dashboard parity matrix. Do not claim the suspension workflow is native: it is still a gap. Keep the transaction date-range issue open until boundary-date and pagination behavior is tested end-to-end. No local runtime or physical-device verification has yet been recorded for this milestone.
+
+
+## Mobile admin dashboard continuation — 2026-10-25
+
+A dedicated native admin/system-developer dashboard has been committed to `main`, replacing the shared dashboard route for `admin`, `sudo`, and `super_admin`. It has a distinct visual theme, overview metrics/recent audit activity, and categorized tools matching `dashboard/admin_dashboard.php`; existing native operational screens are connected. Several admin tools still open existing web pages externally and must be treated as web-only gaps, not native parity. See `docs/MOBILE_ROLE_FEATURE_PARITY.md`. Await current Flutter analyze/tests/APK and PHP lint CI before claiming verification. Then continue role-by-role dashboard parity rather than applying more isolated visual tweaks.
