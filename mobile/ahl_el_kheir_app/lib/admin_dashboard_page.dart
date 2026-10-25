@@ -246,9 +246,12 @@ class _StatusPill extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 8),
     decoration: BoxDecoration(color: Colors.white.withValues(alpha: .10), borderRadius: BorderRadius.circular(12), border: Border.all(color: Colors.white.withValues(alpha: .12))),
     child: Row(mainAxisSize: MainAxisSize.min, children: [
-      Icon(good ? Icons.check_circle_rounded : Icons.error_outline_rounded, color: good ? const Color(0xFF7EE3B2) : const Color(0xFFFFC3C3), size: 14),
-      const SizedBox(width: 6),
-      Text('$label: $value', style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+      Icon(good ? Icons.check_circle_rounded : Icons.error_outline_rounded, color: good ? const Color(0xFF7EE3B2) : const Color(0xFFFFC3C3), size: 12),
+      const SizedBox(width: 5),
+      Flexible(
+        child: Text('$label: $value', maxLines: 1, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w700)),
+      ),
     ]),
   );
 }
