@@ -27,6 +27,7 @@ import 'audit_log_page.dart';
 import 'admin_users_page.dart';
 import 'admin_departments_page.dart';
 import 'admin_recovery_page.dart';
+import 'admin_settings_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 String? normalizeApiBaseUrl(String value) {
@@ -475,6 +476,32 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'audit/index.php?page=$page&q=$encodedQuery', token: token);
   }
 
+  Future<Map<String, dynamic>> loadAdminSettings() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'admin/settings.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> saveAdminSettings(Map<String, dynamic> values) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'admin/settings.php', token: token, body: {'values': values});
+  }
+
+  void openAdminSettingsPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AdminSettingsPage(
+        english: english,
+        loadSettings: loadAdminSettings,
+        saveSettings: saveAdminSettings,
+      ),
+    ));
+  }
+
   void openAuditLogPage() {
     navigatorKey.currentState?.push(MaterialPageRoute<void>(
       builder: (_) => AuditLogPage(
@@ -550,7 +577,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openNativeTool('modules/departments/index.php');
         return;
       case 'settings':
-        openNativeTool('modules/settings/index.php');
+        if (user?['raw_role_code']?.toString() != 'admin') {
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            SnackBar(content: Text(english
+                ? 'System settings are restricted to the administrator role.'
+                : 'إعدادات النظام متاحة لدور المسؤول فقط.')),
+          );
+          return;
+        }
+        openAdminSettingsPage();
         return;
       case 'recovery':
         openNativeTool('modules/users/recovery.php');
