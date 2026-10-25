@@ -117,6 +117,7 @@ class RoleToolsSection extends StatelessWidget {
       case 'finance':
         return [
           g('العمليات المالية', 'Financial operations', [
+            t('لوحة المدير المالي', 'Finance dashboard', 'لوحة المتابعة المالية الكاملة للنظام', 'Open the full existing finance dashboard', 'modules/accounting/fm_dashboard.php', Icons.dashboard_outlined),
             t('الرصيد الافتتاحي', 'Opening balance', 'إدارة الرصيد الافتتاحي وسياسة الرسوم الإدارية', 'Manage opening balance and administrative-fee policy', 'modules/accounting/opening_balance.php', Icons.account_balance_outlined),
             t('الحاضنات المعيّنات', 'Assigned nannies', 'متابعة الحاضنات المعيّنات والتحقق', 'Review assigned nannies and verification', 'modules/accounting/my_nannies.php', Icons.support_agent_outlined),
             t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات والصرف', 'Review monthly transfers and disbursements', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
