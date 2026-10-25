@@ -4848,3 +4848,8 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 ## 2026-10-25 — Mobile API audit finding: milestone identifier omitted
 Evidence: `api/v1/projects/detail.php` queried `m.id` but the `milestones` JSON mapper returned only title, description, planned date, and completion percentage. The Flutter page builds edit/delete requests from `milestone['id']`; without the field, actions cannot target a real milestone. Corrected the serializer to include the selected ID in commit `20631106ae8fe9f8267779faf4c6e9a1d7608057`. This is a confirmed API/UI contract defect, not evidence of an authorization bypass. Verification remains pending; do not claim runtime security or endpoint acceptance from the source change alone.
+
+
+## 2026-10-25 — Mobile milestone response and assignment-boundary verification
+
+The milestone serializer fix from 20631106ae8fe9f8267779faf4c6e9a1d7608057 now has a focused endpoint assertion in tools/test_mobile_api_auth_integration.php. The test also confirms an ended project-supervisor assignment cannot edit a milestone and that the stored title remains unchanged. [Run 40160569643](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160569643) passed against disposable MariaDB after importing the checked-in schema and applying the mobile-session migration. Source review confirms milestone mutations scope the row by both milestone ID and project ID and follow the web edit/delete assignment and closed-project gates. This does not prove local Apache/MariaDB behavior or close the broad authorization audit; no local database was modified.
