@@ -41,6 +41,8 @@ void main() {
     expect(find.text('HR Staff'), findsOneWidget);
     expect(find.text('Human Resources'), findsOneWidget);
     expect(find.text('Active'), findsOneWidget);
+    expect(find.text('Disable'), findsOneWidget);
+    expect(find.text('Reset password'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -69,4 +71,60 @@ void main() {
     expect(submittedPage, 1);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('native user directory confirms and submits account activation toggle', (tester) async {
+    Map<String, dynamic>? submitted;
+    await tester.pumpWidget(MaterialApp(
+      home: AdminUsersPage(
+        english: true,
+        currentUserId: 1,
+        loadPage: (_, page) async => {
+          'items': [
+            {'id': 8, 'username': 'staff', 'full_name': 'Staff', 'is_active': true, 'role_code': 'staff', 'role_en': 'Staff', 'page': page},
+          ],
+          'total': 1,
+          'page': page,
+          'pages': 1,
+        },
+        submitAction: (payload) async {
+          submitted = payload;
+          return {'message': 'User status updated.'};
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Disable').first);
+    await tester.pumpAndSettle();
+    expect(find.text('Disable account?'), findsOneWidget);
+    await tester.tap(find.text('Disable').last);
+    await tester.pumpAndSettle();
+
+    expect(submitted?['action'], 'toggle');
+    expect(submitted?['user_id'], 8);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('native user directory hides self-service account actions', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: AdminUsersPage(
+        english: true,
+        currentUserId: 8,
+        loadPage: (_, page) async => {
+          'items': [
+            {'id': 8, 'username': 'admin', 'full_name': 'Admin', 'is_active': true, 'role_code': 'admin', 'role_en': 'Administrator'},
+          ],
+          'total': 1,
+          'page': page,
+          'pages': 1,
+        },
+        submitAction: (_) async => {'message': 'Saved'},
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Disable'), findsNothing);
+    expect(find.text('Reset password'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
 }
