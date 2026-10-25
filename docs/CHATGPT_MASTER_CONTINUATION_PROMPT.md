@@ -2342,3 +2342,8 @@ Source change: `f627d130fe36b4bfe4232891aff521f63af1b518` updates `mobile/ahl_el
 - Existing routes, API payloads, role visibility conditions, and server-side authorization are unchanged.
 
 **Verification status:** source committed to `main`; Flutter CI and device verification pending. The user has not yet accepted the new design and has not completed detailed feature testing. Do not describe the broader redesign as complete or runtime-verified until the new APK passes CI and the user reviews it on device.
+
+## Latest mobile app continuation — 2026-10-25
+
+The active user-selected direction for the Flutter app is a modern professional dashboard in the existing navy/blue palette. They explicitly require a password visibility eye and a forgot-password link on login. Source work at `ca16265515612bfa18442dcd59a987baaa303e0e` includes the responsive module dashboard, compact header without the visible role pill, password visibility, launch to the existing website recovery workflow, account-sheet navigation-context fix, notification details with related-link handling, and opening the canonical orphan form in the external browser from child records. Read `docs/MOBILE_APP_CONTINUATION.md` for the exact commit sequence. Latest Flutter CI and physical-phone verification are still pending; do not claim success until verified.
+
