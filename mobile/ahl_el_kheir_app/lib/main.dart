@@ -12,6 +12,7 @@ import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'supervisors_page.dart';
 import 'families_page.dart';
+import 'family_detail_page.dart';
 import 'fm_review_queue_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
@@ -238,6 +239,30 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                   ? (english ? 'Legal age reached' : 'بلغ السن القانوني')
                                   : (english ? '$days days remaining' : 'متبقي $days يوم'),
                                   style: TextStyle(color: accent, fontSize: 12, fontWeight: FontWeight.w800)),
+                                const SizedBox(height: 8),
+                                Align(
+                                  alignment: AlignmentDirectional.centerStart,
+                                  child: TextButton.icon(
+                                    onPressed: () {
+                                      Navigator.pop(sheetContext);
+                                      final familyId = int.tryParse(item['family_id']?.toString() ?? '') ?? 0;
+                                      if (familyId < 1) return;
+                                      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+                                        builder: (_) => FamilyDetailPage(
+                                          familyId: familyId,
+                                          english: english,
+                                          loadDetail: loadFamilyDetail,
+                                          openOrphanForm: (childId) => openWebPage(
+                                            'modules/families/orphan_form.php',
+                                            queryParameters: {'child': childId.toString()},
+                                          ),
+                                        ),
+                                      ));
+                                    },
+                                    icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                                    label: Text(english ? 'Open family details' : 'عرض تفاصيل الأسرة'),
+                                  ),
+                                ),
                               ])),
                             ]),
                           );
