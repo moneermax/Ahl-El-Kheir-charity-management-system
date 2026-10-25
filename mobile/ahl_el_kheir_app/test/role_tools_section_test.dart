@@ -202,7 +202,7 @@ void main() {
       ),
     ));
 
-    expect(find.text('Vouchers'), findsOneWidget);
+    expect(find.text('Vouchers'), findsNothing);
     expect(find.text('Assigned nannies'), findsOneWidget);
     expect(find.text('GM reconciliation'), findsOneWidget);
     expect(find.text('Monthly disbursements'), findsNothing);
