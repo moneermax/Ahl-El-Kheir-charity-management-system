@@ -6,11 +6,11 @@ void main() {
   testWidgets('GM tools expose executive reporting and approval routes', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: RoleToolsSection(
+        body: SingleChildScrollView(child: RoleToolsSection(
           roleCode: 'general_manager',
           english: true,
           onOpen: (_) {},
-        ),
+        )),
       ),
     ));
 
@@ -24,11 +24,11 @@ void main() {
   testWidgets('nanny tools expose returned-fund follow-up but not HR controls', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
-        body: RoleToolsSection(
+        body: SingleChildScrollView(child: RoleToolsSection(
           roleCode: 'nanny',
           english: false,
           onOpen: (_) {},
-        ),
+        )),
       ),
     ));
 
