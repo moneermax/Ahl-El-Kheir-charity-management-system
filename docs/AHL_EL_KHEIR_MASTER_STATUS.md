@@ -4566,3 +4566,7 @@ Disposable MariaDB live HTTP coverage now confirms sponsor-request role boundari
 
 ## 2026-10-25 — Mobile nanny family scope integration checkpoint
 Disposable live HTTP coverage now verifies assigned-family detail access, foreign-family detail denial (403), and family-list inclusion/exclusion for a nanny. The first attempt timed out at the harness's five-second request limit while listing the checked-in schema's 2,208 families; the test helper now allows 20 seconds for this endpoint only. Updated harness commit `9312a7118ebe7876986dcecfda0bdcd0e3e594d9` passed [run 40162023286](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162023286). No production code/schema change. Local XAMPP migration state and full local role/record-scope/action acceptance remain open.
+
+
+## 2026-10-25 — Mobile supervisor sponsor responsibility integration checkpoint
+The disposable API harness now verifies the authoritative sponsor letter+gender rule: a fixture with `sponsor.supervisor_id` set to the supervisor but a first-letter outside the supervisor's configured matrix returns 403 on detail and is excluded from the sponsor listing. Test commit `de9af9c85a56f5f5f593ec404dda7b26753bfdb8`; [run 40162198710](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162198710) passed. This confirms the API does not treat the direct assignment field as an independent sponsor authorization grant. No production code/schema change; local XAMPP migration and runtime acceptance remain open.
