@@ -29,6 +29,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('HR Staff').last);
     await tester.pumpAndSettle();
+    await tester.testTextInput.hide();
+    await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.text('Create account and employee'), 300, scrollable: find.byType(Scrollable).first);
     await tester.tap(find.text('Create account and employee'));
     await tester.pumpAndSettle();
 
