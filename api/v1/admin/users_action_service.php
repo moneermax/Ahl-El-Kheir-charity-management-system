@@ -33,7 +33,7 @@ function ak_api_admin_user_action(array $input, int $actorId): array
                 'hire_date' => trim((string)($input['hire_date'] ?? '')),
                 'basic_salary' => $input['basic_salary'] ?? null,
             ], $actorId);
-        } catch (Throwable $e) {
+        } catch (InvalidArgumentException $e) {
             throw new AkAdminUserActionException(422, 'user_creation_failed', $e->getMessage());
         }
         return [
