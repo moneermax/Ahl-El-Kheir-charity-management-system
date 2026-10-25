@@ -132,8 +132,25 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
   }
 
   Future<void> openWebPage(String relativePath, {Map<String, String>? queryParameters}) async {
+    // Keep workflows already implemented natively inside the app instead of
+    // sending the user to an external browser without the website session.
     if (relativePath == 'modules/families/suspensions.php') {
       openSuspensionCases();
+      return;
+    }
+    if (relativePath == 'modules/sponsors/assign.php') {
+      openSponsorAssignmentPage();
+      return;
+    }
+    if (relativePath == 'modules/supervisors/index.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => SupervisorsPage(
+          english: english,
+          loadPage: loadSupervisors,
+          canManage: true,
+          submitStatusAction: submitSupervisorStatusAction,
+        ),
+      ));
       return;
     }
     final uri = webPageUri(relativePath, queryParameters: queryParameters);
