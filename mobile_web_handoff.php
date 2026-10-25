@@ -115,7 +115,14 @@ try {
     $_SESSION['user_id'] = (int)$handoff['user_id'];
     $_SESSION['user_name'] = (string)$handoff['full_name'];
     $_SESSION['user_username'] = (string)$handoff['username'];
-    $_SESSION['user_role'] = (string)$handoff['role_code'];
+    // Keep the browser session's role canonical in the same way as the mobile API.
+    $_SESSION['user_role'] = match ((string)$handoff['role_code']) {
+        'sudo', 'super_admin' => 'admin',
+        'gm' => 'general_manager',
+        'vgm' => 'vice_general_manager',
+        'fm', 'finance' => 'financial_manager',
+        default => (string)$handoff['role_code'],
+    };
     $_SESSION['_auth_session_rotated'] = true;
 
     // Apply the standard session boundary checks to the newly authenticated
