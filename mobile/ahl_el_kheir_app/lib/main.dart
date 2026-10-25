@@ -1122,7 +1122,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       subtitle: Text(english ? 'View supervisor assignments and status' : 'عرض المشرفين والحروف المسندة والحالة'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
-                        builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors),
+                        builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors, canManage: true, submitStatusAction: submitSupervisorStatusAction),
                       )),
                     ))),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor'].contains(user?['role_code']?.toString()))
