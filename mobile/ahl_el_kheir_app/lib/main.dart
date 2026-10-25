@@ -220,7 +220,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         navigator.push(MaterialPageRoute<void>(builder: (_) => AttendancePage(english: english, loadAttendance: loadAttendance)));
         return;
       case 'supervisors':
-        navigator.push(MaterialPageRoute<void>(builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors)));
+        navigator.push(MaterialPageRoute<void>(builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors, canManage: true, submitStatusAction: submitSupervisorStatusAction)));
         return;
       case 'sponsor_requests':
         navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorRequestsPage(english: english, loadRequests: loadSponsorRequests, submitAction: submitSponsorRequestAction)));
@@ -591,6 +591,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       'page': page.toString(),
     };
     return call('GET', 'supervisors/index.php?${Uri(queryParameters: params).query}', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitSupervisorStatusAction(int supervisorId, String action) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'supervisors/action.php', token: token, body: {
+      'supervisor_id': supervisorId,
+      'action': action,
+    });
   }
 
   Future<Map<String, dynamic>> loadEmployees(String query, int page) async {
