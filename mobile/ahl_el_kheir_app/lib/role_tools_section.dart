@@ -22,8 +22,8 @@ class RoleToolsSection extends StatelessWidget {
         _SectionTitle(
           title: english ? 'Additional role tools' : 'أدوات إضافية حسب الدور',
           subtitle: english
-              ? 'These tools open the existing website, which remains responsible for permission checks.'
-              : 'تفتح هذه الأدوات صفحات النظام الحالية، وتظل صلاحيات الوصول مفروضة من الخادم.',
+              ? 'Additional modules from the existing system'
+              : 'وحدات إضافية من النظام الحالي',
         ),
         const SizedBox(height: 12),
         for (final group in groups) ...[
