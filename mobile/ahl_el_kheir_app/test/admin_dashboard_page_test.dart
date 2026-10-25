@@ -32,7 +32,7 @@ void main() {
       180,
       scrollable: find.byType(Scrollable).first,
     );
-    await tester.tap(find.text('Full website dashboard'));
+    await tester.tap(find.text('Administration dashboard'));
     expect(openedTool, 'web_dashboard');
 
     await tester.scrollUntilVisible(
