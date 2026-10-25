@@ -64,13 +64,13 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF172033);
-    const muted = Color(0xFF758198);
-    const canvas = Color(0xFFF5F7FC);
-    const violet = Color(0xFF7057D9);
-    const cyan = Color(0xFF21B6B0);
-    const orange = Color(0xFFFF9F43);
-    const rose = Color(0xFFE75A7C);
+    const ink = Color(0xFF16353A);
+    const muted = Color(0xFF667D80);
+    const canvas = Color(0xFFF3F8F7);
+    const violet = Color(0xFF087F8C);
+    const cyan = Color(0xFF0E9F9A);
+    const orange = Color(0xFFD58A3A);
+    const rose = Color(0xFFC6536B);
 
     return Scaffold(
       backgroundColor: canvas,
@@ -86,7 +86,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF171C35), Color(0xFF373B76), Color(0xFF7358D7)],
+                  colors: [Color(0xFF12383D), Color(0xFF075B63), Color(0xFF0E9F9A)],
                 ),
                 boxShadow: [
                   BoxShadow(color: violet.withValues(alpha: .20), blurRadius: 28, offset: const Offset(0, 12)),
@@ -149,7 +149,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               physics: const NeverScrollableScrollPhysics(),
               mainAxisSpacing: 10,
               crossAxisSpacing: 10,
-              childAspectRatio: 1.32,
+              childAspectRatio: 1.05,
               children: [
                 _MetricCard(label: t('المستخدمون', 'Users'), value: metric('users'), icon: Icons.groups_rounded, color: violet),
                 _MetricCard(label: t('الكفلاء', 'Sponsors'), value: metric('sponsors'), icon: Icons.volunteer_activism_rounded, color: orange),
@@ -263,17 +263,26 @@ class _MetricCard extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(15),
     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE7EAF2)), boxShadow: [BoxShadow(color: color.withValues(alpha: .06), blurRadius: 14, offset: const Offset(0, 5))]),
-    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Row(children: [
-        Container(width: 36, height: 36, decoration: BoxDecoration(color: color.withValues(alpha: .11), borderRadius: BorderRadius.circular(12)), child: Icon(icon, color: color, size: 19)),
-        const Spacer(),
-        Icon(Icons.north_east_rounded, color: color.withValues(alpha: .65), size: 16),
-      ]),
-      const Spacer(),
-      Text(value.toString(), style: const TextStyle(color: Color(0xFF172033), fontSize: 24, fontWeight: FontWeight.w900)),
-      const SizedBox(height: 3),
-      Text(label, style: const TextStyle(color: Color(0xFF758198), fontSize: 12, fontWeight: FontWeight.w700)),
-    ]),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(children: [
+          Container(width: 34, height: 34, decoration: BoxDecoration(color: color.withValues(alpha: .11), borderRadius: BorderRadius.circular(11)), child: Icon(icon, color: color, size: 18)),
+          const Spacer(),
+          Icon(Icons.north_east_rounded, color: color.withValues(alpha: .65), size: 15),
+        ]),
+        const SizedBox(height: 12),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          alignment: AlignmentDirectional.centerStart,
+          child: Text(value.toString(), style: const TextStyle(color: Color(0xFF16353A), fontSize: 24, fontWeight: FontWeight.w900)),
+        ),
+        const SizedBox(height: 4),
+        Text(label, maxLines: 2, overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: Color(0xFF667D80), fontSize: 11, height: 1.25, fontWeight: FontWeight.w700)),
+      ],
+    ),
   );
 }
 
