@@ -353,7 +353,29 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1F4E8C), primary: const Color(0xFF0A1F44), secondary: const Color(0xFF2E63A8)),
       scaffoldBackgroundColor: const Color(0xFFF0F2F5),
       fontFamily: 'Cairo',
-      appBarTheme: const AppBarTheme(backgroundColor: Colors.white, foregroundColor: Color(0xFF0A1F44), elevation: 0),
+      cardTheme: CardThemeData(
+        color: Colors.white,
+        elevation: 0,
+        margin: EdgeInsets.zero,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0xFFE3E8EF)),
+        ),
+      ),
+      listTileTheme: ListTileThemeData(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
+        minVerticalPadding: 12,
+        iconColor: const Color(0xFF1F4E8C),
+        textColor: const Color(0xFF0A1F44),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: Colors.white,
+        foregroundColor: Color(0xFF0A1F44),
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        toolbarHeight: 68,
+      ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true, fillColor: const Color(0xFFF9FAFC),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
@@ -383,33 +405,79 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               body: ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
-                  Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        children: [
-                          const OrganizationLogo(size: 84),
-                          const SizedBox(height: 16),
-                          Text(
-                            english ? 'Welcome' : 'مرحباً',
-                            style: Theme.of(context).textTheme.headlineSmall,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            user?['full_name']?.toString() ?? '',
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          const SizedBox(height: 4),
-                          Text(
-                            '${english ? 'Role' : 'الدور'}: ${user?['role_code'] ?? ''}',
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: AlignmentDirectional.topStart,
+                        end: AlignmentDirectional.bottomEnd,
+                        colors: [Color(0xFF081527), Color(0xFF1F4E8C)],
                       ),
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF0A1F44).withValues(alpha: 0.14),
+                          blurRadius: 20,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        const OrganizationLogo(size: 68),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                english ? 'Welcome back' : 'أهلاً بعودتك',
+                                style: const TextStyle(
+                                  color: Colors.white70,
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                user?['full_name']?.toString() ?? '',
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.25,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.13),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
+                                ),
+                                child: Text(
+                                  '${english ? 'Role' : 'الدور'} · ${user?['role_code'] ?? ''}',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 24),
+                  _HomeSectionTitle(
+                    title: english ? 'Work areas' : 'مساحات العمل',
+                    subtitle: english
+                        ? 'Tools available to your account'
+                        : 'الأدوات المتاحة لحسابك',
+                  ),
+                  const SizedBox(height: 12),
                   if ([
                     'admin',
                     'general_manager',
@@ -570,6 +638,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         ),
                       )),
                     )),
+                  const SizedBox(height: 24),
+                  _HomeSectionTitle(
+                    title: english ? 'My account' : 'حسابي',
+                    subtitle: english
+                        ? 'Your personal records and notifications'
+                        : 'سجلاتك الشخصية والإشعارات',
+                  ),
                   const SizedBox(height: 12),
                   Card(
                     child: ListTile(
@@ -640,6 +715,37 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     ));
 }
 
+
+class _HomeSectionTitle extends StatelessWidget {
+  const _HomeSectionTitle({required this.title, required this.subtitle});
+
+  final String title;
+  final String subtitle;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+        padding: const EdgeInsetsDirectional.only(start: 2, end: 2, bottom: 2),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: const Color(0xFF0A1F44),
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              subtitle,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: const Color(0xFF64748B),
+                  ),
+            ),
+          ],
+        ),
+      );
+}
 
 class NotificationPage extends StatefulWidget {
   const NotificationPage({
