@@ -2,6 +2,8 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/_bootstrap.php';
+require_once dirname(__DIR__, 3) . '/config/functions.php';
+require_once dirname(__DIR__, 3) . '/modules/hr/lib_employee_provisioning.php';
 
 final class AkAdminUserActionException extends RuntimeException
 {
@@ -16,8 +18,33 @@ final class AkAdminUserActionException extends RuntimeException
 
 function ak_api_admin_user_action(array $input, int $actorId): array
 {
-    $id = (int)($input['user_id'] ?? 0);
     $action = trim((string)($input['action'] ?? ''));
+    if ($action === 'create') {
+        try {
+            $created = hrCreateUserWithEmployee(db(), [
+                'full_name' => trim((string)($input['full_name'] ?? '')),
+                'username' => trim((string)($input['username'] ?? '')),
+                'role_code' => trim((string)($input['role_code'] ?? '')),
+                'email' => trim((string)($input['email'] ?? '')),
+                'phone' => trim((string)($input['phone'] ?? '')),
+                'gender' => $input['gender'] ?? null,
+                'department_id' => $input['department_id'] ?? null,
+                'manager_id' => $input['manager_id'] ?? null,
+                'hire_date' => trim((string)($input['hire_date'] ?? '')),
+                'basic_salary' => $input['basic_salary'] ?? null,
+            ], $actorId);
+        } catch (Throwable $e) {
+            throw new AkAdminUserActionException(422, 'user_creation_failed', $e->getMessage());
+        }
+        return [
+            'message' => 'User and linked employee profile created. Share the temporary password securely.',
+            'user_id' => (int)$created['user_id'],
+            'employee_id' => (int)$created['employee_id'],
+            'temporary_password' => (string)$created['temporary_password'],
+        ];
+    }
+
+    $id = (int)($input['user_id'] ?? 0);
     if ($id <= 0) {
         throw new AkAdminUserActionException(422, 'invalid_user', 'A valid user ID is required.');
     }
