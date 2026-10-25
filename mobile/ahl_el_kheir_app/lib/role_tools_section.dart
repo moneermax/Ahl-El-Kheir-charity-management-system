@@ -200,7 +200,7 @@ class RoleToolsSection extends StatelessWidget {
         return [
           g('إدارة المشروعات', 'Project management', [
             if (role == 'projects_manager') t('إنشاء مشروع', 'Create project', 'فتح نموذج إنشاء مشروع جديد', 'Open the existing new-project form', 'modules/projects/form.php', Icons.create_new_folder_outlined),
-            t('سجل المشروعات', 'Project register', 'فتح سجل المشروعات الكامل في الموقع', 'Open the full project register on the website', 'modules/projects/index.php', Icons.folder_open_outlined),
+            t('سجل المشروعات', 'Project register', 'عرض المشروعات والتقدم والمعالم داخل التطبيق', 'Review projects, progress and milestones inside the app', 'modules/projects/index.php', Icons.folder_open_outlined),
           ]),
         ];
       default:
