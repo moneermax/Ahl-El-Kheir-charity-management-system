@@ -52,9 +52,9 @@ function mobileApiRequest(string $path, string $method = 'GET', ?array $body = n
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
-if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'])) {
-    throw new RuntimeException('Checked-in schema must contain admin, nanny and hr_staff roles.');
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'])) {
+    throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff and project_supervisor roles.');
 }
 $user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
 if (!$user || trim((string)$user['username']) === '') throw new RuntimeException('Checked-in schema has no usable user fixture.');
@@ -149,6 +149,26 @@ try {
         && ($fixture['approval_status'] ?? '') === 'draft',
         'project portfolio defaults a missing approval row to draft'
     );
+
+    $pdo->prepare("INSERT INTO project_approval (project_id, approval_status) VALUES (?, 'approved')")->execute([$testProjectId]);
+    $pdo->prepare("INSERT INTO project_lifecycle (project_id, lifecycle_status) VALUES (?, 'active')")->execute([$testProjectId]);
+    $pdo->prepare('INSERT INTO project_supervisor_assignments (project_id, supervisor_user_id, assigned_by) VALUES (?, ?, ?)')->execute([$testProjectId, $userId, $userId]);
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['project_supervisor'], $userId]);
+
+    $progressBody = [
+        'project_id' => $testProjectId,
+        'summary' => 'Mobile API integration test progress update',
+        'completion_percent' => 10,
+        'update_date' => date('Y-m-d'),
+    ];
+    $r = mobileApiRequest('/api/v1/projects/progress_update.php', 'POST', $progressBody, $token);
+    mobileApiExpect($r['status'] === 200 && ($r['json']['ok'] ?? false) === true, 'assigned project supervisor can add progress to an approved active project');
+
+    $pdo->prepare('UPDATE project_supervisor_assignments SET ended_at=NOW() WHERE project_id=? AND supervisor_user_id=? AND ended_at IS NULL')
+        ->execute([$testProjectId, $userId]);
+    $r = mobileApiRequest('/api/v1/projects/progress_update.php', 'POST', array_merge($progressBody, ['summary' => 'Must be denied after assignment ends']), $token);
+    mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'forbidden', 'project supervisor cannot add progress after the assignment ends');
+
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
 
     $pdo->prepare('UPDATE users SET is_active=0 WHERE id=?')->execute([$userId]);
@@ -194,6 +214,10 @@ try {
         $stmt->execute($testTokenHashes);
     }
     if ($testProjectId > 0) {
+        $pdo->prepare('DELETE FROM project_progress_updates WHERE project_id=?')->execute([$testProjectId]);
+        $pdo->prepare('DELETE FROM project_supervisor_assignments WHERE project_id=?')->execute([$testProjectId]);
+        $pdo->prepare('DELETE FROM project_lifecycle WHERE project_id=?')->execute([$testProjectId]);
+        $pdo->prepare('DELETE FROM project_approval WHERE project_id=?')->execute([$testProjectId]);
         $pdo->prepare('DELETE FROM other_projects WHERE id=?')->execute([$testProjectId]);
     }
     $pdo->prepare('DELETE FROM audit_log WHERE user_id=? AND action=? AND entity_type=? AND entity_id=? AND created_at>=?')
