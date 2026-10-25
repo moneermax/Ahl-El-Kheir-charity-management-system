@@ -4977,3 +4977,10 @@ Verification: Flutter analysis passed, all Flutter widget tests passed, and the 
 The native login screen now exposes an API-server configuration control. It validates HTTP/HTTPS URLs that end in /api/v1, persists the selected endpoint in platform secure storage, displays the active endpoint on the login screen, and clears the old bearer token when the endpoint changes. This removes dependence on a single hard-coded LAN IP and lets a phone be configured for the computer's currently reachable local address without rebuilding the APK. It does not bypass Android cleartext policy, firewall rules, or host reachability requirements.
 
 Verification checkpoint: Flutter analysis passed and all Flutter tests passed in GitHub Actions run 40213757297; APK compilation/publication was still in progress at this documentation point. Do not claim the new endpoint-configurable APK is ready until that run publishes its artifact.
+
+
+## 2026-10-25 — Mobile dashboard checkpoint
+
+The existing Flutter admin dashboard received a narrow-screen layout correction and a regression test. Source commit: `fa11cde81f98839175431dd2d86348ee363d2270`. Flutter analysis and widget tests passed in run [40215385941](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40215385941); APK compilation/publication was pending at the checkpoint. This is not physical-device or live local API verification.
+
+Remaining mobile work is still open: complete the native workflows currently marked unavailable, resolve role/dashboard visibility against the actual server authorization policy without widening permissions by assumption, and only then request consolidated device acceptance. No website/browser handoff is acceptable as a substitute for native functionality.

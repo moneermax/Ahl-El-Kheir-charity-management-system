@@ -193,3 +193,10 @@ Correction to the earlier in-progress checkpoint: GitHub Actions run [4019917746
 The PHP full-schema rollback-only suspension case/suspend/lift test passed in run `40199009847`; transaction date-boundary integration passed in run `40198548850`. This is automated CI evidence, not proof of live local XAMPP/API/database behavior or physical-device acceptance.
 
 The mobile parity work is not complete: non-age suspension creation, native financial/HR/beneficiary-form/Fina workflows, and website-session continuity for remaining WEB links are still open. Do not claim full native feature parity until those gaps are implemented and verified.
+
+
+## 2026-10-25 — Administrator dashboard responsive checkpoint
+
+The dedicated admin dashboard now has a narrow-phone layout regression test and more defensive metric-card, hero-control, status-pill, and tool-tile sizing. Flutter analysis and all widget tests passed in run [40215385941](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40215385941); Android APK publication was still pending at the time of this note.
+
+Tool availability labels now distinguish implemented native workflows from unfinished ones. Users, departments, password recovery, and recent audit activity have native page implementations, but API authorization is not uniform across the roles shown the admin dashboard. Departments is admin-only; password recovery is admin/HR-manager only; settings is still not native. Do not grant `sudo`/ `super_admin` access or change web guards without a confirmed role policy. No external-browser handoff is to be added as a workaround. Full native parity and local phone/API acceptance remain open.

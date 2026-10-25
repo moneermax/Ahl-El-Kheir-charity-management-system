@@ -1092,3 +1092,15 @@ Verification: Flutter analysis passed, all Flutter widget tests passed, and the 
 The native login screen now exposes an API-server configuration control. It validates HTTP/HTTPS URLs that end in /api/v1, persists the selected endpoint in platform secure storage, displays the active endpoint on the login screen, and clears the old bearer token when the endpoint changes. This removes dependence on a single hard-coded LAN IP and lets a phone be configured for the computer's currently reachable local address without rebuilding the APK. It does not bypass Android cleartext policy, firewall rules, or host reachability requirements.
 
 Verification checkpoint: Flutter analysis passed and all Flutter tests passed in GitHub Actions run 40213757297; APK compilation/publication was still in progress at this documentation point. Do not claim the new endpoint-configurable APK is ready until that run publishes its artifact.
+
+
+## 2026-10-25 — Administrator dashboard responsive layout checkpoint
+
+Source commit: `fa11cde81f98839175431dd2d86348ee363d2270`.
+
+- Added a 360×800 narrow-phone regression test for the dedicated administrator dashboard.
+- Increased metric-card height, removed flex-based spacing from the metric-card header, constrained the hero refresh control, and constrained the database/PHP status-pill row to avoid fractional horizontal overflow.
+- Changed tool labels so settings, reports, finance dashboard, chart of accounts, monthly disbursements, Fina collection, backup, and database tools are explicitly marked unavailable natively rather than misleadingly labelled as in-app workflows.
+- Flutter analysis and the full widget-test suite passed in Actions run [40215385941](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40215385941). At documentation time Android APK compilation/artifact publication is still pending; do not distribute or claim the APK is ready until that run completes successfully.
+
+Authorization finding retained as open: the dashboard is shown for `admin`, `sudo`, and `super_admin`, but existing server guards are narrower for some tools. `modules/departments/index.php` and the mobile department API permit `admin` only; settings is admin-only and has no native API; password recovery permits `admin` and `hr_manager`. Do not widen those permissions speculatively. The native user directory API does permit `sudo` and `super_admin`. Native parity remains incomplete and local XAMPP/physical-device acceptance has not been established.
