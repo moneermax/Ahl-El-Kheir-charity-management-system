@@ -2430,3 +2430,14 @@ The next analyzer pass isolated one remaining Dart error: the notification mark-
 ## 2026-10-25 — Mobile UI feedback checkpoint
 
 The user rejected the recent two-column mobile dashboard layout and asked to restore the prior single-column full-width operational-card arrangement. Sign-out must be directly in the top app-bar icon row, not hidden inside the account menu. Notification detail content must remain in-app; external browser navigation from a notification detail has been removed, with a clear in-app note when the related website destination is not available natively. Source changes and a regression widget test are committed on `main`; latest CI and APK artifact verification are pending. See `docs/MOBILE_APP_CONTINUATION.md`.
+
+
+## 2026-10-25 — Mobile header two-row correction (CI pending)
+
+Committed on `main`: `ee917da2ea64e6e817422850c80e9393ccac78ba`.
+
+Source change: `mobile/ahl_el_kheir_app/lib/main.dart` now separates the signed-in header into two logical rows: the existing organization logo/name on the first row, and notification, account, language, and sign-out icons on the second. The full-width single-column dashboard remains unchanged. Notification details continue to use the native in-app screen; this change does not add browser navigation from notifications. The unnecessary “Tools available to your account” / Arabic subtitle below the work-area heading has been removed without changing role visibility or API authorization.
+
+Branding evidence: the web theme in `assets/css/style.css` defines the navy palette `#081527`, `#0A1F44`, `#0E2A5C`, `#123A7A`, `#1F4E8C`, `#2E63A8`, light background `#F0F2F5`, border `#E3E8EF`, and Cairo typography. The mobile app uses the checked-in `assets/organization_logo.jpg` and Cairo theme. No replacement brand asset or new color palette was introduced.
+
+Verification status at commit time: source committed, but Flutter formatter/analyzer/widget tests, Android APK workflow, and physical-device verification are pending. Do not claim the two-row header is runtime-verified until the workflow passes and the APK is tested on a phone. The feature-parity matrix and date-range investigation remain open; the transaction API currently validates ISO dates and applies inclusive `transaction_date >= from` / `transaction_date <= to` filters, while Flutter rejects reversed selected ranges and resets pagination on date selection. These are source observations, not yet proof that all range cases pass end-to-end.
