@@ -149,7 +149,7 @@ try {
     $handoffToken = (string)($r['json']['data']['handoff_token'] ?? '');
     mobileApiExpect(
         $r['status'] === 200 && preg_match('/^[a-f0-9]{64}$/', $handoffToken) === 1,
-        'authenticated mobile session issues a one-time website handoff token'
+        'authenticated mobile session issues a one-time website handoff token; status=' . $r['status'] . '; body=' . substr($r['raw'], 0, 700)
     );
     $handoffHash = hash('sha256', $handoffToken);
     $handoffRow = $pdo->prepare('SELECT token_hash, target_path, target_query_json, consumed_at, TIMESTAMPDIFF(SECOND, NOW(), expires_at) AS ttl FROM mobile_web_handoffs WHERE token_hash=?');
