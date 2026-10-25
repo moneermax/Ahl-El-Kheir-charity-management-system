@@ -73,6 +73,22 @@ void main() {
     expect(find.text('My profile'), findsNothing);
   });
 
+  testWidgets('accountant role does not see disbursement routes denied by the web guard', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'accountant',
+          english: true,
+          onOpen: (_) {},
+        ),
+      ),
+    ));
+
+    expect(find.text('Report center'), findsOneWidget);
+    expect(find.text('Monthly disbursements'), findsNothing);
+    expect(find.text('Group disbursements'), findsNothing);
+  });
+
   testWidgets('HR staff sees operational tools but not HR-manager-only controls', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: SingleChildScrollView(
