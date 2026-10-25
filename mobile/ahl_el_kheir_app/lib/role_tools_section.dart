@@ -161,17 +161,19 @@ class RoleToolsSection extends StatelessWidget {
           g('إدارة الموارد البشرية', 'Human resources operations', [
             t('مركز التقارير', 'Report center', 'التقارير المتاحة للموارد البشرية', 'Reports available to Human Resources', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة الموظفين', 'Employee management', 'سجل الموظفين وإجراءات الموارد البشرية', 'Employee records and HR actions', 'modules/hr/employees.php', Icons.badge_outlined),
-            t('حالات التوظيف', 'Employment states', 'إدارة حالات العمل وفق الصلاحيات', 'Manage employment states within permissions', 'modules/hr/employment_states.php', Icons.work_history_outlined),
             t('الحضور والانصراف', 'Attendance management', 'إدارة سجلات الحضور', 'Manage attendance records', 'modules/hr/attendance.php', Icons.fact_check_outlined),
             t('إدارة الإجازات', 'Leave management', 'مراجعة طلبات الإجازة', 'Review leave requests', 'modules/hr/leaves.php', Icons.event_available_outlined),
             t('الرواتب', 'Payroll', 'إدارة فترات الرواتب', 'Manage payroll periods', 'modules/hr/payroll.php', Icons.payments_outlined),
             t('بناء العقود', 'Contract builder', 'إنشاء ومتابعة عقود الموظفين', 'Create and manage employee contracts', 'modules/hr/contract_builder.php', Icons.description_outlined),
             t('سياسة الرواتب', 'Payroll policy', 'إعدادات وسياسات الرواتب', 'Payroll settings and policies', 'modules/hr/payroll_policy.php', Icons.policy_outlined),
-            t('سياسة الحوافز', 'Incentive policy', 'إدارة سياسة الحوافز', 'Manage incentive policy', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
-            t('عكس الرواتب', 'Payroll reversal', 'إجراءات عكس الرواتب المصرح بها', 'Authorized payroll reversal operations', 'modules/hr/payroll_reversal.php', Icons.undo_rounded),
-            t('التحقق من الحوافز', 'Incentive verification', 'مراجعة الحوافز', 'Review incentives', 'modules/hr/incentive_verification.php', Icons.verified_outlined),
-            t('سياسة الحضور', 'Attendance policy', 'قواعد الحضور الفعالة', 'Effective attendance rules', 'modules/hr/attendance_policy.php', Icons.schedule_outlined),
-            t('سلامة الرواتب', 'Payroll integrity', 'أدوات تدقيق سلامة الرواتب', 'Payroll integrity tools', 'modules/hr/payroll_integrity.php', Icons.shield_outlined),
+            if (role == 'hr_manager') ...[
+              t('حالات التوظيف', 'Employment states', 'إدارة حالات العمل وفق الصلاحيات', 'Manage employment states within permissions', 'modules/hr/employment_states.php', Icons.work_history_outlined),
+              t('سياسة الحوافز', 'Incentive policy', 'إدارة سياسة الحوافز', 'Manage incentive policy', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
+              t('عكس الرواتب', 'Payroll reversal', 'إجراءات عكس الرواتب المصرح بها', 'Authorized payroll reversal operations', 'modules/hr/payroll_reversal.php', Icons.undo_rounded),
+              t('التحقق من الحوافز', 'Incentive verification', 'مراجعة الحوافز', 'Review incentives', 'modules/hr/incentive_verification.php', Icons.verified_outlined),
+              t('سياسة الحضور', 'Attendance policy', 'قواعد الحضور الفعالة', 'Effective attendance rules', 'modules/hr/attendance_policy.php', Icons.schedule_outlined),
+              t('سلامة الرواتب', 'Payroll integrity', 'أدوات تدقيق سلامة الرواتب', 'Payroll integrity tools', 'modules/hr/payroll_integrity.php', Icons.shield_outlined),
+            ],
           ]),
         ];
       case 'projects_manager':
