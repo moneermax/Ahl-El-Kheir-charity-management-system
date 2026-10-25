@@ -1201,17 +1201,11 @@ class _LoginPageState extends State<LoginPage> {
                               Center(child: OrganizationLogo(size: 106)),
                               const SizedBox(height: 20),
                               Text(
-                                en ? 'Ahl El Kheir' : 'أهل الخير',
+                                en ? 'Ahl El Kheir Women’s Organization for Orphan Sponsorship' : 'منظمة أهل الخير النسوية لكفالة الأيتام',
                                 textAlign: TextAlign.center,
-                                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                                  color: navy900, fontWeight: FontWeight.w800, height: 1.25,
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                  color: navy900, fontWeight: FontWeight.w800, height: 1.45,
                                 ),
-                              ),
-                              const SizedBox(height: 5),
-                              Text(
-                                en ? 'Charity Management System' : 'نظام إدارة الجمعية الخيرية',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
                               ),
                               const SizedBox(height: 26),
                               Text(
@@ -1287,8 +1281,6 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    const Text('AHL EL KHEIR', textAlign: TextAlign.center,
-                      style: TextStyle(color: Colors.white70, fontSize: 11, letterSpacing: 2.4, fontWeight: FontWeight.w700)),
                   ],
                 ),
               ),
