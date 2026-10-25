@@ -72,15 +72,15 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final en = widget.english;
-    const ink = Color(0xFF0A1F44);
-    const muted = Color(0xFF64748B);
+    const ink = Color(0xFF16353A);
+    const muted = Color(0xFF667D80);
     const accents = [
-      Color(0xFF2E63A8),
-      Color(0xFF218C74),
-      Color(0xFF8764B8),
-      Color(0xFFC56B32),
-      Color(0xFF168AAD),
-      Color(0xFFB5475A),
+      Color(0xFF087F8C),
+      Color(0xFF0E9F9A),
+      Color(0xFF477D72),
+      Color(0xFFD58A3A),
+      Color(0xFF397F99),
+      Color(0xFFC6536B),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -147,7 +147,7 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
             crossAxisCount: 2,
             crossAxisSpacing: 10,
             mainAxisSpacing: 10,
-            childAspectRatio: 1.55,
+            childAspectRatio: 1.15,
           ),
           itemBuilder: (context, index) {
             final item = metrics[index];
@@ -165,13 +165,17 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Text(label, maxLines: 2, overflow: TextOverflow.ellipsis,
                     style: const TextStyle(color: muted, fontSize: 11, height: 1.35, fontWeight: FontWeight.w700)),
-                  const SizedBox(height: 8),
-                  Text(_formatValue(item['value']), maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: ink, fontSize: 22, fontWeight: FontWeight.w900)),
+                  const SizedBox(height: 10),
+                  Flexible(child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: AlignmentDirectional.centerStart,
+                    child: Text(_formatValue(item['value']), maxLines: 1, overflow: TextOverflow.ellipsis,
+                      style: TextStyle(color: ink, fontSize: 22, fontWeight: FontWeight.w900)),
+                  )),
                 ],
               ),
             );
