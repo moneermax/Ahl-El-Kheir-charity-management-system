@@ -96,6 +96,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+    if (user != null && ['admin', 'sudo', 'super_admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'nanny'].contains(user?['role_code']?.toString())) {
+      await openAgeAlerts(onlyIfItems: true);
+    }
   }
 
   Future<void> login(String username, String password) async {
@@ -106,6 +109,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     await storage.write(key: tokenKey, value: data['access_token'] as String);
     if (mounted) setState(() => user = data['user'] as Map<String, dynamic>);
+    if (['admin', 'sudo', 'super_admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'nanny'].contains(data['user']['role_code']?.toString())) {
+      await openAgeAlerts(onlyIfItems: true);
+    }
   }
 
   Uri webPageUri(String relativePath, {Map<String, String>? queryParameters}) {
@@ -150,7 +156,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'age_alerts/index.php', token: token);
   }
 
-  Future<void> openAgeAlerts() async {
+  Future<void> openAgeAlerts({bool onlyIfItems = false}) async {
     if (ageAlertsLoading) return;
     setState(() => ageAlertsLoading = true);
     try {
@@ -160,6 +166,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
           ? raw.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
           : <Map<String, dynamic>>[];
       if (!mounted) return;
+      if (onlyIfItems && ageAlertItems.isEmpty) return;
       final sheetContext = navigatorKey.currentContext;
       if (sheetContext == null) return;
       await showModalBottomSheet<void>(
@@ -499,6 +506,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         primary: const Color(0xFF0A1F44),
         secondary: const Color(0xFF2E63A8),
         surface: Colors.white,
+        error: const Color(0xFFB42318),
       ),
       scaffoldBackgroundColor: const Color(0xFFF3F6FB),
       visualDensity: VisualDensity.standard,
@@ -703,16 +711,40 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               ),
               body: LayoutBuilder(builder: (context, constraints) {
                 final moduleCardWidth = constraints.maxWidth - 40;
+                final roleCode = user?['role_code']?.toString() ?? '';
+                final roleTitle = switch (roleCode) {
+                  'admin' || 'sudo' || 'super_admin' => english ? 'System control center' : 'مركز إدارة النظام',
+                  'general_manager' || 'gm' => english ? 'Executive overview' : 'نظرة الإدارة التنفيذية',
+                  'vice_general_manager' || 'vgm' => english ? 'Operations oversight' : 'متابعة العمليات',
+                  'financial_manager' || 'fm' || 'finance' => english ? 'Finance workspace' : 'مساحة العمل المالية',
+                  'accountant' || 'accountant_staff' => english ? 'Accounting workspace' : 'مساحة عمل المحاسبة',
+                  'supervisor' => english ? 'Supervisor workspace' : 'مساحة عمل المشرف',
+                  'nanny' => english ? 'Family care workspace' : 'مساحة عمل الحاضنة',
+                  'hr_manager' || 'hr_staff' => english ? 'Human resources' : 'الموارد البشرية',
+                  'projects_manager' || 'project_supervisor' => english ? 'Project workspace' : 'مساحة عمل المشروعات',
+                  'administration' || 'staff' || 'social_media' => english ? 'Organization workspace' : 'مساحة عمل المنظمة',
+                  _ => english ? 'Your workspace' : 'مساحة عملك',
+                };
+                final heroColors = switch (roleCode) {
+                  'admin' || 'sudo' || 'super_admin' => const [Color(0xFF081527), Color(0xFF4B3F91)],
+                  'general_manager' || 'gm' => const [Color(0xFF0A1F44), Color(0xFF2E63A8)],
+                  'vice_general_manager' || 'vgm' => const [Color(0xFF123A7A), Color(0xFF247BA0)],
+                  'financial_manager' || 'fm' || 'finance' || 'accountant' || 'accountant_staff' => const [Color(0xFF123B36), Color(0xFF218C74)],
+                  'supervisor' || 'nanny' => const [Color(0xFF174A63), Color(0xFF2A9D8F)],
+                  'hr_manager' || 'hr_staff' => const [Color(0xFF432874), Color(0xFF8764B8)],
+                  'projects_manager' || 'project_supervisor' => const [Color(0xFF753B19), Color(0xFFC56B32)],
+                  _ => const [Color(0xFF081527), Color(0xFF1F4E8C)],
+                };
                 return ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
+                      gradient: LinearGradient(
                         begin: AlignmentDirectional.topStart,
                         end: AlignmentDirectional.bottomEnd,
-                        colors: [Color(0xFF081527), Color(0xFF1F4E8C)],
+                        colors: heroColors,
                       ),
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
@@ -738,6 +770,11 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
                                 ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                roleTitle,
+                                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w800, height: 1.25),
                               ),
                               const SizedBox(height: 5),
                               Text(
