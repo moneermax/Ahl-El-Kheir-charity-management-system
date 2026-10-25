@@ -77,7 +77,7 @@ $offset = ($page - 1) * $perPage;
 
 $rows = dbFetchAll(
     'SELECT u.id, u.username, u.full_name, u.email, u.phone, u.is_active,
-            u.last_login_at, u.gender, r.code AS role_code,
+            u.last_login_at, u.gender, u.department_id, u.manager_id, r.code AS role_code,
             r.name_ar AS role_name, r.name_en AS role_en,
             d.name_ar AS dept_name, d.name_en AS dept_en,
             m.full_name AS manager_name
@@ -99,6 +99,8 @@ $items = array_map(static fn(array $row): array => [
     'is_active' => (int)($row['is_active'] ?? 0) === 1,
     'last_login_at' => (string)($row['last_login_at'] ?? ''),
     'gender' => (string)($row['gender'] ?? ''),
+    'department_id' => $row['department_id'] === null ? null : (int)$row['department_id'],
+    'manager_id' => $row['manager_id'] === null ? null : (int)$row['manager_id'],
     'role_code' => (string)($row['role_code'] ?? ''),
     'role_name' => (string)($row['role_name'] ?? ''),
     'role_en' => (string)($row['role_en'] ?? ''),
