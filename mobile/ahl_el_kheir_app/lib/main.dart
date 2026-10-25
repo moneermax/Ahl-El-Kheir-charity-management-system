@@ -956,6 +956,36 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                             ));
                                           },
                                         ),
+                                        ListTile(
+                                          leading: const Icon(Icons.person_outline_rounded),
+                                          title: Text(english ? 'My profile' : 'ملفي الشخصي'),
+                                          subtitle: Text(english ? 'WEB · website sign-in may be required' : 'ويب · قد يُطلب تسجيل الدخول للموقع'),
+                                          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                                          onTap: () {
+                                            Navigator.pop(sheetContext);
+                                            openWebPage('modules/users/profile.php');
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(Icons.settings_outlined),
+                                          title: Text(english ? 'Account settings' : 'إعدادات الحساب'),
+                                          subtitle: Text(english ? 'WEB · website sign-in may be required' : 'ويب · قد يُطلب تسجيل الدخول للموقع'),
+                                          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                                          onTap: () {
+                                            Navigator.pop(sheetContext);
+                                            openWebPage('modules/users/settings.php');
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(Icons.request_quote_outlined),
+                                          title: Text(english ? 'Salary advance request' : 'طلب سلفة راتب'),
+                                          subtitle: Text(english ? 'WEB · requires an employee profile' : 'ويب · يتطلب وجود ملف موظف'),
+                                          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                                          onTap: () {
+                                            Navigator.pop(sheetContext);
+                                            openWebPage('modules/hr/salary_advance_request.php');
+                                          },
+                                        ),
                                       ],
                                     ),
                                   ),
