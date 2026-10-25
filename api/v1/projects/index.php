@@ -147,7 +147,7 @@ $projects = dbFetchAll(
                       WHERE psa.project_id = p.id AND psa.ended_at IS NULL
                       ORDER BY psa.id DESC LIMIT 1), '—') AS supervisor_name,
             COALESCE((SELECT pa.approval_status FROM project_approval pa
-                      WHERE pa.project_id = p.id), 'approved') AS approval_status
+                      WHERE pa.project_id = p.id), 'draft') AS approval_status
      FROM other_projects p
      LEFT JOIN project_lifecycle l ON l.project_id = p.id
      ORDER BY p.id DESC"
