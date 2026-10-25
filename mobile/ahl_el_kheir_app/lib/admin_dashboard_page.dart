@@ -308,7 +308,11 @@ class _ToolTile extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(bottom: 8),
     decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE7EAF2))),
-    child: ListTile(
+    child: Material(
+      color: Colors.transparent,
+      borderRadius: BorderRadius.circular(17),
+      clipBehavior: Clip.antiAlias,
+      child: ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       leading: Container(width: 42, height: 42, decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(13)), child: Icon(icon, color: color)),
@@ -319,6 +323,7 @@ class _ToolTile extends StatelessWidget {
         const SizedBox(width: 6),
         const Icon(Icons.chevron_right_rounded, color: Color(0xFF9AA3B5)),
       ]),
+      ),
     ),
   );
 }
