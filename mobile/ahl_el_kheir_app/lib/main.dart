@@ -861,6 +861,7 @@ class NotificationPage extends StatefulWidget {
     required this.english,
     required this.loadPage,
     required this.markRead,
+    required this.openRelatedLink,
   });
 
   final bool english;
