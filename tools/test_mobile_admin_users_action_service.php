@@ -1,6 +1,12 @@
 <?php
 declare(strict_types=1);
 
+$database = (string)(getenv('AHL_DB_NAME') ?: '');
+if (getenv('MOBILE_API_AUTH_TEST') !== '1' || $database !== 'mobile_api_auth_test') {
+    fwrite(STDERR, "Refusing to run outside mobile_api_auth_test with MOBILE_API_AUTH_TEST=1.\n");
+    exit(2);
+}
+
 require_once dirname(__DIR__) . '/api/v1/admin/users_action_service.php';
 
 $pdo = db();
