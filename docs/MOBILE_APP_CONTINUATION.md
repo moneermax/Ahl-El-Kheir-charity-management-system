@@ -496,3 +496,10 @@ The PHP/database workflow passed after the mobile auth migration coverage change
 - Source review found the Flutter compile-time fallback in `mobile/ahl_el_kheir_app/lib/main.dart` used port `8081`, while the documented physical-phone Apache host and the GitHub Android workflow default use port `881`. This would affect direct Flutter runs that do not supply `API_BASE_URL`, even though the workflow-built APK overrides it.
 - Corrected only the fallback URL to `http://192.168.18.9:881/AhlElKheir/api/v1`, matching the existing phone-test setup. No backend or web URL was changed.
 - Commit: `273bd040d7ad697f9dce66708e681f43cb97c390`. Android build and PHP/database workflow runs are pending at this checkpoint; do not claim verification until both finish. This URL remains LAN-only and depends on the laptop IP/Apache port; it is not suitable for an external production release. Do not request phone testing yet.
+
+## 2026-10-25 — Corrected mobile API fallback to verified Apache port
+
+- Compared `mobile/ahl_el_kheir_app/lib/main.dart` with `.github/workflows/build-flutter-mobile-app.yml` and the prior local reachability evidence. The Flutter compile-time fallback still used `http://192.168.18.9:881/AhlElKheir/api/v1`, while the workflow default and the recorded successful local/phone-browser reachability checks use port `8081`; the previous local check explicitly found no listener on port `881`.
+- Corrected only the Dart fallback to `http://192.168.18.9:8081/AhlElKheir/api/v1` in commit `41cd2e0176ee4bf2254dfc92fadde6b8c3ba6665`. No backend, database, or web behavior changed.
+- Android analyzer/test/build/artifact verification for this correction is pending; check the workflow run before claiming it passed. This aligns the default with the last recorded local evidence, but does not prove the laptop IP or Apache port remain unchanged today.
+- The live API role/record-scope/action acceptance gate remains outstanding. Do not request physical-device testing until the broader release-readiness gate is satisfied.
