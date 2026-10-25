@@ -56,9 +56,7 @@ $assert($activeBefore > 0, 'The chosen child must have at least one active spons
 
 $pdo->beginTransaction();
 try {
-    if ((int)($candidate['nanny_id'] ?? 0) < 1) {
-        dbExecute('UPDATE families SET nanny_id = ? WHERE id = ?', [$nannyId, $familyId]);
-    }
+    dbExecute('UPDATE families SET nanny_id = ? WHERE id = ?', [$nannyId, $familyId]);
 
     // Put the fixture inside the exact age-alert window without changing the real database:
     // every mutation below is rolled back before this test exits.
@@ -80,6 +78,16 @@ try {
         [$caseId, $childId]
     );
     $assert($case !== null && $case['reason'] === 'age_out' && $case['status'] === 'active', 'Suspension case fields do not match the web workflow.');
+
+    $adminCases = ak_api_list_suspension_cases($actorId, 'admin');
+    $adminCaseIds = array_map(static fn(array $item): int => (int)$item['id'], $adminCases['items']);
+    $assert(in_array($caseId, $adminCaseIds, true), 'Administrator case list omitted the active suspension.');
+    $assert($adminCases['can_lift'] === true, 'Administrator case list did not expose its lift capability.');
+
+    $nannyCases = ak_api_list_suspension_cases($nannyId, 'nanny');
+    $nannyCaseIds = array_map(static fn(array $item): int => (int)$item['id'], $nannyCases['items']);
+    $assert(in_array($caseId, $nannyCaseIds, true), 'Nanny case list omitted a case from its assigned family.');
+    $assert($nannyCases['can_lift'] === false, 'Nanny case list incorrectly exposed lift capability.');
 
     $child = dbFetchOne(
         'SELECT is_active, disqualified_at, disqualification_reason FROM family_children WHERE id = ?',
