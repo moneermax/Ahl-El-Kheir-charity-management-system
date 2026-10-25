@@ -42,6 +42,47 @@ void main() {
     expect(find.text('مرحّلة'), findsOneWidget);
   });
 
+  testWidgets('rejects a reversed date range before issuing another request', (tester) async {
+    var calls = 0;
+    await tester.pumpWidget(MaterialApp(
+      home: TransactionsPage(
+        english: true,
+        loadTransactions: (_, __, page, ___, ____) async {
+          calls++;
+          return {
+            'items': <Map<String, dynamic>>[],
+            'total': 0,
+            'page': page,
+            'pages': 1,
+            'posted_total': 0.0,
+          };
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    final initialCalls = calls;
+    final today = DateTime.now();
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    await tester.tap(find.textContaining('From: Any date'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('${today.day}').last);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    final callsAfterStart = calls;
+    await tester.tap(find.textContaining('To: Any date'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('${yesterday.day}').last);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('Start date must not be after end date.'), findsOneWidget);
+    expect(calls, callsAfterStart);
+    expect(find.textContaining('To: Any date'), findsOneWidget);
+    expect(callsAfterStart, greaterThan(initialCalls));
+  });
+
   testWidgets('multi-day date bounds persist through pagination and refresh', (tester) async {
     final calls = <List<dynamic>>[];
     await tester.pumpWidget(MaterialApp(
