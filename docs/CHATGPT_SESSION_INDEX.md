@@ -2568,3 +2568,8 @@ Verification:
 - Flutter analysis and widget tests passed in run `40196556920` at source `d8a8e66e056d0f1535862bfefc1750592fe55a08`, including confirm/toggle/refresh behavior and read-only visibility. APK build/publication is still pending at this checkpoint.
 
 The status service test verified the update and rollback against disposable MariaDB. Local XAMPP and physical-device acceptance remain open.
+
+
+## 2026-10-25 — Mobile app continuation evidence
+
+The mobile parity evidence matrix was refreshed. A repository route audit confirmed every website path in the mobile role-tools list exists, while noting these WEB links still depend on external-browser session continuity. Native role dashboard metrics passed full-schema MariaDB CI for 14 roles (run 40195397302); sponsor assignment and supervisor status service rollback tests passed (runs 40195979512 and 40196421650); the latest source with supervisor controls passed Flutter analyze/tests and APK publication (run 40196556920). A rollback-only transaction date-boundary harness passed PHP lint and full-schema MariaDB CI in run 40198548850: inclusive start/end, same-day range, outside-bound exclusion, rollback=PASS. Local authenticated API/database and physical-device checks remain pending. Native financial, HR, beneficiary-form and Fina workflow parity remains incomplete; do not claim the mobile app is feature-complete.
