@@ -2326,3 +2326,7 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 ### 2026-10-25 — Mobile project milestone ID defect
 Source audit found the project detail API selected milestone IDs but omitted them from its JSON response, preventing the Flutter milestone maintenance actions from using the required identifier. Added the ID to the response in `20631106ae8fe9f8267779faf4c6e9a1d7608057`. Verification is pending; continue from CI/endpoint verification, then resume the mobile API role/record-scope audit. Live local Apache/MariaDB acceptance remains outstanding.
+
+
+### 2026-10-25 — Mobile milestone response verification
+The milestone ID response correction has focused CI endpoint coverage. The assignment-revocation milestone mutation assertion and the complete mobile auth integration harness passed in run 40160569643 on commit eebe53983eed73e9899ca9cf5d85754497e3e092. CI used disposable MariaDB only. Continue the source/schema-led mobile API authorization and record-scope audit; local XAMPP migration state and runtime acceptance remain open. Never run the harness against ahl_el_kheir.
