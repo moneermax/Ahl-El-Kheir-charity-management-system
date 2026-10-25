@@ -241,6 +241,67 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'age_alerts/index.php', token: token);
   }
 
+  Future<void> suspendAgeAlertChild(int childId) async {
+    final dialogContext = navigatorKey.currentContext;
+    if (dialogContext == null || childId < 1) return;
+    final confirmed = await showDialog<bool>(
+      context: dialogContext,
+      builder: (context) => AlertDialog(
+        title: Text(english ? 'Suspend sponsorship?' : 'هل تريد تعليق الكفالة؟'),
+        content: Text(english
+            ? 'This records a legal-age suspension, marks the child inactive, and pauses active linked sponsorships.'
+            : 'سيتم تسجيل تعليق بسبب بلوغ السن القانوني، وإيقاف نشاط الطفل، وتعليق الكفالات النشطة المرتبطة به.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(english ? 'Cancel' : 'إلغاء'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(backgroundColor: const Color(0xFFB42318)),
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(english ? 'Confirm suspension' : 'تأكيد التعليق'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true) return;
+
+    try {
+      final token = await storage.read(key: tokenKey);
+      if (token == null || token.isEmpty) {
+        throw const ApiFailure('Authentication is required.', statusCode: 401);
+      }
+      await call(
+        'POST',
+        'age_alerts/suspend_child.php',
+        token: token,
+        body: {'child_id': childId},
+      );
+      final refreshed = await loadAgeAlerts();
+      final raw = refreshed['items'];
+      if (mounted) {
+        setState(() {
+          ageAlertItems = raw is List
+              ? raw.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+              : <Map<String, dynamic>>[];
+        });
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(
+            content: Text(english
+                ? 'Suspension completed and active linked sponsorships paused.'
+                : 'تم التعليق وإيقاف الكفالات النشطة المرتبطة.'),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
+  }
+
   Future<void> openAgeAlerts({bool onlyIfItems = false}) async {
     if (ageAlertsLoading) return;
     setState(() => ageAlertsLoading = true);
@@ -347,6 +408,20 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                     label: Text(english ? 'Open family details' : 'عرض تفاصيل الأسرة'),
                                   ),
                                 ),
+                                if (['admin', 'sudo', 'super_admin', 'vice_general_manager', 'vgm', 'nanny'].contains(user?['role_code']?.toString()))
+                                  Align(
+                                    alignment: AlignmentDirectional.centerStart,
+                                    child: TextButton.icon(
+                                      style: TextButton.styleFrom(foregroundColor: const Color(0xFFB42318)),
+                                      onPressed: () {
+                                        Navigator.pop(sheetContext);
+                                        final childId = int.tryParse(item['child_id']?.toString() ?? '') ?? 0;
+                                        suspendAgeAlertChild(childId);
+                                      },
+                                      icon: const Icon(Icons.pause_circle_outline_rounded, size: 16),
+                                      label: Text(english ? 'Suspend sponsorship' : 'تعليق الكفالة'),
+                                    ),
+                                  ),
                               ])),
                             ]),
                           );
