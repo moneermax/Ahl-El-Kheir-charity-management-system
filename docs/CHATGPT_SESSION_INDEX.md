@@ -2338,3 +2338,7 @@ Commit `bc67997093d15fd616ac95ac4ead566840004883` adds a second-project/foreign-
 
 ### 2026-10-25 — Mobile notification cross-account isolation verified
 Commit `ab2a6173e596f88ed4e7c2fb6e962e40e5429192` adds disposable-database HTTP assertions that a notification addressed to a second user is absent from the authenticated user's list and remains unread after that user calls the API mark-read endpoint. [Mobile API auth integration run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591) passed, including schema import, session migration, and the live endpoint harness. Cleanup deletes only the inserted notification. Local XAMPP migration state and broader live local API acceptance remain outstanding; never run the harness against `ahl_el_kheir`.
+
+
+### 2026-10-25 — Mobile sponsor-request authorization verified in CI
+Commit `f0dfa70a376771cbceeae04e73b57f2e6e40cb89` adds disposable HTTP integration checks proving a nanny cannot list sponsor requests or change a request's status, while an admin can transition `new` to `contacted`; repeating that transition returns 409 and leaves state unchanged. [Mobile API auth integration run 40161801824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161801824) passed. Fixture cleanup removes the exact temporary request. Local XAMPP migration state and broader local API acceptance remain open; never run the harness against `ahl_el_kheir`.
