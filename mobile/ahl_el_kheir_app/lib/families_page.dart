@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'family_detail_page.dart';
 
 class FamiliesPage extends StatefulWidget {
-  const FamiliesPage({super.key, required this.english, required this.loadFamilies, required this.loadDetail});
+  const FamiliesPage({super.key, required this.english, required this.loadFamilies, required this.loadDetail, required this.openOrphanForm});
   final bool english;
   final Future<Map<String, dynamic>> Function(String query, String status, int page) loadFamilies;
   final Future<Map<String, dynamic>> Function(int id) loadDetail;
+  final Future<void> Function(int childId) openOrphanForm;
 
   @override
   State<FamiliesPage> createState() => _FamiliesPageState();
@@ -118,7 +119,7 @@ class _FamiliesPageState extends State<FamiliesPage> {
                           final family = items[index];
                           final phone = family['mother_phone']?.toString() ?? '';
                           final monthly = double.tryParse(family['monthly_commitment']?.toString() ?? '0') ?? 0;
-                          return Card(child: InkWell(onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FamilyDetailPage(familyId: int.tryParse(family['id']?.toString() ?? '') ?? 0, english: en, loadDetail: widget.loadDetail))), child: ListTile(
+                          return Card(child: InkWell(onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => FamilyDetailPage(familyId: int.tryParse(family['id']?.toString() ?? '') ?? 0, english: en, loadDetail: widget.loadDetail, openOrphanForm: widget.openOrphanForm))), child: ListTile(
                             leading: const CircleAvatar(child: Icon(Icons.family_restroom_rounded)),
                             title: Text(family['mother_name']?.toString() ?? ''),
                             subtitle: Text(
