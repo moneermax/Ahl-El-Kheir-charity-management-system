@@ -42,6 +42,54 @@ void main() {
     expect(find.text('مرحّلة'), findsOneWidget);
   });
 
+  testWidgets('multi-day date bounds persist through pagination and refresh', (tester) async {
+    final calls = <List<dynamic>>[];
+    await tester.pumpWidget(MaterialApp(
+      home: TransactionsPage(
+        english: true,
+        loadTransactions: (query, status, page, from, to) async {
+          calls.add([from, to, page]);
+          return {
+            'items': <Map<String, dynamic>>[],
+            'total': 60,
+            'page': page,
+            'pages': 2,
+            'posted_total': 0.0,
+          };
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+
+    final today = DateTime.now();
+    final yesterday = today.subtract(const Duration(days: 1));
+    String iso(DateTime d) =>
+        '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+    await tester.tap(find.textContaining('From: Any date'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('${yesterday.day}').last);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.textContaining('To: Any date'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('${today.day}').last);
+    await tester.tap(find.text('OK'));
+    await tester.pumpAndSettle();
+
+    expect(calls.last, [iso(yesterday), iso(today), 1]);
+    expect(find.textContaining('No transactions found.'), findsOneWidget);
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    expect(calls.last, [iso(yesterday), iso(today), 2]);
+
+    await tester.drag(find.byType(RefreshIndicator), const Offset(0, 350));
+    await tester.pumpAndSettle();
+    expect(calls.last, [iso(yesterday), iso(today), 2]);
+  });
+
   testWidgets('same-day date range sends both inclusive YYYY-MM-DD bounds', (tester) async {
     final calls = <List<String>>[];
     await tester.pumpWidget(MaterialApp(
