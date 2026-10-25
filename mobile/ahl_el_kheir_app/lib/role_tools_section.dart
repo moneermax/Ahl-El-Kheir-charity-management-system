@@ -129,6 +129,7 @@ class RoleToolsSection extends StatelessWidget {
             t('مراجعة تحصيلات فينا', 'Review Fina collections', 'فتح صفحة مراجعة التحصيلات', 'Open the collection review page', 'modules/accounting/fina_payment_review.php', Icons.fact_check_outlined),
             t('سجل تحصيلات فينا', 'Fina collection history', 'متابعة سجل التحصيلات', 'Review collection history', 'modules/accounting/fina_payment_history.php', Icons.history_rounded),
             t('تقرير تحصيلات فينا', 'Fina collection report', 'تقارير التحصيلات الخاصة بالدور', 'Collection reports for this role', 'modules/accounting/fina_payment_report.php', Icons.summarize_outlined),
+            t('تسجيل تحصيل فينا', 'Record Fina collection', 'تسجيل تحصيل وفق نموذج النظام الحالي', 'Record a collection using the existing workflow', 'modules/transactions/fina_payment_create.php', Icons.add_card_outlined),
           ]),
         ];
       case 'nanny':
@@ -171,6 +172,7 @@ class RoleToolsSection extends StatelessWidget {
       case 'project_supervisor':
         return [
           g('إدارة المشروعات', 'Project management', [
+            if (role == 'projects_manager') t('إنشاء مشروع', 'Create project', 'فتح نموذج إنشاء مشروع جديد', 'Open the existing new-project form', 'modules/projects/form.php', Icons.create_new_folder_outlined),
             t('سجل المشروعات', 'Project register', 'فتح سجل المشروعات الكامل في الموقع', 'Open the full project register on the website', 'modules/projects/index.php', Icons.folder_open_outlined),
           ]),
         ];
