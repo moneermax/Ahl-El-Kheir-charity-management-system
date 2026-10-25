@@ -28,6 +28,8 @@ import 'admin_users_page.dart';
 import 'admin_departments_page.dart';
 import 'admin_recovery_page.dart';
 import 'admin_settings_page.dart';
+import 'reports_page.dart';
+import 'orphaned_families_report_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 String? normalizeApiBaseUrl(String value) {
@@ -223,6 +225,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     if (relativePath == 'modules/logs/audit.php') {
       openAuditLogPage();
+      return;
+    }
+    if (relativePath == 'modules/reports/index.php') {
+      openReportsPage();
+      return;
+    }
+    if (relativePath == 'modules/reports/orphaned_families.php') {
+      openOrphanedFamiliesReport();
       return;
     }
     if (relativePath == 'modules/users/index.php') {
@@ -474,6 +484,57 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     final encodedQuery = Uri.encodeQueryComponent(query);
     return call('GET', 'audit/index.php?page=$page&q=$encodedQuery', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadReportsOverview() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'reports/overview.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadOrphanedFamiliesReport(String city, String status) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final encodedCity = Uri.encodeQueryComponent(city);
+    final encodedStatus = Uri.encodeQueryComponent(status);
+    return call('GET', 'reports/orphaned_families.php?city=$encodedCity&status=$encodedStatus', token: token);
+  }
+
+  void openReportsPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => ReportsPage(
+        english: english,
+        loadOverview: loadReportsOverview,
+        openReport: (key) {
+          if (key == 'orphaned') openOrphanedFamiliesReport();
+        },
+      ),
+    ));
+  }
+
+  void openOrphanedFamiliesReport() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => OrphanedFamiliesReportPage(
+        english: english,
+        loadReport: loadOrphanedFamiliesReport,
+        openFamily: (familyId) {
+          navigatorKey.currentState?.push(MaterialPageRoute<void>(
+            builder: (_) => FamilyDetailPage(
+              familyId: familyId,
+              english: english,
+              loadDetail: loadFamilyDetail,
+              openOrphanForm: (childId) async {
+                ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+                  SnackBar(content: Text(english
+                      ? 'Orphan form is not implemented natively yet.'
+                      : 'نموذج اليتيم غير منفذ داخل التطبيق بعد.')),
+                );
+              },
+            ),
+          ));
+        },
+      ),
+    ));
   }
 
   Future<Map<String, dynamic>> loadAdminSettings() async {
