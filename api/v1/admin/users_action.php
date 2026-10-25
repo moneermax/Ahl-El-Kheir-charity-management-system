@@ -5,7 +5,7 @@ require_once __DIR__ . '/users_action_service.php';
 
 ak_api_require_method('POST');
 $user = ak_api_authenticated_user();
-if (!in_array((string)$user['role_code'], ['admin', 'hr_manager'], true)) {
+if (!in_array((string)$user['role_code'], ['admin', 'sudo', 'super_admin', 'hr_manager'], true)) {
     ak_api_json(403, ['ok' => false, 'error' => [
         'code' => 'forbidden',
         'message' => 'User account actions are limited to system administrators and HR managers.',
