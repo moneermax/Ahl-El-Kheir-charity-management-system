@@ -57,6 +57,7 @@ jobs:
             api/v1/families/index.php
             api/v1/families/detail.php
             api/v1/age_alerts/index.php
+            api/v1/age_alerts/suspend_child.php
             api/v1/admin/overview.php
             api/v1/transactions/index.php
             api/v1/accounting/fm_review_queue.php
