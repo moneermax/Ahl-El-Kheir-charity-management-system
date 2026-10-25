@@ -1018,3 +1018,25 @@ Corrected both the Dart fallback in `mobile/ahl_el_kheir_app/lib/main.dart` and 
 The user reported that the installed APK again displayed `تعذر الاتصال بخادم API`. Source inspection identified the exact cause in `.github/workflows/build-flutter-mobile-app.yml`: the manual-dispatch default used `http://192.168.18.9:8081/AhlElKheir/api/v1`, but the automatic push-build fallback incorrectly used port `881`. Because automatic builds have no `workflow_dispatch` input, their APKs were compiled with the wrong port despite passing Flutter analysis/tests. Corrected the automatic fallback to port `8081` in commit `221937453f0df3606982b6ab0f7aa8fa10711c7d`. This is the previously verified local Apache port and the phone-browser API endpoint that returned the expected JSON 405 for GET.
 
 **Acceptance status:** source/config root cause corrected; the newly triggered GitHub Actions build must pass and publish a fresh APK before the user installs anything. Do not reuse the failing APK artifact. This source correction does not itself prove physical-phone login; after the fresh APK is installed, confirm one login request appears in Apache access logs and login succeeds. If it still fails, capture the exact Android-side exception/status rather than treating all failures as credentials problems. Local API migration was previously reported applied; do not rerun it without evidence it is missing.
+## 2026-10-25 — User-reported UI and navigation defects
+
+Latest user acceptance feedback after signing in as Sudo:
+- Stat cards show Flutter "bottom overflowed by ..." warnings.
+- All System Administration website links fail with "couldn't open the website page".
+- The user expects system workflows to open natively in the app; a large number of WEB handoffs is not accepted as the finished product.
+- The existing visual theme/colors are explicitly rejected and must be redesigned rather than defended.
+
+### Source findings and targeted fixes on main
+
+1. **Website handoff token extraction:** `AhlElKheirAppState.call()` returns the decoded API envelope's `data` object. `openWebPage()` incorrectly attempted a second `response['data']` lookup. It now reads `response['handoff_token']` directly. Handoff errors now include details rather than swallowing all exceptions into the same message.
+2. **Metric overflow risk:** Sudo dashboard cards now use a taller grid ratio and compact, bounded metric text. Role dashboard cards use a taller ratio and fitted value text. A widget regression assertion checks for RenderFlex exceptions in the role metrics test.
+3. **Visual theme:** the shared app theme and admin/role dashboard palettes have been shifted from the prior navy/blue/violet look toward a teal/sea-green palette. This is a first correction, not a full design sign-off.
+
+Commits on `main`: `68ab7b57283b4fd3b052c860cb5cf6b64d73daf8`, `141662935f37f3898501eca3a279aa5fb4e949b4`, `c69eb19c122370ef41e1ee4a749977316809a627`, `8180d52e3e73a64d638f2cbb4b324c1ba3dc5891`, `d5ed6f1ce673354dad6c984e5e49941d0ff946e1`.
+
+### Verification and remaining scope
+
+- These commits have not yet been verified by a completed CI run in this checkpoint.
+- No physical-device handoff test is claimed.
+- A website handoff is not a native mobile workflow. The native API/screens currently cover only a subset of the existing system. Continue by inventorying every visible tool by native/API-backed vs WEB, then implement native workflows in prioritized slices using the existing database/business rules and server-side authorization. Do not invent API routes or infer permissions from client-side role codes.
+- Do not ask the user to retest each small change. Run CI and source-level checks first, then provide one consolidated APK for acceptance once the meaningful slice is complete.
