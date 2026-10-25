@@ -221,6 +221,10 @@ try {
     mobileApiExpect($r['status'] === 200 && ($r['json']['data']['user']['role_code'] ?? '') === 'nanny', '/me accepts a valid token and returns the live role');
     $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 403, 'nanny is denied access to the HR employee directory');
+    $r = mobileApiRequest('/api/v1/hr/leaves.php?view=queue', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to the HR leave approval queue');
+    $r = mobileApiRequest('/api/v1/projects/milestone_create.php', 'POST', ['project_id' => 1, 'title' => 'Unauthorized test milestone'], $token);
+    mobileApiExpect($r['status'] === 403, 'nanny cannot create project milestones');
 
     $r = mobileApiRequest('/api/v1/hr/attendance.php?date=2026-10-01', 'GET', null, $token);
     mobileApiExpect($r['status'] === 403, 'nanny is denied access to the HR attendance register');
