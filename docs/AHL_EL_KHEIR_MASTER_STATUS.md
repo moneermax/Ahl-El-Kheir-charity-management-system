@@ -4549,3 +4549,8 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 ## 2026-10-25 — Mobile API authorization audit continuation
 A concrete project-detail contract mismatch was found: `api/v1/projects/detail.php` selected `project_milestones.id` but did not serialize it, although Flutter edit/delete actions require it. Source correction committed on `main` as `20631106ae8fe9f8267779faf4c6e9a1d7608057`. CI and runtime verification are pending. This does not close the broader mobile release gates: local migration-state confirmation, authenticated Apache/MariaDB role and record-scope/action acceptance, and HTTPS PHP/MariaDB hosting.
+
+
+## 2026-10-25 — Mobile API milestone verification checkpoint
+
+The project-detail milestone ID contract and assignment-revocation guard now have disposable-database HTTP integration coverage. Harness commit eebe53983eed73e9899ca9cf5d85754497e3e092 passed [Mobile API auth integration run 40160569643](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160569643). CI imported the checked-in schema, applied the mobile-session migration, and exercised the PHP endpoints against disposable MariaDB. Local XAMPP migration state and live local role/record-scope/action acceptance remain unverified. Do not run the harness against ahl_el_kheir.
