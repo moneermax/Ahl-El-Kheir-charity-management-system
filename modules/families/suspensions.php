@@ -22,25 +22,6 @@ $reasons = [
     'other'        => 'سبب آخر',
 ];
 
-/* ══════════ schema sync ══════════ */
-try {
-    dbExecute("CREATE TABLE IF NOT EXISTS suspension_cases (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        entity_type ENUM('family','child') NOT NULL,
-        entity_id INT UNSIGNED NOT NULL,
-        reason VARCHAR(30) NOT NULL,
-        notes TEXT,
-        suspended_by INT UNSIGNED NULL,
-        suspended_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        status ENUM('active','lifted') NOT NULL DEFAULT 'active',
-        lifted_by INT UNSIGNED NULL,
-        lifted_at DATETIME NULL,
-        KEY idx_sc_entity (entity_type, entity_id),
-        FOREIGN KEY (suspended_by) REFERENCES users(id) ON DELETE SET NULL,
-        FOREIGN KEY (lifted_by) REFERENCES users(id) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-} catch (Throwable $e) { error_log('Suspensions schema sync: ' . $e->getMessage()); }
-
 function susp_audit(int $uid, string $action, int $caseId, array $new): void {
     try {
         dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
