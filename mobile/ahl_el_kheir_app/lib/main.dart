@@ -137,7 +137,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     if (relativePath == 'modules/users/index.php') {
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
-        builder: (_) => AdminUsersPage(english: english, loadPage: loadAdminUsers),
+        builder: (_) => AdminUsersPage(
+          english: english,
+          loadPage: loadAdminUsers,
+          currentUserId: int.tryParse(user?['id']?.toString() ?? '') ?? 0,
+          submitAction: submitAdminUserAction,
+        ),
       ));
       return;
     }
@@ -374,6 +379,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('POST', 'admin/recovery_action.php', token: token, body: payload);
+  }
+
+  Future<Map<String, dynamic>> submitAdminUserAction(Map<String, dynamic> payload) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'admin/users_action.php', token: token, body: payload);
   }
 
   Future<Map<String, dynamic>> loadAdminUsers(String query, int page) async {
