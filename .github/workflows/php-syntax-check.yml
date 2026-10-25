@@ -61,6 +61,7 @@ jobs:
             api/v1/age_alerts/suspension_service.php
             api/v1/admin/overview.php
             api/v1/dashboard/overview.php
+            api/v1/dashboard/overview_service.php
             api/v1/transactions/index.php
             api/v1/accounting/fm_review_queue.php
             api/v1/accounting/fm_review_queue_action.php
@@ -103,6 +104,7 @@ jobs:
             tools/run_salary_advance_1410_reconciliation.php
             tools/test_mobile_api_role_normalization.php
             tools/test_mobile_api_suspension_service.php
+            tools/test_mobile_role_dashboard_queries.php
           )
           for file in "${files[@]}"; do
             php -l "$file"
@@ -252,6 +254,7 @@ jobs:
           php tools/run_salary_advance_1410_reconciliation.php
           php tools/test_salary_advance_rescheduling_payroll_concurrency.php
           php tools/test_mobile_api_suspension_service.php
+          php tools/test_mobile_role_dashboard_queries.php
 
   hr-job-description-migrations:
     runs-on: ubuntu-latest
