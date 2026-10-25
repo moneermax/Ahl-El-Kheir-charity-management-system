@@ -19,7 +19,7 @@ $page = min($page, $pages);
 $offset = ($page - 1) * $perPage;
 
 $items = dbFetchAll(
-    'SELECT id, title, body, created_at, is_read
+    'SELECT id, title, body, created_at, is_read, link
      FROM notifications
      WHERE recipient_user_id = ?
      ORDER BY id DESC
@@ -41,6 +41,7 @@ $items = array_map(
         'body' => (string)($item['body'] ?? ''),
         'created_at' => (string)($item['created_at'] ?? ''),
         'is_read' => (int)($item['is_read'] ?? 0) === 1,
+        'link' => (string)($item['link'] ?? ''),
     ],
     $items
 );
