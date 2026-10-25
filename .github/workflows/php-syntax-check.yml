@@ -111,6 +111,7 @@ jobs:
             tools/run_salary_advance_1410_reconciliation.php
             tools/test_mobile_api_role_normalization.php
             tools/test_mobile_api_suspension_service.php
+            tools/test_mobile_transactions_date_filter.php
             tools/test_mobile_role_dashboard_queries.php
           )
           for file in "${files[@]}"; do
@@ -261,6 +262,7 @@ jobs:
           php tools/run_salary_advance_1410_reconciliation.php
           php tools/test_salary_advance_rescheduling_payroll_concurrency.php
           php tools/test_mobile_api_suspension_service.php
+          php tools/test_mobile_transactions_date_filter.php
           php tools/test_mobile_role_dashboard_queries.php
           php tools/test_mobile_sponsor_assignment_service.php
           php tools/test_mobile_supervisor_status_service.php
