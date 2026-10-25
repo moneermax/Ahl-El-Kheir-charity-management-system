@@ -52,9 +52,9 @@ function mobileApiRequest(string $path, string $method = 'GET', ?array $body = n
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
-if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'])) {
-    throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff and project_supervisor roles.');
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'])) {
+    throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff, project_supervisor and financial_manager roles.');
 }
 $user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
 if (!$user || trim((string)$user['username']) === '') throw new RuntimeException('Checked-in schema has no usable user fixture.');
@@ -68,6 +68,7 @@ $server = null;
 $serverPipes = [];
 $failure = null;
 $testProjectId = 0;
+$testPaymentId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -171,6 +172,53 @@ try {
 
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
 
+    $r = mobileApiRequest('/api/v1/accounting/fm_review_queue_action.php', 'POST', [
+        'payment_id' => 1,
+        'action' => 'return',
+        'return_note' => 'Authorization boundary test',
+    ], $token);
+    mobileApiExpect($r['status'] === 403, 'HR staff cannot perform financial review actions');
+
+    $pdo->prepare("INSERT INTO sponsor_payments (payment_type, supervisor_id, payment_period, amount, currency_code, status) VALUES ('other', ?, 'MOBILE-CI-TEST', 1.00, 'SDG', 'pending')")
+        ->execute([$userId]);
+    $testPaymentId = (int)$pdo->lastInsertId();
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+
+    $r = mobileApiRequest('/api/v1/accounting/fm_review_queue_action.php', 'POST', [
+        'payment_id' => $testPaymentId,
+        'action' => 'return',
+    ], $token);
+    $pendingStatus = $pdo->prepare('SELECT status FROM sponsor_payments WHERE id=?');
+    $pendingStatus->execute([$testPaymentId]);
+    mobileApiExpect($r['status'] === 422 && (string)$pendingStatus->fetchColumn() === 'pending', 'financial return requires a reason and leaves the payment pending');
+
+    $returnNote = 'Mobile API CI return test ' . bin2hex(random_bytes(4));
+    $r = mobileApiRequest('/api/v1/accounting/fm_review_queue_action.php', 'POST', [
+        'payment_id' => $testPaymentId,
+        'action' => 'return',
+        'return_note' => $returnNote,
+    ], $token);
+    $returned = $pdo->prepare('SELECT status, reviewed_by_user_id, return_note FROM sponsor_payments WHERE id=?');
+    $returned->execute([$testPaymentId]);
+    $returnedRow = $returned->fetch();
+    mobileApiExpect(
+        $r['status'] === 200
+        && ($r['json']['data']['status'] ?? '') === 'returned'
+        && $returnedRow
+        && $returnedRow['status'] === 'returned'
+        && (int)$returnedRow['reviewed_by_user_id'] === $userId
+        && (string)$returnedRow['return_note'] === $returnNote,
+        'financial manager return commits the expected sponsor payment transition'
+    );
+
+    $r = mobileApiRequest('/api/v1/accounting/fm_review_queue_action.php', 'POST', [
+        'payment_id' => $testPaymentId,
+        'action' => 'return',
+        'return_note' => 'Duplicate return must fail',
+    ], $token);
+    mobileApiExpect($r['status'] === 409 && ($r['json']['error']['code'] ?? '') === 'payment_not_pending', 'already-returned sponsor payment cannot be returned twice');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
+
     $pdo->prepare('UPDATE users SET is_active=0 WHERE id=?')->execute([$userId]);
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 401, 'deactivated accounts lose access to existing tokens');
@@ -212,6 +260,13 @@ try {
         $marks = implode(',', array_fill(0, count($testTokenHashes), '?'));
         $stmt = $pdo->prepare("DELETE FROM mobile_api_sessions WHERE token_hash IN ($marks)");
         $stmt->execute($testTokenHashes);
+    }
+    if ($testPaymentId > 0) {
+        $pdo->prepare("DELETE FROM notifications WHERE recipient_user_id=? AND title=? AND created_at>=?")
+            ->execute([$userId, 'تم إرجاع تحصيل مشرف #' . $testPaymentId, $testStart]);
+        $pdo->prepare("DELETE FROM audit_log WHERE action='RETURN' AND entity_type='sponsor_payments' AND entity_id=? AND created_at>=?")
+            ->execute([$testPaymentId, $testStart]);
+        $pdo->prepare('DELETE FROM sponsor_payments WHERE id=?')->execute([$testPaymentId]);
     }
     if ($testProjectId > 0) {
         $pdo->prepare('DELETE FROM project_progress_updates WHERE project_id=?')->execute([$testProjectId]);
