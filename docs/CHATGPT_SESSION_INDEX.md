@@ -2461,3 +2461,8 @@ Next priority: comprehensive role-aware dashboard and design pass, including the
 ### Mobile app — 2026-10-25 coordinated redesign milestone
 
 Main commits: `1c51846a9c348f5fb09fd5fb9d551f10edf7cd62`, `9ddf86df2a145f18a553ab452e7577723408c71d`, `0253a88d3a6201c9a279b879dd2e5fa0fcfe1a46`, `17af21974b9decf913954f4b7d96127ac34704b1`. The mobile shell now has role-specific hero presentation and an authenticated native legal-age alert list using the web alert's date/active-child rule and nanny scope. CI verification was still in progress at the time of this note. This is a partial milestone, not mobile parity closure. Continue with actual CI results, secure native action workflows, role-dashboard feature matrix, and the open transaction date-range acceptance checks.
+
+
+### 2026-10-25 — Dedicated admin dashboard source implementation
+
+Added a dedicated administrator/system-developer mobile dashboard and authenticated overview endpoint, replacing the shared dashboard for `admin`, `sudo`, and `super_admin`. It surfaces the web admin's control groups and adds native operational routes where mobile screens already exist. Some system tools still open their existing website pages externally and are explicitly documented as non-native gaps. Feature matrix: `docs/MOBILE_ROLE_FEATURE_PARITY.md`. Automated verification remains pending.
