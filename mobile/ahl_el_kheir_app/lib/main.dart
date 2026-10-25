@@ -44,6 +44,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
   bool english = false, loading = true;
   Map<String, dynamic>? user;
   String? error;
+  bool ageAlertsLoading = false;
+  List<Map<String, dynamic>> ageAlertItems = [];
 
   Future<Map<String, dynamic>> call(String method, String path,
       {Map<String, dynamic>? body, String? token}) async {
@@ -137,6 +139,123 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     } finally {
       await storage.delete(key: tokenKey);
       if (mounted) setState(() => user = null);
+    }
+  }
+
+  Future<Map<String, dynamic>> loadAgeAlerts() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'age_alerts/index.php', token: token);
+  }
+
+  Future<void> openAgeAlerts() async {
+    if (ageAlertsLoading) return;
+    setState(() => ageAlertsLoading = true);
+    try {
+      final data = await loadAgeAlerts();
+      final raw = data['items'];
+      ageAlertItems = raw is List
+          ? raw.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+          : <Map<String, dynamic>>[];
+      if (!mounted) return;
+      final sheetContext = navigatorKey.currentContext;
+      if (sheetContext == null) return;
+      await showModalBottomSheet<void>(
+        context: sheetContext,
+        isScrollControlled: true,
+        showDragHandle: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+        ),
+        builder: (sheetContext) => SafeArea(
+          child: SizedBox(
+            height: MediaQuery.of(sheetContext).size.height * 0.72,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                  child: Row(children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0xFFFFF0C2),
+                      child: Icon(Icons.hourglass_bottom_rounded, color: Color(0xFF8A5A00)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(english ? 'Legal age alerts' : 'تنبيه بلوغ السن القانوني',
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0A1F44))),
+                        Text(english ? '${ageAlertItems.length} children need review' : '${ageAlertItems.length} طفل يحتاج إلى المراجعة',
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                      ],
+                    )),
+                  ]),
+                ),
+                const Divider(height: 1),
+                Expanded(child: ageAlertItems.isEmpty
+                    ? Center(child: Padding(
+                        padding: const EdgeInsets.all(24),
+                        child: Text(english ? 'No children are within the alert window.' : 'لا يوجد أطفال ضمن فترة التنبيه الحالية.', textAlign: TextAlign.center),
+                      ))
+                    : ListView.separated(
+                        padding: const EdgeInsets.all(16),
+                        itemCount: ageAlertItems.length,
+                        separatorBuilder: (_, __) => const SizedBox(height: 10),
+                        itemBuilder: (_, index) {
+                          final item = ageAlertItems[index];
+                          final days = int.tryParse(item['days_until_18']?.toString() ?? '') ?? 999;
+                          final overdue = days <= 0;
+                          final soon = days > 0 && days <= 7;
+                          final accent = overdue ? const Color(0xFFB42318) : (soon ? const Color(0xFFB54708) : const Color(0xFF2E63A8));
+                          return Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.055),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: accent.withValues(alpha: 0.20)),
+                            ),
+                            child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                              CircleAvatar(backgroundColor: accent.withValues(alpha: 0.12), child: Icon(Icons.person_outline_rounded, color: accent)),
+                              const SizedBox(width: 12),
+                              Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                                Text(item['child_name']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF0A1F44))),
+                                const SizedBox(height: 3),
+                                Text('${item['mother_name'] ?? ''} • ${item['family_code'] ?? ''}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                const SizedBox(height: 6),
+                                Text('${english ? 'Birth date' : 'تاريخ الميلاد'}: ${item['birth_date'] ?? '—'}', style: const TextStyle(fontSize: 12)),
+                                const SizedBox(height: 5),
+                                Text(overdue
+                                  ? (english ? 'Legal age reached' : 'بلغ السن القانوني')
+                                  : (english ? '$days days remaining' : 'متبقي $days يوم'),
+                                  style: TextStyle(color: accent, fontSize: 12, fontWeight: FontWeight.w800)),
+                              ])),
+                            ]),
+                          );
+                        },
+                      )),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                  child: SizedBox(width: double.infinity, child: OutlinedButton(
+                    onPressed: () => Navigator.pop(sheetContext),
+                    child: Text(english ? 'Close' : 'إغلاق'),
+                  )),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      final context = navigatorKey.currentContext;
+      if (context != null) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => ageAlertsLoading = false);
     }
   }
 
@@ -381,7 +500,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         secondary: const Color(0xFF2E63A8),
         surface: Colors.white,
       ),
-      scaffoldBackgroundColor: const Color(0xFFF0F2F5),
+      scaffoldBackgroundColor: const Color(0xFFF3F6FB),
       visualDensity: VisualDensity.standard,
       dividerTheme: const DividerThemeData(
         color: Color(0xFFE3E8EF),
@@ -394,8 +513,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(18),
-          side: const BorderSide(color: Color(0xFFE3E8EF)),
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFDDE6F1)),
         ),
       ),
       listTileTheme: ListTileThemeData(
@@ -434,7 +553,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         toolbarHeight: 56,
       ),
       inputDecorationTheme: InputDecorationTheme(
-        filled: true, fillColor: const Color(0xFFF9FAFC),
+        filled: true, fillColor: const Color(0xFFF7F9FD),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8AA6C8), width: 1.5)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8AA6C8), width: 1.5)),
@@ -466,9 +585,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text(
-                              english ? 'Ahl El Kheir' : 'أهل الخير',
+                              english
+                                  ? 'Ahl El Kheir Women’s Organization for Orphan Sponsorship'
+                                  : 'منظمة أهل الخير النسوية لكفالة الأيتام',
+                              maxLines: 2,
                               overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(fontWeight: FontWeight.w800),
+                              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13, height: 1.25),
                             ),
                           ),
                         ],
@@ -477,6 +599,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
+                          if (['admin', 'sudo', 'super_admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'nanny'].contains(user?['role_code']?.toString()))
+                            IconButton(
+                              tooltip: english ? 'Legal age alerts' : 'تنبيه بلوغ السن القانوني',
+                              onPressed: openAgeAlerts,
+                              icon: const Icon(Icons.hourglass_bottom_rounded, color: Color(0xFFB54708)),
+                            ),
                           IconButton(
                             tooltip: english ? 'Notifications' : 'الإشعارات',
                             onPressed: () => navigatorKey.currentState?.push(
