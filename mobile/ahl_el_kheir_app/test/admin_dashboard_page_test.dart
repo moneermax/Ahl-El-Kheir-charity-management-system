@@ -28,7 +28,7 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.scrollUntilVisible(
-      find.text('Full website dashboard'),
+      find.text('Administration dashboard'),
       180,
       scrollable: find.byType(Scrollable).first,
     );
