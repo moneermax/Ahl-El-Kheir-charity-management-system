@@ -171,8 +171,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
           'query': queryParameters ?? <String, String>{},
         },
       );
-      final data = response['data'];
-      final handoffToken = data is Map ? (data['handoff_token']?.toString() ?? '') : '';
+      final handoffToken = response['handoff_token']?.toString() ?? '';
       final validHandoffToken = handoffToken.length == 64 &&
           handoffToken.codeUnits.every((code) =>
               (code >= 48 && code <= 57) || (code >= 97 && code <= 102));
@@ -833,16 +832,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF1F4E8C),
-        primary: const Color(0xFF0A1F44),
-        secondary: const Color(0xFF2E63A8),
+        seedColor: const Color(0xFF087F8C),
+        primary: const Color(0xFF075B63),
+        secondary: const Color(0xFF0E9F9A),
         surface: Colors.white,
         error: const Color(0xFFB42318),
       ),
-      scaffoldBackgroundColor: const Color(0xFFF3F6FB),
+      scaffoldBackgroundColor: const Color(0xFFF3F8F7),
       visualDensity: VisualDensity.standard,
       dividerTheme: const DividerThemeData(
-        color: Color(0xFFE3E8EF),
+        color: Color(0xFFDCE9E7),
         thickness: 1,
         space: 1,
       ),
@@ -853,17 +852,17 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFFDDE6F1)),
+          side: const BorderSide(color: Color(0xFFDCE9E7)),
         ),
       ),
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         minVerticalPadding: 14,
         horizontalTitleGap: 14,
-        iconColor: const Color(0xFF1F4E8C),
-        textColor: const Color(0xFF0A1F44),
+        iconColor: const Color(0xFF087F8C),
+        textColor: const Color(0xFF16353A),
         titleTextStyle: const TextStyle(
-          color: Color(0xFF0A1F44),
+          color: Color(0xFF16353A),
           fontFamily: 'Cairo',
           fontSize: 14,
           fontWeight: FontWeight.w800,
@@ -878,27 +877,27 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          foregroundColor: const Color(0xFF0A1F44),
-          backgroundColor: const Color(0xFFF0F4FA),
+          foregroundColor: const Color(0xFF075B63),
+          backgroundColor: const Color(0xFFEAF4F2),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           minimumSize: const Size(44, 44),
         ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF0A1F44),
+        foregroundColor: Color(0xFF16353A),
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 56,
       ),
       inputDecorationTheme: InputDecorationTheme(
-        filled: true, fillColor: const Color(0xFFF7F9FD),
+        filled: true, fillColor: const Color(0xFFF6FAF9),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8AA6C8), width: 1.5)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB7D0CD), width: 1.2)),
         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8AA6C8), width: 1.5)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1F4E8C), width: 2)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF087F8C), width: 2)),
       ),
-      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0A1F44), foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
+      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF075B63), foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
     navigatorKey: navigatorKey,
   home: Directionality(
       textDirection: english ? TextDirection.ltr : TextDirection.rtl,
