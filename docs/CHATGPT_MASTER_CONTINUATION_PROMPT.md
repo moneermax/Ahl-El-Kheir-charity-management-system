@@ -2436,3 +2436,19 @@ This corrects concrete native-screen/API mismatches where the UI offered role-ap
 - Role-alias regression: `PASS | mobile API role normalization | 14 cases` in PHP workflow `40192899764`.
 
 Remaining acceptance boundary: these CI checks use disposable databases and cannot verify the user's running XAMPP server, actual local `ahl_el_kheir` schema alignment, the phone's network route, or a live authenticated session. The mobile API session migration must be applied to the intended local database before first use if it has not already been applied. Website-only tools remain labelled WEB and need a valid website session; they are not native parity claims.
+
+## Active continuation — 2026-10-25 mobile role dashboard parity
+
+Continue on `main` in the existing repository. Latest source work adds `api/v1/dashboard/overview.php`, `mobile/ahl_el_kheir_app/lib/role_dashboard_page.dart`, and integration into `mobile/ahl_el_kheir_app/lib/main.dart`. It exposes source-derived, role-specific dashboard metrics for GM, VGM, FM, Accountant/Accountant Staff, Supervisor, Nanny, Administration/Staff/Social Media, HR, and Projects Manager/Supervisor. Admin/sudo/super_admin continue using `api/v1/admin/overview.php`. The PHP lint workflow now includes the new endpoint. New widget tests cover role dashboard metrics/error retry and prevent a Supervisor-only link to an FM/admin-only Fina creation page.
+
+Source commits include `f6ac0b4490b712ae7bebd23474aa97d6ab93d165`, `1e74df5e3e601593808121a907a7023faede21ba`, `7c96953e298aa83b4d04149e91a2a55efa952283`, `9735d2430d94ca067639d253cf1df0548fc7c7c9`, `59bf9bb3d6d25c81cbb04fe572d7b62b14527fbf`, `74f7e018d0ee640127383ccdec515a34bdb87462`, and `4fe6df05679946968666959cfc6025921b28e1fd`.
+
+Immediate next actions:
+1. Check the latest PHP and Flutter GitHub Actions runs on current `main`; inspect failures rather than guessing.
+2. Confirm the new API's role-specific SQL runs against the checked-in full schema. Fix only confirmed query/schema mismatches.
+3. Add or improve automated coverage where the current CI allows it, then update this document with exact run IDs and outcomes.
+4. Continue role-by-role native dashboard and workflow parity; do not count website links as native implementation.
+5. Complete transaction date filter acceptance for same-day and multi-day inclusive boundaries, empty results, invalid/reversed range, pagination and refresh. UI and API source filters already exist, but full acceptance is not proven.
+6. Keep local XAMPP/database and physical-device verification explicitly pending until actually performed by the user or a tool with access.
+
+Do not reopen closed unrelated HR/payroll/waiver/i18n work. Do not claim completion from lint/APK build alone.
