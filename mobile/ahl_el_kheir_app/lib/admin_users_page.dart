@@ -1,16 +1,19 @@
 import 'package:flutter/material.dart';
+import 'admin_user_create_page.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({
     super.key,
     required this.english,
     required this.loadPage,
+    required this.loadOptions,
     required this.currentUserId,
     required this.submitAction,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function(String query, int page) loadPage;
+  final Future<Map<String, dynamic>> Function() loadOptions;
   final int currentUserId;
   final Future<Map<String, dynamic>> Function(Map<String, dynamic> payload) submitAction;
 
@@ -146,6 +149,19 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
       appBar: AppBar(
         title: Text(en ? 'User directory' : 'دليل المستخدمين'),
         actions: [
+          IconButton(
+            tooltip: en ? 'Create account' : 'إنشاء حساب',
+            onPressed: saving ? null : () {
+              Navigator.of(context).push(MaterialPageRoute<void>(
+                builder: (_) => AdminUserCreatePage(
+                  english: en,
+                  loadOptions: widget.loadOptions,
+                  submitAction: widget.submitAction,
+                ),
+              )).then((_) => refresh(requestedPage: page));
+            },
+            icon: const Icon(Icons.person_add_alt_1_rounded),
+          ),
           IconButton(
             tooltip: en ? 'Refresh' : 'تحديث',
             onPressed: loading ? null : () => refresh(requestedPage: page),
