@@ -4857,3 +4857,7 @@ The milestone serializer fix from 20631106ae8fe9f8267779faf4c6e9a1d7608057 now h
 
 ## 2026-10-25 — Mobile notification account-isolation integration evidence
 `tools/test_mobile_api_auth_integration.php` now inserts one uniquely identified notification for a second existing user in the disposable schema, confirms the authenticated account's API list excludes it, attempts the mark-read action using the first account's bearer token, and verifies the stored row remains unread. Cleanup deletes that exact test row. Commit `ab2a6173e596f88ed4e7c2fb6e962e40e5429192`; live PHP endpoint suite passed in [run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591). This is CI-only evidence; local Apache/MariaDB acceptance remains open.
+
+
+## 2026-10-25 — Mobile sponsor-request authorization integration evidence
+Extended `tools/test_mobile_api_auth_integration.php` using the schema-confirmed `sponsor_requests` columns and an exact-row disposable fixture. Assertions verify a `nanny` receives 403 from sponsor-request listing and status action, with state remaining `new`; `admin` can transition the request to `contacted`; a repeated `mark_contacted` returns 409 `invalid_transition` and leaves state unchanged. Commit `f0dfa70a376771cbceeae04e73b57f2e6e40cb89`; [run 40161801824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161801824) passed against disposable MariaDB. This is CI evidence only, not local Apache/MariaDB acceptance.
