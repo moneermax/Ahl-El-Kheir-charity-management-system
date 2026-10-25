@@ -4935,3 +4935,8 @@ Source change: `f627d130fe36b4bfe4232891aff521f63af1b518` updates `mobile/ahl_el
 - Existing routes, API payloads, role visibility conditions, and server-side authorization are unchanged.
 
 **Verification status:** source committed to `main`; Flutter CI and device verification pending. The user has not yet accepted the new design and has not completed detailed feature testing. Do not describe the broader redesign as complete or runtime-verified until the new APK passes CI and the user reviews it on device.
+
+## Mobile app UX follow-up — 2026-10-25
+
+A new user requirement opened a mobile UI/navigation work unit. The user selected a modern professional dashboard while retaining the current Ahl El Kheir navy/blue branding, and requested password reveal plus password-recovery access on the login screen. Changes are summarized in `docs/MOBILE_APP_CONTINUATION.md`; latest source checkpoint `ca16265515612bfa18442dcd59a987baaa303e0e`. These are source-level changes only until the matching Flutter CI run succeeds and the latest APK is checked on a physical phone. Existing backend authorization remains authoritative; no database schema changes were made.
+
