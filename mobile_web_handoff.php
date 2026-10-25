@@ -12,7 +12,20 @@ header('Referrer-Policy: no-referrer');
 header('X-Content-Type-Options: nosniff');
 header('X-Robots-Tag: noindex, nofollow');
 
-Session::start();
+// Start the cookie session without running the normal authenticated-session
+// redirect guard against a different account already open in this browser.
+if (session_status() === PHP_SESSION_NONE) {
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'domain' => '',
+        'secure' => (defined('APP_ENV') && APP_ENV === 'production'),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_name('AhlElKheirSession');
+    session_start();
+}
 
 $scriptName = str_replace('\\', '/', (string)($_SERVER['SCRIPT_NAME'] ?? '/mobile_web_handoff.php'));
 $basePath = rtrim(dirname($scriptName), '/');
@@ -105,6 +118,9 @@ try {
     $_SESSION['user_role'] = (string)$handoff['role_code'];
     $_SESSION['_auth_session_rotated'] = true;
 
+    // Apply the standard session boundary checks to the newly authenticated
+    // identity before redirecting to the requested website page.
+    Session::start();
     session_write_close();
 
     $location = $basePath . '/' . $targetPath;
