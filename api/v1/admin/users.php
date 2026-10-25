@@ -12,6 +12,44 @@ if (!in_array((string)$user['role_code'], ['admin', 'sudo', 'super_admin', 'hr_m
     ]]);
 }
 
+if ((string)($_GET['options'] ?? '') === '1') {
+    $roles = dbFetchAll('SELECT id, code, name_ar, name_en FROM roles ORDER BY id');
+    $departments = dbFetchAll('SELECT id, name_ar, name_en FROM departments ORDER BY id');
+    $managers = dbFetchAll(
+        "SELECT u.id, u.full_name, u.username
+         FROM users u
+         JOIN roles r ON r.id = u.role_id
+         WHERE u.is_active = 1
+           AND (
+             r.code IN ('admin','sudo','general_manager','vice_general_manager','financial_manager','accountant')
+             OR r.code LIKE '%_manager'
+             OR r.name_ar LIKE '%مدير%'
+             OR r.name_ar LIKE '%رئيس%'
+             OR r.name_en LIKE '%Manager%'
+             OR r.name_en LIKE '%Head%'
+           )
+         ORDER BY u.full_name"
+    );
+    ak_api_json(200, ['ok' => true, 'data' => [
+        'roles' => array_map(static fn(array $row): array => [
+            'id' => (int)$row['id'],
+            'code' => (string)$row['code'],
+            'name_ar' => (string)$row['name_ar'],
+            'name_en' => (string)$row['name_en'],
+        ], $roles),
+        'departments' => array_map(static fn(array $row): array => [
+            'id' => (int)$row['id'],
+            'name_ar' => (string)$row['name_ar'],
+            'name_en' => (string)$row['name_en'],
+        ], $departments),
+        'managers' => array_map(static fn(array $row): array => [
+            'id' => (int)$row['id'],
+            'full_name' => (string)$row['full_name'],
+            'username' => (string)$row['username'],
+        ], $managers),
+    ]]);
+}
+
 $query = trim((string)($_GET['q'] ?? ''));
 if (strlen($query) > 200) {
     ak_api_json(422, ['ok' => false, 'error' => [
