@@ -4939,4 +4939,9 @@ Source change: `f627d130fe36b4bfe4232891aff521f63af1b518` updates `mobile/ahl_el
 ## Mobile app UX follow-up — 2026-10-25
 
 A new user requirement opened a mobile UI/navigation work unit. The user selected a modern professional dashboard while retaining the current Ahl El Kheir navy/blue branding, and requested password reveal plus password-recovery access on the login screen. Changes are summarized in `docs/MOBILE_APP_CONTINUATION.md`; latest source checkpoint `ca16265515612bfa18442dcd59a987baaa303e0e`. These are source-level changes only until the matching Flutter CI run succeeds and the latest APK is checked on a physical phone. Existing backend authorization remains authoritative; no database schema changes were made.
+### CI correction follow-up — 2026-10-25
+
+The first Flutter analyzer run for this work exposed concrete integration errors: a duplicate notification-tile `onTap` and required callbacks missing from the existing widget tests after constructor changes. The notification tap now uses one handler, mark-read failure stops navigation (preserving the prior error behavior), and tests provide explicit no-op callbacks where external navigation is not under test.
+
+Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification handler) and test callback updates through `c30c10b8e1a6df3f9ac2e197dc4363748419df22`. The new Flutter workflow runs for these commits are still pending/in progress at documentation time. Do not claim analysis, tests, or APK build passed until the latest run confirms it.
 
