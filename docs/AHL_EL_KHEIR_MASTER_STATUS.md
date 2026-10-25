@@ -4688,3 +4688,15 @@ Commits `1c51846a9c348f5fb09fd5fb9d551f10edf7cd62`, `9ddf86df2a145f18a553ab452e7
 ## Mobile administrator dashboard — 2026-10-25 (implementation committed; verification pending)
 
 A dedicated Flutter dashboard now replaces the common role-card list for `admin`, `sudo`, and `super_admin`. New authenticated overview endpoint: `api/v1/admin/overview.php`; new screen: `mobile/ahl_el_kheir_app/lib/admin_dashboard_page.dart`. It includes role-specific visual design, real record-count metrics, recent audit activity, and categorized administration/core-record/operations/finance/protection tool groups. Native links are wired where native screens exist; system administration and other web-only tools currently open the existing website pages externally. This is not full native parity. See `docs/MOBILE_ROLE_FEATURE_PARITY.md`. Flutter CI/APK and PHP lint results for this latest change are pending; local runtime and device verification are not claimed.
+
+
+## 2026-10-25 — Role-aware mobile tools and employee self-service
+
+Source commits on `main`:
+- `8f659a0cec3ae9d565dd8bba98297da2f94b7639`: expose native leave requests and salary statements from the mobile workspace.
+- `842e4382bcf922f9c67b82fcc414abdd7e72fba8` and `9e3044d842c1893bf685ef2bb87ae253a7d2c150`: add a role-specific quick-tools section derived from each existing web dashboard. Website-only links are labelled WEB and remain subject to website server-side authorization; this is navigation coverage, not native workflow parity.
+- `fbc30ebf5c1df671e6fcca6b07c39963abe3661e` and `a2eb57da68fde5a1cb206732ed4781df609c0382`: align the mobile API default and Android workflow default with the documented phone LAN endpoint `http://192.168.18.9:881/AhlElKheir/api/v1`. The previous 8081 default did not match the documented phone-facing Apache port and is superseded.
+
+The workspace now exposes the existing native personal leave-request page and finalized salary-statement page, and adds role-scoped quick links matching the real GM, VGM, FM, Accountant, Supervisor, Nanny, Administration/Staff, HR, and Projects dashboard routes. The API enforces leave-queue permissions and returns salary statements only for paid payrolls posted to accounting. No account without a linked employee profile is given another employee's records.
+
+**Still open; do not claim full completion:** role-specific dashboard metrics and operational workflows are not all native yet; website-only tools require a valid website session in the external browser; legal-age sponsorship suspension is not implemented natively; transaction date-range end-to-end acceptance and physical-device runtime remain pending; the mobile API migration must be applied to the intended local development database before API runtime testing. Current GitHub Actions for these newest source changes must be checked before claiming the new revision builds successfully.
