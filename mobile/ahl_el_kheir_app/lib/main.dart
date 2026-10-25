@@ -940,7 +940,7 @@ class _NotificationPageState extends State<NotificationPage> {
       await load();
       return true;
     } catch (e) {
-      if (!mounted) return;
+      if (!mounted) return false;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
