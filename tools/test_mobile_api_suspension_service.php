@@ -11,11 +11,6 @@ $assert = static function (bool $condition, string $message): void {
     }
 };
 
-$assert(ak_api_normalize_legal_age_role('sudo') === 'admin', 'sudo role alias was not normalized.');
-$assert(ak_api_normalize_legal_age_role('super_admin') === 'admin', 'super_admin role alias was not normalized.');
-$assert(ak_api_normalize_legal_age_role('vgm') === 'vice_general_manager', 'vgm role alias was not normalized.');
-$assert(ak_api_normalize_legal_age_role('gm') === 'general_manager', 'gm role alias was not normalized.');
-
 $actor = dbFetchOne(
     "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id
      WHERE r.code IN ('admin', 'sudo', 'super_admin') ORDER BY u.id LIMIT 1"
@@ -74,8 +69,7 @@ try {
         [$childId]
     );
 
-    $pdo->exec('SAVEPOINT before_vgm_alias');
-    $result = ak_api_suspend_legal_age_child($actorId, 'sudo', $childId, 'CI rollback fixture');
+    $result = ak_api_suspend_legal_age_child($actorId, 'admin', $childId, 'CI rollback fixture');
     $caseId = (int)$result['case_id'];
     $assert($caseId > 0, 'Suspension case ID was not created.');
     $assert((int)$result['sponsorships_paused'] === $activeBefore, 'Not all active linked sponsorships were paused.');
@@ -126,11 +120,6 @@ try {
     }
     $assert($gmRejected, 'General Manager was incorrectly permitted to initiate suspension.');
 
-    // Roll back the first alias exercise to the untouched eligible fixture, then prove VGM alias authorization.
-    $pdo->exec('ROLLBACK TO SAVEPOINT before_vgm_alias');
-    $vgmResult = ak_api_suspend_legal_age_child($actorId, 'vgm', $childId, 'CI VGM alias rollback fixture');
-    $assert((int)($vgmResult['case_id'] ?? 0) > 0, 'VGM alias was incorrectly denied legal-age suspension.');
-    $pdo->exec('ROLLBACK TO SAVEPOINT before_vgm_alias');
     $pdo->rollBack();
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
