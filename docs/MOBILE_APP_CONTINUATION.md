@@ -635,3 +635,12 @@ The existing HR employee-directory denial assertion is retained, making eight re
 - Source inspection of the nanny endpoints confirms both action routes check the live authenticated role before reading request input or performing writes. The four assertions are regression coverage, not evidence of a newly discovered production defect.
 - **Verification remains pending.** The repository workflow currently visible for mobile is the Flutter Android build workflow, scoped to Flutter paths; the GitHub status endpoint returned no commit checks for the recent PHP integration-test commits. No passing result is claimed for these assertions. Local runtime acceptance against the disposable CI database and the user's local app remains outstanding.
 - Continue auditing remaining endpoint scopes and record only source-confirmed findings. Keep local runtime acceptance open; do not run the integration harness against the real `ahl_el_kheir` database.
+
+
+## 2026-10-25 — Authentication and remaining record-scope source review
+
+- Re-inspected `api/v1/_bootstrap.php` and the login, `/me`, and logout routes. Authenticated requests resolve the token hash against a non-revoked, unexpired mobile session and re-read active-account, password-change-required, and current-role state from the database. The raw bearer token is not stored.
+- Re-inspected family, sponsor, and sponsorship detail authorization. Nanny family detail is constrained to the directly assigned nanny; supervisor family detail uses the existing family-scope helper; supervisor sponsor and sponsorship detail use the existing sponsor responsibility helper. These checks are consistent with the documented scope model in the reviewed paths.
+- Re-inspected the HR attendance and salary-statement read paths. Attendance is limited to HR manager, HR staff, and admin. Employee salary statements are resolved from the authenticated user's linked employee and restricted to paid payrolls with posted accounting status.
+- No additional production defect was confirmed by this source pass. This is a source review only; it is not a substitute for HTTP integration/runtime verification.
+- The newly added nanny-endpoint role-denial assertions and previous read-endpoint assertions remain unverified because the available commit-status query returned no checks for these PHP harness commits. The Flutter build workflow does not run this PHP integration harness. Keep this limitation explicit and continue the audit without claiming a pass.
