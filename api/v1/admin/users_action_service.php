@@ -48,11 +48,55 @@ function ak_api_admin_user_action(array $input, int $actorId): array
     if ($id <= 0) {
         throw new AkAdminUserActionException(422, 'invalid_user', 'A valid user ID is required.');
     }
-    if ($id === $actorId) {
+    if (!in_array($action, ['update', 'toggle', 'reset_password'], true)) {
+        throw new AkAdminUserActionException(422, 'invalid_action', 'Unsupported user action.');
+    }
+    if ($action !== 'update' && $id === $actorId) {
         throw new AkAdminUserActionException(403, 'self_action_forbidden', 'You cannot disable or reset your own account here.');
     }
-    if (!in_array($action, ['toggle', 'reset_password'], true)) {
-        throw new AkAdminUserActionException(422, 'invalid_action', 'Unsupported user action.');
+
+    if ($action === 'update') {
+        $fullName = trim((string)($input['full_name'] ?? ''));
+        $email = trim((string)($input['email'] ?? ''));
+        $phone = trim((string)($input['phone'] ?? ''));
+        $roleCode = trim((string)($input['role_code'] ?? ''));
+        $departmentId = !empty($input['department_id']) ? (int)$input['department_id'] : null;
+        $managerId = !empty($input['manager_id']) ? (int)$input['manager_id'] : null;
+        $gender = in_array(($input['gender'] ?? null), ['male', 'female'], true) ? $input['gender'] : null;
+        $isActive = filter_var($input['is_active'] ?? false, FILTER_VALIDATE_BOOLEAN) ? 1 : 0;
+        if ($fullName === '') {
+            throw new AkAdminUserActionException(422, 'full_name_required', 'Full name is required.');
+        }
+        $role = dbFetchOne('SELECT id FROM roles WHERE code = ? LIMIT 1', [$roleCode]);
+        if (!$role) {
+            throw new AkAdminUserActionException(422, 'invalid_role', 'The selected role is not valid.');
+        }
+
+        $pdo = db();
+        $ownsTransaction = !$pdo->inTransaction();
+        if ($ownsTransaction) $pdo->beginTransaction();
+        try {
+            $existing = dbFetchOne('SELECT id FROM users WHERE id = ? FOR UPDATE', [$id]);
+            if (!$existing) {
+                throw new AkAdminUserActionException(404, 'user_not_found', 'User account was not found.');
+            }
+            dbExecute(
+                'UPDATE users SET full_name = ?, email = ?, phone = ?, role_id = ?, department_id = ?, manager_id = ?, gender = ?, is_active = ?, updated_at = NOW() WHERE id = ?',
+                [$fullName, $email !== '' ? $email : null, $phone !== '' ? $phone : null, (int)$role['id'], $departmentId, $managerId, $gender, $isActive, $id]
+            );
+            hrSyncEmployeeIdentityFromUser($pdo, $id, [
+                'full_name' => $fullName,
+                'email' => $email !== '' ? $email : null,
+                'phone' => $phone !== '' ? $phone : null,
+                'gender' => $gender,
+                'department_id' => $departmentId,
+            ]);
+            if ($ownsTransaction) $pdo->commit();
+            return ['message' => 'User account and linked employee identity updated.'];
+        } catch (Throwable $e) {
+            if ($ownsTransaction && $pdo->inTransaction()) $pdo->rollBack();
+            throw $e;
+        }
     }
 
     $newPassword = null;
