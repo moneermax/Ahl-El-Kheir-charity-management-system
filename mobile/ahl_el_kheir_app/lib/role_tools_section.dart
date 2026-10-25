@@ -120,8 +120,8 @@ class RoleToolsSection extends StatelessWidget {
       case 'accountant_staff':
         return [
           g('المحاسبة والتوزيعات', 'Accounting and disbursements', [
-            t('صرف مجموعات الكفالات', 'Group disbursements', 'إدارة عمليات الصرف ضمن الصلاحيات الحالية', 'Manage disbursements within existing permissions', 'modules/accounting/group_disbursements.php', Icons.groups_outlined),
-            t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات المسموح بها للدور', 'Review disbursements available to this role', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
+            if (role == 'accountant_staff') t('صرف مجموعات الكفالات', 'Group disbursements', 'إدارة عمليات الصرف ضمن الصلاحيات الحالية', 'Manage disbursements within existing permissions', 'modules/accounting/group_disbursements.php', Icons.groups_outlined),
+            if (role == 'accountant_staff') t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات المسموح بها للدور', 'Review disbursements available to this role', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
             t('مركز التقارير', 'Report center', 'التقارير المتاحة للمحاسبة', 'Reports available to accounting staff', 'modules/reports/index.php', Icons.assessment_outlined),
           ]),
         ];
