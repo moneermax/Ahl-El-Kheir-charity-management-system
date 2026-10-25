@@ -269,43 +269,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       return;
     }
 
-    final titles = <String, List<String>>{
-      'modules/families/orphan_form.php': ['نموذج اليتيم', 'Orphan form'],
-      'modules/users/password_recovery_request.php': ['استعادة كلمة المرور', 'Password recovery'],
-      'modules/users/profile.php': ['ملفي الشخصي', 'My profile'],
-      'modules/users/settings.php': ['إعدادات الحساب', 'Account settings'],
-      'modules/hr/salary_advance_request.php': ['طلب سلفة راتب', 'Salary advance request'],
-      'modules/messages/index.php': ['الرسائل', 'Messages'],
-      'modules/search/index.php': ['البحث في النظام', 'System search'],
-      'modules/accounting/fm_dashboard.php': ['لوحة المالية', 'Finance dashboard'],
-      'modules/accounting/accounts.php': ['دليل الحسابات', 'Chart of accounts'],
-      'modules/accounting/disbursements.php': ['التحويلات الشهرية', 'Monthly disbursements'],
-      'modules/transactions/fina_payment_create.php': ['تحصيل فينا الخير', 'Fina Al-Khair collection'],
-      'modules/users/index.php': ['إدارة المستخدمين', 'User management'],
-      'modules/departments/index.php': ['إدارة الأقسام', 'Department management'],
-      'modules/settings/index.php': ['إعدادات النظام', 'System settings'],
-      'modules/users/recovery.php': ['طلبات استعادة الحسابات', 'Account recovery requests'],
-      'dashboard/admin_dashboard.php': ['لوحة الإدارة', 'Administration dashboard'],
-      'modules/reports/index.php': ['التقارير', 'Reports'],
-      'modules/reports/orphaned_families.php': ['تقرير الأسر غير المكفولة', 'Uncovered families report'],
-      'modules/reports/sponsorship.php': ['تقرير الكفالات', 'Sponsorship report'],
-      'modules/reports/operational.php': ['التقرير التشغيلي', 'Operational report'],
-      'modules/reports/financial.php': ['التقرير المالي', 'Financial report'],
-      'modules/reports/hr.php': ['تقرير الموارد البشرية', 'HR report'],
-      'modules/system/backup.php': ['النسخ الاحتياطي', 'Database backup'],
-      'modules/system/database.php': ['أدوات قاعدة البيانات', 'Database tools'],
-    };
-    final labels = titles[relativePath] ?? ['أداة النظام', 'System tool'];
-    final pathDetail = queryParameters == null || queryParameters.isEmpty
-        ? null
-        : queryParameters.entries.map((entry) => '${entry.key}=${entry.value}').join(', ');
-    navigatorKey.currentState?.push(MaterialPageRoute<void>(
-      builder: (_) => NativeToolPage(
-        english: english,
-        title: english ? labels[1] : labels[0],
-        detail: pathDetail,
-      ),
-    ));
+    final labels = english ? 'This feature is not available natively yet. No website or external page will be opened.' : 'هذه الميزة لم تُنفذ داخل التطبيق بعد. لن يتم فتح الموقع أو أي صفحة خارجية.';
+    final messenger = navigatorKey.currentState?.context;
+    if (messenger != null) {
+      ScaffoldMessenger.of(messenger).showSnackBar(
+        SnackBar(content: Text(labels), duration: const Duration(seconds: 4)),
+      );
+    }
   }
 
   Future<void> logout() async {
