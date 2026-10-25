@@ -4847,7 +4847,7 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 
 ## 2026-10-25 — Mobile API audit finding: milestone identifier omitted
-Evidence: `api/v1/projects/detail.php` queried `m.id` but the `milestones` JSON mapper returned only title, description, planned date, and completion percentage. The Flutter page builds edit/delete requests from `milestone['id']`; without the field, actions cannot target a real milestone. Corrected the serializer to include the selected ID in commit `20631106ae8fe9f8267779faf4c6e9a1d7608057`. This is a confirmed API/UI contract defect, not evidence of an authorization bypass. Verification remains pending; do not claim runtime security or endpoint acceptance from the source change alone.
+Evidence: `api/v1/projects/detail.php` queried `m.id` but the `milestones` JSON mapper returned only title, description, planned date, and completion percentage. The Flutter page builds edit/delete requests from `milestone['id']`; without the field, actions cannot target a real milestone. Corrected the serializer to include the selected ID in commit `20631106ae8fe9f8267779faf4c6e9a1d7608057`. Focused disposable-database endpoint verification passed in run `40160569643`; ended-assignment and cross-project no-mutation assertions passed in run `40160867381`. These are CI-only results, not local XAMPP runtime evidence. This was a confirmed API/UI contract defect, not an authorization bypass.
 
 
 ## 2026-10-25 — Mobile milestone response and assignment-boundary verification
