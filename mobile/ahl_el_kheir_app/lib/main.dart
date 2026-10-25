@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:url_launcher/url_launcher.dart';
 import 'projects_page.dart';
 import 'attendance_page.dart';
 import 'employees_page.dart';
@@ -105,6 +106,30 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     if (mounted) setState(() => user = data['user'] as Map<String, dynamic>);
   }
 
+  Uri webPageUri(String relativePath, {Map<String, String>? queryParameters}) {
+    final apiUri = Uri.parse(baseUrl);
+    final segments = apiUri.pathSegments.where((part) => part.isNotEmpty).toList();
+    if (segments.length >= 2) segments.removeRange(segments.length - 2, segments.length);
+    final pageSegments = relativePath.split('/').where((part) => part.isNotEmpty);
+    return apiUri.replace(
+      pathSegments: [...segments, ...pageSegments],
+      queryParameters: queryParameters,
+    );
+  }
+
+  Future<void> openWebPage(String relativePath, {Map<String, String>? queryParameters}) async {
+    final uri = webPageUri(relativePath, queryParameters: queryParameters);
+    final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+    if (!opened) {
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(english ? 'Could not open the page.' : 'تعذر فتح الصفحة.')),
+        );
+      }
+    }
+  }
+
   Future<void> logout() async {
     final token = await storage.read(key: tokenKey);
     try {
@@ -134,6 +159,27 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       token: token,
       body: {'notification_id': notificationId},
     );
+  }
+
+  Future<void> openNotificationLink(String storedLink) async {
+    final target = Uri.tryParse(storedLink);
+    final apiUri = Uri.parse(baseUrl);
+    if (target == null || !target.hasAuthority || target.path.isEmpty) return;
+    final appSegments = apiUri.pathSegments.where((part) => part.isNotEmpty).toList();
+    if (appSegments.length >= 2) appSegments.removeRange(appSegments.length - 2, appSegments.length);
+    final targetSegments = target.pathSegments.where((part) => part.isNotEmpty).toList();
+    if (targetSegments.length < appSegments.length ||
+        !List.generate(appSegments.length, (i) => targetSegments[i] == appSegments[i]).every((same) => same)) {
+      final context = navigatorKey.currentContext;
+      if (context != null && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(english ? 'This link is outside the Ahl El Kheir website.' : 'هذا الرابط خارج موقع أهل الخير.')),
+        );
+      }
+      return;
+    }
+    final relative = targetSegments.skip(appSegments.length).join('/');
+    await openWebPage(relative, queryParameters: target.queryParameters.isEmpty ? null : target.queryParameters);
   }
 
   Future<Map<String, dynamic>> loadNannyPreVerification(String month) async {
@@ -406,7 +452,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         foregroundColor: Color(0xFF0A1F44),
         elevation: 0,
         scrolledUnderElevation: 0,
-        toolbarHeight: 68,
+        toolbarHeight: 56,
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true, fillColor: const Color(0xFFF9FAFC),
@@ -423,7 +469,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         ? const Scaffold(body: Center(child: CircularProgressIndicator()))
         : user == null
           ? LoginPage(english: english,
-              toggle: () => setState(() => english = !english), submit: login)
+              toggle: () => setState(() => english = !english), submit: login,
+              onForgotPassword: () => openWebPage('modules/users/password_recovery_request.php'))
           : Scaffold(
               appBar: AppBar(
                 title: Row(
@@ -449,6 +496,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           english: english,
                           loadPage: loadNotifications,
                           markRead: markNotificationRead,
+                          openRelatedLink: (url) => openNotificationLink(url),
                         ),
                       ),
                     ),
@@ -456,8 +504,11 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   ),
                   IconButton(
                     tooltip: english ? 'My account' : 'حسابي',
-                    onPressed: () => showModalBottomSheet<void>(
-                      context: context,
+                    onPressed: () {
+                    final overlayContext = navigatorKey.currentState?.overlay?.context;
+                    if (overlayContext == null) return;
+                    showModalBottomSheet<void>(
+                      context: overlayContext,
                       showDragHandle: true,
                       isScrollControlled: true,
                       backgroundColor: Colors.white,
@@ -526,7 +577,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           ),
                         ),
                       ),
-                    ),
+                    );
+                  },
                     icon: const Icon(Icons.account_circle_outlined),
                   ),
                   IconButton(
@@ -537,7 +589,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   const SizedBox(width: 6),
                 ],
               ),
-              body: ListView(
+              body: LayoutBuilder(builder: (context, constraints) {
+                final moduleCardWidth = (constraints.maxWidth - 52) / 2;
+                return ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
                   Container(
@@ -582,23 +636,6 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                   height: 1.25,
                                 ),
                               ),
-                              const SizedBox(height: 10),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.13),
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.22)),
-                                ),
-                                child: Text(
-                                  '${english ? 'Role' : 'الدور'} · ${user?['role_code'] ?? ''}',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                ),
-                              ),
                             ],
                           ),
                         ),
@@ -613,6 +650,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         : 'الأدوات المتاحة لحسابك',
                   ),
                   const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 12,
+                    runSpacing: 12,
+                    children: [
                   if ([
                     'admin',
                     'general_manager',
@@ -622,7 +663,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     'accountant',
                     'financial_manager',
                   ].contains(user?['role_code']?.toString()))
-                    Card(
+                    SizedBox(width: moduleCardWidth, child: Card(
                       child: ListTile(
                         leading: const CircleAvatar(
                           child: Icon(Icons.folder_open_rounded),
@@ -649,9 +690,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           );
                         },
                       ),
-                    ),
+                    )),
                   if (['hr_manager', 'hr_staff', 'admin'].contains(user?['role_code']?.toString()))
-                    Card(
+                    SizedBox(width: moduleCardWidth, child: Card(
                       child: ListTile(
                         leading: const CircleAvatar(child: Icon(Icons.badge_outlined)),
                         title: Text(english ? 'Employees' : 'الموظفون'),
@@ -661,9 +702,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           builder: (_) => EmployeesPage(english: english, loadPage: loadEmployees, openDetail: (employee) { final id = int.tryParse(employee['id']?.toString() ?? ''); if (id == null || id < 1) return; navigatorKey.currentState?.push( MaterialPageRoute<void>(builder: (_) => EmployeeDetailPage(employeeId: id, english: english, loadDetail: loadEmployeeDetail))); }),
                         )),
                       ),
-                    ),
+                    )),
                   if (['hr_manager', 'hr_staff', 'admin'].contains(user?['role_code']?.toString()))
-                    Card(
+                    SizedBox(width: moduleCardWidth, child: Card(
                       child: ListTile(
                         leading: const CircleAvatar(child: Icon(Icons.fact_check_outlined)),
                         title: Text(english ? 'Attendance' : 'الحضور والانصراف'),
@@ -673,10 +714,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           builder: (_) => AttendancePage(english: english, loadAttendance: loadAttendance),
                         )),
                       ),
-                    ),
-                  const SizedBox(height: 12),
+                    )),
                   if (['admin', 'vice_general_manager'].contains(user?['role_code']?.toString()))
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.supervisor_account_rounded)),
                       title: Text(english ? 'Supervisors' : 'المشرفون'),
                       subtitle: Text(english ? 'View supervisor assignments and status' : 'عرض المشرفين والحروف المسندة والحالة'),
@@ -684,9 +724,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors),
                       )),
-                    )),
+                    ))),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor'].contains(user?['role_code']?.toString()))
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.volunteer_activism_rounded)),
                       title: Text(english ? 'Sponsors' : 'الكفلاء'),
                       subtitle: Text(english ? 'Browse sponsors within your role scope' : 'استعراض الكفلاء وفق صلاحيات حسابك'),
@@ -694,9 +734,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail),
                       )),
-                    )),
+                    ))),
                   if (['admin', 'vice_general_manager', 'general_manager', 'administration', 'staff', 'social_media'].contains(user?['role_code']?.toString()))
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.campaign_outlined)),
                       title: Text(english ? 'Sponsor requests' : 'طلبات الرعاية'),
                       subtitle: Text(english ? 'Review sponsor leads and their current status' : 'مراجعة طلبات الرعاية وحالاتها الحالية'),
@@ -704,9 +744,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SponsorRequestsPage(english: english, loadRequests: loadSponsorRequests, submitAction: submitSponsorRequestAction),
                       )),
-                    )),
+                    ))),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant'].contains(user?['role_code']?.toString()))
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.volunteer_activism_rounded)),
                       title: Text(english ? 'Sponsorships' : 'الكفالات'),
                       subtitle: Text(english ? 'Browse sponsorship records within your role scope' : 'استعراض سجلات الكفالات وفق صلاحيات حسابك'),
@@ -714,9 +754,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships, loadDetail: loadSponsorshipDetail),
                       )),
-                    )),
+                    ))),
                   if (['financial_manager', 'fm', 'finance', 'admin', 'sudo', 'general_manager'].contains(user?['role_code']?.toString()))
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.fact_check_outlined)),
                       title: Text(english ? 'Financial review queue' : 'طابور المراجعة المالية'),
                       subtitle: Text(english ? 'Review pending supervisor collections and recent decisions' : 'عرض تحصيلات المشرفين المعلقة وسجل المراجعات'),
@@ -724,9 +764,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => FmReviewQueuePage(english: english, loadQueue: loadFmReviewQueue, submitAction: submitFmReviewQueueAction),
                       )),
-                    )),
+                    ))),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant_staff', 'financial_manager'].contains(user?['role_code']?.toString()))
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.receipt_long_rounded)),
                       title: Text(english ? 'Transactions' : 'المعاملات'),
                       subtitle: Text(english ? 'Review payment records within your role scope' : 'مراجعة سجلات المعاملات وفق صلاحياتك'),
@@ -734,9 +774,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => TransactionsPage(english: english, loadTransactions: loadTransactions),
                       )),
-                    )),
+                    ))),
                   if (['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'nanny'].contains(user?['role_code']?.toString()))
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.family_restroom_rounded)),
                       title: Text(english ? 'Families' : 'الأسر'),
                       subtitle: Text(english ? 'Browse families within your role scope' : 'استعراض الأسر وفق صلاحيات حسابك'),
@@ -744,9 +784,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail),
                       )),
-                    )),
+                    ))),
                   if (user?['role_code']?.toString() == 'nanny')
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.playlist_add_check_rounded)),
                       title: Text(english ? 'Preliminary verification' : 'التحقق المسبق للأسر'),
                       subtitle: Text(english ? 'Verify families across your active groups before group submission' : 'توثيق الأسر ضمن مجموعاتك النشطة قبل إرسال المجموعة'),
@@ -758,9 +798,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           submitAction: submitNannyPreVerificationAction,
                         ),
                       )),
-                    )),
+                    ))),
                   if (user?['role_code']?.toString() == 'nanny')
-                    Card(child: ListTile(
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
                       leading: const CircleAvatar(child: Icon(Icons.fact_check_rounded)),
                       title: Text(english ? 'Group verification' : 'توثيق المجموعات'),
                       subtitle: Text(english ? 'Verify family eligibility, contact and bank details' : 'التحقق من حالة الأيتام والتواصل والحسابات البنكية'),
@@ -772,10 +812,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           submitAction: submitNannyGroupVerificationAction,
                         ),
                       )),
-                    )),
+                    ))),
+                    ],
+                  ),
                   const SizedBox(height: 20),
                 ],
-              ),
+              );
+              }),
             )
     ));
 }
@@ -823,6 +866,7 @@ class NotificationPage extends StatefulWidget {
   final bool english;
   final Future<Map<String, dynamic>> Function(int page) loadPage;
   final Future<void> Function(int notificationId) markRead;
+  final Future<void> Function(String url) openRelatedLink;
 
   @override
   State<NotificationPage> createState() => _NotificationPageState();
@@ -1075,10 +1119,11 @@ class OrganizationLogo extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.english, required this.toggle, required this.submit});
+  const LoginPage({super.key, required this.english, required this.toggle, required this.submit, required this.onForgotPassword});
   final bool english;
   final VoidCallback toggle;
   final Future<void> Function(String, String) submit;
+  final Future<void> Function() onForgotPassword;
   @override
   State<LoginPage> createState() => _LoginPageState();
 }
@@ -1087,6 +1132,7 @@ class _LoginPageState extends State<LoginPage> {
   final form = GlobalKey<FormState>();
   final username = TextEditingController(), password = TextEditingController();
   bool busy = false;
+  bool showPassword = false;
   String? error;
   @override
   void dispose() { username.dispose(); password.dispose(); super.dispose(); }
@@ -1192,11 +1238,16 @@ class _LoginPageState extends State<LoginPage> {
                               const SizedBox(height: 15),
                               TextFormField(
                                 controller: password,
-                                obscureText: true,
+                                obscureText: !showPassword,
                                 onFieldSubmitted: (_) { if (!busy) signIn(); },
                                 decoration: InputDecoration(
                                   labelText: en ? 'Password' : 'كلمة المرور',
                                   prefixIcon: const Icon(Icons.lock_outline_rounded),
+                                  suffixIcon: IconButton(
+                                    tooltip: showPassword ? (en ? 'Hide password' : 'إخفاء كلمة المرور') : (en ? 'Show password' : 'إظهار كلمة المرور'),
+                                    onPressed: () => setState(() => showPassword = !showPassword),
+                                    icon: Icon(showPassword ? Icons.visibility_off_rounded : Icons.visibility_rounded),
+                                  ),
                                 ),
                                 validator: (v) => v == null || v.isEmpty
                                   ? (en ? 'Enter password' : 'أدخل كلمة المرور') : null,
@@ -1213,7 +1264,15 @@ class _LoginPageState extends State<LoginPage> {
                                   child: Text(error!, style: const TextStyle(color: Color(0xFF842026), fontSize: 13)),
                                 ),
                               ],
-                              const SizedBox(height: 20),
+                              Align(
+                                alignment: AlignmentDirectional.centerEnd,
+                                child: TextButton.icon(
+                                  onPressed: busy ? null : widget.onForgotPassword,
+                                  icon: const Icon(Icons.key_rounded, size: 17),
+                                  label: Text(en ? 'Forgot password?' : 'نسيت كلمة المرور؟'),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
                               FilledButton(
                                 onPressed: busy ? null : signIn,
                                 child: busy
