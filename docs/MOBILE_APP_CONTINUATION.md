@@ -1040,3 +1040,19 @@ Commits on `main`: `68ab7b57283b4fd3b052c860cb5cf6b64d73daf8`, `141662935f37f389
 - No physical-device handoff test is claimed.
 - A website handoff is not a native mobile workflow. The native API/screens currently cover only a subset of the existing system. Continue by inventorying every visible tool by native/API-backed vs WEB, then implement native workflows in prioritized slices using the existing database/business rules and server-side authorization. Do not invent API routes or infer permissions from client-side role codes.
 - Do not ask the user to retest each small change. Run CI and source-level checks first, then provide one consolidated APK for acceptance once the meaningful slice is complete.
+
+
+## 2026-10-25 — Native-only navigation and native admin workflows
+
+The mobile client no longer uses `url_launcher`, does not call `api/v1/auth/web_handoff.php`, and has no external-browser launch path. Former website routes now stay in the Flutter navigator. Existing native screens are used directly for projects, employees, attendance, leave requests, sponsors, sponsor requests, families, sponsorships, transactions, the financial review queue, salary statements, and suspension cases. Tool labels and account-sheet text no longer advertise website handoffs.
+
+Where a native workflow is still missing, the app displays an explicit in-app notice instead of opening the website. This is a safety boundary, not a claim that the missing workflow has been implemented.
+
+New native administration features:
+- `GET api/v1/admin/users.php`: read-only, searchable, paginated user directory; server-side role guard is administrator/Sudo or HR Manager; password hashes and other credentials are never returned.
+- `GET api/v1/admin/departments.php` and `POST api/v1/admin/departments_action.php`: native department list/create/update/delete. Authorization is the canonical administrator role, matching the existing department page's guard. Names are required and limited to 100 characters, duplicates are rejected, and deletion is blocked while users or employees remain assigned.
+- `mobile/ahl_el_kheir_app/lib/audit_log_page.dart`: native recent audit activity view using the existing administrator overview response. It clearly says it currently displays only the latest six events; full audit pagination remains open.
+
+The department operations were extracted into `api/v1/admin/departments_service.php` and verified by rollback-only full-schema MariaDB test `tools/test_mobile_admin_departments_service.php`. GitHub Actions run [40210824853](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40210824853) passed the full-schema migration job, PHP lint, and the department service integration output: `PASS | mobile admin department service | create, list, duplicate guard, update, assigned-user delete guard, delete, rollback=PASS`.
+
+Flutter widget tests passed for the department form/list, user directory, audit activity, and native-only notice. Current physical-device acceptance has not been performed. Remaining work is substantial: user creation/edit/activation/password reset and accountant assignments are not native; recovery decisions, reports, settings, accounting/disbursements/Fina, backups/database tools, global search, profile/messages, orphan forms, and several HR/finance workflows still need real native implementations. Do not ask the user to test this intermediate checkpoint or describe mobile parity as complete.
