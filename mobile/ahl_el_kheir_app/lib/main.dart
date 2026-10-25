@@ -20,6 +20,7 @@ import 'sponsorships_page.dart';
 import 'sponsor_requests_page.dart';
 import 'nanny_group_verification_page.dart';
 import 'nanny_pre_verification_page.dart';
+import 'role_tools_section.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -1078,6 +1079,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       )),
                     ))),
                     ],
+                  ),
+                  const SizedBox(height: 22),
+                  RoleToolsSection(
+                    roleCode: roleCode,
+                    english: english,
+                    onOpen: (path) => openWebPage(path),
                   ),
                   const SizedBox(height: 22),
                   _HomeSectionTitle(
