@@ -4562,3 +4562,7 @@ The disposable MariaDB HTTP integration harness now verifies that another user's
 
 ## 2026-10-25 — Mobile sponsor-request authorization CI checkpoint
 Disposable MariaDB live HTTP coverage now confirms sponsor-request role boundaries and a valid/invalid status transition: nanny listing/mutation is denied without changing `new`; admin may transition `new` to `contacted`; a repeated transition returns 409 without mutation. Test commit `f0dfa70a376771cbceeae04e73b57f2e6e40cb89`; [run 40161801824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161801824) passed. No production code or schema changed. Local XAMPP migration state and full local role/record-scope/action acceptance remain open.
+
+
+## 2026-10-25 — Mobile nanny family scope integration checkpoint
+Disposable live HTTP coverage now verifies assigned-family detail access, foreign-family detail denial (403), and family-list inclusion/exclusion for a nanny. The first attempt timed out at the harness's five-second request limit while listing the checked-in schema's 2,208 families; the test helper now allows 20 seconds for this endpoint only. Updated harness commit `9312a7118ebe7876986dcecfda0bdcd0e3e594d9` passed [run 40162023286](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162023286). No production code/schema change. Local XAMPP migration state and full local role/record-scope/action acceptance remain open.
