@@ -2350,3 +2350,7 @@ Commit `5b1b95cbdda200887dd03c63e2a7bf09665a746c` adds disposable fixtures provi
 
 ### 2026-10-25 — Mobile supervisor sponsor-responsibility scope verified
 Commit `de9af9c85a56f5f5f593ec404dda7b26753bfdb8` adds a sponsor fixture whose `supervisor_id` points to the authenticated user but whose first-letter/gender is outside that user's responsibility matrix. Live API tests confirm direct detail access is denied (403) and the sponsor is excluded from the supervisor's list. [Run 40162198710](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162198710) passed against disposable MariaDB. No production code/schema changed; local XAMPP acceptance remains open. Never run the harness against `ahl_el_kheir`.
+
+
+### 2026-10-25 — Mobile milestone lifecycle authorization finding
+Source review found `api/v1/projects/milestone_action.php` enforced assignment and blocked closed projects but did not enforce the same approval/operational lifecycle boundary already used by `milestone_create.php`. Added the matching non-admin guard in commit `bc6f6ee0104326ee536fdaa732f1e693de739eb8`. Added a disposable-CI integration assertion that a Project Supervisor cannot edit a milestone on a draft/unapproved project and that the stored title remains unchanged in commit `c6cc08b3b646c1906392019e116a646ab038a5df`. CI run 40162518220 was in progress at this checkpoint. Do not claim regression verification until that run passes. Local XAMPP/MariaDB acceptance remains outstanding; never run the mobile integration harness against `ahl_el_kheir`.
