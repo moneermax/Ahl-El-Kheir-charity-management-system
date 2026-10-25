@@ -12,6 +12,7 @@ void main() {
             english: false,
             toggle: () {},
             submit: (_, __) async {},
+            onForgotPassword: () async {},
           ),
         ),
       ),
