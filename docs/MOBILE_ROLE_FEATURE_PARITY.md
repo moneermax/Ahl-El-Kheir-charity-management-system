@@ -94,3 +94,12 @@ Commits: `f6ac0b4490b712ae7bebd23474aa97d6ab93d165` (API), `1e74df5e3e6015938081
 The additional role-tool routes were checked against the current repository tree. The Supervisor-only “Record Fina collection” link was removed after source inspection confirmed `modules/transactions/fina_payment_create.php` permits only financial_manager/fm/admin. A widget regression test covers that permission boundary.
 
 Automated verification for the final combined revision is pending. Do not claim the new dashboard SQL is runtime-verified against the local database until its workflow and local XAMPP/API request pass. Transaction date filters already exist in both the mobile UI and API, including inclusive `transaction_date >= from` and `transaction_date <= to`; same-day widget coverage exists, but the complete date-boundary, empty-result, reversed-date, pagination/refresh and authenticated API acceptance remains open. Website-only links remain website navigation, not native feature parity. Physical-device and local-database acceptance remain pending.
+
+## 2026-10-25 — Role-tool authorization follow-up
+
+A second guard-level review corrected additional mobile quick-tool visibility:
+- HR Manager-only pages (employment states, incentive verification, payroll reversal, attendance policy, payroll integrity, and incentive policy management) are now shown only to `hr_manager`; HR Staff retain pages whose real web guards permit them.
+- Accountant-only role cards no longer surface monthly/group disbursement pages whose existing web guards deny the `accountant` role. Those links remain available to `accountant_staff`.
+- Regression tests cover the HR Manager/HR Staff split, accountant disbursement restrictions, and the Supervisor Fina-creation restriction.
+
+Commits: `98e2e48a724b0b403a8795988005f5c4f30cd311`, `d845ec9a67a6540d9f5764c54f6096c9bfceaf5a`, `07a8d34ca187a9b6c28692e32c813a0cc76e2166`, `7532b0f63fc24d7916003f54d8bfee9860ed72d9`. Latest tests/build after these changes are still pending. Continue auditing role tools against actual page guards; repository file existence alone is not sufficient.
