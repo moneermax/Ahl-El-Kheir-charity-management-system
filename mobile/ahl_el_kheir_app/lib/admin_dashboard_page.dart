@@ -171,6 +171,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             _SectionHeading(title: t('البيانات الأساسية', 'CORE RECORDS'), subtitle: t('السجلات التشغيلية الرئيسية', 'Primary operational records'), icon: Icons.hub_rounded, color: cyan),
             const SizedBox(height: 10),
             _ToolTile(icon: Icons.volunteer_activism_rounded, color: orange, title: t('الكفلاء', 'Sponsors'), description: t('سجل الكفلاء وبياناتهم', 'Sponsor directory and records'), onTap: () => widget.onOpenTool('sponsors')),
+            _ToolTile(icon: Icons.assignment_ind_rounded, color: cyan, title: t('إسناد الكفلاء', 'Sponsor assignment'), description: t('إسناد الكفلاء غير المسندين للمشرفين النشطين', 'Assign unassigned sponsors to active supervisors'), onTap: () => widget.onOpenTool('sponsor_assignment')),
             _ToolTile(icon: Icons.family_restroom_rounded, color: cyan, title: t('الأسر', 'Families'), description: t('سجل الأسر والبيانات المرتبطة بها', 'Family records and linked information'), onTap: () => widget.onOpenTool('families')),
             _ToolTile(icon: Icons.handshake_rounded, color: rose, title: t('الكفالات', 'Sponsorships'), description: t('سجل الكفالات وعلاقاتها', 'Sponsorship records and relationships'), onTap: () => widget.onOpenTool('sponsorships')),
             _ToolTile(icon: Icons.query_stats_rounded, color: cyan, title: t('التقارير', 'Reports'), description: t('مركز التقارير الموحد', 'Unified reporting center'), tag: t('ويب', 'WEB'), onTap: () => widget.onOpenTool('reports')),
