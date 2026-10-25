@@ -80,7 +80,6 @@ class _SponsorAssignmentPageState extends State<SponsorAssignmentPage> {
         sponsors.removeWhere((item) => _id(item['id']) == sponsorId);
         selected.remove(sponsorId);
       });
-      if (result['sponsor_id'] == null) await load();
     } catch (e) {
       if (mounted) {
         setState(() => error = e.toString());
