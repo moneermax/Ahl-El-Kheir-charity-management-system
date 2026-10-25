@@ -72,6 +72,7 @@ $testPaymentId = 0;
 $testMilestoneId = 0;
 $testForeignProjectId = 0;
 $testForeignMilestoneId = 0;
+$testNotificationId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -124,6 +125,38 @@ try {
     $stored = $pdo->prepare('SELECT token_hash FROM mobile_api_sessions WHERE token_hash=?');
     $stored->execute([$tokenHash]);
     mobileApiExpect((string)$stored->fetchColumn() === $tokenHash && $tokenHash !== $token, 'only the SHA-256 token hash is stored');
+
+
+    $otherUser = $pdo->prepare('SELECT id FROM users WHERE id <> ? ORDER BY id LIMIT 1');
+    $otherUser->execute([$userId]);
+    $notificationRecipientId = (int)$otherUser->fetchColumn();
+    if ($notificationRecipientId < 1) throw new RuntimeException('Notification isolation test requires a second user in the disposable schema.');
+    $foreignNotificationTitle = 'Mobile API cross-account fixture ' . bin2hex(random_bytes(6));
+    $pdo->prepare('INSERT INTO notifications (recipient_user_id, type, title, body, link, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, NOW())')
+        ->execute([$notificationRecipientId, 'info', $foreignNotificationTitle, 'Disposable authorization test', null]);
+    $testNotificationId = (int)$pdo->lastInsertId();
+
+    $r = mobileApiRequest('/api/v1/notifications/index.php', 'GET', null, $token);
+    $listedNotificationIds = array_map(
+        static fn(array $item): int => (int)($item['id'] ?? 0),
+        $r['json']['data']['items'] ?? []
+    );
+    mobileApiExpect(
+        $r['status'] === 200
+        && ($r['json']['ok'] ?? false) === true
+        && !in_array($testNotificationId, $listedNotificationIds, true),
+        'notification listing excludes another account\'s notification'
+    );
+
+    $r = mobileApiRequest('/api/v1/notifications/mark_read.php', 'POST', ['notification_id' => $testNotificationId], $token);
+    $foreignNotificationReadState = $pdo->prepare('SELECT is_read FROM notifications WHERE id=? AND recipient_user_id=?');
+    $foreignNotificationReadState->execute([$testNotificationId, $notificationRecipientId]);
+    mobileApiExpect(
+        $r['status'] === 200
+        && ($r['json']['ok'] ?? false) === true
+        && (int)$foreignNotificationReadState->fetchColumn() === 0,
+        'mark-read cannot change another account\'s notification'
+    );
 
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 200 && ($r['json']['data']['user']['role_code'] ?? '') === 'nanny', '/me accepts a valid token and returns the live role');
@@ -316,6 +349,9 @@ try {
         proc_close($server);
     }
     foreach ($serverPipes as $pipe) if (is_resource($pipe)) fclose($pipe);
+    if ($testNotificationId > 0) {
+        $pdo->prepare('DELETE FROM notifications WHERE id=?')->execute([$testNotificationId]);
+    }
     if (isset($testTokenHashes) && $testTokenHashes) {
         $marks = implode(',', array_fill(0, count($testTokenHashes), '?'));
         $stmt = $pdo->prepare("DELETE FROM mobile_api_sessions WHERE token_hash IN ($marks)");
