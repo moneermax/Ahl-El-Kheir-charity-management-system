@@ -33,6 +33,7 @@ void main() {
           expect(id, 17);
           liftCalls++;
           lifted = true;
+          return {'case_id': id};
         },
       ),
     ));
