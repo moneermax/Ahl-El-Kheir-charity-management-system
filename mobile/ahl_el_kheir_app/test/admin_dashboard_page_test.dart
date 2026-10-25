@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/admin_dashboard_page.dart';
 
 void main() {
-  testWidgets('admin dashboard exposes guarded password recovery route', (tester) async {
+  testWidgets('admin dashboard exposes native recovery route without duplicate dashboard link', (tester) async {
     String? openedTool;
 
     await tester.pumpWidget(MaterialApp(
@@ -27,13 +27,7 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    await tester.scrollUntilVisible(
-      find.text('Administration dashboard'),
-      180,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Administration dashboard'));
-    expect(openedTool, 'web_dashboard');
+    expect(find.text('Administration dashboard'), findsNothing);
 
     await tester.scrollUntilVisible(
       find.text('Password recovery requests'),
