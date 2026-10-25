@@ -2278,3 +2278,7 @@ The disposable mobile API integration harness now verifies that a nanny can view
 
 ## 2026-10-25 — Mobile supervisor sponsor scope tests passed
 The disposable integration harness now proves a supervisor cannot access a sponsor solely because `sponsor.supervisor_id` matches: when the sponsor's first-letter/gender falls outside that supervisor's matrix, detail returns 403 and list omits the sponsor. Commit `de9af9c85a56f5f5f593ec404dda7b26753bfdb8`; [run 40162198710](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162198710) passed. Continue remaining API authorization/source review; local XAMPP migration state and broader live local role/record-scope/action acceptance remain unverified. Never run the harness against `ahl_el_kheir`.
+
+
+## 2026-10-25 — Mobile API milestone lifecycle guard
+The mobile API source audit found that milestone edit/delete did not enforce the approval and operational lifecycle guard already present in milestone creation. This was corrected on `main` in `bc6f6ee0104326ee536fdaa732f1e693de739eb8`. A disposable-CI test now attempts to edit a milestone on the draft fixture and verifies both HTTP 409 `project_not_operational` and no data mutation; test commit `c6cc08b3b646c1906392019e116a646ab038a5df`. Run 40162518220 was in progress at documentation time. Verify its final result before calling the test passed, then continue the source/schema-led API authorization audit. Local XAMPP migration state and live role/record/action acceptance remain open. Never run the harness against `ahl_el_kheir`.
