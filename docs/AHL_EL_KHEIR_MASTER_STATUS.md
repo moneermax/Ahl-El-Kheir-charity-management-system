@@ -4738,3 +4738,12 @@ A native role-metrics API and Flutter dashboard section have been added for the 
 The role-tool route audit found one role mismatch: Supervisor was offered a Fina collection creation page that explicitly denies Supervisor access. That link has been removed and a widget regression test added.
 
 **Not closed:** combined-revision CI, execution of role dashboard SQL against the local development database, physical-device acceptance, and full transaction date-filter acceptance. The latest APK CI success observed before these new commits is not evidence that this new revision is built. Website-only links still do not count as native parity.
+
+## 2026-10-25 — Role-tool authorization follow-up
+
+A second guard-level review corrected additional mobile quick-tool visibility:
+- HR Manager-only pages (employment states, incentive verification, payroll reversal, attendance policy, payroll integrity, and incentive policy management) are now shown only to `hr_manager`; HR Staff retain pages whose real web guards permit them.
+- Accountant-only role cards no longer surface monthly/group disbursement pages whose existing web guards deny the `accountant` role. Those links remain available to `accountant_staff`.
+- Regression tests cover the HR Manager/HR Staff split, accountant disbursement restrictions, and the Supervisor Fina-creation restriction.
+
+Commits: `98e2e48a724b0b403a8795988005f5c4f30cd311`, `d845ec9a67a6540d9f5764c54f6096c9bfceaf5a`, `07a8d34ca187a9b6c28692e32c813a0cc76e2166`, `7532b0f63fc24d7916003f54d8bfee9860ed72d9`. Latest tests/build after these changes are still pending. Continue auditing role tools against actual page guards; repository file existence alone is not sufficient.
