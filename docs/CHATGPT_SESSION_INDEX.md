@@ -2334,3 +2334,7 @@ The milestone ID response correction has focused CI endpoint coverage. The assig
 
 ### 2026-10-25 — Cross-project milestone isolation verified in CI
 Commit `bc67997093d15fd616ac95ac4ead566840004883` adds a second-project/foreign-milestone fixture to the disposable mobile API integration harness. Attempting to edit the foreign milestone using the assigned project ID must return 404 `milestone_not_found` and leave the stored title unchanged. [Run 40160867381](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160867381) completed successfully. This adds record-isolation evidence but does not close the broad authorization audit or prove local XAMPP runtime/migration state. Do not run the harness against `ahl_el_kheir`.
+
+
+### 2026-10-25 — Mobile notification cross-account isolation verified
+Commit `ab2a6173e596f88ed4e7c2fb6e962e40e5429192` adds disposable-database HTTP assertions that a notification addressed to a second user is absent from the authenticated user's list and remains unread after that user calls the API mark-read endpoint. [Mobile API auth integration run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591) passed, including schema import, session migration, and the live endpoint harness. Cleanup deletes only the inserted notification. Local XAMPP migration state and broader live local API acceptance remain outstanding; never run the harness against `ahl_el_kheir`.
