@@ -96,7 +96,6 @@ class RoleToolsSection extends StatelessWidget {
       case 'vgm':
         return [
           g('الإشراف والتوزيع', 'Supervision and assignment', [
-            t('إسناد الكفلاء للمشرفين', 'Assign sponsors to supervisors', 'إدارة توزيع المسؤوليات حسب قواعد النظام', 'Manage assignments under the existing system rules', 'modules/sponsors/assign.php', Icons.assignment_ind_outlined),
             t('مركز التقارير', 'Report center', 'تقارير التشغيل المتاحة للدور', 'Operational reports available to this role', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة تعليق الكفالات', 'Manage sponsorship suspensions', 'تعليق أو رفع التعليق وفق الصلاحيات', 'Suspend or lift suspensions within your permissions', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
