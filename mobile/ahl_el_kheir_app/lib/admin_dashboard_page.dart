@@ -266,11 +266,13 @@ class _MetricCard extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
       children: [
-        Row(children: [
-          Container(width: 34, height: 34, decoration: BoxDecoration(color: color.withValues(alpha: .11), borderRadius: BorderRadius.circular(11)), child: Icon(icon, color: color, size: 18)),
-          const Spacer(),
-          Icon(Icons.north_east_rounded, color: color.withValues(alpha: .65), size: 15),
-        ]),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Container(width: 34, height: 34, decoration: BoxDecoration(color: color.withValues(alpha: .11), borderRadius: BorderRadius.circular(11)), child: Icon(icon, color: color, size: 18)),
+            Icon(Icons.north_east_rounded, color: color.withValues(alpha: .65), size: 15),
+          ],
+        ),
         const Spacer(),
         FittedBox(
           fit: BoxFit.scaleDown,
