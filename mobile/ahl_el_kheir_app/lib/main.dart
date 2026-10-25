@@ -451,115 +451,127 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               toggle: () => setState(() => english = !english), submit: login,
               onForgotPassword: () => openWebPage('modules/users/password_recovery_request.php'))
           : Scaffold(
-              appBar: AppBar(
-                title: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const OrganizationLogo(size: 38),
-                    const SizedBox(width: 10),
-                    Flexible(
-                      child: Text(
-                        english ? 'Ahl El Kheir' : 'أهل الخير',
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    ),
-                  ],
-                ),
-                actions: [
-                  IconButton(
-                    tooltip: english ? 'Notifications' : 'الإشعارات',
-                    onPressed: () => navigatorKey.currentState?.push(
-                      MaterialPageRoute<void>(
-                        builder: (_) => NotificationPage(
-                          english: english,
-                          loadPage: loadNotifications,
-                          markRead: markNotificationRead,
-                        ),
-                      ),
-                    ),
-                    icon: const Icon(Icons.notifications_none_rounded),
-                  ),
-                  IconButton(
-                    tooltip: english ? 'My account' : 'حسابي',
-                    onPressed: () {
-                    final overlayContext = navigatorKey.currentState?.overlay?.context;
-                    if (overlayContext == null) return;
-                    showModalBottomSheet<void>(
-                      context: overlayContext,
-                      showDragHandle: true,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.white,
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-                      ),
-                      builder: (sheetContext) => SafeArea(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              ListTile(
-                                leading: const CircleAvatar(
-                                  backgroundColor: Color(0xFFDCE7F5),
-                                  child: Icon(Icons.person_rounded, color: Color(0xFF0A1F44)),
-                                ),
-                                title: Text(user?['full_name']?.toString() ?? '',
-                                  style: const TextStyle(fontWeight: FontWeight.w800)),
-                                subtitle: Text(user?['role_code']?.toString() ?? ''),
-                              ),
-                              const Divider(height: 20),
-                              ListTile(
-                                leading: const Icon(Icons.payments_outlined),
-                                title: Text(english ? 'My salary statements' : 'كشوف رواتبي'),
-                                trailing: const Icon(Icons.chevron_right_rounded),
-                                onTap: () {
-                                  Navigator.pop(sheetContext);
-                                  navigatorKey.currentState?.push(MaterialPageRoute<void>(
-                                    builder: (_) => MySalaryStatementsPage(
-                                      english: english,
-                                      loadPage: loadMySalaryStatements,
-                                    ),
-                                  ));
-                                },
-                              ),
-                              ListTile(
-                                leading: const Icon(Icons.event_note_rounded),
-                                title: Text(english ? 'Leave requests' : 'طلبات الإجازة'),
-                                trailing: const Icon(Icons.chevron_right_rounded),
-                                onTap: () {
-                                  Navigator.pop(sheetContext);
-                                  navigatorKey.currentState?.push(MaterialPageRoute<void>(
-                                    builder: (_) => LeaveRequestsPage(
-                                      english: english,
-                                      roleCode: user?['role_code']?.toString() ?? '',
-                                      loadLeaves: loadLeaves,
-                                      submitAction: submitLeaveAction,
-                                    ),
-                                  ));
-                                },
-                              ),
-
-                            ],
+              appBar: PreferredSize(
+                preferredSize: const Size.fromHeight(104),
+                child: AppBar(
+                  toolbarHeight: 104,
+                  titleSpacing: 16,
+                  title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        children: [
+                          const OrganizationLogo(size: 38),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              english ? 'Ahl El Kheir' : 'أهل الخير',
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(fontWeight: FontWeight.w800),
+                            ),
                           ),
-                        ),
+                        ],
                       ),
-                    );
-                  },
-                    icon: const Icon(Icons.account_circle_outlined),
+                      const SizedBox(height: 4),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          IconButton(
+                            tooltip: english ? 'Notifications' : 'الإشعارات',
+                            onPressed: () => navigatorKey.currentState?.push(
+                              MaterialPageRoute<void>(
+                                builder: (_) => NotificationPage(
+                                  english: english,
+                                  loadPage: loadNotifications,
+                                  markRead: markNotificationRead,
+                                ),
+                              ),
+                            ),
+                            icon: const Icon(Icons.notifications_none_rounded),
+                          ),
+                          IconButton(
+                            tooltip: english ? 'My account' : 'حسابي',
+                            onPressed: () {
+                              final overlayContext = navigatorKey.currentState?.overlay?.context;
+                              if (overlayContext == null) return;
+                              showModalBottomSheet<void>(
+                                context: overlayContext,
+                                showDragHandle: true,
+                                isScrollControlled: true,
+                                backgroundColor: Colors.white,
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                                ),
+                                builder: (sheetContext) => SafeArea(
+                                  child: Padding(
+                                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        ListTile(
+                                          leading: const CircleAvatar(
+                                            backgroundColor: Color(0xFFDCE7F5),
+                                            child: Icon(Icons.person_rounded, color: Color(0xFF0A1F44)),
+                                          ),
+                                          title: Text(user?['full_name']?.toString() ?? '',
+                                            style: const TextStyle(fontWeight: FontWeight.w800)),
+                                          subtitle: Text(user?['role_code']?.toString() ?? ''),
+                                        ),
+                                        const Divider(height: 20),
+                                        ListTile(
+                                          leading: const Icon(Icons.payments_outlined),
+                                          title: Text(english ? 'My salary statements' : 'كشوف رواتبي'),
+                                          trailing: const Icon(Icons.chevron_right_rounded),
+                                          onTap: () {
+                                            Navigator.pop(sheetContext);
+                                            navigatorKey.currentState?.push(MaterialPageRoute<void>(
+                                              builder: (_) => MySalaryStatementsPage(
+                                                english: english,
+                                                loadPage: loadMySalaryStatements,
+                                              ),
+                                            ));
+                                          },
+                                        ),
+                                        ListTile(
+                                          leading: const Icon(Icons.event_note_rounded),
+                                          title: Text(english ? 'Leave requests' : 'طلبات الإجازة'),
+                                          trailing: const Icon(Icons.chevron_right_rounded),
+                                          onTap: () {
+                                            Navigator.pop(sheetContext);
+                                            navigatorKey.currentState?.push(MaterialPageRoute<void>(
+                                              builder: (_) => LeaveRequestsPage(
+                                                english: english,
+                                                roleCode: user?['role_code']?.toString() ?? '',
+                                                loadLeaves: loadLeaves,
+                                                submitAction: submitLeaveAction,
+                                              ),
+                                            ));
+                                          },
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(Icons.account_circle_outlined),
+                          ),
+                          IconButton(
+                            tooltip: english ? 'Change language' : 'تغيير اللغة',
+                            onPressed: () => setState(() => english = !english),
+                            icon: const Icon(Icons.language_rounded),
+                          ),
+                          IconButton(
+                            tooltip: english ? 'Sign out' : 'تسجيل الخروج',
+                            onPressed: logout,
+                            icon: const Icon(Icons.logout_rounded),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: english ? 'Sign out' : 'تسجيل الخروج',
-                    onPressed: logout,
-                    icon: const Icon(Icons.logout_rounded),
-                  ),
-                  IconButton(
-                    tooltip: english ? 'Change language' : 'تغيير اللغة',
-                    onPressed: () => setState(() => english = !english),
-                    icon: const Icon(Icons.language_rounded),
-                  ),
-                  const SizedBox(width: 6),
-                ],
+                ),
               ),
               body: LayoutBuilder(builder: (context, constraints) {
                 final moduleCardWidth = constraints.maxWidth - 40;
@@ -617,9 +629,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   const SizedBox(height: 24),
                   _HomeSectionTitle(
                     title: english ? 'Work areas' : 'مساحات العمل',
-                    subtitle: english
-                        ? 'Tools available to your account'
-                        : 'الأدوات المتاحة لحسابك',
+                    subtitle: '',
                   ),
                   const SizedBox(height: 12),
                   Wrap(
@@ -797,7 +807,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
 
 
 class _HomeSectionTitle extends StatelessWidget {
-  const _HomeSectionTitle({required this.title, required this.subtitle});
+  const _HomeSectionTitle({required this.title, this.subtitle = ''});
 
   final String title;
   final String subtitle;
@@ -815,13 +825,15 @@ class _HomeSectionTitle extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
             ),
-            const SizedBox(height: 3),
-            Text(
-              subtitle,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: const Color(0xFF64748B),
-                  ),
-            ),
+            if (subtitle.isNotEmpty) ...[
+              const SizedBox(height: 3),
+              Text(
+                subtitle,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: const Color(0xFF64748B),
+                    ),
+              ),
+            ],
           ],
         ),
       );
