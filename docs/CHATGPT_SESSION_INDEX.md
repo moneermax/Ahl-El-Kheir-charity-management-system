@@ -2427,3 +2427,6 @@ Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification han
 
 The next analyzer pass isolated one remaining Dart error: the notification mark-read helper returned without a boolean when the widget was unmounted during an error. Corrected to return `false` explicitly so the detail route is not opened after an unsuccessful mark-read operation. Source commit: `b572e49403805f3057e4830c211002c0d4fbd0e6`. The matching Flutter workflow run `40183286267` is queued; analysis/tests/APK status remain unverified.
 
+## 2026-10-25 — Mobile UI feedback checkpoint
+
+The user rejected the recent two-column mobile dashboard layout and asked to restore the prior single-column full-width operational-card arrangement. Sign-out must be directly in the top app-bar icon row, not hidden inside the account menu. Notification detail content must remain in-app; external browser navigation from a notification detail has been removed, with a clear in-app note when the related website destination is not available natively. Source changes and a regression widget test are committed on `main`; latest CI and APK artifact verification are pending. See `docs/MOBILE_APP_CONTINUATION.md`.
