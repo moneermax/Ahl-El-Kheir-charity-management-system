@@ -23,6 +23,7 @@ import 'sponsor_requests_page.dart';
 import 'nanny_group_verification_page.dart';
 import 'nanny_pre_verification_page.dart';
 import 'role_tools_section.dart';
+import 'suspension_cases_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -131,6 +132,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
   }
 
   Future<void> openWebPage(String relativePath, {Map<String, String>? queryParameters}) async {
+    if (relativePath == 'modules/families/suspensions.php') {
+      openSuspensionCases();
+      return;
+    }
     final uri = webPageUri(relativePath, queryParameters: queryParameters);
     final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
     if (!opened) {
@@ -270,6 +275,35 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       default:
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(SnackBar(content: Text(english ? 'This tool is not mapped yet.' : 'لم يتم ربط هذه الأداة بعد.')));
     }
+  }
+
+  Future<Map<String, dynamic>> loadSuspensionCases() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'suspensions/index.php', token: token);
+  }
+
+  Future<void> liftSuspensionCase(int caseId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    await call('POST', 'suspensions/lift.php', token: token, body: {'case_id': caseId});
+  }
+
+  void openSuspensionCases() {
+    final role = user?['role_code']?.toString() ?? '';
+    final canLift = ['admin', 'sudo', 'super_admin', 'vice_general_manager', 'vgm'].contains(role);
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => SuspensionCasesPage(
+        english: english,
+        canLift: canLift,
+        loadCases: loadSuspensionCases,
+        liftCase: liftSuspensionCase,
+      ),
+    ));
   }
 
   Future<Map<String, dynamic>> loadAgeAlerts() async {
