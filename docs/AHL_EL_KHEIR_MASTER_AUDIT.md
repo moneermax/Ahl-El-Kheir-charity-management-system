@@ -4948,3 +4948,6 @@ Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification han
 
 The next analyzer pass isolated one remaining Dart error: the notification mark-read helper returned without a boolean when the widget was unmounted during an error. Corrected to return `false` explicitly so the detail route is not opened after an unsuccessful mark-read operation. Source commit: `b572e49403805f3057e4830c211002c0d4fbd0e6`. The matching Flutter workflow run `40183286267` is queued; analysis/tests/APK status remain unverified.
 
+## 2026-10-25 — Mobile UI correction (user-requested)
+
+The two-column dashboard redesign was rejected by the user. The mobile home module cards now use the prior single-column/full-width arrangement, and sign-out is exposed as a top app-bar icon. Notification details remain in-app; the external related-page launch action was removed to avoid sending the user to a browser from notification details. This does not imply arbitrary related website workflows have native mobile implementations. Latest Flutter CI/artifact verification and physical-device acceptance remain pending.
