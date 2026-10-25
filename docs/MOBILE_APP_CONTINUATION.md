@@ -891,3 +891,19 @@ Verification:
 - Flutter analysis and widget tests passed in run `40196556920` at source `d8a8e66e056d0f1535862bfefc1750592fe55a08`, including confirm/toggle/refresh behavior and read-only visibility. APK build/publication is still pending at this checkpoint.
 
 The status service test verified the update and rollback against disposable MariaDB. Local XAMPP and physical-device acceptance remain open.
+
+
+## 2026-10-25 — Mobile parity verification refresh
+
+Repository audit on `main` confirmed that every literal website route currently listed in `mobile/ahl_el_kheir_app/lib/role_tools_section.dart` exists in the repository tree. These entries remain website links, not native workflow implementations; external-browser website-session continuity is still unverified.
+
+Verified native/API milestones:
+- Role dashboard metrics: full-schema MariaDB 10.4.32 CI passed for all 14 supported non-admin role variants in run `40195397302`.
+- Role dashboard/filter widgets and Android debug APK: run `40195228074` passed at Flutter source `64da0db9eef605a8a1442e9c623e1fa3a85f80e7`.
+- Native sponsor assignment: rollback-only full-schema service test passed in run `40195979512`.
+- Native supervisor status controls: rollback-only full-schema service test passed in run `40196421650`; Flutter analyze/tests and APK artifact publication passed in run `40196556920` at source `d8a8e66e056d0f1535862bfefc1750592fe55a08`.
+- Transaction date filtering: added `tools/test_mobile_transactions_date_filter.php`, which moves three existing records to isolated 2099 boundary dates inside a transaction, verifies inclusive start/end and same-day behavior plus exclusion outside the range, and rolls all changes back. PHP lint and the full-schema MariaDB test passed in run `40198548850`: `PASS | mobile transaction date filter | inclusive start/end, same-day range, outside-bound exclusion, rollback=PASS`.
+
+The API query test complements the Flutter widget tests for same-day/multi-day filters, pagination/refresh, and reversed-range rejection. It does not replace authenticated HTTP testing against the intended local `ahl_el_kheir` database or physical-device acceptance.
+
+**Still open:** complete native implementations for several role-specific financial, HR, beneficiary-form and Fina workflows; website-session handoff for WEB links; local XAMPP/API/database verification; physical-device acceptance. Do not describe mobile parity as complete.
