@@ -277,21 +277,26 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         token: token,
         body: {'child_id': childId},
       );
-      final refreshed = await loadAgeAlerts();
-      final raw = refreshed['items'];
-      if (mounted) {
-        setState(() {
-          ageAlertItems = raw is List
-              ? raw.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
-              : <Map<String, dynamic>>[];
-        });
-        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-          SnackBar(
-            content: Text(english
-                ? 'Suspension completed and active linked sponsorships paused.'
-                : 'تم التعليق وإيقاف الكفالات النشطة المرتبطة.'),
-          ),
-        );
+      if (!mounted) return;
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+        SnackBar(
+          content: Text(english
+              ? 'Suspension completed and active linked sponsorships paused.'
+              : 'تم التعليق وإيقاف الكفالات النشطة المرتبطة.'),
+        ),
+      );
+      try {
+        final refreshed = await loadAgeAlerts();
+        final raw = refreshed['items'];
+        if (mounted) {
+          setState(() {
+            ageAlertItems = raw is List
+                ? raw.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
+                : <Map<String, dynamic>>[];
+          });
+        }
+      } catch (_) {
+        // The suspension has already succeeded; keep the success result authoritative.
       }
     } catch (e) {
       if (!mounted) return;
