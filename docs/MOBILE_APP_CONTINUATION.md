@@ -694,3 +694,20 @@ Source change: `f627d130fe36b4bfe4232891aff521f63af1b518` updates `mobile/ahl_el
 - Existing routes, API payloads, role visibility conditions, and server-side authorization are unchanged.
 
 **Verification status:** source committed to `main`; Flutter CI and device verification pending. The user has not yet accepted the new design and has not completed detailed feature testing. Do not describe the broader redesign as complete or runtime-verified until the new APK passes CI and the user reviews it on device.
+
+## 2026-10-25 — Mobile dashboard refresh and login/navigation follow-up
+
+User-selected direction: **modern professional dashboard**, retaining the Ahl El Kheir navy/blue palette and Arabic-first RTL behavior. The user also requires a password-visibility eye icon and a forgot-password link on the login screen.
+
+Source changes committed sequentially on `main`:
+- `b4c1470a9628fb92a9155ae74b238b2b892dee1b`: introduced responsive two-column work-area tiles, removed the visible role pill from the welcome panel, reduced the app bar from 68 to 56 logical pixels, added password reveal control and a forgot-password action, and corrected the account sheet to use the navigator overlay context.
+- `75718e46132b7db06f83728509467411a54f652b`: added the `url_launcher` dependency for opening existing website workflows from the app.
+- `a7a60e97adc984d6fa4171bfdba280fea73cf964`: included each notification's existing `link` in the authenticated notifications API response.
+- `b85dc7aa57b6e4c5ccbccbb463af922881de9bc3` and `23137b81e4ea3e94e1bfd1251652b7462620f86c`: wired an orphan-form action from each child record to the existing canonical `modules/families/orphan_form.php?child=<id>` web workflow. It opens in the external browser; a browser login may be required because mobile bearer tokens do not create a browser session.
+- `7d979e4bcb5a840ce983b4f4d9b7137edba1902a`: added a notification detail screen and tap navigation, and wired family/orphan-form access from the home menu.
+- `ca16265515612bfa18442dcd59a987baaa303e0e`: completed the notification detail link callback wiring.
+
+The forgot-password action opens the existing public `modules/users/password_recovery_request.php` flow, which submits a recovery request for review by HR/system administrators; no new password-reset mechanism or API was invented. Notification links are mapped back onto the app's configured website host/path before opening, rather than trusting a notification's origin.
+
+**Verification status:** GitHub Actions Flutter analysis/tests/APK build are pending for the latest commit. No device runtime test has been performed for these changes. Do not claim the account sheet, notification detail/related-page flow, password recovery launch, or orphan form launch is device-verified until the latest APK succeeds and is tested on a phone. The orphan form remains the existing website screen, not a newly implemented native form. No database schema or business authorization rules were changed.
+
