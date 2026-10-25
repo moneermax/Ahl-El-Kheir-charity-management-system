@@ -4945,3 +4945,10 @@ Added a server-authorized, read-only searchable/paginated mobile user directory 
 Automated verification: full-schema rollback-only MariaDB test passed in Actions run [40210824853](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40210824853), output `PASS | mobile admin department service | create, list, duplicate guard, update, assigned-user delete guard, delete, rollback=PASS`. Flutter widget tests were added for user directory, department CRUD UI, audit activity, and the in-app pending-workflow notice. Physical-device verification remains open.
 
 Remaining mobile parity includes full user-account actions, password recovery decisions, reports, settings, accounting/disbursements/Fina, backup/database administration, global search, profile/messages, orphan forms, and further HR/finance workflows. Do not describe the app as complete or request user acceptance testing until a consolidated native workflow slice is ready.
+
+
+## 2026-10-25 — Native password recovery workflow added
+
+The app now provides native password recovery review for canonical administrator/Sudo and HR Manager roles. The API lists the latest 50 requests and supports approve/reject only while pending. Approval atomically updates the password hash and recovery request, sets the forced-password-change flag and 24-hour expiry, and returns the temporary password only once in the response; notifications/audit are best-effort after commit. Rejection is recorded and sends a best-effort notification. Server-side authorization is authoritative; HR Staff is not granted this tool. No database migration was added.
+
+Verification passed in Actions run [40211295992](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40211295992): rollback-only full-schema MariaDB recovery test and PHP lint. Flutter analyzer passed; the latest Flutter widget suite/APK publication is pending. No physical-device acceptance is claimed.
