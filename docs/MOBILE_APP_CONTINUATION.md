@@ -927,3 +927,20 @@ Correction to the earlier in-progress checkpoint: GitHub Actions run [4019917746
 The PHP full-schema rollback-only suspension case/suspend/lift test passed in run `40199009847`; transaction date-boundary integration passed in run `40198548850`. This is automated CI evidence, not proof of live local XAMPP/API/database behavior or physical-device acceptance.
 
 The mobile parity work is not complete: non-age suspension creation, native financial/HR/beneficiary-form/Fina workflows, and website-session continuity for remaining WEB links are still open. Do not claim full native feature parity until those gaps are implemented and verified.
+
+
+## 2026-10-25 — Role-sidebar parity: omitted tools restored (source/CI pending)
+
+Follow-up source audit compared `includes/sidebar.php` and each target page's real role guard with `mobile/ahl_el_kheir_app/lib/role_tools_section.dart`. The previous attempted additions of sponsor assignment, supervisor management, and the general sponsor-request pipeline to the supplemental role section were removed after confirming those are already present as native work-area cards; duplicate cards are not an acceptable fix.
+
+The current change adds only tools present in the existing role sidebar and not otherwise exposed by the mobile workspace:
+- GM: salary-advance waiver decisions (`modules/hr/salary_advance_waiver_gm.php`).
+- VGM: orphan-group management (`modules/deputy_gm/groups.php`).
+- FM: opening balance and assigned nannies (`modules/accounting/opening_balance.php`, `modules/accounting/my_nannies.php`).
+- Accountant: vouchers, assigned nannies, and GM reconciliation; it deliberately does **not** expose journal, transaction, FM review, FM dashboard, or disbursement pages where the target page guards deny this role.
+- Accountant Staff: vouchers, assigned nannies, and orphan forms.
+- Supervisor and Nanny: orphan forms.
+
+Source commit: `9bbc4dc8d4943dc3858c65c5e5898d3b27d939f3`. Widget coverage commit: `84e55aa12f1f13aea77659fe347be6edee447ac4`. The tests assert the added tools and preserve the accountant disbursement restriction.
+
+**Verification boundary:** GitHub Actions for the exact latest Flutter source revision and a fresh APK are not yet confirmed at this checkpoint. WEB entries still launch the existing website and do not establish authenticated website-session continuity. Local XAMPP/API and physical-device acceptance remain pending. Continue the same route-by-route audit; do not describe overall mobile parity as complete.
