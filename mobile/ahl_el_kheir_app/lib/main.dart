@@ -187,14 +187,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       if (!opened) {
         throw const ApiFailure('Could not open the website page.');
       }
-    } catch (_) {
+    } catch (e) {
       final context = navigatorKey.currentContext;
       if (context != null && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(english
-                ? 'Could not open this website page. Sign in again or contact the administrator.'
-                : 'تعذر فتح صفحة الموقع. أعد تسجيل الدخول أو تواصل مع مسؤول النظام.'),
+                ? 'Could not open this website page. Details: $e'
+                : 'تعذر فتح صفحة الموقع. التفاصيل: $e'),
+            duration: const Duration(seconds: 6),
           ),
         );
       }
