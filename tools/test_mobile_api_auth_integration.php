@@ -70,6 +70,8 @@ $failure = null;
 $testProjectId = 0;
 $testPaymentId = 0;
 $testMilestoneId = 0;
+$testForeignProjectId = 0;
+$testForeignMilestoneId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -160,6 +162,30 @@ try {
     $pdo->prepare('INSERT INTO project_milestones (project_id, title, description, planned_date, status, completion_percent, notes, created_by) VALUES (?,?,?,?,?,?,?,?)')
         ->execute([$testProjectId, 'Mobile API milestone ID fixture', 'Integration test only', date('Y-m-d'), 'in_progress', 10, null, $userId]);
     $testMilestoneId = (int)$pdo->lastInsertId();
+
+    $foreignProjectCode = 'MOBILE-API-CI-FOREIGN-' . bin2hex(random_bytes(6));
+    $pdo->prepare("INSERT INTO other_projects (name, project_code, status, created_by) VALUES (?, ?, 'planned', ?)")
+        ->execute(['Mobile API cross-project isolation fixture', $foreignProjectCode, $userId]);
+    $testForeignProjectId = (int)$pdo->lastInsertId();
+    $pdo->prepare('INSERT INTO project_milestones (project_id, title, description, planned_date, status, completion_percent, notes, created_by) VALUES (?,?,?,?,?,?,?,?)')
+        ->execute([$testForeignProjectId, 'Foreign project milestone must remain unchanged', 'Integration test only', date('Y-m-d'), 'in_progress', 10, null, $userId]);
+    $testForeignMilestoneId = (int)$pdo->lastInsertId();
+
+    $r = mobileApiRequest('/api/v1/projects/milestone_action.php', 'POST', [
+        'action' => 'edit',
+        'project_id' => $testProjectId,
+        'milestone_id' => $testForeignMilestoneId,
+        'title' => 'Cross-project mutation must fail',
+        'completion_percent' => 80,
+    ], $token);
+    $foreignTitle = $pdo->prepare('SELECT title FROM project_milestones WHERE id=? AND project_id=?');
+    $foreignTitle->execute([$testForeignMilestoneId, $testForeignProjectId]);
+    mobileApiExpect(
+        $r['status'] === 404
+        && ($r['json']['error']['code'] ?? '') === 'milestone_not_found'
+        && (string)$foreignTitle->fetchColumn() === 'Foreign project milestone must remain unchanged',
+        'cross-project milestone isolation'
+    );
     $r = mobileApiRequest('/api/v1/projects/detail.php?id=' . $testProjectId, 'GET', null, $token);
     $detailMilestone = null;
     foreach (($r['json']['data']['milestones'] ?? []) as $item) {
@@ -305,9 +331,11 @@ try {
     if ($testProjectId > 0) {
         $pdo->prepare('DELETE FROM project_progress_updates WHERE project_id=?')->execute([$testProjectId]);
         $pdo->prepare('DELETE FROM project_milestones WHERE project_id=?')->execute([$testProjectId]);
+        if ($testForeignProjectId > 0) $pdo->prepare('DELETE FROM project_milestones WHERE project_id=?')->execute([$testForeignProjectId]);
         $pdo->prepare('DELETE FROM project_supervisor_assignments WHERE project_id=?')->execute([$testProjectId]);
         $pdo->prepare('DELETE FROM project_lifecycle WHERE project_id=?')->execute([$testProjectId]);
         $pdo->prepare('DELETE FROM project_approval WHERE project_id=?')->execute([$testProjectId]);
+        if ($testForeignProjectId > 0) $pdo->prepare('DELETE FROM other_projects WHERE id=?')->execute([$testForeignProjectId]);
         $pdo->prepare('DELETE FROM other_projects WHERE id=?')->execute([$testProjectId]);
     }
     $pdo->prepare('DELETE FROM audit_log WHERE user_id=? AND action=? AND entity_type=? AND entity_id=? AND created_at>=?')
