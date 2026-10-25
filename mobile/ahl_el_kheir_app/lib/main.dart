@@ -995,7 +995,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                           },
                                         ),
                                         ListTile(
-                                          leading: const Icon(Icons.mark_unread_chat_alt_outlined),
+                                          leading: const Icon(Icons.chat_bubble_outline_rounded),
                                           title: Text(english ? 'Internal messages' : 'الرسائل الداخلية'),
                                           subtitle: Text(english ? 'WEB · website sign-in may be required' : 'ويب · قد يُطلب تسجيل الدخول للموقع'),
                                           trailing: const Icon(Icons.open_in_new_rounded, size: 18),
