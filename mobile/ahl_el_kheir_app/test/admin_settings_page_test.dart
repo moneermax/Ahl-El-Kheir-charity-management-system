@@ -45,6 +45,8 @@ void main() {
     expect(tester.takeException(), isNull);
 
     await tester.enterText(find.byType(TextFormField).first, 'Ahl El Kheir Foundation');
+    await tester.ensureVisible(find.text('Save settings'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Save settings'));
     await tester.pumpAndSettle();
 
