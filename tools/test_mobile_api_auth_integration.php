@@ -136,38 +136,27 @@ try {
     $stored->execute([$tokenHash]);
     mobileApiExpect((string)$stored->fetchColumn() === $tokenHash && $tokenHash !== $token, 'only the SHA-256 token hash is stored');
 
+    $handoffCountBefore = (int)$pdo->query('SELECT COUNT(*) FROM mobile_web_handoffs')->fetchColumn();
     $r = mobileApiRequest('/api/v1/auth/web_handoff.php', 'POST', ['path' => 'https://example.com'], $token);
     mobileApiExpect(
-        $r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'invalid_target_path',
-        'website handoff rejects external redirect targets'
+        $r['status'] === 410 && ($r['json']['error']['code'] ?? '') === 'native_only'
+        && !isset($r['json']['data']['handoff_token']),
+        'website handoff API is disabled even for external redirect targets'
     );
 
     $r = mobileApiRequest('/api/v1/auth/web_handoff.php', 'POST', [
         'path' => 'modules/users/profile.php',
         'query' => ['source' => 'mobile'],
     ], $token);
-    $handoffToken = (string)($r['json']['data']['handoff_token'] ?? '');
     mobileApiExpect(
-        $r['status'] === 200 && preg_match('/^[a-f0-9]{64}$/', $handoffToken) === 1,
-        'authenticated mobile session issues a one-time website handoff token; status=' . $r['status'] . '; body=' . substr($r['raw'], 0, 700)
+        $r['status'] === 410 && ($r['json']['error']['code'] ?? '') === 'native_only'
+        && !isset($r['json']['data']['handoff_token']),
+        'website handoff API does not issue tokens for internal pages'
     );
-    $handoffHash = hash('sha256', $handoffToken);
-    $handoffRow = $pdo->prepare('SELECT token_hash, target_path, target_query_json, consumed_at, TIMESTAMPDIFF(SECOND, NOW(), expires_at) AS ttl FROM mobile_web_handoffs WHERE token_hash=?');
-    $handoffRow->execute([$handoffHash]);
-    $handoffStored = $handoffRow->fetch();
-    mobileApiExpect(
-        $handoffStored
-        && (string)$handoffStored['token_hash'] === $handoffHash
-        && $handoffHash !== $handoffToken
-        && (string)$handoffStored['target_path'] === 'modules/users/profile.php'
-        && (json_decode((string)$handoffStored['target_query_json'], true)['source'] ?? '') === 'mobile'
-        && $handoffStored['consumed_at'] === null
-        && (int)$handoffStored['ttl'] > 0
-        && (int)$handoffStored['ttl'] <= 60,
-        'website handoff stores only a hash, a bounded expiry and an internal target'
-    );
+    $handoffCountAfter = (int)$pdo->query('SELECT COUNT(*) FROM mobile_web_handoffs')->fetchColumn();
+    mobileApiExpect($handoffCountAfter === $handoffCountBefore, 'disabled handoff API creates no handoff records');
 
-    $r = mobileApiRequest('/mobile_web_handoff.php?token=' . rawurlencode($handoffToken), 'GET', null, null, 5, false);
+    $r = mobileApiRequest('/mobile_web_handoff.php?token=' . str_repeat('a', 64), 'GET', null, null, 5, false);
     $location = '';
     $setCookie = '';
     foreach (($r['headers'] ?? []) as $header) {
@@ -175,66 +164,9 @@ try {
         if (stripos($header, 'Set-Cookie: AhlElKheirSession=') === 0) $setCookie = $header;
     }
     mobileApiExpect(
-        $r['status'] === 302
-        && $location === '/modules/users/profile.php?source=mobile'
-        && $setCookie !== ''
-        && stripos($setCookie, 'httponly') !== false,
-        'website handoff establishes an HttpOnly PHP session and redirects to the stored target'
+        $r['status'] === 410 && $location === '' && $setCookie === '',
+        'retired website route never redirects or establishes a browser session'
     );
-    $consumed = $pdo->prepare('SELECT consumed_at FROM mobile_web_handoffs WHERE token_hash=?');
-    $consumed->execute([$handoffHash]);
-    mobileApiExpect($consumed->fetchColumn() !== null, 'website handoff token is marked consumed');
-
-    $r = mobileApiRequest('/mobile_web_handoff.php?token=' . rawurlencode($handoffToken), 'GET', null, null, 5, false);
-    $replayLocation = '';
-    foreach (($r['headers'] ?? []) as $header) {
-        if (stripos($header, 'Location:') === 0) $replayLocation = trim(substr($header, strlen('Location:')));
-    }
-    mobileApiExpect(
-        $r['status'] === 302 && $replayLocation === '/index.php',
-        'website handoff token cannot be replayed'
-    );
-
-    $r = mobileApiRequest('/api/v1/auth/web_handoff.php', 'POST', ['path' => 'modules/users/profile.php'], $token);
-    $expiredHandoffToken = (string)($r['json']['data']['handoff_token'] ?? '');
-    $expiredHandoffHash = hash('sha256', $expiredHandoffToken);
-    $pdo->prepare('UPDATE mobile_web_handoffs SET expires_at=DATE_SUB(NOW(), INTERVAL 1 SECOND) WHERE token_hash=?')
-        ->execute([$expiredHandoffHash]);
-    $r = mobileApiRequest('/mobile_web_handoff.php?token=' . rawurlencode($expiredHandoffToken), 'GET', null, null, 5, false);
-    $expiredLocation = '';
-    foreach (($r['headers'] ?? []) as $header) {
-        if (stripos($header, 'Location:') === 0) $expiredLocation = trim(substr($header, strlen('Location:')));
-    }
-    mobileApiExpect(
-        $r['status'] === 302 && $expiredLocation === '/index.php',
-        'expired website handoff token is rejected'
-    );
-
-    $secondLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
-    $secondToken = (string)($secondLogin['json']['data']['access_token'] ?? '');
-    mobileApiExpect(
-        $secondLogin['status'] === 200 && preg_match('/^[a-f0-9]{64}$/', $secondToken) === 1,
-        'second mobile session fixture is available for revocation testing'
-    );
-    $secondTokenHash = hash('sha256', $secondToken);
-    $testTokenHashes[] = $secondTokenHash;
-    $secondHandoff = mobileApiRequest('/api/v1/auth/web_handoff.php', 'POST', ['path' => 'modules/users/profile.php'], $secondToken);
-    $secondHandoffToken = (string)($secondHandoff['json']['data']['handoff_token'] ?? '');
-    mobileApiExpect(
-        $secondHandoff['status'] === 200 && preg_match('/^[a-f0-9]{64}$/', $secondHandoffToken) === 1,
-        'second mobile session can issue a handoff before revocation'
-    );
-    $pdo->prepare('UPDATE mobile_api_sessions SET revoked_at=NOW() WHERE token_hash=?')->execute([$secondTokenHash]);
-    $r = mobileApiRequest('/mobile_web_handoff.php?token=' . rawurlencode($secondHandoffToken), 'GET', null, null, 5, false);
-    $revokedLocation = '';
-    foreach (($r['headers'] ?? []) as $header) {
-        if (stripos($header, 'Location:') === 0) $revokedLocation = trim(substr($header, strlen('Location:')));
-    }
-    mobileApiExpect(
-        $r['status'] === 302 && $revokedLocation === '/index.php',
-        'handoff is rejected after its mobile session is revoked'
-    );
-
 
     $otherUser = $pdo->prepare('SELECT id FROM users WHERE id <> ? ORDER BY id LIMIT 1');
     $otherUser->execute([$userId]);
