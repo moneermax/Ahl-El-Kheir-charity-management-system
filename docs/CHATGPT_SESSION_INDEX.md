@@ -2414,3 +2414,8 @@ Source change: `f627d130fe36b4bfe4232891aff521f63af1b518` updates `mobile/ahl_el
 - Existing routes, API payloads, role visibility conditions, and server-side authorization are unchanged.
 
 **Verification status:** source committed to `main`; Flutter CI and device verification pending. The user has not yet accepted the new design and has not completed detailed feature testing. Do not describe the broader redesign as complete or runtime-verified until the new APK passes CI and the user reviews it on device.
+
+### Mobile app checkpoint — 2026-10-25 (dashboard/login/navigation follow-up)
+
+The user selected a modern professional dashboard using the existing navy/blue branding and requested an eye icon for password visibility plus a forgot-password link. The current mobile changes are recorded in `docs/MOBILE_APP_CONTINUATION.md`. Source commits include the responsive two-column module dashboard, compact header without the visible role pill, password visibility and existing website recovery link, account sheet navigator-context correction, notification detail view with related-link action, and browser access to the existing orphan form. Latest source checkpoint: `ca16265515612bfa18442dcd59a987baaa303e0e`. Flutter CI and phone verification are pending; do not treat this as accepted until verified.
+
