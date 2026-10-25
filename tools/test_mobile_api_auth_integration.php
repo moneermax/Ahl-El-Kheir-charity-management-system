@@ -77,6 +77,9 @@ $testNotificationId = 0;
 $testSponsorRequestId = 0;
 $testNannyFamilyId = 0;
 $testForeignNannyFamilyId = 0;
+$testLeaveId = 0;
+$testLeaveEmployeeId = 0;
+$testLeaveAttendanceDate = '';
 $testSponsorId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
@@ -219,11 +222,87 @@ try {
     $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 403, 'nanny is denied access to the HR employee directory');
 
+    $leaveEmployee = $pdo->prepare(
+        "SELECT e.id
+         FROM employees e
+         JOIN users u ON u.id = e.user_id
+         JOIN roles r ON r.id = u.role_id
+         WHERE u.id <> ?
+           AND r.code NOT IN ('hr_manager', 'hr_staff')
+         ORDER BY e.id
+         LIMIT 1"
+    );
+    $leaveEmployee->execute([$userId]);
+    $testLeaveEmployeeId = (int)$leaveEmployee->fetchColumn();
+    if ($testLeaveEmployeeId < 1) {
+        throw new RuntimeException('Leave-action integration test requires an employee linked to a non-HR user.');
+    }
+    $candidateDate = new DateTimeImmutable('2099-12-31');
+    for ($attempt = 0; $attempt < 365; $attempt++) {
+        $candidate = $candidateDate->modify('+' . $attempt . ' days')->format('Y-m-d');
+        $existingAttendance = $pdo->prepare('SELECT 1 FROM attendance WHERE employee_id=? AND date=? LIMIT 1');
+        $existingAttendance->execute([$testLeaveEmployeeId, $candidate]);
+        if (!$existingAttendance->fetchColumn()) {
+            $testLeaveAttendanceDate = $candidate;
+            break;
+        }
+    }
+    if ($testLeaveAttendanceDate === '') {
+        throw new RuntimeException('Could not allocate a unique disposable attendance date for the leave-action test.');
+    }
+    $pdo->prepare(
+        "INSERT INTO leaves (employee_id, leave_type, start_date, end_date, days_count, reason, status)
+         VALUES (?, 'annual', ?, ?, 1, 'Disposable mobile API integration fixture', 'pending')"
+    )->execute([$testLeaveEmployeeId, $testLeaveAttendanceDate, $testLeaveAttendanceDate]);
+    $testLeaveId = (int)$pdo->lastInsertId();
+
+    $r = mobileApiRequest('/api/v1/hr/leaves/action.php', 'POST', [
+        'action' => 'approve',
+        'leave_id' => $testLeaveId,
+    ], $token);
+    $leaveState = $pdo->prepare('SELECT status FROM leaves WHERE id=?');
+    $leaveState->execute([$testLeaveId]);
+    mobileApiExpect(
+        $r['status'] === 403 && (string)$leaveState->fetchColumn() === 'pending',
+        'nanny cannot approve a leave request and the pending state remains unchanged'
+    );
+
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
+    $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 200 && ($r['json']['data']['user']['role_code'] ?? '') === 'hr_staff', 'role changes are reflected on the next authenticated request');
     $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 200 && ($r['json']['ok'] ?? false) === true, 'HR staff can access the HR employee directory');
+
+    $r = mobileApiRequest('/api/v1/hr/leaves/action.php', 'POST', [
+        'action' => 'approve',
+        'leave_id' => $testLeaveId,
+    ], $token);
+    $approvedLeave = $pdo->prepare('SELECT status, hr_approved_by FROM leaves WHERE id=?');
+    $approvedLeave->execute([$testLeaveId]);
+    $approvedLeaveRow = $approvedLeave->fetch(PDO::FETCH_ASSOC);
+    $leaveAttendance = $pdo->prepare("SELECT status, notes FROM attendance WHERE employee_id=? AND date=?");
+    $leaveAttendance->execute([$testLeaveEmployeeId, $testLeaveAttendanceDate]);
+    $leaveAttendanceRow = $leaveAttendance->fetch(PDO::FETCH_ASSOC);
+    mobileApiExpect(
+        $r['status'] === 200
+        && ($r['json']['data']['status'] ?? '') === 'hr_approved'
+        && (string)($approvedLeaveRow['status'] ?? '') === 'hr_approved'
+        && (int)($approvedLeaveRow['hr_approved_by'] ?? 0) === $userId
+        && (string)($leaveAttendanceRow['status'] ?? '') === 'on_leave'
+        && (string)($leaveAttendanceRow['notes'] ?? '') === 'إجازة معتمدة',
+        'HR approval commits leave state and its attendance row together'
+    );
+    $r = mobileApiRequest('/api/v1/hr/leaves/action.php', 'POST', [
+        'action' => 'approve',
+        'leave_id' => $testLeaveId,
+    ], $token);
+    $approvedLeave->execute([$testLeaveId]);
+    mobileApiExpect(
+        $r['status'] === 409
+        && (string)($approvedLeave->fetch(PDO::FETCH_ASSOC)['status'] ?? '') === 'hr_approved',
+        'repeated leave approval is rejected without changing the approved state'
+    );
 
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
@@ -478,6 +557,14 @@ try {
         proc_close($server);
     }
     foreach ($serverPipes as $pipe) if (is_resource($pipe)) fclose($pipe);
+    if ($testLeaveId > 0) {
+        $pdo->prepare('DELETE FROM notifications WHERE link LIKE ?')->execute(['%leave_id=' . $testLeaveId . '%']);
+        if ($testLeaveEmployeeId > 0 && $testLeaveAttendanceDate !== '') {
+            $pdo->prepare("DELETE FROM attendance WHERE employee_id=? AND date=? AND status='on_leave' AND notes='إجازة معتمدة'")
+                ->execute([$testLeaveEmployeeId, $testLeaveAttendanceDate]);
+        }
+        $pdo->prepare('DELETE FROM leaves WHERE id=?')->execute([$testLeaveId]);
+    }
     if ($testNotificationId > 0) {
         $pdo->prepare('DELETE FROM notifications WHERE id=?')->execute([$testNotificationId]);
     }
