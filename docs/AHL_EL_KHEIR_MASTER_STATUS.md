@@ -4649,3 +4649,6 @@ Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification han
 
 The next analyzer pass isolated one remaining Dart error: the notification mark-read helper returned without a boolean when the widget was unmounted during an error. Corrected to return `false` explicitly so the detail route is not opened after an unsuccessful mark-read operation. Source commit: `b572e49403805f3057e4830c211002c0d4fbd0e6`. The matching Flutter workflow run `40183286267` is queued; analysis/tests/APK status remain unverified.
 
+## 2026-10-25 — Mobile dashboard and notification feedback
+
+User rejected the recent two-column mobile dashboard redesign. The dashboard is restored to full-width single-column module cards; a top app-bar sign-out icon is added beside the existing utility icons. Notification details stay in Flutter and no longer launch their related website link externally. A linked-page note is shown instead until a native destination is implemented. Changes are on `main`; latest Flutter analysis, widget tests, APK build/artifact, and physical-device visual acceptance must be verified separately.
