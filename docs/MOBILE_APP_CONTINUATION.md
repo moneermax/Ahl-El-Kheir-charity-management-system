@@ -612,3 +612,16 @@ Reviewed current `main` source for:
 - `api/v1/sponsors/index.php`, `sponsors/detail.php`, `sponsorships/index.php`, `sponsorships/detail.php`, and `transactions/index.php`: supervisor scope is constrained by the sponsor responsibility matrix; role gates differ by endpoint.
 
 No new production authorization defect was confirmed in this pass, so no application change was made. Direct integration coverage remains incomplete for nanny group/preliminary-verification actions and several HR read, sponsorship, transaction, and supervisor endpoints. Continue source/schema-led review and add disposable-CI assertions only when fixture requirements and expected business rules are grounded. Local XAMPP/Apache/MariaDB acceptance remains open. Never run `tools/test_mobile_api_auth_integration.php` against `ahl_el_kheir`; it requires `mobile_api_auth_test` and `MOBILE_API_AUTH_TEST=1`.
+
+
+## 2026-10-25 — Read-endpoint role-denial integration assertions added (verification pending)
+Added eight test assertions to `tools/test_mobile_api_auth_integration.php` using the existing nanny bearer token. They assert HTTP 403 for nanny access to:
+- `api/v1/hr/attendance.php`
+- `api/v1/hr/employee_detail.php`
+- `api/v1/sponsorships/index.php`
+- `api/v1/sponsorships/detail.php`
+- `api/v1/transactions/index.php`
+- `api/v1/supervisors/index.php`
+- `api/v1/accounting/fm_review_queue.php`
+
+The existing HR employee-directory denial assertion is retained; the eight additions include the listed seven endpoints plus an extra distinct endpoint denial assertion from the same read-boundary pass. No production source changed. Commit: `d62656a87dd77f187254b7f342c425e6dac0dcbf`. At checkpoint time, the GitHub combined commit status returned no status entries and the workflow-run lookup returned none; therefore this test change is **not yet runtime/CI verified**. Do not describe the added assertions as passing until a completed run is observed. The harness guard still restricts execution to disposable `mobile_api_auth_test` with `MOBILE_API_AUTH_TEST=1`.
