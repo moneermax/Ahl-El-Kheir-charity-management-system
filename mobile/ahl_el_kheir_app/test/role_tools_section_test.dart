@@ -73,6 +73,27 @@ void main() {
     expect(find.text('My profile'), findsNothing);
   });
 
+  testWidgets('HR staff sees operational tools but not HR-manager-only controls', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'hr_staff',
+          english: true,
+          onOpen: (_) {},
+        ),
+      ),
+    ));
+
+    expect(find.text('Employee management'), findsOneWidget);
+    expect(find.text('Attendance management'), findsOneWidget);
+    expect(find.text('Employment states'), findsNothing);
+    expect(find.text('Incentive policy'), findsNothing);
+    expect(find.text('Payroll reversal'), findsNothing);
+    expect(find.text('Incentive verification'), findsNothing);
+    expect(find.text('Attendance policy'), findsNothing);
+    expect(find.text('Payroll integrity'), findsNothing);
+  });
+
   testWidgets('supervisor tools do not offer the FM-only Fina collection creation page', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: SingleChildScrollView(
