@@ -12,6 +12,7 @@ import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'supervisors_page.dart';
 import 'families_page.dart';
+import 'admin_dashboard_page.dart';
 import 'family_detail_page.dart';
 import 'fm_review_queue_page.dart';
 import 'transactions_page.dart';
@@ -146,6 +147,82 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     } finally {
       await storage.delete(key: tokenKey);
       if (mounted) setState(() => user = null);
+    }
+  }
+
+  Future<Map<String, dynamic>> loadAdminOverview() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'admin/overview.php', token: token);
+  }
+
+  void openAdminTool(String tool) {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return;
+    switch (tool) {
+      case 'sponsors':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail)));
+        return;
+      case 'families':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openWebPage('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()}))));
+        return;
+      case 'sponsorships':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships, loadDetail: loadSponsorshipDetail)));
+        return;
+      case 'transactions':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => TransactionsPage(english: english, loadTransactions: loadTransactions)));
+        return;
+      case 'employees':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => EmployeesPage(english: english, loadPage: loadEmployees, openDetail: (employee) {
+          final id = int.tryParse(employee['id']?.toString() ?? '');
+          if (id == null || id < 1) return;
+          navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => EmployeeDetailPage(employeeId: id, english: english, loadDetail: loadEmployeeDetail)));
+        })));
+        return;
+      case 'attendance':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => AttendancePage(english: english, loadAttendance: loadAttendance)));
+        return;
+      case 'supervisors':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors)));
+        return;
+      case 'projects':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => ProjectsPage(english: english, loadPage: loadProjects, loadDetail: loadProjectDetail, submitProgress: submitProjectProgressUpdate, createMilestone: createProjectMilestone, actOnMilestone: actOnProjectMilestone)));
+        return;
+      case 'finance_dashboard':
+        openWebPage('modules/accounting/fm_dashboard.php');
+        return;
+      case 'accounts':
+        openWebPage('modules/accounting/accounts.php');
+        return;
+      case 'disbursements':
+        openWebPage('modules/accounting/disbursements.php');
+        return;
+      case 'fina_collection':
+        openWebPage('modules/transactions/fina_payment_create.php');
+        return;
+      case 'users':
+        openWebPage('modules/users/index.php');
+        return;
+      case 'departments':
+        openWebPage('modules/departments/index.php');
+        return;
+      case 'settings':
+        openWebPage('modules/settings/index.php');
+        return;
+      case 'reports':
+        openWebPage('modules/reports/index.php');
+        return;
+      case 'backup':
+        openWebPage('modules/system/backup.php');
+        return;
+      case 'database':
+        openWebPage('modules/system/database.php');
+        return;
+      case 'audit':
+        openWebPage('modules/logs/audit.php');
+        return;
+      default:
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(SnackBar(content: Text(english ? 'This tool is not mapped yet.' : 'لم يتم ربط هذه الأداة بعد.')));
     }
   }
 
@@ -737,6 +814,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               body: LayoutBuilder(builder: (context, constraints) {
                 final moduleCardWidth = constraints.maxWidth - 40;
                 final roleCode = user?['role_code']?.toString() ?? '';
+                if (['admin', 'sudo', 'super_admin'].contains(roleCode)) {
+                  return AdminDashboardPage(
+                    english: english,
+                    fullName: user?['full_name']?.toString() ?? '',
+                    loadOverview: loadAdminOverview,
+                    onOpenTool: openAdminTool,
+                    onOpenAgeAlerts: openAgeAlerts,
+                  );
+                }
                 final roleTitle = switch (roleCode) {
                   'admin' || 'sudo' || 'super_admin' => english ? 'System control center' : 'مركز إدارة النظام',
                   'general_manager' || 'gm' => english ? 'Executive overview' : 'نظرة الإدارة التنفيذية',
