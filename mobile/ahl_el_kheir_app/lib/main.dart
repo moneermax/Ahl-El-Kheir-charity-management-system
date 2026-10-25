@@ -885,6 +885,11 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                               icon: const Icon(Icons.hourglass_bottom_rounded, color: Color(0xFFB54708)),
                             ),
                           IconButton(
+                            tooltip: english ? 'Global search (WEB)' : 'البحث الشامل (ويب)',
+                            onPressed: () => openWebPage('modules/search/index.php'),
+                            icon: const Icon(Icons.search_rounded),
+                          ),
+                          IconButton(
                             tooltip: english ? 'Notifications' : 'الإشعارات',
                             onPressed: () => navigatorKey.currentState?.push(
                               MaterialPageRoute<void>(
