@@ -148,15 +148,19 @@ class RoleToolsSection extends StatelessWidget {
       case 'social_media':
         return [
           g('خدمة المستفيدين والمتابعة', 'Sponsor service and follow-up', [
+            t('الطلبات الجديدة', 'New sponsor requests', 'مراجعة الطلبات الجديدة الواردة', 'Review newly received sponsor requests', 'modules/sponsors/new_requests.php', Icons.mark_email_unread_outlined),
+            t('الطلبات التي تمت متابعتها', 'Contacted sponsor requests', 'متابعة الطلبات التي تم التواصل بشأنها', 'Review sponsor requests already contacted', 'modules/sponsors/contacted_requests.php', Icons.mark_email_read_outlined),
             if (role == 'administration') t('الأسر المتاحة للكفالة', 'Families available for sponsorship', 'متابعة الأسر غير المغطاة', 'Review families without active sponsorship', 'modules/administration/available_families.php', Icons.home_work_outlined),
             if (role == 'administration') t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة حملات استرجاع الكفلاء', 'Review sponsor win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
             t('استمارات الأيتام', 'Orphan forms', 'عرض وإدارة الاستمارات', 'Browse and manage forms', 'modules/families/orphan_forms_index.php', Icons.assignment_outlined),
+            t('ملفي الشخصي', 'My profile', 'عرض وتحديث بيانات الحساب', 'View and update your account profile', 'modules/users/profile.php', Icons.account_circle_outlined),
           ]),
         ];
       case 'hr_manager':
       case 'hr_staff':
         return [
           g('إدارة الموارد البشرية', 'Human resources operations', [
+            t('مركز التقارير', 'Report center', 'التقارير المتاحة للموارد البشرية', 'Reports available to Human Resources', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة الموظفين', 'Employee management', 'سجل الموظفين وإجراءات الموارد البشرية', 'Employee records and HR actions', 'modules/hr/employees.php', Icons.badge_outlined),
             t('حالات التوظيف', 'Employment states', 'إدارة حالات العمل وفق الصلاحيات', 'Manage employment states within permissions', 'modules/hr/employment_states.php', Icons.work_history_outlined),
             t('الحضور والانصراف', 'Attendance management', 'إدارة سجلات الحضور', 'Manage attendance records', 'modules/hr/attendance.php', Icons.fact_check_outlined),
