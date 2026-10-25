@@ -12,6 +12,8 @@ void main() {
             english: false,
             toggle: () {},
             submit: (_, __) async {},
+            apiBaseUrl: 'http://192.168.1.10:8081/AhlElKheir/api/v1',
+            onConfigureApi: () async {},
             onForgotPassword: () async {},
           ),
         ),
@@ -20,5 +22,8 @@ void main() {
 
     expect(find.text('تسجيل الدخول'), findsOneWidget);
     expect(find.text('اسم المستخدم'), findsOneWidget);
+    expect(find.text('الخادم'), findsOneWidget);
+    expect(find.text('http://192.168.1.10:8081/AhlElKheir/api/v1'), findsOneWidget);
   });
 }
+
