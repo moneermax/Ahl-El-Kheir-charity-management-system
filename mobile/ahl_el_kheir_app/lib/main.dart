@@ -2154,6 +2154,13 @@ class _LoginPageState extends State<LoginPage> {
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(color: Color(0xFF65756A), fontSize: 12),
                               ),
+                              const SizedBox(height: 7),
+                              SelectableText(
+                                widget.apiBaseUrl,
+                                textDirection: TextDirection.ltr,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Color(0xFF65756A), fontSize: 10),
+                              ),
                             ],
                           ),
                         ),
