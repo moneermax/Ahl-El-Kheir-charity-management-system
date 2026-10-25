@@ -222,6 +222,21 @@ try {
     $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 403, 'nanny is denied access to the HR employee directory');
 
+    $r = mobileApiRequest('/api/v1/hr/attendance.php?date=2026-10-01', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to the HR attendance register');
+    $r = mobileApiRequest('/api/v1/hr/employee_detail.php?id=1', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to individual HR employee details');
+    $r = mobileApiRequest('/api/v1/sponsorships/index.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to the sponsorship directory');
+    $r = mobileApiRequest('/api/v1/sponsorships/detail.php?id=1', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to sponsorship details');
+    $r = mobileApiRequest('/api/v1/transactions/index.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to the transaction register');
+    $r = mobileApiRequest('/api/v1/supervisors/index.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to supervisor management');
+    $r = mobileApiRequest('/api/v1/accounting/fm_review_queue.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to the financial review queue');
+
     $leaveEmployee = $pdo->prepare(
         "SELECT e.id
          FROM employees e
