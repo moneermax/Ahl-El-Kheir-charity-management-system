@@ -27,6 +27,7 @@ void main() {
     expect(find.text('دفعات محولة بانتظار التأكيد'), findsOneWidget);
     expect(find.text('12'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
+    expect(tester.takeException(), isNull, reason: 'Metric cards must fit without RenderFlex overflow.');
   });
 
   testWidgets('shows retry action when role dashboard API fails', (tester) async {
