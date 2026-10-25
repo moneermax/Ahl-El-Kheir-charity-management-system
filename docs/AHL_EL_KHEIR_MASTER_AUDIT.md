@@ -4982,3 +4982,8 @@ Next priority: comprehensive role-aware dashboard and design pass, including the
 ## Mobile app audit note — 2026-10-25
 
 A partial coordinated mobile shell redesign and legal-age alert slice was committed on `main` (commits `1c51846a9c348f5fb09fd5fb9d551f10edf7cd62`, `9ddf86df2a145f18a553ab452e7577723408c71d`, `0253a88d3a6201c9a279b879dd2e5fa0fcfe1a46`, `17af21974b9decf913954f4b7d96127ac34704b1`). The alert API requires a live bearer session, restricts eligible roles, applies nanny assignment scope, and uses the existing web query's active-child/date window. This source change is not runtime-proven; CI was still in progress. No claim of full role parity or of a native sponsorship-suspension action is made. Open risks include admin-specific tool parity, other role workflows, date-filter end-to-end behavior, and physical-device acceptance.
+
+
+## Mobile administrator dashboard audit — 2026-10-25
+
+The earlier shared Flutter home was materially different from `dashboard/admin_dashboard.php`. A dedicated admin route and server-authenticated overview endpoint have now been added. Endpoint limits overview access to `admin`, `sudo`, and `super_admin`; it returns the dashboard metrics and recent audit activity used by the screen. Tool parity and known non-native routes are itemized in `docs/MOBILE_ROLE_FEATURE_PARITY.md`. Current source changes have not yet been declared verified; wait for the relevant CI results and do not infer other roles are complete.
