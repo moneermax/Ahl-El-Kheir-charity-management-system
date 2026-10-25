@@ -967,3 +967,22 @@ The native Sudo/admin dashboard already displayed the pending password-recovery 
 The latest role-sidebar parity slice remains in `mobile/ahl_el_kheir_app/lib/role_tools_section.dart`: GM waiver queue, VGM orphan-group management, FM opening balance/assigned nannies, accountant/accountant-staff permitted links, and orphan forms for Supervisor/Nanny. Restricted accountant pages remain hidden when the target web guard denies access. Personal profile/settings/salary-advance request and global role-aware search are also now discoverable from the mobile UI, labelled WEB where they still use the website.
 
 Source commits: `45be3327f14e5129a9fb2dbb65daa618026dd648` (admin tile), `c19938979b181b53cc01237dce2d8c34bbfa6feb` (route), `12bd0f5dd017bc233e197b95cb4ef1814aeb9261` (widget test). Flutter analysis/widget CI and APK build for the newest source revision are pending. Website-session continuity, local XAMPP/API verification, and physical-device acceptance remain open. This is incremental tool discovery, not full native parity.
+
+
+## 2026-10-25 — Authenticated mobile-to-website handoff implemented
+
+Root cause confirmed: mobile requests authenticate with bearer tokens, but existing website pages require the PHP `AhlElKheirSession` browser session. Opening WEB tools directly therefore did not authenticate the browser. The mobile app now requests a short-lived handoff token from `api/v1/auth/web_handoff.php`; `mobile_web_handoff.php` validates and consumes it once, re-checks the active/unrevoked mobile session and account state, establishes the normal PHP session, and redirects only to the stored internal page/query. The app routes its existing WEB tools through this handoff. Native suspension and other native workflows remain native.
+
+Security boundaries implemented:
+- 256-bit random token; only its SHA-256 hash is stored.
+- 60-second expiry; single-use consumption under a database transaction/row lock.
+- Target paths restricted to internal `modules/` or `dashboard/` PHP pages; external URLs, traversal, backslashes, and duplicate slashes are rejected.
+- Target query is bounded and stored server-side; the browser redirect does not carry the handoff token forward.
+- Handoff is denied if the mobile session is revoked/expired or the account is inactive/forced to change password.
+- No runtime DDL; migration is `database/migrations/2026-10-25_mobile_web_handoffs.sql`.
+
+Integration evidence from GitHub Actions run `40201983559` (`d82559e9b3495233b0fdf219d7c0ed3356b2fbd5`): PASS for external-target rejection, token/hash/expiry storage, HttpOnly session creation, target redirect, consumption, replay rejection, and full mobile API auth integration. Flutter analyze and widget tests passed for `fb3e73ef3a575e3ff0e0e43585459ab960f1e0b9`; Android APK build is still running at this checkpoint. Local XAMPP/real-device acceptance remains outstanding.
+
+**Required local deployment step after pulling:** apply `database/migrations/2026-10-25_mobile_web_handoffs.sql` to `ahl_el_kheir` before testing WEB links. Without the migration, handoff creation fails safely and the app displays an error. Do not run DDL from PHP requests.
+
+Role-sidebar parity updates in this continuation also restore GM salary-advance waivers, VGM orphan-group management, FM finance dashboard/opening balance/assigned nannies, permitted accountant tools, and orphan forms for Supervisor/Nanny. Admin/Sudo now has a direct password-recovery tool, and global search, profile, settings, salary-advance request, and internal messages are discoverable. Website-only tools remain labelled WEB; full native workflow parity is still not complete.
