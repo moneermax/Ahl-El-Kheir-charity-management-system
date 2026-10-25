@@ -4558,3 +4558,7 @@ The project-detail milestone ID contract and assignment-revocation guard now hav
 
 ## 2026-10-25 — Mobile notification isolation CI checkpoint
 The disposable MariaDB HTTP integration harness now verifies that another user's notification is not returned to the authenticated account and cannot be marked read by that account. Test commit `ab2a6173e596f88ed4e7c2fb6e962e40e5429192`; [workflow run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591) completed successfully. No production endpoint/schema change. Local XAMPP migration state and full local role/record-scope/action acceptance remain open. Do not run the harness against `ahl_el_kheir`.
+
+
+## 2026-10-25 — Mobile sponsor-request authorization CI checkpoint
+Disposable MariaDB live HTTP coverage now confirms sponsor-request role boundaries and a valid/invalid status transition: nanny listing/mutation is denied without changing `new`; admin may transition `new` to `contacted`; a repeated transition returns 409 without mutation. Test commit `f0dfa70a376771cbceeae04e73b57f2e6e40cb89`; [run 40161801824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161801824) passed. No production code or schema changed. Local XAMPP migration state and full local role/record-scope/action acceptance remain open.
