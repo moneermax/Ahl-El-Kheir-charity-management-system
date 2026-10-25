@@ -828,3 +828,12 @@ Commits: API `f6ac0b4490b712ae7bebd23474aa97d6ab93d165`; widget `1e74df5e3e60159
 Route audit confirmed that the additional web tool paths exist. One invalid-by-role action was removed: Supervisor no longer sees “Record Fina collection”, because the existing web page explicitly denies Supervisor access.
 
 **Verification boundary:** combined-revision CI and API SQL execution are not yet confirmed. After CI, verify authenticated requests for at least one account in each role family against the intended local `ahl_el_kheir` database. Do not apply any schema changes for this endpoint. The mobile transaction date filter exists in both UI and API; complete boundary/pagination/refresh runtime acceptance is still open. The external browser may not share the mobile bearer session with the website, so website links must not be described as authenticated session handoff.
+
+## 2026-10-25 — Role-tool authorization follow-up
+
+A second guard-level review corrected additional mobile quick-tool visibility:
+- HR Manager-only pages (employment states, incentive verification, payroll reversal, attendance policy, payroll integrity, and incentive policy management) are now shown only to `hr_manager`; HR Staff retain pages whose real web guards permit them.
+- Accountant-only role cards no longer surface monthly/group disbursement pages whose existing web guards deny the `accountant` role. Those links remain available to `accountant_staff`.
+- Regression tests cover the HR Manager/HR Staff split, accountant disbursement restrictions, and the Supervisor Fina-creation restriction.
+
+Commits: `98e2e48a724b0b403a8795988005f5c4f30cd311`, `d845ec9a67a6540d9f5764c54f6096c9bfceaf5a`, `07a8d34ca187a9b6c28692e32c813a0cc76e2166`, `7532b0f63fc24d7916003f54d8bfee9860ed72d9`. Latest tests/build after these changes are still pending. Continue auditing role tools against actual page guards; repository file existence alone is not sufficient.
