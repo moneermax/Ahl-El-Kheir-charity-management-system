@@ -19,6 +19,17 @@ function ak_api_json(int $status, array $payload): never
     exit;
 }
 
+function ak_api_normalize_role_code(string $roleCode): string
+{
+    return match ($roleCode) {
+        'sudo', 'super_admin' => 'admin',
+        'gm' => 'general_manager',
+        'vgm' => 'vice_general_manager',
+        'fm', 'finance' => 'financial_manager',
+        default => $roleCode,
+    };
+}
+
 function ak_api_require_method(string $method): void
 {
     if (strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== strtoupper($method)) {
@@ -98,11 +109,16 @@ function ak_api_authenticated_user(): array
 
     dbExecute('UPDATE mobile_api_sessions SET last_used_at = NOW() WHERE id = ?', [(int)$session['mobile_session_id']]);
 
+    $rawRoleCode = (string)$session['role_code'];
+
     return [
         'id' => (int)$session['id'],
         'username' => (string)$session['username'],
         'full_name' => (string)$session['full_name'],
-        'role_code' => (string)$session['role_code'],
+        // Use the canonical web-router role for authorization checks in API endpoints.
+        'role_code' => ak_api_normalize_role_code($rawRoleCode),
+        // Keep the persisted role for auth/me so the client retains the user's real role label.
+        'raw_role_code' => $rawRoleCode,
         'mobile_session_id' => (int)$session['mobile_session_id'],
     ];
 }
