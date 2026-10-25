@@ -5228,3 +5228,17 @@ Corrected both the Dart fallback in `mobile/ahl_el_kheir_app/lib/main.dart` and 
 ## 2026-10-25 — Mobile app defect evidence and verification boundary
 
 Source evidence: `AhlElKheirAppState.call()` in `mobile/ahl_el_kheir_app/lib/main.dart` decodes the API envelope and returns `json['data']`; `openWebPage()` previously then read `response['data']['handoff_token']`, a second envelope lookup that is inconsistent with `call()`'s contract and prevents the handoff token from being recognized. The extraction now reads `response['handoff_token']` directly. Handoff exceptions are surfaced with details for diagnosis. Admin and role dashboard metric layouts were adjusted to reduce RenderFlex overflow risk; the shared theme and dashboard colors were changed from blue/violet-heavy styling to teal/sea-green. A widget regression assertion was added for role dashboard overflow. Commits: `68ab7b57283b4fd3b052c860cb5cf6b64d73daf8`, `141662935f37f3898501eca3a279aa5fb4e949b4`, `c69eb19c122370ef41e1ee4a749977316809a627`, `8180d52e3e73a64d638f2cbb4b324c1ba3dc5891`, `d5ed6f1ce673354dad6c984e5e49941d0ff946e1`. No successful physical-device WEB handoff or APK rebuild is claimed yet. Major scope gap remains: most existing website workflows are not native Flutter screens; adding a WEB handoff is navigation, not native parity.
+
+
+## 2026-10-25 — Mobile navigation handoff removed; native admin workflows added
+
+The mobile Flutter client has been changed to a native-only navigation policy: it no longer imports or calls `url_launcher`, does not request a website handoff token, and does not launch an external browser. Unsupported routes show an in-app notice; the notice is explicitly not treated as implementation parity. Existing native screens are now reached from role-tool paths where an exact equivalent already exists.
+
+New API-backed native administration:
+- Read-only user directory: `api/v1/admin/users.php`; server-side authorization permits canonical administrator and HR Manager roles. Query is paginated/searched and returns no credentials.
+- Department management: `api/v1/admin/departments.php`, `api/v1/admin/departments_action.php`, and shared service `api/v1/admin/departments_service.php`. Existing source `modules/departments/index.php` confirms the role boundary and the name/duplicate/delete-usage rules. No schema changes or runtime DDL were added.
+- Recent audit activity: native screen backed by the existing admin overview, with a documented six-event limit.
+
+Evidence: Actions run [40210824853](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40210824853) passed PHP lint and the rollback-only full-schema MariaDB department service test. Exact service output: `PASS | mobile admin department service | create, list, duplicate guard, update, assigned-user delete guard, delete, rollback=PASS`. Widget coverage added for native admin screens and native-only fallback behavior. Latest Flutter/device acceptance must be checked separately; no physical-device success is claimed.
+
+Open gaps remain significant: full user management actions, recovery queue decisions, full audit pagination, reports, system settings, accounting/disbursements/Fina, backups/database tools, global search, profile/messages, orphan forms, and other role-specific workflows are not all implemented natively.
