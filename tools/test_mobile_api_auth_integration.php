@@ -74,6 +74,8 @@ $testForeignProjectId = 0;
 $testForeignMilestoneId = 0;
 $testNotificationId = 0;
 $testSponsorRequestId = 0;
+$testNannyFamilyId = 0;
+$testForeignNannyFamilyId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -137,6 +139,14 @@ try {
         ->execute([$notificationRecipientId, 'info', $foreignNotificationTitle, 'Disposable authorization test', null]);
     $testNotificationId = (int)$pdo->lastInsertId();
 
+    $ownFamilyCode = 'MOBILE-NANNY-CI-' . bin2hex(random_bytes(5));
+    $foreignFamilyCode = 'MOBILE-NANNY-FOREIGN-CI-' . bin2hex(random_bytes(5));
+    $insertFamily = $pdo->prepare('INSERT INTO families (mother_name, family_code, status, created_by, nanny_id) VALUES (?, ?, \'pending\', ?, ?)');
+    $insertFamily->execute(['Mobile API assigned nanny family fixture', $ownFamilyCode, $userId, $userId]);
+    $testNannyFamilyId = (int)$pdo->lastInsertId();
+    $insertFamily->execute(['Mobile API foreign nanny family fixture', $foreignFamilyCode, $userId, $notificationRecipientId]);
+    $testForeignNannyFamilyId = (int)$pdo->lastInsertId();
+
     $r = mobileApiRequest('/api/v1/notifications/index.php', 'GET', null, $token);
     $listedNotificationIds = array_map(
         static fn(array $item): int => (int)($item['id'] ?? 0),
@@ -157,6 +167,31 @@ try {
         && ($r['json']['ok'] ?? false) === true
         && (int)$foreignNotificationReadState->fetchColumn() === 0,
         'mark-read cannot change another account\'s notification'
+    );
+
+    $r = mobileApiRequest('/api/v1/families/detail.php?id=' . $testNannyFamilyId, 'GET', null, $token);
+    mobileApiExpect(
+        $r['status'] === 200
+        && ($r['json']['ok'] ?? false) === true
+        && (int)($r['json']['data']['family']['id'] ?? 0) === $testNannyFamilyId,
+        'nanny can view an assigned family'
+    );
+    $r = mobileApiRequest('/api/v1/families/detail.php?id=' . $testForeignNannyFamilyId, 'GET', null, $token);
+    mobileApiExpect(
+        $r['status'] === 403
+        && ($r['json']['error']['code'] ?? '') === 'forbidden',
+        'nanny cannot view a family assigned to another account'
+    );
+    $r = mobileApiRequest('/api/v1/families/index.php', 'GET', null, $token);
+    $listedFamilyIds = array_map(
+        static fn(array $item): int => (int)($item['id'] ?? 0),
+        $r['json']['data']['items'] ?? []
+    );
+    mobileApiExpect(
+        $r['status'] === 200
+        && in_array($testNannyFamilyId, $listedFamilyIds, true)
+        && !in_array($testForeignNannyFamilyId, $listedFamilyIds, true),
+        'nanny family listing includes assigned fixture and excludes foreign fixture'
     );
 
     $sponsorRequestName = 'Mobile API CI sponsor request ' . bin2hex(random_bytes(6));
@@ -396,6 +431,12 @@ try {
     }
     if ($testSponsorRequestId > 0) {
         $pdo->prepare('DELETE FROM sponsor_requests WHERE id=?')->execute([$testSponsorRequestId]);
+    }
+    if ($testNannyFamilyId > 0) {
+        $pdo->prepare('DELETE FROM families WHERE id=?')->execute([$testNannyFamilyId]);
+    }
+    if ($testForeignNannyFamilyId > 0) {
+        $pdo->prepare('DELETE FROM families WHERE id=?')->execute([$testForeignNannyFamilyId]);
     }
     if (isset($testTokenHashes) && $testTokenHashes) {
         $marks = implode(',', array_fill(0, count($testTokenHashes), '?'));
