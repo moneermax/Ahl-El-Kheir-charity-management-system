@@ -918,8 +918,8 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> openNotification(Map<String, dynamic> item) async {
-    await markNotification(item);
-    if (!mounted) return;
+    final marked = await markNotification(item);
+    if (!marked || !mounted) return;
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => NotificationDetailPage(
         english: widget.english,
@@ -929,20 +929,22 @@ class _NotificationPageState extends State<NotificationPage> {
     ));
   }
 
-  Future<void> markNotification(Map<String, dynamic> item) async {
+  Future<bool> markNotification(Map<String, dynamic> item) async {
     final isRead = item['is_read'] == true || item['is_read'] == 1;
-    if (isRead) return;
+    if (isRead) return true;
     final id = int.tryParse(item['id']?.toString() ?? '') ?? 0;
-    if (id < 1) return;
+    if (id < 1) return true;
     try {
       await widget.markRead(id);
-      if (!mounted) return;
+      if (!mounted) return false;
       await load();
+      return true;
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(e.toString())),
       );
+      return false;
     }
   }
 
@@ -1020,7 +1022,6 @@ class _NotificationPageState extends State<NotificationPage> {
                                           ? Colors.grey
                                           : const Color(0xFF1F4E8C),
                                     ),
-                                    onTap: () => openNotification(item),
                                     title: Text(
                                       item['title']?.toString() ?? '',
                                       style: TextStyle(
@@ -1052,7 +1053,7 @@ class _NotificationPageState extends State<NotificationPage> {
                                         ],
                                       ),
                                     ),
-                                    onTap: () => markNotification(item),
+                                    onTap: () => openNotification(item),
                                   ),
                                 );
                               },
