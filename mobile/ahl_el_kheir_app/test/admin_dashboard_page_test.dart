@@ -29,7 +29,9 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(tester.takeException(), isNull, reason: 'Dashboard metric cards must not overflow on a narrow phone.');
+    final layoutException = tester.takeException();
+    if (layoutException != null) debugDumpRenderTree();
+    expect(layoutException, isNull, reason: 'Dashboard must not overflow on a narrow phone.');
     expect(find.text('Administration dashboard'), findsNothing);
 
     await tester.scrollUntilVisible(
