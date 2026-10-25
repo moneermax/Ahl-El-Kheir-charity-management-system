@@ -554,3 +554,12 @@ A targeted source audit found `api/v1/projects/detail.php` selected `project_mil
 - Verification: [Mobile API auth integration run 40160867381](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160867381) completed successfully. Its live PHP API test step and full workflow passed against disposable MariaDB.
 - Cleanup removes the foreign milestone and temporary project. No schema/migration or production endpoint code changed in this checkpoint.
 - Confirmed scope coverage now includes milestone ID serialization, ended-assignment denial with no mutation, and cross-project milestone mutation denial with no mutation. Local XAMPP runtime/migration state and broader mobile API release acceptance remain open.
+
+
+## 2026-10-25 — Mobile notification cross-account isolation verified in CI
+
+- Extended `tools/test_mobile_api_auth_integration.php` with a notification addressed to a second existing user in the disposable schema.
+- The test confirms `GET /api/v1/notifications/index.php` excludes the foreign notification and `POST /api/v1/notifications/mark_read.php` cannot change its stored `is_read=0` state when called by the first user's token. Cleanup deletes only the exact fixture row.
+- Test commit: `ab2a6173e596f88ed4e7c2fb6e962e40e5429192`.
+- Runtime result: PASS in [Mobile API auth integration run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591). The workflow imported the checked-in schema, applied the mobile-session migration, and ran live PHP endpoints against disposable MariaDB.
+- No production endpoint or schema change. Local XAMPP migration-state confirmation and broader local API authorization/record-scope/action acceptance remain open. Never run this harness against `ahl_el_kheir`.
