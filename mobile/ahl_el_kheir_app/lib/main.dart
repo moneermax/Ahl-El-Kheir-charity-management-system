@@ -466,11 +466,20 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'admin/users.php?q=$encodedQuery&page=$page', token: token);
   }
 
+  Future<Map<String, dynamic>> loadAdminAuditLog(int page, String query) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    final encodedQuery = Uri.encodeQueryComponent(query);
+    return call('GET', 'audit/index.php?page=$page&q=$encodedQuery', token: token);
+  }
+
   void openAuditLogPage() {
     navigatorKey.currentState?.push(MaterialPageRoute<void>(
       builder: (_) => AuditLogPage(
         english: english,
-        loadOverview: loadAdminOverview,
+        loadPage: loadAdminAuditLog,
       ),
     ));
   }
