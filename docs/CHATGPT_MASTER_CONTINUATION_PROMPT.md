@@ -2266,3 +2266,7 @@ The focused project-detail milestone ID assertion and ended-assignment mutation 
 
 ## 2026-10-25 — Mobile notification isolation test passed
 Commit `ab2a6173e596f88ed4e7c2fb6e962e40e5429192` adds a disposable-CI fixture proving another account's notification is excluded from the authenticated user's list and cannot have its read state changed through the API. [Mobile API auth integration run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591) passed against the checked-in schema and disposable MariaDB. Continue the remaining source/schema-led API authorization audit; local XAMPP migration state and live local role/record-scope/action acceptance remain unverified. Never run the harness against `ahl_el_kheir`.
+
+
+## 2026-10-25 — Mobile sponsor-request authorization tests passed
+Commit `f0dfa70a376771cbceeae04e73b57f2e6e40cb89` adds live disposable-DB checks for sponsor-request role denial and state-transition integrity. Nanny list/mutation is denied with no state change; admin can transition `new` to `contacted`; repeating the transition is rejected with 409 and no mutation. [Mobile API auth integration run 40161801824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161801824) passed. Continue the source/schema-led API authorization audit; local XAMPP migration state and broader live local role/record-scope/action acceptance remain unverified. Never run the harness against `ahl_el_kheir`.
