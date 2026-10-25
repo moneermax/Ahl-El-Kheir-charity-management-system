@@ -535,3 +535,13 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 ## 2026-10-25 — Project milestone ID response defect found and source-corrected (verification pending)
 A targeted source audit found `api/v1/projects/detail.php` selected `project_milestones.id` but omitted `id` from each serialized milestone. The Flutter edit/delete actions require that ID, so the documented milestone-maintenance workflow could not reliably send a valid `milestone_id` from real API data. Added the existing row ID to the milestone response in commit `20631106ae8fe9f8267779faf4c6e9a1d7608057`. No schema or migration changes. CI/runtime verification is not yet confirmed; do not mark this fix verified until the relevant PHP lint and endpoint response test pass. Continue the source/schema-led API authorization audit afterward. Local Apache/MariaDB acceptance, migration-state confirmation, and HTTPS hosting remain release gates.
+
+
+## 2026-10-25 — Mobile milestone ID and project-scope integration verification
+
+- Added a disposable-CI integration assertion to tools/test_mobile_api_auth_integration.php that inserts a real test milestone and confirms GET /api/v1/projects/detail.php?id=... serializes the matching milestone id.
+- Added an assertion that ends the project supervisor's assignment, attempts to edit a milestone, and verifies HTTP 403 with the stored title unchanged.
+- Test commit: eebe53983eed73e9899ca9cf5d85754497e3e092.
+- Runtime result: PASS in [Mobile API auth integration run 40160569643](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160569643). The workflow imported the checked-in schema, applied the mobile-session migration, and exercised live PHP endpoints against disposable MariaDB. This is CI evidence only; it does not establish local XAMPP migration state or local runtime behavior.
+- Source review also compared the milestone mutation API with modules/projects/view.php: project and milestone IDs are jointly scoped; supervisor mutations require an active primary-supervisor or operations assignment; closed projects are blocked, consistent with the web edit/delete gate. No new production authorization defect was established in this pass.
+- Latest source audit checkpoint: milestone response ID defect corrected and CI-tested; broad live local API authorization/record-isolation/action acceptance remains open. Do not run the integration harness against ahl_el_kheir; it is gated for the disposable mobile_api_auth_test database.
