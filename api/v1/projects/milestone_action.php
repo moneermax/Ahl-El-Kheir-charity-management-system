@@ -63,6 +63,16 @@ try {
         dbExecute('ROLLBACK');
         ak_api_json(409, ['ok' => false, 'error' => ['code' => 'project_closed', 'message' => 'Milestones cannot be changed on a closed project.']]);
     }
+    if ($role !== 'admin' && (
+        (string)$project['approval_status'] !== 'approved'
+        || !in_array($lifecycle, ['active', 'reopened', 'completed', 'under_review', 'cancelled'], true)
+    )) {
+        dbExecute('ROLLBACK');
+        ak_api_json(409, ['ok' => false, 'error' => [
+            'code' => 'project_not_operational',
+            'message' => 'This project is not available for operational updates.',
+        ]]);
+    }
     if ($role === 'project_supervisor') {
         $primary = dbFetchOne(
             'SELECT id FROM project_supervisor_assignments WHERE project_id = ? AND supervisor_user_id = ? AND ended_at IS NULL LIMIT 1',
