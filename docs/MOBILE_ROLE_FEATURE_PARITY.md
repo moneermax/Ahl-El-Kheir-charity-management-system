@@ -84,3 +84,13 @@ This corrects concrete native-screen/API mismatches where the UI offered role-ap
 - Role-alias regression: `PASS | mobile API role normalization | 14 cases` in PHP workflow `40192899764`.
 
 Remaining acceptance boundary: these CI checks use disposable databases and cannot verify the user's running XAMPP server, actual local `ahl_el_kheir` schema alignment, the phone's network route, or a live authenticated session. The mobile API session migration must be applied to the intended local database before first use if it has not already been applied. Website-only tools remain labelled WEB and need a valid website session; they are not native parity claims.
+
+## 2026-10-25 — Native role-specific dashboard metrics (source implementation; runtime gate pending)
+
+Added `GET api/v1/dashboard/overview.php` and a native Flutter `RoleDashboardPage` section for General Manager, Vice General Manager, Financial Manager, Accountant/Accountant Staff, Supervisor, Nanny, Administration/Staff/Social Media, HR Manager/Staff, Project Manager and Project Supervisor. The API re-authenticates the bearer token on each request, uses the existing canonical role normalization, rejects administrator roles in favor of the dedicated administrator endpoint, and returns only metrics scoped to the authenticated role. Metric SQL was derived from the corresponding existing web dashboard queries.
+
+Commits: `f6ac0b4490b712ae7bebd23474aa97d6ab93d165` (API), `1e74df5e3e601593808121a907a7023faede21ba` (native metrics section), `7c96953e298aa83b4d04149e91a2a55efa952283` (workspace integration), `4fe6df05679946968666959cfc6025921b28e1fd` (PHP lint CI).
+
+The additional role-tool routes were checked against the current repository tree. The Supervisor-only “Record Fina collection” link was removed after source inspection confirmed `modules/transactions/fina_payment_create.php` permits only financial_manager/fm/admin. A widget regression test covers that permission boundary.
+
+Automated verification for the final combined revision is pending. Do not claim the new dashboard SQL is runtime-verified against the local database until its workflow and local XAMPP/API request pass. Transaction date filters already exist in both the mobile UI and API, including inclusive `transaction_date >= from` and `transaction_date <= to`; same-day widget coverage exists, but the complete date-boundary, empty-result, reversed-date, pagination/refresh and authenticated API acceptance remains open. Website-only links remain website navigation, not native feature parity. Physical-device and local-database acceptance remain pending.
