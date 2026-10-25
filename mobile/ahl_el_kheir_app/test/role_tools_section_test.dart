@@ -125,6 +125,21 @@ void main() {
     expect(find.text('Record Fina collection'), findsNothing);
   });
 
+  testWidgets('VGM suspension cases are labelled as a native app workflow', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'vice_general_manager',
+          english: true,
+          onOpen: (_) {},
+        ),
+      ),
+    ));
+
+    expect(find.text('Manage sponsorship suspensions'), findsOneWidget);
+    expect(find.text('APP'), findsOneWidget);
+  });
+
   testWidgets('roles without extra website tools render no empty section', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
