@@ -53,14 +53,14 @@ class RoleToolsSection extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        _isNativePath(tool.path)
+                        tool.path == 'modules/families/suspensions.php'
                             ? Icons.phone_android_rounded
                             : Icons.open_in_new_rounded,
                         size: 18,
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _isNativePath(tool.path)
+                        tool.path == 'modules/families/suspensions.php'
                             ? (english ? 'APP' : 'تطبيق')
                             : 'WEB',
                         style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
@@ -75,12 +75,6 @@ class RoleToolsSection extends StatelessWidget {
       ],
     );
   }
-
-  bool _isNativePath(String path) => const {
-        'modules/families/suspensions.php',
-        'modules/sponsors/assign.php',
-        'modules/supervisors/index.php',
-      }.contains(path);
 
   List<_ToolGroup> _groups(String role, bool en) {
     _Tool t(String ar, String eng, String arSub, String enSub, String path, IconData icon) =>
