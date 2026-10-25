@@ -1,0 +1,78 @@
+name: Mobile API auth integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'api/v1/**'
+      - 'config/config.php'
+      - 'config/database.php'
+      - 'config/environment.php'
+      - 'database/ahl_el_kheir.sql'
+      - 'database/migrations/2026-10-24_mobile_api_sessions.sql'
+      - 'tools/test_mobile_api_auth_integration.php'
+      - '.github/workflows/mobile-api-auth-integration.yml'
+  pull_request:
+    paths:
+      - 'api/v1/**'
+      - 'config/config.php'
+      - 'config/database.php'
+      - 'config/environment.php'
+      - 'database/ahl_el_kheir.sql'
+      - 'database/migrations/2026-10-24_mobile_api_sessions.sql'
+      - 'tools/test_mobile_api_auth_integration.php'
+      - '.github/workflows/mobile-api-auth-integration.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  mobile-api-auth:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.4.32
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: mobile_api_auth_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    env:
+      MOBILE_API_AUTH_TEST: '1'
+      AHL_ENV: development
+      AHL_DB_HOST: 127.0.0.1
+      AHL_DB_PORT: '3306'
+      AHL_DB_NAME: mobile_api_auth_test
+      AHL_DB_USER: root
+      AHL_DB_PASS: root
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: pdo_mysql, mbstring
+          coverage: none
+
+      - name: Install MariaDB client
+        run: sudo apt-get update && sudo apt-get install -y mariadb-client
+
+      - name: Import the checked-in schema and apply the mobile session migration
+        env:
+          MYSQL_PWD: root
+        run: |
+          set -euo pipefail
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/ahl_el_kheir.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-24_mobile_api_sessions.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-24_mobile_api_sessions.sql
+
+      - name: Exercise live PHP API endpoints against disposable MariaDB
+        run: php tools/test_mobile_api_auth_integration.php

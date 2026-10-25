@@ -1,0 +1,179 @@
+<?php
+declare(strict_types=1);
+
+/**
+ * Destructive operations are limited to a dedicated, disposable CI database.
+ * The selected existing user is restored and all sessions created by this test
+ * are deleted before exit. Never run against a development/production database.
+ */
+$database = (string)(getenv('AHL_DB_NAME') ?: '');
+if (getenv('MOBILE_API_AUTH_TEST') !== '1' || $database !== 'mobile_api_auth_test') {
+    fwrite(STDERR, "Refusing to run outside mobile_api_auth_test with MOBILE_API_AUTH_TEST=1.\n");
+    exit(2);
+}
+
+$pdo = new PDO(
+    sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', getenv('AHL_DB_HOST') ?: '127.0.0.1', getenv('AHL_DB_PORT') ?: '3306', $database),
+    (string)(getenv('AHL_DB_USER') ?: 'root'),
+    (string)(getenv('AHL_DB_PASS') ?: 'root'),
+    [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC]
+);
+if ((string)$pdo->query('SELECT DATABASE()')->fetchColumn() !== 'mobile_api_auth_test') {
+    throw new RuntimeException('Connected to an unexpected database.');
+}
+
+function mobileApiExpect(bool $ok, string $message): void {
+    if (!$ok) throw new RuntimeException('FAIL: ' . $message);
+    echo "PASS: {$message}\n";
+}
+function mobileApiRequest(string $path, string $method = 'GET', ?array $body = null, ?string $token = null): array {
+    $headers = ['Accept: application/json'];
+    $content = '';
+    if ($body !== null) {
+        $headers[] = 'Content-Type: application/json';
+        $content = json_encode($body, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
+    }
+    if ($token !== null) $headers[] = 'Authorization: Bearer ' . $token;
+    $context = stream_context_create(['http' => [
+        'method' => $method,
+        'header' => implode("\r\n", $headers),
+        'content' => $content,
+        'ignore_errors' => true,
+        'timeout' => 5,
+    ]]);
+    $raw = file_get_contents('http://127.0.0.1:18080' . $path, false, $context);
+    $responseHeaders = $http_response_header ?? [];
+    $status = 0;
+    foreach ($responseHeaders as $header) {
+        if (preg_match('/^HTTP\/\S+\s+(\d{3})/', $header, $m)) $status = (int)$m[1];
+    }
+    $json = is_string($raw) ? json_decode($raw, true) : null;
+    return ['status' => $status, 'json' => is_array($json) ? $json : [], 'raw' => (string)$raw];
+}
+
+$roles = [];
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('nanny','hr_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['nanny'], $roles['hr_staff'])) {
+    throw new RuntimeException('Checked-in schema must contain nanny and hr_staff roles.');
+}
+$user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
+if (!$user || trim((string)$user['username']) === '') throw new RuntimeException('Checked-in schema has no usable user fixture.');
+
+$userId = (int)$user['id'];
+$username = (string)$user['username'];
+$knownPassword = 'MobileApi-CI-Only-2026!';
+$testStart = date('Y-m-d H:i:s');
+$testTokenHashes = [];
+$server = null;
+$serverPipes = [];
+$failure = null;
+
+try {
+    $pdo->prepare('UPDATE users SET password_hash=?, is_active=1, password_change_required=0, role_id=? WHERE id=?')
+        ->execute([password_hash($knownPassword, PASSWORD_DEFAULT), $roles['nanny'], $userId]);
+
+    $server = proc_open(
+        [PHP_BINARY, '-S', '127.0.0.1:18080', '-t', dirname(__DIR__)],
+        [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']],
+        $serverPipes,
+        dirname(__DIR__),
+        array_merge($_ENV, [
+            'AHL_ENV' => 'development',
+            'AHL_DB_HOST' => getenv('AHL_DB_HOST') ?: '127.0.0.1',
+            'AHL_DB_PORT' => getenv('AHL_DB_PORT') ?: '3306',
+            'AHL_DB_NAME' => 'mobile_api_auth_test',
+            'AHL_DB_USER' => getenv('AHL_DB_USER') ?: 'root',
+            'AHL_DB_PASS' => getenv('AHL_DB_PASS') ?: 'root',
+        ])
+    );
+    if (!is_resource($server)) throw new RuntimeException('Could not start the PHP test server.');
+    stream_set_blocking($serverPipes[1], false);
+    stream_set_blocking($serverPipes[2], false);
+
+    $ready = false;
+    for ($i = 0; $i < 40; $i++) {
+        usleep(250000);
+        $probe = mobileApiRequest('/api/v1/auth/me.php');
+        if ($probe['status'] === 401) { $ready = true; break; }
+    }
+    if (!$ready) throw new RuntimeException('PHP test server did not become ready.');
+
+    $r = mobileApiRequest('/api/v1/auth/me.php');
+    mobileApiExpect($r['status'] === 401 && ($r['json']['error']['code'] ?? '') === 'unauthenticated', 'missing bearer token is rejected');
+    $r = mobileApiRequest('/api/v1/auth/login.php', 'GET');
+    mobileApiExpect($r['status'] === 405, 'login rejects the wrong HTTP method');
+    $r = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => 'wrong-password']);
+    mobileApiExpect($r['status'] === 401, 'invalid credentials are rejected');
+
+    $r = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($r['status'] === 200 && isset($r['json']['data']['access_token']), 'valid credentials issue a bearer token');
+    $token = (string)$r['json']['data']['access_token'];
+    mobileApiExpect((bool)preg_match('/^[a-f0-9]{64}$/', $token), 'access token has expected opaque-token format');
+    $tokenHash = hash('sha256', $token);
+    $testTokenHashes[] = $tokenHash;
+    $stored = $pdo->prepare('SELECT token_hash FROM mobile_api_sessions WHERE token_hash=?');
+    $stored->execute([$tokenHash]);
+    mobileApiExpect((string)$stored->fetchColumn() === $tokenHash && $tokenHash !== $token, 'only the SHA-256 token hash is stored');
+
+    $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 200 && ($r['json']['data']['user']['role_code'] ?? '') === 'nanny', '/me accepts a valid token and returns the live role');
+    $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403, 'nanny is denied access to the HR employee directory');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
+    $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 200 && ($r['json']['data']['user']['role_code'] ?? '') === 'hr_staff', 'role changes are reflected on the next authenticated request');
+    $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 200 && ($r['json']['ok'] ?? false) === true, 'HR staff can access the HR employee directory');
+
+    $pdo->prepare('UPDATE users SET is_active=0 WHERE id=?')->execute([$userId]);
+    $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 401, 'deactivated accounts lose access to existing tokens');
+    $pdo->prepare('UPDATE users SET is_active=1, password_change_required=1, role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+    $r = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'password_change_required', 'password-change-required accounts cannot sign in');
+
+    $expiredToken = bin2hex(random_bytes(32));
+    $revokedToken = bin2hex(random_bytes(32));
+    $expiredHash = hash('sha256', $expiredToken);
+    $revokedHash = hash('sha256', $revokedToken);
+    $testTokenHashes[] = $expiredHash;
+    $testTokenHashes[] = $revokedHash;
+    $insert = $pdo->prepare('INSERT INTO mobile_api_sessions (user_id, token_hash, expires_at, revoked_at, created_at, last_used_at) VALUES (?, ?, ?, NULL, NOW(), NOW())');
+    $insert->execute([$userId, $expiredHash, date('Y-m-d H:i:s', time() - 60)]);
+    $insert->execute([$userId, $revokedHash, date('Y-m-d H:i:s', time() + 3600)]);
+    $pdo->prepare('UPDATE mobile_api_sessions SET revoked_at=NOW() WHERE token_hash=?')->execute([$revokedHash]);
+    $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $expiredToken);
+    mobileApiExpect($r['status'] === 401, 'expired sessions are rejected');
+    $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $revokedToken);
+    mobileApiExpect($r['status'] === 401, 'revoked sessions are rejected');
+
+    $pdo->prepare('UPDATE users SET password_change_required=0 WHERE id=?')->execute([$userId]);
+    $r = mobileApiRequest('/api/v1/auth/logout.php', 'POST', [], $token);
+    mobileApiExpect($r['status'] === 200 && ($r['json']['data']['signed_out'] ?? false) === true, 'logout revokes the bearer session');
+    $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 401, 'logged-out token can no longer authenticate');
+
+    echo "PASS | mobile_api_auth_integration=PASS\n";
+} catch (Throwable $e) {
+    $failure = $e;
+} finally {
+    if (is_resource($server)) {
+        proc_terminate($server);
+        proc_close($server);
+    }
+    foreach ($serverPipes as $pipe) if (is_resource($pipe)) fclose($pipe);
+    if (isset($testTokenHashes) && $testTokenHashes) {
+        $marks = implode(',', array_fill(0, count($testTokenHashes), '?'));
+        $stmt = $pdo->prepare("DELETE FROM mobile_api_sessions WHERE token_hash IN ($marks)");
+        $stmt->execute($testTokenHashes);
+    }
+    $pdo->prepare('DELETE FROM audit_log WHERE user_id=? AND action=? AND entity_type=? AND entity_id=? AND created_at>=?')
+        ->execute([$userId, 'LOGIN', 'users', $userId, $testStart]);
+    $pdo->prepare('UPDATE users SET password_hash=?, is_active=?, password_change_required=?, role_id=?, last_login_at=? WHERE id=?')
+        ->execute([$user['password_hash'], $user['is_active'], $user['password_change_required'], $user['role_id'], $user['last_login_at'], $userId]);
+}
+if ($failure !== null) {
+    fwrite(STDERR, $failure->getMessage() . "\n");
+    exit(1);
+}
