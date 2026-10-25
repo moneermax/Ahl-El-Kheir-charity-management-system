@@ -1283,14 +1283,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   _ => english ? 'Your workspace' : 'مساحة عملك',
                 };
                 final heroColors = switch (roleCode) {
-                  'admin' || 'sudo' || 'super_admin' => const [Color(0xFF081527), Color(0xFF4B3F91)],
-                  'general_manager' || 'gm' => const [Color(0xFF154734), Color(0xFF2E63A8)],
-                  'vice_general_manager' || 'vgm' => const [Color(0xFF123A7A), Color(0xFF247BA0)],
-                  'financial_manager' || 'fm' || 'finance' || 'accountant' || 'accountant_staff' => const [Color(0xFF123B36), Color(0xFF218C74)],
-                  'supervisor' || 'nanny' => const [Color(0xFF174A63), Color(0xFF2A9D8F)],
-                  'hr_manager' || 'hr_staff' => const [Color(0xFF432874), Color(0xFF8764B8)],
-                  'projects_manager' || 'project_supervisor' => const [Color(0xFF753B19), Color(0xFFC56B32)],
-                  _ => const [Color(0xFF081527), Color(0xFF1E6B4E)],
+                  'admin' || 'sudo' || 'super_admin' => const [Color(0xFF173D2F), Color(0xFFC89B3C)],
+                  'general_manager' || 'gm' => const [Color(0xFF154734), Color(0xFF478364)],
+                  'vice_general_manager' || 'vgm' => const [Color(0xFF15583F), Color(0xFFC89B3C)],
+                  'financial_manager' || 'fm' || 'finance' || 'accountant' || 'accountant_staff' => const [Color(0xFF173D2F), Color(0xFF478364)],
+                  'supervisor' || 'nanny' => const [Color(0xFF1E6B4E), Color(0xFF8FAE91)],
+                  'hr_manager' || 'hr_staff' => const [Color(0xFF154734), Color(0xFFC89B3C)],
+                  'projects_manager' || 'project_supervisor' => const [Color(0xFF1E6B4E), Color(0xFFB58A3A)],
+                  _ => const [Color(0xFF173D2F), Color(0xFF15583F)],
                 };
                 return ListView(
                 padding: const EdgeInsets.all(20),
