@@ -3,7 +3,10 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
 ak_api_require_method('GET');
 $user = ak_api_authenticated_user();
-if (!in_array((string)$user['role_code'], ['admin', 'general_manager'], true)) {
+// This screen's existing web guard checks the persisted role exactly. Do not use
+// the normalized role here: sudo/super_admin normalize to admin for routing, but
+// the web audit page itself does not grant them access.
+if (!in_array((string)$user['raw_role_code'], ['admin', 'general_manager'], true)) {
     ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'Audit log access is limited to system administrators and the General Manager.']]);
 }
 $query = trim((string)($_GET['q'] ?? ''));
