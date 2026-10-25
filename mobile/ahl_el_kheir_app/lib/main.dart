@@ -14,6 +14,7 @@ import 'supervisors_page.dart';
 import 'families_page.dart';
 import 'admin_dashboard_page.dart';
 import 'role_dashboard_page.dart';
+import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
 import 'fm_review_queue_page.dart';
 import 'transactions_page.dart';
@@ -152,6 +153,31 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
   }
 
+  Future<Map<String, dynamic>> loadSponsorAssignmentOptions() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'sponsors/assignment_options.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitSponsorAssignment(int sponsorId, int supervisorId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'sponsors/assign.php', token: token, body: {
+      'sponsor_id': sponsorId,
+      'supervisor_id': supervisorId,
+    });
+  }
+
+  void openSponsorAssignmentPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => SponsorAssignmentPage(
+        english: english,
+        loadOptions: loadSponsorAssignmentOptions,
+        assignSponsor: submitSponsorAssignment,
+      ),
+    ));
+  }
+
   Future<Map<String, dynamic>> loadAdminOverview() async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -168,6 +194,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final navigator = navigatorKey.currentState;
     if (navigator == null) return;
     switch (tool) {
+      case 'sponsor_assignment':
+        openSponsorAssignmentPage();
+        return;
       case 'sponsors':
         navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail)));
         return;
@@ -1096,6 +1125,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail),
                       )),
+                    ))),
+                  if (['general_manager', 'gm', 'vice_general_manager', 'vgm'].contains(roleCode))
+                    SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
+                      leading: const CircleAvatar(backgroundColor: Color(0xFFEAF2FF), child: Icon(Icons.assignment_ind_rounded, color: Color(0xFF1F4E8C))),
+                      title: Text(english ? 'Sponsor assignment' : 'إسناد الكفلاء'),
+                      subtitle: Text(english ? 'Assign unassigned sponsors to active supervisors' : 'إسناد الكفلاء غير المسندين إلى المشرفين النشطين'),
+                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
+                      onTap: openSponsorAssignmentPage,
                     ))),
                   if (['admin', 'vice_general_manager', 'general_manager', 'administration', 'staff', 'social_media'].contains(user?['role_code']?.toString()))
                     SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
