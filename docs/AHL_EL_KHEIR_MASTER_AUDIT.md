@@ -5217,3 +5217,10 @@ The role-specific mobile summary remains native, but users now also have a direc
 The one-time website handoff normalizes legacy aliases (`sudo/super_admin`, `gm`, `vgm`, `fm/finance`) to the same canonical role codes as the mobile API before creating the PHP session. The public password-recovery page remains directly accessible from the logged-out screen.
 
 Automated evidence: role-dashboard route mapping tests and the expanded mobile widget suite pass on the latest dashboard-link test run `40203004193` (commit `0fc03d7e2593f424fbe951e319f6d6dbbc47aa99`). The debug APK build step is in progress. The latest mobile API handoff integration run `40202879178` passed, including expired/revoked-token rejection and replay protection. Local migration/device acceptance remains outstanding.
+
+
+## 2026-10-25 — Mobile API connection regression: wrong APK port corrected
+
+Root cause confirmed from the exact build configuration: the latest push-triggered APK (Actions run `40203004193`) was compiled with the fallback API URL `http://192.168.18.9:881/AhlElKheir/api/v1`. Port `881` was the old/wrong port. The previously verified phone endpoint is `http://192.168.18.9:8081/AhlElKheir/api/v1`; laptop loopback verification used `http://127.0.0.1:8081/AhlElKheir/api/v1`. This explains the generic `تعذر الاتصال بخادم API` login message: the app's error handler hides transport/response failures behind one message.
+
+Corrected both the Dart fallback in `mobile/ahl_el_kheir_app/lib/main.dart` and the GitHub Actions dispatch/fallback URL in `.github/workflows/build-flutter-mobile-app.yml` to port `8081`. Commits: `f88668ff93cf446e9cfe8d7c011b22721ff98787` and `c5d7b6f04d708e7503fc2d3d812394409f5842bc`. New APK workflow runs `40204712668` and `40204718850` were queued/running at documentation time. Do not use the prior APK from run `40203004193`; it has the wrong port. Acceptance remains pending until the corrected APK build completes and the existing login succeeds against the user's local server.
