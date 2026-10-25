@@ -2771,3 +2771,10 @@ Current open finding: role authorization mismatch between the shared admin dashb
 - CI note: the separate full-schema migration workflow's repeated failure is the known harness guard `Refusing to run outside mobile_api_auth_test with MOBILE_API_AUTH_TEST=1`; the PHP lint, MariaDB 10.4 migration, HR migration and rescheduling jobs passed in run `40218041093`. No closed payroll code or production behavior was changed in response to that unrelated harness failure.
 
 **Native-only navigation correction:** the Flutter app's `openNativeTool()` explicitly never launches a website, browser, or external application. Any website-only route not mapped to a native screen displays an in-app unavailable message. Older parity text that describes WEB links as opening the external browser is stale; WEB labels are placeholders, not completed workflows.
+
+
+## 2026-10-25 — Native settings verification and Android APK published
+
+Correction to the previous pending-build note: Flutter workflow run [40218216549](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40218216549) completed successfully for app source `d2566a3130d89d7ba04b510063a49cbac410a05c`. Dart analysis, the complete Flutter widget-test suite (including native settings form test), debug APK build and artifact publication all passed. Artifact: `ahl-el-kheir-flutter-android-debug-apk`, 77,491,114 bytes, SHA-256 `26e427538cca26cb9573ab0ce3e4b1c3a0f25175ea3f164dba553beb4e164362`, expires 2026-11-24. Download through [GitHub Actions run 40218216549](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40218216549).
+
+The PHP lint job passed in run `40217995457`; the mobile API auth integration job passed in run `40217995530`. The separate full-schema workflow still fails only at its existing invocation guard `Refusing to run outside mobile_api_auth_test with MOBILE_API_AUTH_TEST=1`; its PHP lint, MariaDB 10.4 migration, HR migration and rescheduling jobs passed. This does not establish a settings DB role-matrix test. Local XAMPP API/database behavior and physical-device acceptance remain unverified.
