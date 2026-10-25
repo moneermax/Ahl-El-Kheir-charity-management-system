@@ -2555,3 +2555,20 @@ This slice restores dashboard entries already evidenced by existing web dashboar
 Commits: `2dc812eadedf47c600eb043e1cad84fbc37bfbad` (role tools), `651456187d01dc693dc666f2c8f1388b8f4e975c` (native routing), `35e9e3e350c996eeaf618987abc0458da33cf745` (widget tests).
 
 Verification boundary: source edits are committed; Flutter analysis/widget CI for this exact revision and real-device acceptance are not yet confirmed. This is one incremental parity slice, not completion of all dashboards. Continue role-by-role against actual web dashboard links and route guards, preserve restricted-tool regression tests, and keep external WEB links clearly labelled until their authenticated session continuity is proven. Local XAMPP/API and physical-device verification remain separate acceptance gates.
+
+
+## 2026-10-25 — Role-sidebar parity: omitted tools restored (source/CI pending)
+
+Follow-up source audit compared `includes/sidebar.php` and each target page's real role guard with `mobile/ahl_el_kheir_app/lib/role_tools_section.dart`. The previous attempted additions of sponsor assignment, supervisor management, and the general sponsor-request pipeline to the supplemental role section were removed after confirming those are already present as native work-area cards; duplicate cards are not an acceptable fix.
+
+The current change adds only tools present in the existing role sidebar and not otherwise exposed by the mobile workspace:
+- GM: salary-advance waiver decisions (`modules/hr/salary_advance_waiver_gm.php`).
+- VGM: orphan-group management (`modules/deputy_gm/groups.php`).
+- FM: opening balance and assigned nannies (`modules/accounting/opening_balance.php`, `modules/accounting/my_nannies.php`).
+- Accountant: vouchers, assigned nannies, and GM reconciliation; it deliberately does **not** expose journal, transaction, FM review, FM dashboard, or disbursement pages where the target page guards deny this role.
+- Accountant Staff: vouchers, assigned nannies, and orphan forms.
+- Supervisor and Nanny: orphan forms.
+
+Source commit: `9bbc4dc8d4943dc3858c65c5e5898d3b27d939f3`. Widget coverage commit: `84e55aa12f1f13aea77659fe347be6edee447ac4`. The tests assert the added tools and preserve the accountant disbursement restriction.
+
+**Verification boundary:** GitHub Actions for the exact latest Flutter source revision and a fresh APK are not yet confirmed at this checkpoint. WEB entries still launch the existing website and do not establish authenticated website-session continuity. Local XAMPP/API and physical-device acceptance remain pending. Continue the same route-by-route audit; do not describe overall mobile parity as complete.
