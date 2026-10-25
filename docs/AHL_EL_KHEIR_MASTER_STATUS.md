@@ -4952,3 +4952,20 @@ Remaining mobile parity includes full user-account actions, password recovery de
 The app now provides native password recovery review for canonical administrator/Sudo and HR Manager roles. The API lists the latest 50 requests and supports approve/reject only while pending. Approval atomically updates the password hash and recovery request, sets the forced-password-change flag and 24-hour expiry, and returns the temporary password only once in the response; notifications/audit are best-effort after commit. Rejection is recorded and sends a best-effort notification. Server-side authorization is authoritative; HR Staff is not granted this tool. No database migration was added.
 
 Verification passed in Actions run [40211295992](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40211295992): rollback-only full-schema MariaDB recovery test and PHP lint. Flutter analyzer passed; the latest Flutter widget suite/APK publication is pending. No physical-device acceptance is claimed.
+
+
+
+## 2026-10-25 — Mobile native-only navigation and Sudo administration checkpoint
+
+The Flutter app's navigation policy is native-only: no browser, WebView, external URL, or website dashboard handoff is used as a substitute for an app workflow. The separate “Full website dashboard” action and duplicate administration-dashboard tile were removed. Routes that still lack a native implementation now show an in-app notice and do not open a placeholder page. These routes remain unfinished product work and must not be reported as implemented.
+
+Native user administration was expanded using the existing HR employee provisioning workflow and current database schema:
+- User directory now has native create and edit screens, with role/department/manager options from the existing roles, departments, and users data.
+- Creation submits to the existing native API action and provisions the linked employee profile and initial salary history through hrCreateUserWithEmployee; the temporary password is shown in-app for one-time sharing.
+- Editing submits identity/role/department/manager/status changes through the native API and calls hrSyncEmployeeIdentityFromUser to synchronize linked employee identity fields.
+- The server-side user-action authorization list was aligned with the user-directory policy to include admin, sudo, super_admin, and hr_manager. Previously, Sudo could see the directory but was denied by the action endpoint; this was a concrete authorization mismatch found in source review.
+- Native user create/edit widget tests and the rollback-only service test cover form payloads, validation, identity synchronization, status changes, password reset rules, and rollback. No local physical-device test has been performed in this checkpoint.
+
+Related commits: cb2b809172b80a31ff0a7ee61ee84ddea5384c53, c8558ae6c6d354bba33973b743cdc04040b33d68, e47b5c0b6b19dd06fedfa8a09eba01c60090cfc8, 84efd7c2981065454a4b51ca7758b38a7c9d50d4, 11019d79b6dd39bcd63aa0c4ff96237cdcd03477, ecbf8e0520fd2940a34ece36616e390c6b54eb2d, 383714f576b8933daf7f54a38ddf74ec2a77139c.
+
+Verification boundary at documentation time: latest Flutter analysis passed and widget tests were running; Android APK build/publication was still pending. A successful CI APK build would verify compilation/tests only, not connectivity from a physical phone to the user's local XAMPP API. Native parity remains incomplete for settings, reports, backup/database tools, finance dashboard/accounts/disbursements/Fina collection, orphan form, profile/settings, salary advance request, messages and system search. Do not send the user to test this as a finished app until the current build is green and the next consolidated native workflow slice is ready.
