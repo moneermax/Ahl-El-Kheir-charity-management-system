@@ -327,10 +327,15 @@ class _ToolTile extends StatelessWidget {
       leading: Container(width: 42, height: 42, decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(13)), child: Icon(icon, color: color)),
       title: Text(title, style: const TextStyle(color: Color(0xFF20352B), fontWeight: FontWeight.w800, fontSize: 13)),
       subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(description, style: const TextStyle(color: Color(0xFF65756A), fontSize: 11, height: 1.4))),
-      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-        if (tag != null) Container(padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4), decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(7)), child: Text(tag!, style: TextStyle(color: color, fontSize: 9, fontWeight: FontWeight.w900))),
-        const SizedBox(width: 6),
-        const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA99E)),
+      trailing: Column(mainAxisSize: MainAxisSize.min, children: [
+        if (tag != null) Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+          decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(7)),
+          child: Text(tag!, maxLines: 1, overflow: TextOverflow.ellipsis,
+            style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.w900)),
+        ),
+        const SizedBox(height: 2),
+        const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA99E), size: 20),
       ]),
       ),
     ),
