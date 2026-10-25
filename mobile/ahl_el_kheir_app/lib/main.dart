@@ -257,6 +257,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       case 'settings':
         openWebPage('modules/settings/index.php');
         return;
+      case 'recovery':
+        openWebPage('modules/users/recovery.php');
+        return;
       case 'reports':
         openWebPage('modules/reports/index.php');
         return;
