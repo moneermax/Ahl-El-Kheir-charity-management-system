@@ -55,14 +55,14 @@ class RoleToolsSection extends StatelessWidget {
                       Icon(
                         tool.path == 'modules/families/suspensions.php'
                             ? Icons.phone_android_rounded
-                            : Icons.open_in_new_rounded,
+                            : Icons.phone_android_rounded,
                         size: 18,
                       ),
                       const SizedBox(height: 2),
                       Text(
                         tool.path == 'modules/families/suspensions.php'
                             ? (english ? 'APP' : 'تطبيق')
-                            : 'WEB',
+                            : (english ? 'IN APP' : 'داخل التطبيق'),
                         style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
                       ),
                     ],
