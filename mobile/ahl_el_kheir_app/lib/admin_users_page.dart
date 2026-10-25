@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'admin_user_create_page.dart';
+import 'admin_user_edit_page.dart';
 
 class AdminUsersPage extends StatefulWidget {
   const AdminUsersPage({
@@ -304,6 +305,22 @@ class _AdminUsersPageState extends State<AdminUsersPage> {
                                     spacing: 8,
                                     runSpacing: 4,
                                     children: [
+                                      OutlinedButton.icon(
+                                        onPressed: saving ? null : () {
+                                          Navigator.of(context).push<bool>(MaterialPageRoute<bool>(
+                                            builder: (_) => AdminUserEditPage(
+                                              english: en,
+                                              user: item,
+                                              loadOptions: widget.loadOptions,
+                                              submitAction: widget.submitAction,
+                                            ),
+                                          )).then((updated) {
+                                            if (updated == true) refresh(requestedPage: page);
+                                          });
+                                        },
+                                        icon: const Icon(Icons.edit_outlined),
+                                        label: Text(en ? 'Edit' : 'تعديل'),
+                                      ),
                                       OutlinedButton.icon(
                                         onPressed: saving ? null : () => act(item, 'toggle'),
                                         icon: Icon(active ? Icons.pause_circle_outline_rounded : Icons.play_circle_outline_rounded),
