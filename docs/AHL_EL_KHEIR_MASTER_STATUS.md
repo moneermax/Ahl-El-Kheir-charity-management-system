@@ -4858,3 +4858,10 @@ The current change adds only tools present in the existing role sidebar and not 
 Source commit: `9bbc4dc8d4943dc3858c65c5e5898d3b27d939f3`. Widget coverage commit: `84e55aa12f1f13aea77659fe347be6edee447ac4`. The tests assert the added tools and preserve the accountant disbursement restriction.
 
 **Verification boundary:** GitHub Actions for the exact latest Flutter source revision and a fresh APK are not yet confirmed at this checkpoint. WEB entries still launch the existing website and do not establish authenticated website-session continuity. Local XAMPP/API and physical-device acceptance remain pending. Continue the same route-by-route audit; do not describe overall mobile parity as complete.
+
+
+## 2026-10-25 — Personal account options restored in mobile header
+
+The existing website header exposes profile, account settings, and salary-advance request options to logged-in users. The mobile account sheet previously exposed only salary statements and leave requests. It now also exposes the existing profile and settings pages plus the salary-advance request page. These entries are explicitly labelled WEB; the salary-advance request notes that an employee profile is required. The links use the existing routes and do not duplicate or reimplement the web business logic.
+
+Source commit: `16e6446c39ba3040a0ce4e7ab934c406ef2a23c7`. Flutter analyze/widget tests and APK build are queued/in progress for this exact revision at this checkpoint. Website session continuity is still not established; the app warns that website sign-in may be required. Local XAMPP/API and physical-device verification remain open.
