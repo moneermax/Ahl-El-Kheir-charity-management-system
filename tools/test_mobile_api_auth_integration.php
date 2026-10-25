@@ -26,7 +26,7 @@ function mobileApiExpect(bool $ok, string $message): void {
     if (!$ok) throw new RuntimeException('FAIL: ' . $message);
     echo "PASS: {$message}\n";
 }
-function mobileApiRequest(string $path, string $method = 'GET', ?array $body = null, ?string $token = null, int $timeoutSeconds = 5): array {
+function mobileApiRequest(string $path, string $method = 'GET', ?array $body = null, ?string $token = null, int $timeoutSeconds = 5, bool $followRedirects = true): array {
     $headers = ['Accept: application/json'];
     $content = '';
     if ($body !== null) {
@@ -40,6 +40,8 @@ function mobileApiRequest(string $path, string $method = 'GET', ?array $body = n
         'content' => $content,
         'ignore_errors' => true,
         'timeout' => max(1, $timeoutSeconds),
+        'follow_location' => $followRedirects ? 1 : 0,
+        'max_redirects' => $followRedirects ? 20 : 0,
     ]]);
     $raw = file_get_contents('http://127.0.0.1:18080' . $path, false, $context);
     $responseHeaders = $http_response_header ?? [];
@@ -133,6 +135,65 @@ try {
     $stored = $pdo->prepare('SELECT token_hash FROM mobile_api_sessions WHERE token_hash=?');
     $stored->execute([$tokenHash]);
     mobileApiExpect((string)$stored->fetchColumn() === $tokenHash && $tokenHash !== $token, 'only the SHA-256 token hash is stored');
+
+    $r = mobileApiRequest('/api/v1/auth/web_handoff.php', 'POST', ['path' => 'https://example.com'], $token);
+    mobileApiExpect(
+        $r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'invalid_target_path',
+        'website handoff rejects external redirect targets'
+    );
+
+    $r = mobileApiRequest('/api/v1/auth/web_handoff.php', 'POST', [
+        'path' => 'modules/users/profile.php',
+        'query' => ['source' => 'mobile'],
+    ], $token);
+    $handoffToken = (string)($r['json']['data']['handoff_token'] ?? '');
+    mobileApiExpect(
+        $r['status'] === 200 && preg_match('/^[a-f0-9]{64}$/', $handoffToken) === 1,
+        'authenticated mobile session issues a one-time website handoff token'
+    );
+    $handoffHash = hash('sha256', $handoffToken);
+    $handoffRow = $pdo->prepare('SELECT token_hash, target_path, target_query_json, consumed_at, TIMESTAMPDIFF(SECOND, NOW(), expires_at) AS ttl FROM mobile_web_handoffs WHERE token_hash=?');
+    $handoffRow->execute([$handoffHash]);
+    $handoffStored = $handoffRow->fetch();
+    mobileApiExpect(
+        $handoffStored
+        && (string)$handoffStored['token_hash'] === $handoffHash
+        && $handoffHash !== $handoffToken
+        && (string)$handoffStored['target_path'] === 'modules/users/profile.php'
+        && (json_decode((string)$handoffStored['target_query_json'], true)['source'] ?? '') === 'mobile'
+        && $handoffStored['consumed_at'] === null
+        && (int)$handoffStored['ttl'] > 0
+        && (int)$handoffStored['ttl'] <= 60,
+        'website handoff stores only a hash, a bounded expiry and an internal target'
+    );
+
+    $r = mobileApiRequest('/mobile_web_handoff.php?token=' . rawurlencode($handoffToken), 'GET', null, null, 5, false);
+    $location = '';
+    $setCookie = '';
+    foreach (($http_response_header ?? []) as $header) {
+        if (stripos($header, 'Location:') === 0) $location = trim(substr($header, strlen('Location:')));
+        if (stripos($header, 'Set-Cookie: AhlElKheirSession=') === 0) $setCookie = $header;
+    }
+    mobileApiExpect(
+        $r['status'] === 302
+        && $location === '/modules/users/profile.php?source=mobile'
+        && $setCookie !== ''
+        && stripos($setCookie, 'httponly') !== false,
+        'website handoff establishes an HttpOnly PHP session and redirects to the stored target'
+    );
+    $consumed = $pdo->prepare('SELECT consumed_at FROM mobile_web_handoffs WHERE token_hash=?');
+    $consumed->execute([$handoffHash]);
+    mobileApiExpect($consumed->fetchColumn() !== null, 'website handoff token is marked consumed');
+
+    $r = mobileApiRequest('/mobile_web_handoff.php?token=' . rawurlencode($handoffToken), 'GET', null, null, 5, false);
+    $replayLocation = '';
+    foreach (($http_response_header ?? []) as $header) {
+        if (stripos($header, 'Location:') === 0) $replayLocation = trim(substr($header, strlen('Location:')));
+    }
+    mobileApiExpect(
+        $r['status'] === 302 && $replayLocation === '/index.php',
+        'website handoff token cannot be replayed'
+    );
 
 
     $otherUser = $pdo->prepare('SELECT id FROM users WHERE id <> ? ORDER BY id LIMIT 1');
