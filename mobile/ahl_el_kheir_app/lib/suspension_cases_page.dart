@@ -117,7 +117,6 @@ class _SuspensionCasesPageState extends State<SuspensionCasesPage> {
 
   @override
   Widget build(BuildContext context) {
-    final en = widget.english;
     return Scaffold(
       appBar: AppBar(
         title: Text(t('حالات تعليق الكفالات', 'Sponsorship suspensions')),
