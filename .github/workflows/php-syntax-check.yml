@@ -99,10 +99,12 @@ jobs:
             tools/run_salary_advance_stage5_payroll_tests.php
             tools/run_salary_advance_stage5_payroll_edge_tests.php
             tools/run_salary_advance_1410_reconciliation.php
+            tools/test_mobile_api_role_normalization.php
           )
           for file in "${files[@]}"; do
             php -l "$file"
           done
+          php tools/test_mobile_api_role_normalization.php
 
   migration-mariadb-10-4:
     runs-on: ubuntu-latest
