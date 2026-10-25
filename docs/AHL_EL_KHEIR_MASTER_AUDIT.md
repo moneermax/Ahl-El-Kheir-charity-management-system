@@ -5242,3 +5242,10 @@ New API-backed native administration:
 Evidence: Actions run [40210824853](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40210824853) passed PHP lint and the rollback-only full-schema MariaDB department service test. Exact service output: `PASS | mobile admin department service | create, list, duplicate guard, update, assigned-user delete guard, delete, rollback=PASS`. Widget coverage added for native admin screens and native-only fallback behavior. Latest Flutter/device acceptance must be checked separately; no physical-device success is claimed.
 
 Open gaps remain significant: full user management actions, recovery queue decisions, full audit pagination, reports, system settings, accounting/disbursements/Fina, backups/database tools, global search, profile/messages, orphan forms, and other role-specific workflows are not all implemented natively.
+
+
+## 2026-10-25 — Native password recovery review
+
+Native recovery endpoints and UI now replace the previous website-only recovery queue. Existing source `modules/users/recovery.php` confirms pending-only approval/rejection, temporary password generation, forced password change, 24-hour expiry, notifications, and approval audit record. The API enforces administrator/Sudo or HR Manager roles, row-locks the pending request, commits the account/request state atomically, and attempts notification/audit writes after commit without allowing those side effects to invalidate the committed result. The temporary password is returned only in the approval response and shown in the app with a dismiss action. No schema changes or runtime DDL.
+
+Evidence: Actions run [40211295992](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40211295992) passed PHP lint and rollback-only full-schema test output `PASS | mobile admin recovery service | queue, approve, temporary password hash, forced change, expiry, duplicate guard, reject, rollback=PASS`. Flutter analyzer passed; widget test/APK build acceptance remains pending. Physical-device verification remains outstanding.
