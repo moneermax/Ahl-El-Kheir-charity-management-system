@@ -35,6 +35,7 @@ class AhlElKheirApp extends StatefulWidget {
 }
 
 class _AhlElKheirAppState extends State<AhlElKheirApp> {
+  final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
   static const storage = FlutterSecureStorage();
   static const tokenKey = 'mobile_access_token';
   static const baseUrl = String.fromEnvironment('API_BASE_URL',
@@ -361,7 +362,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1F4E8C), width: 2)),
       ),
       filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF0A1F44), foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
-    home: Directionality(
+    navigatorKey: navigatorKey,
+  home: Directionality(
       textDirection: english ? TextDirection.ltr : TextDirection.rtl,
       child: loading
         ? const Scaffold(body: Center(child: CircularProgressIndicator()))
@@ -430,7 +432,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         ),
                         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                         onTap: () {
-                          Navigator.of(context).push(
+                          navigatorKey.currentState?.push(
                             MaterialPageRoute<void>(
                               builder: (_) => ProjectsPage(
                                 english: english,
@@ -452,8 +454,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         title: Text(english ? 'Employees' : 'الموظفون'),
                         subtitle: Text(english ? 'Browse the staff directory' : 'استعراض دليل الموظفين'),
                         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
-                          builder: (_) => EmployeesPage(english: english, loadPage: loadEmployees, openDetail: (employee) { final id = int.tryParse(employee['id']?.toString() ?? ''); if (id == null || id < 1) return; Navigator.push(context, MaterialPageRoute<void>(builder: (_) => EmployeeDetailPage(employeeId: id, english: english, loadDetail: loadEmployeeDetail))); }),
+                        onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
+                          builder: (_) => EmployeesPage(english: english, loadPage: loadEmployees, openDetail: (employee) { final id = int.tryParse(employee['id']?.toString() ?? ''); if (id == null || id < 1) return; navigatorKey.currentState?.push( MaterialPageRoute<void>(builder: (_) => EmployeeDetailPage(employeeId: id, english: english, loadDetail: loadEmployeeDetail))); }),
                         )),
                       ),
                     ),
@@ -464,7 +466,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         title: Text(english ? 'Attendance' : 'الحضور والانصراف'),
                         subtitle: Text(english ? 'Review attendance records by date' : 'مراجعة سجلات الحضور حسب التاريخ'),
                         trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                        onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                        onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                           builder: (_) => AttendancePage(english: english, loadAttendance: loadAttendance),
                         )),
                       ),
@@ -476,7 +478,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Supervisors' : 'المشرفون'),
                       subtitle: Text(english ? 'View supervisor assignments and status' : 'عرض المشرفين والحروف المسندة والحالة'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors),
                       )),
                     )),
@@ -486,7 +488,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Sponsors' : 'الكفلاء'),
                       subtitle: Text(english ? 'Browse sponsors within your role scope' : 'استعراض الكفلاء وفق صلاحيات حسابك'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail),
                       )),
                     )),
@@ -496,7 +498,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Sponsor requests' : 'طلبات الرعاية'),
                       subtitle: Text(english ? 'Review sponsor leads and their current status' : 'مراجعة طلبات الرعاية وحالاتها الحالية'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SponsorRequestsPage(english: english, loadRequests: loadSponsorRequests, submitAction: submitSponsorRequestAction),
                       )),
                     )),
@@ -506,7 +508,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Sponsorships' : 'الكفالات'),
                       subtitle: Text(english ? 'Browse sponsorship records within your role scope' : 'استعراض سجلات الكفالات وفق صلاحيات حسابك'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships, loadDetail: loadSponsorshipDetail),
                       )),
                     )),
@@ -516,7 +518,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Financial review queue' : 'طابور المراجعة المالية'),
                       subtitle: Text(english ? 'Review pending supervisor collections and recent decisions' : 'عرض تحصيلات المشرفين المعلقة وسجل المراجعات'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => FmReviewQueuePage(english: english, loadQueue: loadFmReviewQueue, submitAction: submitFmReviewQueueAction),
                       )),
                     )),
@@ -526,7 +528,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Transactions' : 'المعاملات'),
                       subtitle: Text(english ? 'Review payment records within your role scope' : 'مراجعة سجلات المعاملات وفق صلاحياتك'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => TransactionsPage(english: english, loadTransactions: loadTransactions),
                       )),
                     )),
@@ -536,7 +538,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Families' : 'الأسر'),
                       subtitle: Text(english ? 'Browse families within your role scope' : 'استعراض الأسر وفق صلاحيات حسابك'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail),
                       )),
                     )),
@@ -546,7 +548,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Preliminary verification' : 'التحقق المسبق للأسر'),
                       subtitle: Text(english ? 'Verify families across your active groups before group submission' : 'توثيق الأسر ضمن مجموعاتك النشطة قبل إرسال المجموعة'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => NannyPreVerificationPage(
                           english: english,
                           loadData: loadNannyPreVerification,
@@ -560,7 +562,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Group verification' : 'توثيق المجموعات'),
                       subtitle: Text(english ? 'Verify family eligibility, contact and bank details' : 'التحقق من حالة الأيتام والتواصل والحسابات البنكية'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => NannyGroupVerificationPage(
                           english: english,
                           loadData: loadNannyGroupVerification,
@@ -575,7 +577,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'My salary statements' : 'كشوف رواتبي'),
                       subtitle: Text(english ? 'View only paid and accounting-posted salary statements linked to your account' : 'عرض كشوف الرواتب المصروفة والمرحّلة محاسبياً والمرتبطة بحسابك فقط'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => MySalaryStatementsPage(
                           english: english,
                           loadPage: loadMySalaryStatements,
@@ -590,7 +592,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       title: Text(english ? 'Leave requests' : 'طلبات الإجازة'),
                       subtitle: Text(english ? 'View your requests and authorized review queue' : 'متابعة طلباتك والطلبات المصرح بمراجعتها'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => Navigator.of(context).push(MaterialPageRoute<void>(
+                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
                         builder: (_) => LeaveRequestsPage(
                           english: english,
                           roleCode: user?['role_code']?.toString() ?? '',
@@ -614,7 +616,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       ),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () {
-                        Navigator.of(context).push(
+                        navigatorKey.currentState?.push(
                           MaterialPageRoute<void>(
                             builder: (_) => NotificationPage(
                               english: english,
