@@ -144,5 +144,5 @@ try {
     ak_api_json(409, ['ok' => false, 'error' => ['code' => 'already_suspended', 'message' => $e->getMessage()]]);
 } catch (Throwable $e) {
     error_log('Mobile legal-age suspension failed: ' . $e->getMessage());
-    ak_api_json(500, ['ok' => false, 'error' => ['code' => 'suspension_failed', 'message' => 'Unable to complete the suspension.']);
+    ak_api_json(500, ['ok' => false, 'error' => ['code' => 'suspension_failed', 'message' => 'Unable to complete the suspension.']]);
 }
