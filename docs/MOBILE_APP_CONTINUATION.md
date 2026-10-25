@@ -581,3 +581,11 @@ A targeted source audit found `api/v1/projects/detail.php` selected `project_mil
 - The first run failed because the harness's five-second HTTP timeout expired on the full family-list query across the checked-in schema's 2,208 families. Source evidence did not establish an endpoint defect. The request helper now supports a per-request timeout and only the family-list test uses 20 seconds.
 - Updated test commit: `9312a7118ebe7876986dcecfda0bdcd0e3e594d9`; [Mobile API auth integration run 40162023286](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162023286) passed. Cleanup deletes the two exact family fixtures. No production code/schema change.
 - Local XAMPP migration-state confirmation and broader local API authorization/record-scope/action acceptance remain open. Never run this harness against `ahl_el_kheir`.
+
+
+## 2026-10-25 — Supervisor sponsor responsibility matrix integration coverage
+
+- Added a disposable sponsor fixture whose `supervisor_id` points to the test user while its first-letter is deliberately outside that user's `supervisor_letters` matrix.
+- Assertions pass: sponsor detail returns HTTP 403 and the sponsor is excluded from the supervisor's sponsor list. This verifies that direct `sponsor.supervisor_id` alone does not bypass the authoritative first-letter + gender responsibility rule.
+- Test commit: `de9af9c85a56f5f5f593ec404dda7b26753bfdb8`; [Mobile API auth integration run 40162198710](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162198710) passed.
+- Cleanup deletes the exact temporary sponsor fixture. No production code/schema change. Local XAMPP migration-state confirmation and broader API acceptance remain open.
