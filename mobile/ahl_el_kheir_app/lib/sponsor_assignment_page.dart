@@ -69,7 +69,7 @@ class _SponsorAssignmentPageState extends State<SponsorAssignmentPage> {
       error = null;
     });
     try {
-      final result = await widget.assignSponsor(sponsorId, supervisorId);
+      await widget.assignSponsor(sponsorId, supervisorId);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(widget.english
