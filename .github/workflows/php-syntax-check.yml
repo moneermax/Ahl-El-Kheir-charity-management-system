@@ -60,6 +60,7 @@ jobs:
             api/v1/age_alerts/suspend_child.php
             api/v1/age_alerts/suspension_service.php
             api/v1/admin/overview.php
+            api/v1/dashboard/overview.php
             api/v1/transactions/index.php
             api/v1/accounting/fm_review_queue.php
             api/v1/accounting/fm_review_queue_action.php
