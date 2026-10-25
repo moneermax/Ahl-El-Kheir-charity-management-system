@@ -137,6 +137,22 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       return;
     }
 
+    // Password recovery is public and is also the entry point from the logged-out
+    // screen, where no mobile bearer token exists yet.
+    if (relativePath == 'modules/users/password_recovery_request.php') {
+      final uri = webPageUri(relativePath, queryParameters: queryParameters);
+      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!opened) {
+        final context = navigatorKey.currentContext;
+        if (context != null && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(english ? 'Could not open password recovery.' : 'تعذر فتح استعادة كلمة المرور.')),
+          );
+        }
+      }
+      return;
+    }
+
     try {
       final token = await storage.read(key: tokenKey);
       if (token == null || token.isEmpty) {
