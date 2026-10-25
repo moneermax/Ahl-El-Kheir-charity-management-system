@@ -2355,3 +2355,6 @@ Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification han
 
 The next analyzer pass isolated one remaining Dart error: the notification mark-read helper returned without a boolean when the widget was unmounted during an error. Corrected to return `false` explicitly so the detail route is not opened after an unsuccessful mark-read operation. Source commit: `b572e49403805f3057e4830c211002c0d4fbd0e6`. The matching Flutter workflow run `40183286267` is queued; analysis/tests/APK status remain unverified.
 
+## Latest mobile UI correction — 2026-10-25
+
+User feedback is authoritative: restore the old single-column, full-width operational-card dashboard rather than the rejected two-column redesign. Keep sign-out as a dedicated icon in the top app bar alongside notifications/account/language. Notification detail content must remain inside the app; do not open notification-related web pages in an external browser. Until a native route exists for a related destination, show an explanatory in-app note rather than navigating externally. Source and widget-test changes are committed to `main`; check the latest CI run and artifact before asking the user to install a new APK. Do not claim the visual design is accepted until the user checks it on the phone.
