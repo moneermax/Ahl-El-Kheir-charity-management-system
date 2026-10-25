@@ -198,7 +198,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             _ToolTile(icon: Icons.backup_rounded, color: rose, title: t('النسخ الاحتياطي', 'Database backup'), description: t('إنشاء وإدارة نسخ قاعدة البيانات', 'Create and manage database backups'), tag: t('ويب', 'WEB'), onTap: () => widget.onOpenTool('backup')),
             _ToolTile(icon: Icons.storage_rounded, color: rose, title: t('إدارة قاعدة البيانات', 'Database tools'), description: t('أدوات إدارة قاعدة البيانات', 'Database administration tools'), tag: t('ويب', 'WEB'), onTap: () => widget.onOpenTool('database')),
             _ToolTile(icon: Icons.fact_check_rounded, color: rose, title: t('سجل التدقيق', 'Audit log'), description: t('مراجعة الأحداث الإدارية المسجلة', 'Review recorded administrative events'), tag: t('ويب', 'WEB'), onTap: () => widget.onOpenTool('audit')),
-            _ToolTile(icon: Icons.pause_circle_outline_rounded, color: rose, title: t('تعليق الكفالات', 'Sponsorship suspensions'), description: t('عرض حالات التعليق وإجراءات الرفع المصرح بها', 'Review suspension cases and authorized lift actions'), tag: t('ويب', 'WEB'), onTap: () => widget.onOpenTool('suspensions')),
+            _ToolTile(icon: Icons.pause_circle_outline_rounded, color: rose, title: t('تعليق الكفالات', 'Sponsorship suspensions'), description: t('عرض حالات التعليق وإجراءات الرفع المصرح بها', 'Review suspension cases and authorized lift actions'), tag: t('تطبيق', 'APP'), onTap: () => widget.onOpenTool('suspensions')),
             const SizedBox(height: 22),
             _SectionHeading(title: t('آخر أنشطة التدقيق', 'RECENT AUDIT ACTIVITY'), subtitle: t('آخر ستة أحداث مسجلة', 'Latest six recorded events'), icon: Icons.history_rounded, color: violet),
             const SizedBox(height: 10),
