@@ -71,6 +71,8 @@ jobs:
             api/v1/suspensions/case_service.php
             api/v1/admin/overview.php
             api/v1/admin/users.php
+            api/v1/admin/departments.php
+            api/v1/admin/departments_action.php
             api/v1/dashboard/overview.php
             api/v1/dashboard/overview_service.php
             api/v1/transactions/index.php
