@@ -818,3 +818,13 @@ This corrects concrete native-screen/API mismatches where the UI offered role-ap
 - Role-alias regression: `PASS | mobile API role normalization | 14 cases` in PHP workflow `40192899764`.
 
 Remaining acceptance boundary: these CI checks use disposable databases and cannot verify the user's running XAMPP server, actual local `ahl_el_kheir` schema alignment, the phone's network route, or a live authenticated session. The mobile API session migration must be applied to the intended local database before first use if it has not already been applied. Website-only tools remain labelled WEB and need a valid website session; they are not native parity claims.
+
+## 2026-10-25 — Native role overview implementation checkpoint
+
+The mobile workspace now includes a native, role-specific metrics section backed by `GET api/v1/dashboard/overview.php`. It covers GM, VGM, FM, Accountant/Accountant Staff, Supervisor, Nanny, Administration/Staff/Social Media, HR, and Projects Manager/Supervisor. Metric queries were derived from the real role dashboards; the API uses the existing bearer authentication and canonical role aliases and does not perform runtime DDL. The admin/sudo/super_admin dashboard remains on its separate `api/v1/admin/overview.php` endpoint.
+
+Commits: API `f6ac0b4490b712ae7bebd23474aa97d6ab93d165`; widget `1e74df5e3e601593808121a907a7023faede21ba`; workspace integration `7c96953e298aa83b4d04149e91a2a55efa952283`; PHP lint workflow `4fe6df05679946968666959cfc6025921b28e1fd`. Widget tests were added in `59bf9bb3d6d25c81cbb04fe572d7b62b14527fbf`; a Supervisor tool authorization regression test was added in `74f7e018d0ee640127383ccdec515a34bdb87462`.
+
+Route audit confirmed that the additional web tool paths exist. One invalid-by-role action was removed: Supervisor no longer sees “Record Fina collection”, because the existing web page explicitly denies Supervisor access.
+
+**Verification boundary:** combined-revision CI and API SQL execution are not yet confirmed. After CI, verify authenticated requests for at least one account in each role family against the intended local `ahl_el_kheir` database. Do not apply any schema changes for this endpoint. The mobile transaction date filter exists in both UI and API; complete boundary/pagination/refresh runtime acceptance is still open. The external browser may not share the mobile bearer session with the website, so website links must not be described as authenticated session handoff.
