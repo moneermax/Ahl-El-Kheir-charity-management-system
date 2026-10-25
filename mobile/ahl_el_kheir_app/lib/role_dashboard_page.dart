@@ -72,15 +72,15 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final en = widget.english;
-    const ink = Color(0xFF16353A);
-    const muted = Color(0xFF667D80);
+    const ink = Color(0xFF20352B);
+    const muted = Color(0xFF65756A);
     const accents = [
-      Color(0xFF087F8C),
-      Color(0xFF0E9F9A),
-      Color(0xFF477D72),
-      Color(0xFFD58A3A),
-      Color(0xFF397F99),
-      Color(0xFFC6536B),
+      Color(0xFF1E6B4E),
+      Color(0xFF478364),
+      Color(0xFF8FAE91),
+      Color(0xFFC89B3C),
+      Color(0xFF6D9B82),
+      Color(0xFFB9535B),
     ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -111,7 +111,7 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
         const SizedBox(height: 12),
         if (error != null)
           Card(
-            color: const Color(0xFFFFF2F0),
+            color: const Color(0xFFFFF1EC),
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
