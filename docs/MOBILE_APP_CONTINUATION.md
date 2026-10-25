@@ -776,3 +776,15 @@ Remaining major gaps: the sudo/admin native tools dashboard is still not feature
 Commits on `main` add `api/v1/admin/overview.php`, a new `mobile/ahl_el_kheir_app/lib/admin_dashboard_page.dart`, and route `admin`/`sudo`/`super_admin` to this dedicated dashboard instead of the shared role-card list. The dashboard has its own violet/navy/teal theme, administrator overview metrics, recent audit activity, and separate System Administration, Core Records, Operations & People, Finance, and Protection & Maintenance groups. Native routes are connected for sponsors, families, sponsorships, transactions, projects, employees, attendance, supervisors, sponsor requests, financial review queue, and legal-age alerts. The website's users/departments/settings/reports/finance account/disbursement/Fina collection/backup/database/audit pages are surfaced but currently open in the external browser; they are not represented as native implementations.
 
 Added `docs/MOBILE_ROLE_FEATURE_PARITY.md` as the explicit gap matrix. CI verification for the current changes is pending; no Flutter analysis/tests/APK or local runtime success is claimed yet. Other role dashboards and end-to-end date-range acceptance remain open.
+
+
+## 2026-10-25 — Role-aware mobile tools and employee self-service
+
+Source commits on `main`:
+- `8f659a0cec3ae9d565dd8bba98297da2f94b7639`: expose native leave requests and salary statements from the mobile workspace.
+- `842e4382bcf922f9c67b82fcc414abdd7e72fba8` and `9e3044d842c1893bf685ef2bb87ae253a7d2c150`: add a role-specific quick-tools section derived from each existing web dashboard. Website-only links are labelled WEB and remain subject to website server-side authorization; this is navigation coverage, not native workflow parity.
+- `fbc30ebf5c1df671e6fcca6b07c39963abe3661e` and `a2eb57da68fde5a1cb206732ed4781df609c0382`: align the mobile API default and Android workflow default with the documented phone LAN endpoint `http://192.168.18.9:881/AhlElKheir/api/v1`. The previous 8081 default did not match the documented phone-facing Apache port and is superseded.
+
+The workspace now exposes the existing native personal leave-request page and finalized salary-statement page, and adds role-scoped quick links matching the real GM, VGM, FM, Accountant, Supervisor, Nanny, Administration/Staff, HR, and Projects dashboard routes. The API enforces leave-queue permissions and returns salary statements only for paid payrolls posted to accounting. No account without a linked employee profile is given another employee's records.
+
+**Still open; do not claim full completion:** role-specific dashboard metrics and operational workflows are not all native yet; website-only tools require a valid website session in the external browser; legal-age sponsorship suspension is not implemented natively; transaction date-range end-to-end acceptance and physical-device runtime remain pending; the mobile API migration must be applied to the intended local development database before API runtime testing. Current GitHub Actions for these newest source changes must be checked before claiming the new revision builds successfully.
