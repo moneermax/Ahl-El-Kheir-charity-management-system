@@ -2346,3 +2346,7 @@ Commit `f0dfa70a376771cbceeae04e73b57f2e6e40cb89` adds disposable HTTP integrati
 
 ### 2026-10-25 — Mobile nanny family record-scope checks verified
 Commit `5b1b95cbdda200887dd03c63e2a7bf09665a746c` adds disposable fixtures proving a nanny can view a directly assigned family, cannot view a family assigned to another user, and sees only the assigned fixture in the family list. The first CI attempt exposed the test client's five-second timeout against the checked-in schema's 2,208 family rows; the family-list request now uses a 20-second timeout only for that request. The updated suite passed in [run 40162023286](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162023286), commit `9312a7118ebe7876986dcecfda0bdcd0e3e594d9`. This does not establish local XAMPP runtime acceptance. Never run the harness against `ahl_el_kheir`.
+
+
+### 2026-10-25 — Mobile supervisor sponsor-responsibility scope verified
+Commit `de9af9c85a56f5f5f593ec404dda7b26753bfdb8` adds a sponsor fixture whose `supervisor_id` points to the authenticated user but whose first-letter/gender is outside that user's responsibility matrix. Live API tests confirm direct detail access is denied (403) and the sponsor is excluded from the supervisor's list. [Run 40162198710](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162198710) passed against disposable MariaDB. No production code/schema changed; local XAMPP acceptance remains open. Never run the harness against `ahl_el_kheir`.
