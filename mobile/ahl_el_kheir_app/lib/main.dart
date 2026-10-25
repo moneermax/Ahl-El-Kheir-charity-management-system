@@ -994,6 +994,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                             openWebPage('modules/hr/salary_advance_request.php');
                                           },
                                         ),
+                                        ListTile(
+                                          leading: const Icon(Icons.mark_unread_chat_alt_outlined),
+                                          title: Text(english ? 'Internal messages' : 'الرسائل الداخلية'),
+                                          subtitle: Text(english ? 'WEB · website sign-in may be required' : 'ويب · قد يُطلب تسجيل الدخول للموقع'),
+                                          trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+                                          onTap: () {
+                                            Navigator.pop(sheetContext);
+                                            openWebPage('modules/messages/index.php');
+                                          },
+                                        ),
                                       ],
                                     ),
                                   ),
