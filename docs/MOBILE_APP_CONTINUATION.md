@@ -601,3 +601,14 @@ A targeted source audit found `api/v1/projects/detail.php` selected `project_mil
 - Latest test commit: `fd7d9652c3d9cc1bc6b6b17900742ef0f7d1d30b`. [GitHub Actions run 40162902436](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162902436) passed using the checked-in schema and disposable MariaDB.
 - Source review found no confirmed production race defect in `api/v1/hr/leaves/action.php`: approval is conditionally updated only while pending, affected rows are checked, and the transaction rolls back on conflict. No production endpoint change was made.
 - This is CI-only verification; local XAMPP migration state and live Apache/MariaDB acceptance remain open. Never run this harness against `ahl_el_kheir`; it requires `mobile_api_auth_test` and `MOBILE_API_AUTH_TEST=1`.
+
+
+## 2026-10-25 — Mobile API authorization source-review pass: nanny, HR reads, sponsorships, transactions
+Reviewed current `main` source for:
+- `api/v1/nanny/group_verification.php` and `group_verification_action.php`: assigned active group is required; bulk verification and submission are limited to pending groups; individual verification remains available after submission, matching the documented follow-up workflow for older payments.
+- `api/v1/nanny/pre_verification.php` and `pre_verification_action.php`: family updates require an active group assignment containing the family; bulk operations validate every selected family before writing and use a transaction.
+- `api/v1/hr/attendance.php` and `employee_detail.php`: read access is restricted to HR roles and administrators.
+- `api/v1/hr/my_salary_statements.php`: rows are scoped to the authenticated user's linked employee and only paid, accounting-posted payroll.
+- `api/v1/sponsors/index.php`, `sponsors/detail.php`, `sponsorships/index.php`, `sponsorships/detail.php`, and `transactions/index.php`: supervisor scope is constrained by the sponsor responsibility matrix; role gates differ by endpoint.
+
+No new production authorization defect was confirmed in this pass, so no application change was made. Direct integration coverage remains incomplete for nanny group/preliminary-verification actions and several HR read, sponsorship, transaction, and supervisor endpoints. Continue source/schema-led review and add disposable-CI assertions only when fixture requirements and expected business rules are grounded. Local XAMPP/Apache/MariaDB acceptance remains open. Never run `tools/test_mobile_api_auth_integration.php` against `ahl_el_kheir`; it requires `mobile_api_auth_test` and `MOBILE_API_AUTH_TEST=1`.
