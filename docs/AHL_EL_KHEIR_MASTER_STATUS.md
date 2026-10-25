@@ -4517,3 +4517,8 @@ The PHP/database workflow passed after the mobile auth migration coverage change
 ## 2026-10-25 — Mobile API continuation checkpoint
 
 A concrete configuration inconsistency was found: Flutter's `API_BASE_URL` fallback used port `881`, while the Android workflow default and prior local/phone reachability evidence use Apache port `8081`; the prior local check reported no listener on `881`. Corrected the fallback in `mobile/ahl_el_kheir_app/lib/main.dart` to `http://192.168.18.9:8081/AhlElKheir/api/v1` (commit `41cd2e0176ee4bf2254dfc92fadde6b8c3ba6665`). CI verification is pending. This does not close the live API authentication/authorization/record-scope acceptance gate. No production API or schema behavior changed.
+
+
+## 2026-10-25 — Mobile Android CI verification
+
+The Android workflow for fallback API URL correction commit `41cd2e0176ee4bf2254dfc92fadde6b8c3ba6665` completed successfully: [workflow run 40156431795](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40156431795). Flutter dependency resolution, Dart analysis, Flutter tests, debug APK build, and artifact publication all passed. Artifact: `ahl-el-kheir-flutter-android-debug-apk` (77,305,556 bytes), available until 2026-11-24. This is a debug APK build/test result, not production signing or live API acceptance. The corrected fallback remains `http://192.168.18.9:8081/AhlElKheir/api/v1`; verify the current LAN IP before using the artifact on a physical phone. Local `ahl_el_kheir` migration state, authenticated role/record-scope/action acceptance against Apache/MariaDB, and HTTPS PHP/MariaDB hosting remain open release gates. Do not claim the full app is complete or request final phone acceptance yet.
