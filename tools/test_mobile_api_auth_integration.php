@@ -52,9 +52,9 @@ function mobileApiRequest(string $path, string $method = 'GET', ?array $body = n
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('nanny','hr_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
-if (!isset($roles['nanny'], $roles['hr_staff'])) {
-    throw new RuntimeException('Checked-in schema must contain nanny and hr_staff roles.');
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'])) {
+    throw new RuntimeException('Checked-in schema must contain admin, nanny and hr_staff roles.');
 }
 $user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
 if (!$user || trim((string)$user['username']) === '') throw new RuntimeException('Checked-in schema has no usable user fixture.');
@@ -67,8 +67,14 @@ $testTokenHashes = [];
 $server = null;
 $serverPipes = [];
 $failure = null;
+$testProjectId = 0;
+$testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
+    $pdo->prepare('INSERT INTO other_projects (name, project_code, status, created_by) VALUES (?, ?, \'planned\', ?)')
+        ->execute(['Mobile API approval fallback integration fixture', $testProjectCode, $userId]);
+    $testProjectId = (int)$pdo->lastInsertId();
+
     $pdo->prepare('UPDATE users SET password_hash=?, is_active=1, password_change_required=0, role_id=? WHERE id=?')
         ->execute([password_hash($knownPassword, PASSWORD_DEFAULT), $roles['nanny'], $userId]);
 
@@ -126,6 +132,25 @@ try {
     $r = mobileApiRequest('/api/v1/hr/employees.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 200 && ($r['json']['ok'] ?? false) === true, 'HR staff can access the HR employee directory');
 
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+    $r = mobileApiRequest('/api/v1/projects/index.php', 'GET', null, $token);
+    $portfolioItems = $r['json']['data']['items'] ?? [];
+    $fixture = null;
+    foreach ($portfolioItems as $portfolioItem) {
+        if (($portfolioItem['project_code'] ?? '') === $testProjectCode) {
+            $fixture = $portfolioItem;
+            break;
+        }
+    }
+    mobileApiExpect(
+        $r['status'] === 200
+        && ($r['json']['ok'] ?? false) === true
+        && is_array($fixture)
+        && ($fixture['approval_status'] ?? '') === 'draft',
+        'project portfolio defaults a missing approval row to draft'
+    );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
+
     $pdo->prepare('UPDATE users SET is_active=0 WHERE id=?')->execute([$userId]);
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 401, 'deactivated accounts lose access to existing tokens');
@@ -167,6 +192,9 @@ try {
         $marks = implode(',', array_fill(0, count($testTokenHashes), '?'));
         $stmt = $pdo->prepare("DELETE FROM mobile_api_sessions WHERE token_hash IN ($marks)");
         $stmt->execute($testTokenHashes);
+    }
+    if ($testProjectId > 0) {
+        $pdo->prepare('DELETE FROM other_projects WHERE id=?')->execute([$testProjectId]);
     }
     $pdo->prepare('DELETE FROM audit_log WHERE user_id=? AND action=? AND entity_type=? AND entity_id=? AND created_at>=?')
         ->execute([$userId, 'LOGIN', 'users', $userId, $testStart]);
