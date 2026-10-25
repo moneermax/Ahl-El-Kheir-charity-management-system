@@ -69,6 +69,7 @@ $serverPipes = [];
 $failure = null;
 $testProjectId = 0;
 $testPaymentId = 0;
+$testMilestoneId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -156,6 +157,24 @@ try {
     $pdo->prepare('INSERT INTO project_supervisor_assignments (project_id, supervisor_user_id, assigned_by) VALUES (?, ?, ?)')->execute([$testProjectId, $userId, $userId]);
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['project_supervisor'], $userId]);
 
+    $pdo->prepare('INSERT INTO project_milestones (project_id, title, description, planned_date, status, completion_percent, notes, created_by) VALUES (?,?,?,?,?,?,?,?)')
+        ->execute([$testProjectId, 'Mobile API milestone ID fixture', 'Integration test only', date('Y-m-d'), 'in_progress', 10, null, $userId]);
+    $testMilestoneId = (int)$pdo->lastInsertId();
+    $r = mobileApiRequest('/api/v1/projects/detail.php?id=' . $testProjectId, 'GET', null, $token);
+    $detailMilestone = null;
+    foreach (($r['json']['data']['milestones'] ?? []) as $item) {
+        if ((int)($item['id'] ?? 0) === $testMilestoneId) {
+            $detailMilestone = $item;
+            break;
+        }
+    }
+    mobileApiExpect(
+        $r['status'] === 200
+        && ($r['json']['ok'] ?? false) === true
+        && is_array($detailMilestone),
+        'project detail returns each milestone ID needed by mobile edit/delete actions'
+    );
+
     $progressBody = [
         'project_id' => $testProjectId,
         'summary' => 'Mobile API integration test progress update',
@@ -169,6 +188,21 @@ try {
         ->execute([$testProjectId, $userId]);
     $r = mobileApiRequest('/api/v1/projects/progress_update.php', 'POST', array_merge($progressBody, ['summary' => 'Must be denied after assignment ends']), $token);
     mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'forbidden', 'project supervisor cannot add progress after the assignment ends');
+    $r = mobileApiRequest('/api/v1/projects/milestone_action.php', 'POST', [
+        'action' => 'edit',
+        'project_id' => $testProjectId,
+        'milestone_id' => $testMilestoneId,
+        'title' => 'Must not be saved after assignment ends',
+        'completion_percent' => 25,
+    ], $token);
+    $milestoneTitle = $pdo->prepare('SELECT title FROM project_milestones WHERE id=? AND project_id=?');
+    $milestoneTitle->execute([$testMilestoneId, $testProjectId]);
+    mobileApiExpect(
+        $r['status'] === 403
+        && ($r['json']['error']['code'] ?? '') === 'assignment_required'
+        && (string)$milestoneTitle->fetchColumn() === 'Mobile API milestone ID fixture',
+        'project supervisor cannot edit a milestone after the project assignment ends'
+    );
 
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
 
@@ -270,6 +304,7 @@ try {
     }
     if ($testProjectId > 0) {
         $pdo->prepare('DELETE FROM project_progress_updates WHERE project_id=?')->execute([$testProjectId]);
+        $pdo->prepare('DELETE FROM project_milestones WHERE project_id=?')->execute([$testProjectId]);
         $pdo->prepare('DELETE FROM project_supervisor_assignments WHERE project_id=?')->execute([$testProjectId]);
         $pdo->prepare('DELETE FROM project_lifecycle WHERE project_id=?')->execute([$testProjectId]);
         $pdo->prepare('DELETE FROM project_approval WHERE project_id=?')->execute([$testProjectId]);
