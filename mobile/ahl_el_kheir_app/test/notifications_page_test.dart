@@ -27,7 +27,6 @@ void main() {
               'pages': 1,
             },
             markRead: (_) async {},
-            openRelatedLink: (_) async {},
           ),
         ),
       ),
@@ -66,7 +65,6 @@ void main() {
               'pages': 1,
             };
           },
-          openRelatedLink: (_) async {},
           markRead: (id) async {
             expect(id, 42);
             markReadCalls++;
@@ -107,7 +105,6 @@ void main() {
               'pages': 1,
             };
           },
-          openRelatedLink: (_) async {},
           markRead: (_) async => throw Exception('network failure'),
         ),
       ),
@@ -143,7 +140,6 @@ void main() {
             'page': 1,
             'pages': 1,
           },
-          openRelatedLink: (_) async {},
           markRead: (_) async => markReadCalls++,
         ),
       ),
@@ -155,5 +151,43 @@ void main() {
 
     expect(markReadCalls, 0);
   });
+
+  testWidgets('opens notification details inside the app without a web-page action',
+      (tester) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: NotificationPage(
+          english: false,
+          loadPage: (_) async => {
+            'items': [
+              {
+                'id': 77,
+                'title': 'إشعار تجريبي',
+                'body': 'محتوى الإشعار داخل التطبيق',
+                'created_at': '2026-10-25 12:00:00',
+                'is_read': true,
+                'link': 'https://example.invalid/related',
+              },
+            ],
+            'total': 1,
+            'unread': 0,
+            'page': 1,
+            'pages': 1,
+          },
+          markRead: (_) async {},
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('إشعار تجريبي'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('تفاصيل الإشعار'), findsOneWidget);
+    expect(find.text('محتوى الإشعار داخل التطبيق'), findsOneWidget);
+    expect(find.text('فتح الصفحة المرتبطة'), findsNothing);
+    expect(find.textContaining('فتح صفحة الموقع المرتبطة غير متاح داخل التطبيق'), findsOneWidget);
+  });
+
 
 }
