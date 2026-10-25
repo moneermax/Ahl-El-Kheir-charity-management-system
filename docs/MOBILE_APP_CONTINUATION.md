@@ -710,4 +710,9 @@ Source changes committed sequentially on `main`:
 The forgot-password action opens the existing public `modules/users/password_recovery_request.php` flow, which submits a recovery request for review by HR/system administrators; no new password-reset mechanism or API was invented. Notification links are mapped back onto the app's configured website host/path before opening, rather than trusting a notification's origin.
 
 **Verification status:** GitHub Actions Flutter analysis/tests/APK build are pending for the latest commit. No device runtime test has been performed for these changes. Do not claim the account sheet, notification detail/related-page flow, password recovery launch, or orphan form launch is device-verified until the latest APK succeeds and is tested on a phone. The orphan form remains the existing website screen, not a newly implemented native form. No database schema or business authorization rules were changed.
+### CI correction follow-up — 2026-10-25
+
+The first Flutter analyzer run for this work exposed concrete integration errors: a duplicate notification-tile `onTap` and required callbacks missing from the existing widget tests after constructor changes. The notification tap now uses one handler, mark-read failure stops navigation (preserving the prior error behavior), and tests provide explicit no-op callbacks where external navigation is not under test.
+
+Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification handler) and test callback updates through `c30c10b8e1a6df3f9ac2e197dc4363748419df22`. The new Flutter workflow runs for these commits are still pending/in progress at documentation time. Do not claim analysis, tests, or APK build passed until the latest run confirms it.
 
