@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 import 'projects_page.dart';
 import 'attendance_page.dart';
 import 'employees_page.dart';
@@ -25,6 +24,8 @@ import 'nanny_group_verification_page.dart';
 import 'nanny_pre_verification_page.dart';
 import 'role_tools_section.dart';
 import 'suspension_cases_page.dart';
+import 'native_tool_page.dart';
+import 'audit_log_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -121,85 +122,54 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
   }
 
-  Uri webPageUri(String relativePath, {Map<String, String>? queryParameters}) {
-    final apiUri = Uri.parse(baseUrl);
-    final segments = apiUri.pathSegments.where((part) => part.isNotEmpty).toList();
-    if (segments.length >= 2) segments.removeRange(segments.length - 2, segments.length);
-    final pageSegments = relativePath.split('/').where((part) => part.isNotEmpty);
-    return apiUri.replace(
-      pathSegments: [...segments, ...pageSegments],
-      queryParameters: queryParameters,
-    );
-  }
-
-  Future<void> openWebPage(String relativePath, {Map<String, String>? queryParameters}) async {
+  Future<void> openNativeTool(String relativePath, {Map<String, String>? queryParameters}) async {
+    // Native-only policy: never launch a website, browser, or external application.
     if (relativePath == 'modules/families/suspensions.php') {
       openSuspensionCases();
       return;
     }
-
-    // Password recovery is public and is also the entry point from the logged-out
-    // screen, where no mobile bearer token exists yet.
-    if (relativePath == 'modules/users/password_recovery_request.php') {
-      final uri = webPageUri(relativePath, queryParameters: queryParameters);
-      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!opened) {
-        final context = navigatorKey.currentContext;
-        if (context != null && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(english ? 'Could not open password recovery.' : 'تعذر فتح استعادة كلمة المرور.')),
-          );
-        }
-      }
+    if (relativePath == 'modules/logs/audit.php') {
+      openAuditLogPage();
       return;
     }
 
-    try {
-      final token = await storage.read(key: tokenKey);
-      if (token == null || token.isEmpty) {
-        throw const ApiFailure('Authentication is required.', statusCode: 401);
-      }
-
-      // Website pages use PHP sessions, while the app uses bearer tokens.
-      // Exchange the bearer session for a short-lived, single-use website handoff.
-      final response = await call(
-        'POST',
-        'auth/web_handoff.php',
-        token: token,
-        body: {
-          'path': relativePath,
-          'query': queryParameters ?? <String, String>{},
-        },
-      );
-      final handoffToken = response['handoff_token']?.toString() ?? '';
-      final validHandoffToken = handoffToken.length == 64 &&
-          handoffToken.codeUnits.every((code) =>
-              (code >= 48 && code <= 57) || (code >= 97 && code <= 102));
-      if (!validHandoffToken) {
-        throw const ApiFailure('The website handoff could not be created.');
-      }
-
-      final uri = webPageUri(
-        'mobile_web_handoff.php',
-        queryParameters: {'token': handoffToken},
-      );
-      final opened = await launchUrl(uri, mode: LaunchMode.externalApplication);
-      if (!opened) {
-        throw const ApiFailure('Could not open the website page.');
-      }
-    } catch (e) {
-      final context = navigatorKey.currentContext;
-      if (context != null && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(english
-                ? 'Could not open this website page. Details: $e'
-                : 'تعذر فتح صفحة الموقع. التفاصيل: $e'),
-            duration: const Duration(seconds: 6),
-          ),
-        );
-      }
-    }
+    final titles = <String, List<String>>{
+      'modules/families/orphan_form.php': ['نموذج اليتيم', 'Orphan form'],
+      'modules/users/password_recovery_request.php': ['استعادة كلمة المرور', 'Password recovery'],
+      'modules/users/profile.php': ['ملفي الشخصي', 'My profile'],
+      'modules/users/settings.php': ['إعدادات الحساب', 'Account settings'],
+      'modules/hr/salary_advance_request.php': ['طلب سلفة راتب', 'Salary advance request'],
+      'modules/messages/index.php': ['الرسائل', 'Messages'],
+      'modules/search/index.php': ['البحث في النظام', 'System search'],
+      'modules/accounting/fm_dashboard.php': ['لوحة المالية', 'Finance dashboard'],
+      'modules/accounting/accounts.php': ['دليل الحسابات', 'Chart of accounts'],
+      'modules/accounting/disbursements.php': ['التحويلات الشهرية', 'Monthly disbursements'],
+      'modules/transactions/fina_payment_create.php': ['تحصيل فينا الخير', 'Fina Al-Khair collection'],
+      'modules/users/index.php': ['إدارة المستخدمين', 'User management'],
+      'modules/departments/index.php': ['إدارة الأقسام', 'Department management'],
+      'modules/settings/index.php': ['إعدادات النظام', 'System settings'],
+      'modules/users/recovery.php': ['طلبات استعادة الحسابات', 'Account recovery requests'],
+      'dashboard/admin_dashboard.php': ['لوحة الإدارة', 'Administration dashboard'],
+      'modules/reports/index.php': ['التقارير', 'Reports'],
+      'modules/reports/orphaned_families.php': ['تقرير الأسر غير المكفولة', 'Uncovered families report'],
+      'modules/reports/sponsorship.php': ['تقرير الكفالات', 'Sponsorship report'],
+      'modules/reports/operational.php': ['التقرير التشغيلي', 'Operational report'],
+      'modules/reports/financial.php': ['التقرير المالي', 'Financial report'],
+      'modules/reports/hr.php': ['تقرير الموارد البشرية', 'HR report'],
+      'modules/system/backup.php': ['النسخ الاحتياطي', 'Database backup'],
+      'modules/system/database.php': ['أدوات قاعدة البيانات', 'Database tools'],
+    };
+    final labels = titles[relativePath] ?? ['أداة النظام', 'System tool'];
+    final pathDetail = queryParameters == null || queryParameters.isEmpty
+        ? null
+        : queryParameters.entries.map((entry) => '${entry.key}=${entry.value}').join(', ');
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => NativeToolPage(
+        english: english,
+        title: english ? labels[1] : labels[0],
+        detail: pathDetail,
+      ),
+    ));
   }
 
   Future<void> logout() async {
@@ -243,6 +213,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'admin/overview.php', token: token);
   }
 
+  void openAuditLogPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AuditLogPage(
+        english: english,
+        loadOverview: loadAdminOverview,
+      ),
+    ));
+  }
+
   Future<Map<String, dynamic>> loadRoleDashboard() async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -260,7 +239,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail)));
         return;
       case 'families':
-        navigator.push(MaterialPageRoute<void>(builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openWebPage('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()}))));
+        navigator.push(MaterialPageRoute<void>(builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openNativeTool('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()}))));
         return;
       case 'sponsorships':
         navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships, loadDetail: loadSponsorshipDetail)));
@@ -291,46 +270,46 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         navigator.push(MaterialPageRoute<void>(builder: (_) => ProjectsPage(english: english, loadPage: loadProjects, loadDetail: loadProjectDetail, submitProgress: submitProjectProgressUpdate, createMilestone: createProjectMilestone, actOnMilestone: actOnProjectMilestone)));
         return;
       case 'finance_dashboard':
-        openWebPage('modules/accounting/fm_dashboard.php');
+        openNativeTool('modules/accounting/fm_dashboard.php');
         return;
       case 'accounts':
-        openWebPage('modules/accounting/accounts.php');
+        openNativeTool('modules/accounting/accounts.php');
         return;
       case 'disbursements':
-        openWebPage('modules/accounting/disbursements.php');
+        openNativeTool('modules/accounting/disbursements.php');
         return;
       case 'fina_collection':
-        openWebPage('modules/transactions/fina_payment_create.php');
+        openNativeTool('modules/transactions/fina_payment_create.php');
         return;
       case 'users':
-        openWebPage('modules/users/index.php');
+        openNativeTool('modules/users/index.php');
         return;
       case 'departments':
-        openWebPage('modules/departments/index.php');
+        openNativeTool('modules/departments/index.php');
         return;
       case 'settings':
-        openWebPage('modules/settings/index.php');
+        openNativeTool('modules/settings/index.php');
         return;
       case 'recovery':
-        openWebPage('modules/users/recovery.php');
+        openNativeTool('modules/users/recovery.php');
         return;
       case 'web_dashboard':
-        openWebPage('dashboard/admin_dashboard.php');
+        openNativeTool('dashboard/admin_dashboard.php');
         return;
       case 'reports':
-        openWebPage('modules/reports/index.php');
+        openNativeTool('modules/reports/index.php');
         return;
       case 'backup':
-        openWebPage('modules/system/backup.php');
+        openNativeTool('modules/system/backup.php');
         return;
       case 'database':
-        openWebPage('modules/system/database.php');
+        openNativeTool('modules/system/database.php');
         return;
       case 'audit':
-        openWebPage('modules/logs/audit.php');
+        openNativeTool('modules/logs/audit.php');
         return;
       case 'suspensions':
-        openWebPage('modules/families/suspensions.php');
+        openNativeTool('modules/families/suspensions.php');
         return;
       default:
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(SnackBar(content: Text(english ? 'This tool is not mapped yet.' : 'لم يتم ربط هذه الأداة بعد.')));
@@ -535,7 +514,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                           familyId: familyId,
                                           english: english,
                                           loadDetail: loadFamilyDetail,
-                                          openOrphanForm: (childId) => openWebPage(
+                                          openOrphanForm: (childId) => openNativeTool(
                                             'modules/families/orphan_form.php',
                                             queryParameters: {'child': childId.toString()},
                                           ),
@@ -907,7 +886,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         : user == null
           ? LoginPage(english: english,
               toggle: () => setState(() => english = !english), submit: login,
-              onForgotPassword: () => openWebPage('modules/users/password_recovery_request.php'))
+              onForgotPassword: () => openNativeTool('modules/users/password_recovery_request.php'))
           : Scaffold(
               appBar: PreferredSize(
                 preferredSize: const Size.fromHeight(104),
@@ -946,7 +925,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                             ),
                           IconButton(
                             tooltip: english ? 'Global search (WEB)' : 'البحث الشامل (ويب)',
-                            onPressed: () => openWebPage('modules/search/index.php'),
+                            onPressed: () => openNativeTool('modules/search/index.php'),
                             icon: const Icon(Icons.search_rounded),
                           ),
                           IconButton(
@@ -1028,7 +1007,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                           trailing: const Icon(Icons.open_in_new_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
-                                            openWebPage('modules/users/profile.php');
+                                            openNativeTool('modules/users/profile.php');
                                           },
                                         ),
                                         ListTile(
@@ -1038,7 +1017,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                           trailing: const Icon(Icons.open_in_new_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
-                                            openWebPage('modules/users/settings.php');
+                                            openNativeTool('modules/users/settings.php');
                                           },
                                         ),
                                         ListTile(
@@ -1048,7 +1027,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                           trailing: const Icon(Icons.open_in_new_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
-                                            openWebPage('modules/hr/salary_advance_request.php');
+                                            openNativeTool('modules/hr/salary_advance_request.php');
                                           },
                                         ),
                                         ListTile(
@@ -1058,7 +1037,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                           trailing: const Icon(Icons.open_in_new_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
-                                            openWebPage('modules/messages/index.php');
+                                            openNativeTool('modules/messages/index.php');
                                           },
                                         ),
                                       ],
@@ -1205,7 +1184,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                             const Icon(Icons.open_in_new_rounded, size: 18),
                           ],
                         ),
-                        onTap: () => openWebPage(fullDashboardPath),
+                        onTap: () => openNativeTool(fullDashboardPath),
                       ),
                     ),
                   ],
@@ -1355,7 +1334,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       subtitle: Text(english ? 'Browse families within your role scope' : 'استعراض الأسر وفق صلاحيات حسابك'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
-                        builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openWebPage('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()})),
+                        builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openNativeTool('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()})),
                       )),
                     ))),
                   if (user?['role_code']?.toString() == 'nanny')
@@ -1392,7 +1371,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   RoleToolsSection(
                     roleCode: roleCode,
                     english: english,
-                    onOpen: (path) => openWebPage(path),
+                    onOpen: (path) => openNativeTool(path),
                   ),
                   const SizedBox(height: 22),
                   _HomeSectionTitle(
