@@ -50,6 +50,10 @@ jobs:
             api/v1/hr/leaves.php
             api/v1/hr/leaves/action.php
             api/v1/sponsors/index.php
+            tools/test_mobile_sponsor_assignment_service.php
+            api/v1/sponsors/assign.php
+            api/v1/sponsors/assignment_options.php
+            api/v1/sponsors/assignment_service.php
             api/v1/supervisors/index.php
             api/v1/sponsors/detail.php
             api/v1/sponsor_requests/index.php
@@ -255,6 +259,7 @@ jobs:
           php tools/test_salary_advance_rescheduling_payroll_concurrency.php
           php tools/test_mobile_api_suspension_service.php
           php tools/test_mobile_role_dashboard_queries.php
+          php tools/test_mobile_sponsor_assignment_service.php
 
   hr-job-description-migrations:
     runs-on: ubuntu-latest
