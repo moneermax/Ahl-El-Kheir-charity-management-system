@@ -70,6 +70,7 @@ jobs:
             api/v1/suspensions/lift.php
             api/v1/suspensions/case_service.php
             api/v1/admin/overview.php
+            api/v1/admin/settings.php
             api/v1/audit/index.php
             api/v1/admin/users.php
             api/v1/admin/departments.php
