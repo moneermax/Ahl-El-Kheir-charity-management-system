@@ -140,6 +140,110 @@ void main() {
     expect(find.text('APP'), findsOneWidget);
   });
 
+  testWidgets('GM sees the salary-advance waiver workflow from the web sidebar', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(
+            roleCode: 'gm',
+            english: true,
+            onOpen: (_) {},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('Salary advance waivers'), findsOneWidget);
+  });
+
+  testWidgets('VGM sees orphan-group management', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(
+            roleCode: 'vice_general_manager',
+            english: true,
+            onOpen: (_) {},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('Orphan groups'), findsOneWidget);
+  });
+
+  testWidgets('FM sees opening balance and assigned nannies', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(
+            roleCode: 'financial_manager',
+            english: true,
+            onOpen: (_) {},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('Opening balance'), findsOneWidget);
+    expect(find.text('Assigned nannies'), findsOneWidget);
+  });
+
+  testWidgets('accountant sees permitted vouchers and assigned-nanny tools but not denied disbursements', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(
+            roleCode: 'accountant',
+            english: true,
+            onOpen: (_) {},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('Vouchers'), findsOneWidget);
+    expect(find.text('Assigned nannies'), findsOneWidget);
+    expect(find.text('GM reconciliation'), findsOneWidget);
+    expect(find.text('Monthly disbursements'), findsNothing);
+    expect(find.text('Group disbursements'), findsNothing);
+  });
+
+  testWidgets('accountant staff sees vouchers, assigned nannies and orphan forms', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(
+            roleCode: 'accountant_staff',
+            english: true,
+            onOpen: (_) {},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('Vouchers'), findsOneWidget);
+    expect(find.text('Assigned nannies'), findsOneWidget);
+    expect(find.text('Orphan forms'), findsOneWidget);
+  });
+
+  testWidgets('supervisor and nanny roles see their permitted orphan forms tool', (tester) async {
+    for (final role in ['supervisor', 'nanny']) {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RoleToolsSection(
+              roleCode: role,
+              english: true,
+              onOpen: (_) {},
+            ),
+          ),
+        ),
+      ));
+      expect(find.text('Orphan forms'), findsOneWidget, reason: role);
+    }
+  });
+
   testWidgets('roles without extra website tools render no empty section', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
