@@ -4548,7 +4548,7 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 
 
 ## 2026-10-25 — Mobile API authorization audit continuation
-A concrete project-detail contract mismatch was found: `api/v1/projects/detail.php` selected `project_milestones.id` but did not serialize it, although Flutter edit/delete actions require it. Source correction committed on `main` as `20631106ae8fe9f8267779faf4c6e9a1d7608057`. CI and runtime verification are pending. This does not close the broader mobile release gates: local migration-state confirmation, authenticated Apache/MariaDB role and record-scope/action acceptance, and HTTPS PHP/MariaDB hosting.
+A concrete project-detail contract mismatch was found: `api/v1/projects/detail.php` selected `project_milestones.id` but did not serialize it, although Flutter edit/delete actions require it. Source correction committed on `main` as `20631106ae8fe9f8267779faf4c6e9a1d7608057`. Focused endpoint verification passed in disposable-database run `40160569643`; ended-assignment and cross-project no-mutation checks passed in run `40160867381`. Local migration-state confirmation, authenticated Apache/MariaDB role and record-scope/action acceptance, and HTTPS PHP/MariaDB hosting remain open release gates.
 
 
 ## 2026-10-25 — Mobile API milestone verification checkpoint
