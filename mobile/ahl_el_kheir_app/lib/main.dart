@@ -561,18 +561,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                   ));
                                 },
                               ),
-                              const SizedBox(height: 8),
-                              SizedBox(
-                                width: double.infinity,
-                                child: OutlinedButton.icon(
-                                  onPressed: () {
-                                    Navigator.pop(sheetContext);
-                                    logout();
-                                  },
-                                  icon: const Icon(Icons.logout_rounded),
-                                  label: Text(english ? 'Sign out' : 'تسجيل الخروج'),
-                                ),
-                              ),
+
                             ],
                           ),
                         ),
@@ -580,6 +569,11 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     );
                   },
                     icon: const Icon(Icons.account_circle_outlined),
+                  ),
+                  IconButton(
+                    tooltip: english ? 'Sign out' : 'تسجيل الخروج',
+                    onPressed: logout,
+                    icon: const Icon(Icons.logout_rounded),
                   ),
                   IconButton(
                     tooltip: english ? 'Change language' : 'تغيير اللغة',
@@ -590,7 +584,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                 ],
               ),
               body: LayoutBuilder(builder: (context, constraints) {
-                final moduleCardWidth = (constraints.maxWidth - 52) / 2;
+                final moduleCardWidth = constraints.maxWidth - 40;
                 return ListView(
                 padding: const EdgeInsets.all(20),
                 children: [
@@ -1372,10 +1366,16 @@ class NotificationDetailPage extends StatelessWidget {
           ),
           if (link.isNotEmpty) ...[
             const SizedBox(height: 18),
-            FilledButton.icon(
-              onPressed: () => openRelatedLink(link),
-              icon: const Icon(Icons.open_in_new_rounded),
-              label: Text(english ? 'Open related page' : 'فتح الصفحة المرتبطة'),
+            Card(
+              child: ListTile(
+                leading: const Icon(Icons.info_outline_rounded),
+                title: Text(english ? 'Related page' : 'الصفحة المرتبطة'),
+                subtitle: Text(
+                  english
+                      ? 'The notification details stay inside this app. Opening the linked website page is not available in-app yet.'
+                      : 'تفاصيل الإشعار معروضة داخل التطبيق. فتح صفحة الموقع المرتبطة غير متاح داخل التطبيق حالياً.',
+                ),
+              ),
             ),
           ],
         ],
