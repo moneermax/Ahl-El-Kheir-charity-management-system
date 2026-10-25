@@ -38,6 +38,41 @@ void main() {
     expect(find.text('سياسة الرواتب'), findsNothing);
   });
 
+  testWidgets('staff sees request queues and profile without Administration-only tools', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'staff',
+          english: true,
+          onOpen: (_) {},
+        ),
+      ),
+    ));
+
+    expect(find.text('New sponsor requests'), findsOneWidget);
+    expect(find.text('Contacted sponsor requests'), findsOneWidget);
+    expect(find.text('My profile'), findsOneWidget);
+    expect(find.text('Families available for sponsorship'), findsNothing);
+    expect(find.text('Sponsor win-back'), findsNothing);
+  });
+
+  testWidgets('HR workspace exposes reporting and the audited HR tool list', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'hr_manager',
+          english: true,
+          onOpen: (_) {},
+        ),
+      ),
+    ));
+
+    expect(find.text('Report center'), findsOneWidget);
+    expect(find.text('Payroll integrity'), findsOneWidget);
+    expect(find.text('Contract builder'), findsOneWidget);
+    expect(find.text('My profile'), findsNothing);
+  });
+
   testWidgets('roles without extra website tools render no empty section', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
