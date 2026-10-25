@@ -185,6 +185,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       case 'supervisors':
         navigator.push(MaterialPageRoute<void>(builder: (_) => SupervisorsPage(english: english, loadPage: loadSupervisors)));
         return;
+      case 'sponsor_requests':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorRequestsPage(english: english, loadRequests: loadSponsorRequests, submitAction: submitSponsorRequestAction)));
+        return;
+      case 'fm_review_queue':
+        navigator.push(MaterialPageRoute<void>(builder: (_) => FmReviewQueuePage(english: english, loadQueue: loadFmReviewQueue, submitAction: submitFmReviewQueueAction)));
+        return;
       case 'projects':
         navigator.push(MaterialPageRoute<void>(builder: (_) => ProjectsPage(english: english, loadPage: loadProjects, loadDetail: loadProjectDetail, submitProgress: submitProjectProgressUpdate, createMilestone: createProjectMilestone, actOnMilestone: actOnProjectMilestone)));
         return;
@@ -820,7 +826,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     fullName: user?['full_name']?.toString() ?? '',
                     loadOverview: loadAdminOverview,
                     onOpenTool: openAdminTool,
-                    onOpenAgeAlerts: openAgeAlerts,
+                    onOpenAgeAlerts: () => openAgeAlerts(),
                   );
                 }
                 final roleTitle = switch (roleCode) {
