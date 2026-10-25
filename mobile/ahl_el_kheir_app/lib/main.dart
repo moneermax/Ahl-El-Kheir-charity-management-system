@@ -228,6 +228,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       case 'audit':
         openWebPage('modules/logs/audit.php');
         return;
+      case 'suspensions':
+        openWebPage('modules/families/suspensions.php');
+        return;
       default:
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(SnackBar(content: Text(english ? 'This tool is not mapped yet.' : 'لم يتم ربط هذه الأداة بعد.')));
     }
