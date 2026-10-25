@@ -4730,3 +4730,11 @@ This corrects concrete native-screen/API mismatches where the UI offered role-ap
 - Role-alias regression: `PASS | mobile API role normalization | 14 cases` in PHP workflow `40192899764`.
 
 Remaining acceptance boundary: these CI checks use disposable databases and cannot verify the user's running XAMPP server, actual local `ahl_el_kheir` schema alignment, the phone's network route, or a live authenticated session. The mobile API session migration must be applied to the intended local database before first use if it has not already been applied. Website-only tools remain labelled WEB and need a valid website session; they are not native parity claims.
+
+## 2026-10-25 — Mobile dashboard parity update (verification pending)
+
+A native role-metrics API and Flutter dashboard section have been added for the non-administrator roles routed to distinct web dashboards. The administrator/sudo/super_admin dashboard remains separate. Metrics use queries taken from the corresponding existing dashboards and are returned only after bearer authentication and role normalization. The API has been added to PHP syntax CI.
+
+The role-tool route audit found one role mismatch: Supervisor was offered a Fina collection creation page that explicitly denies Supervisor access. That link has been removed and a widget regression test added.
+
+**Not closed:** combined-revision CI, execution of role dashboard SQL against the local development database, physical-device acceptance, and full transaction date-filter acceptance. The latest APK CI success observed before these new commits is not evidence that this new revision is built. Website-only links still do not count as native parity.
