@@ -533,8 +533,8 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 - Do not run this harness against `ahl_el_kheir` or any production/development database; it explicitly requires `MOBILE_API_AUTH_TEST=1` and database `mobile_api_auth_test`.
 
 
-## 2026-10-25 — Project milestone ID response defect found and source-corrected (verification pending)
-A targeted source audit found `api/v1/projects/detail.php` selected `project_milestones.id` but omitted `id` from each serialized milestone. The Flutter edit/delete actions require that ID, so the documented milestone-maintenance workflow could not reliably send a valid `milestone_id` from real API data. Added the existing row ID to the milestone response in commit `20631106ae8fe9f8267779faf4c6e9a1d7608057`. No schema or migration changes. CI/runtime verification is not yet confirmed; do not mark this fix verified until the relevant PHP lint and endpoint response test pass. Continue the source/schema-led API authorization audit afterward. Local Apache/MariaDB acceptance, migration-state confirmation, and HTTPS hosting remain release gates.
+## 2026-10-2026-10-25 — Project milestone ID response defect found, corrected, and verified
+A targeted source audit found `api/v1/projects/detail.php` selected `project_milestones.id` but omitted `id` from each serialized milestone, while Flutter edit/delete actions require that ID. Added the existing row ID to the response in commit `20631106ae8fe9f8267779faf4c6e9a1d7608057`. Focused disposable-database endpoint coverage passed in [run 40160569643](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160569643); cross-project and ended-assignment mutation checks subsequently passed in [run 40160867381](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160867381). No schema or migration changes. These are CI results only; local Apache/MariaDB acceptance, migration-state confirmation, and HTTPS hosting remain release gates. Continue the broader source/schema-led API authorization audit.
 
 
 ## 2026-10-25 — Mobile milestone ID and project-scope integration verification
