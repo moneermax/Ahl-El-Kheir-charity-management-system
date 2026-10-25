@@ -1056,3 +1056,14 @@ New native administration features:
 The department operations were extracted into `api/v1/admin/departments_service.php` and verified by rollback-only full-schema MariaDB test `tools/test_mobile_admin_departments_service.php`. GitHub Actions run [40210824853](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40210824853) passed the full-schema migration job, PHP lint, and the department service integration output: `PASS | mobile admin department service | create, list, duplicate guard, update, assigned-user delete guard, delete, rollback=PASS`.
 
 Flutter widget tests passed for the department form/list, user directory, audit activity, and native-only notice. Current physical-device acceptance has not been performed. Remaining work is substantial: user creation/edit/activation/password reset and accountant assignments are not native; recovery decisions, reports, settings, accounting/disbursements/Fina, backups/database tools, global search, profile/messages, orphan forms, and several HR/finance workflows still need real native implementations. Do not ask the user to test this intermediate checkpoint or describe mobile parity as complete.
+
+
+## 2026-10-25 — Native password recovery queue
+
+Added native recovery queue for administrator/Sudo and HR Manager:
+- `GET api/v1/admin/recovery.php` lists the same latest-50 request queue and status/reviewer/expiry fields as the existing website page.
+- `POST api/v1/admin/recovery_action.php` supports approve/reject only for pending requests and re-checks authorization server-side.
+- `api/v1/admin/recovery_service.php` locks the request row, atomically updates the user password hash/forced-change flag and request status, sets the 24-hour expiry on approval, and returns the generated 12-character temporary password only in the approval response. Notification/audit writes are best-effort after commit; the UI displays the password in-app with a dismiss control and copy action. No schema change or runtime DDL was added.
+- HR Manager now sees the recovery tool; HR Staff does not. The admin dashboard route also opens this native screen. The mobile client still never opens the website or browser.
+
+Rollback-only full-schema MariaDB verification passed in Actions run [40211295992](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40211295992), output: `PASS | mobile admin recovery service | queue, approve, temporary password hash, forced change, expiry, duplicate guard, reject, rollback=PASS`. PHP lint passed in the same run. Flutter analyzer passed on the follow-up build; widget tests and APK publication are pending at this checkpoint. No physical-device test is claimed.
