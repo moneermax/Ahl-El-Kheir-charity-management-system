@@ -290,7 +290,7 @@ class _AdminRecoveryPageState extends State<AdminRecoveryPage> {
                       const SizedBox(height: 10),
                       _RecoveryInfo(icon: Icons.schedule_rounded, text: (en ? 'Requested' : 'تاريخ الطلب') + ': ' + (item['requested_at']?.toString().isNotEmpty == true ? item['requested_at'].toString() : '—')),
                       if ((item['reviewer_name']?.toString() ?? '').isNotEmpty)
-                        _RecoveryInfo(icon: Icons.person_check_outlined, text: (en ? 'Reviewed by' : 'راجعه') + ': ' + item['reviewer_name'].toString()),
+                        _RecoveryInfo(icon: Icons.verified_user_outlined, text: (en ? 'Reviewed by' : 'راجعه') + ': ' + item['reviewer_name'].toString()),
                       if ((item['expires_at']?.toString() ?? '').isNotEmpty)
                         _RecoveryInfo(icon: Icons.hourglass_bottom_rounded, text: (en ? 'Expires' : 'الصلاحية') + ': ' + item['expires_at'].toString()),
                       if (pending) ...[
