@@ -350,8 +350,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     title: english ? 'Ahl El Kheir' : 'أهل الخير',
     debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true,
-      colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1F4E8C), primary: const Color(0xFF0A1F44), secondary: const Color(0xFF2E63A8)),
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: const Color(0xFF1F4E8C),
+        primary: const Color(0xFF0A1F44),
+        secondary: const Color(0xFF2E63A8),
+        surface: Colors.white,
+      ),
       scaffoldBackgroundColor: const Color(0xFFF0F2F5),
+      visualDensity: VisualDensity.standard,
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFFE3E8EF),
+        thickness: 1,
+        space: 1,
+      ),
       fontFamily: 'Cairo',
       cardTheme: CardThemeData(
         color: Colors.white,
@@ -363,11 +374,32 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         ),
       ),
       listTileTheme: ListTileThemeData(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 5),
-        minVerticalPadding: 12,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
+        minVerticalPadding: 14,
+        horizontalTitleGap: 14,
         iconColor: const Color(0xFF1F4E8C),
         textColor: const Color(0xFF0A1F44),
+        titleTextStyle: const TextStyle(
+          color: Color(0xFF0A1F44),
+          fontFamily: 'Cairo',
+          fontSize: 14,
+          fontWeight: FontWeight.w800,
+        ),
+        subtitleTextStyle: const TextStyle(
+          color: Color(0xFF64748B),
+          fontFamily: 'Cairo',
+          fontSize: 12,
+          height: 1.45,
+        ),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+      ),
+      iconButtonTheme: IconButtonThemeData(
+        style: IconButton.styleFrom(
+          foregroundColor: const Color(0xFF0A1F44),
+          backgroundColor: const Color(0xFFF0F4FA),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+          minimumSize: const Size(44, 44),
+        ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
@@ -394,12 +426,115 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               toggle: () => setState(() => english = !english), submit: login)
           : Scaffold(
               appBar: AppBar(
-                title: Text(english ? 'Ahl El Kheir' : 'أهل الخير'),
+                title: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const OrganizationLogo(size: 38),
+                    const SizedBox(width: 10),
+                    Flexible(
+                      child: Text(
+                        english ? 'Ahl El Kheir' : 'أهل الخير',
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(fontWeight: FontWeight.w800),
+                      ),
+                    ),
+                  ],
+                ),
                 actions: [
-                  TextButton(
-                    onPressed: () => setState(() => english = !english),
-                    child: Text(english ? 'العربية' : 'English'),
+                  IconButton(
+                    tooltip: english ? 'Notifications' : 'الإشعارات',
+                    onPressed: () => navigatorKey.currentState?.push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => NotificationPage(
+                          english: english,
+                          loadPage: loadNotifications,
+                          markRead: markNotificationRead,
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(Icons.notifications_none_rounded),
                   ),
+                  IconButton(
+                    tooltip: english ? 'My account' : 'حسابي',
+                    onPressed: () => showModalBottomSheet<void>(
+                      context: context,
+                      showDragHandle: true,
+                      isScrollControlled: true,
+                      backgroundColor: Colors.white,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+                      ),
+                      builder: (sheetContext) => SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ListTile(
+                                leading: const CircleAvatar(
+                                  backgroundColor: Color(0xFFDCE7F5),
+                                  child: Icon(Icons.person_rounded, color: Color(0xFF0A1F44)),
+                                ),
+                                title: Text(user?['full_name']?.toString() ?? '',
+                                  style: const TextStyle(fontWeight: FontWeight.w800)),
+                                subtitle: Text(user?['role_code']?.toString() ?? ''),
+                              ),
+                              const Divider(height: 20),
+                              ListTile(
+                                leading: const Icon(Icons.payments_outlined),
+                                title: Text(english ? 'My salary statements' : 'كشوف رواتبي'),
+                                trailing: const Icon(Icons.chevron_right_rounded),
+                                onTap: () {
+                                  Navigator.pop(sheetContext);
+                                  navigatorKey.currentState?.push(MaterialPageRoute<void>(
+                                    builder: (_) => MySalaryStatementsPage(
+                                      english: english,
+                                      loadPage: loadMySalaryStatements,
+                                    ),
+                                  ));
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.event_note_rounded),
+                                title: Text(english ? 'Leave requests' : 'طلبات الإجازة'),
+                                trailing: const Icon(Icons.chevron_right_rounded),
+                                onTap: () {
+                                  Navigator.pop(sheetContext);
+                                  navigatorKey.currentState?.push(MaterialPageRoute<void>(
+                                    builder: (_) => LeaveRequestsPage(
+                                      english: english,
+                                      roleCode: user?['role_code']?.toString() ?? '',
+                                      loadLeaves: loadLeaves,
+                                      submitAction: submitLeaveAction,
+                                    ),
+                                  ));
+                                },
+                              ),
+                              const SizedBox(height: 8),
+                              SizedBox(
+                                width: double.infinity,
+                                child: OutlinedButton.icon(
+                                  onPressed: () {
+                                    Navigator.pop(sheetContext);
+                                    logout();
+                                  },
+                                  icon: const Icon(Icons.logout_rounded),
+                                  label: Text(english ? 'Sign out' : 'تسجيل الخروج'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    icon: const Icon(Icons.account_circle_outlined),
+                  ),
+                  IconButton(
+                    tooltip: english ? 'Change language' : 'تغيير اللغة',
+                    onPressed: () => setState(() => english = !english),
+                    icon: const Icon(Icons.language_rounded),
+                  ),
+                  const SizedBox(width: 6),
                 ],
               ),
               body: ListView(
@@ -638,77 +773,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         ),
                       )),
                     )),
-                  const SizedBox(height: 24),
-                  _HomeSectionTitle(
-                    title: english ? 'My account' : 'حسابي',
-                    subtitle: english
-                        ? 'Your personal records and notifications'
-                        : 'سجلاتك الشخصية والإشعارات',
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    child: ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.payments_outlined)),
-                      title: Text(english ? 'My salary statements' : 'كشوف رواتبي'),
-                      subtitle: Text(english ? 'View only paid and accounting-posted salary statements linked to your account' : 'عرض كشوف الرواتب المصروفة والمرحّلة محاسبياً والمرتبطة بحسابك فقط'),
-                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
-                        builder: (_) => MySalaryStatementsPage(
-                          english: english,
-                          loadPage: loadMySalaryStatements,
-                        ),
-                      )),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    child: ListTile(
-                      leading: const CircleAvatar(child: Icon(Icons.event_note_rounded)),
-                      title: Text(english ? 'Leave requests' : 'طلبات الإجازة'),
-                      subtitle: Text(english ? 'View your requests and authorized review queue' : 'متابعة طلباتك والطلبات المصرح بمراجعتها'),
-                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
-                        builder: (_) => LeaveRequestsPage(
-                          english: english,
-                          roleCode: user?['role_code']?.toString() ?? '',
-                          loadLeaves: loadLeaves,
-                          submitAction: submitLeaveAction,
-                        ),
-                      )),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Card(
-                    child: ListTile(
-                      leading: const CircleAvatar(
-                        child: Icon(Icons.notifications_none_rounded),
-                      ),
-                      title: Text(english ? 'Notifications' : 'الإشعارات'),
-                      subtitle: Text(
-                        english
-                            ? 'View your notification history'
-                            : 'عرض سجل الإشعارات الخاصة بك',
-                      ),
-                      trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
-                      onTap: () {
-                        navigatorKey.currentState?.push(
-                          MaterialPageRoute<void>(
-                            builder: (_) => NotificationPage(
-                              english: english,
-                              loadPage: loadNotifications,
-                              markRead: markNotificationRead,
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
                   const SizedBox(height: 20),
-                  FilledButton.icon(
-                    onPressed: logout,
-                    icon: const Icon(Icons.logout_rounded),
-                    label: Text(english ? 'Sign out' : 'تسجيل الخروج'),
-                  ),
                 ],
               ),
             )
