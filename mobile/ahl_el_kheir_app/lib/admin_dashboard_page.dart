@@ -167,6 +167,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             _ToolTile(icon: Icons.manage_accounts_rounded, color: violet, title: t('المستخدمون', 'User accounts'), description: t('إنشاء الحسابات وإدارة المستخدمين', 'Create and manage user accounts'), tag: t('إدارة', 'ADMIN'), onTap: () => widget.onOpenTool('users')),
             _ToolTile(icon: Icons.apartment_rounded, color: violet, title: t('الأقسام', 'Departments'), description: t('إدارة أقسام المنظمة', 'Manage organization departments'), tag: t('إدارة', 'ADMIN'), onTap: () => widget.onOpenTool('departments')),
             _ToolTile(icon: Icons.settings_rounded, color: violet, title: t('إعدادات النظام', 'System settings'), description: t('بيانات المنظمة والإعدادات العامة', 'Organization profile and global settings'), tag: t('إدارة', 'ADMIN'), onTap: () => widget.onOpenTool('settings')),
+            _ToolTile(icon: Icons.password_rounded, color: violet, title: t('طلبات استعادة كلمة المرور', 'Password recovery requests'), description: t('مراجعة طلبات استعادة الحسابات المعلقة', 'Review pending account recovery requests'), tag: t('ويب', 'WEB'), onTap: () => widget.onOpenTool('recovery')),
             const SizedBox(height: 22),
             _SectionHeading(title: t('البيانات الأساسية', 'CORE RECORDS'), subtitle: t('السجلات التشغيلية الرئيسية', 'Primary operational records'), icon: Icons.hub_rounded, color: cyan),
             const SizedBox(height: 10),
