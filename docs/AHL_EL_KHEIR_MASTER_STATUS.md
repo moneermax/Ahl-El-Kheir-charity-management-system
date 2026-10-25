@@ -4585,3 +4585,8 @@ Harness commit: `fd7d9652c3d9cc1bc6b6b17900742ef0f7d1d30b`. GitHub Actions [run 
 ### Mobile API authorization audit checkpoint — 2026-10-25
 
 The mobile API authorization audit remains open. Commit `fbf83136ace25fb80c3f51f82b529552aa311d85` adds four disposable-harness assertions that HR staff are denied nanny group/preliminary verification GET and action routes. Documentation of the checkpoint is in `docs/MOBILE_APP_CONTINUATION.md`. These are test additions, not a confirmed production defect. GitHub returned no commit status checks for the PHP harness commits, so the new assertions are **not verified as passing**. Do not run `tools/test_mobile_api_auth_integration.php` against `ahl_el_kheir`; its guard requires `MOBILE_API_AUTH_TEST=1` and database `mobile_api_auth_test`. Preserve local runtime acceptance as pending and continue source-grounded endpoint review.
+
+
+### Mobile API source review — 2026-10-25
+
+Additional source review covered the bearer-session bootstrap/login/me/logout path, family/sponsor/sponsorship detail scoping, HR attendance access, and employee salary-statement scoping. No new production authorization defect was confirmed in these paths. This is source inspection only. The PHP integration harness additions remain unverified because no commit status checks were returned; the Flutter build workflow does not execute that harness. Continue treating disposable-database HTTP integration and local runtime acceptance as open. See `docs/MOBILE_APP_CONTINUATION.md` for the detailed checkpoint.
