@@ -42,7 +42,7 @@ $childId = (int)$candidate['child_id'];
 $familyId = (int)$candidate['family_id'];
 $actorId = (int)$actor['id'];
 $nannyId = (int)$nanny['id'];
-$otherUser = dbFetchOne('SELECT id FROM users WHERE id <> ? ORDER BY id LIMIT 1', [$nannyId]);
+$otherUser = dbFetchOne('SELECT id FROM users WHERE id <> ? AND id <> ? ORDER BY id LIMIT 1', [$nannyId, (int)($candidate['nanny_id'] ?? 0)]);
 $assert($otherUser !== null, 'A second account is required for the nanny scope test.');
 $wrongNannyId = (int)$otherUser['id'];
 $activeBefore = (int)(dbFetchOne(
