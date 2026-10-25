@@ -5029,3 +5029,11 @@ This corrects concrete native-screen/API mismatches where the UI offered role-ap
 - Role-alias regression: `PASS | mobile API role normalization | 14 cases` in PHP workflow `40192899764`.
 
 Remaining acceptance boundary: these CI checks use disposable databases and cannot verify the user's running XAMPP server, actual local `ahl_el_kheir` schema alignment, the phone's network route, or a live authenticated session. The mobile API session migration must be applied to the intended local database before first use if it has not already been applied. Website-only tools remain labelled WEB and need a valid website session; they are not native parity claims.
+
+## 2026-10-25 — Mobile role dashboard audit checkpoint
+
+Source audit: the web dashboard router defines distinct dashboard destinations for GM, VGM, FM, Accountant Staff, Supervisor, Nanny, Staff/Administration, HR, and Projects roles. Native mobile workspace now requests role-specific metric data through `api/v1/dashboard/overview.php`; administrator roles remain on their dedicated overview API. The new endpoint uses the existing bearer authentication/canonical role normalization, and its metric queries were transcribed from the relevant existing web dashboard query patterns. No schema migration or runtime DDL was added.
+
+A role-tool authorization defect was found and corrected: `modules/transactions/fina_payment_create.php` is restricted to financial_manager/fm/admin, so it was removed from the Supervisor's mobile tools. The repository tree confirmed the surfaced tool paths exist, but file existence alone is not treated as proof of role authorization.
+
+Evidence still required: final CI for the combined revision, API execution against the full schema and intended local database, role-by-role local authenticated smoke checks, physical-device UI check, and complete date-filter boundary/pagination/refresh acceptance. Do not label the mobile feature-parity work closed.
