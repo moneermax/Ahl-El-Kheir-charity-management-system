@@ -7,7 +7,7 @@ require_once __DIR__ . '/suspension_service.php';
 ak_api_require_method('POST');
 $user = ak_api_authenticated_user();
 $userId = (int)$user['id'];
-$role = ak_api_normalize_legal_age_role((string)$user['role_code']);
+$role = (string)$user['role_code'];
 if (!in_array($role, ['admin', 'vice_general_manager', 'nanny'], true)) {
     ak_api_json(403, [
         'ok' => false,
