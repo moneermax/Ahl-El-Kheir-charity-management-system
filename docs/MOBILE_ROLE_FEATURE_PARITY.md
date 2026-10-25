@@ -31,15 +31,15 @@ The website routes each role to a distinct dashboard in `config/functions.php`: 
 
 | Role | Existing native mobile capabilities | Additional website tools surfaced | Remaining parity work |
 |---|---|---|---|
-| GM | Sponsors, families, sponsorships, sponsor requests, projects, transactions, legal-age alerts, personal leave requests/salary statements | Executive reports, uncovered-family/sponsorship/operational reports, win-back, incentive policy, GM payroll-period history | Native executive metrics/attention queue and approval workflows; web session handoff |
-| VGM | Sponsors, families, sponsorships, sponsor requests, projects, supervisors, FM review queue, transactions, legal-age alerts | Sponsor assignment and reports | Native sponsor assignment and full VGM dashboard indicators |
-| FM | Projects, transactions, FM review queue, legal-age alerts | Disbursements, chart of accounts, journal, vouchers, transaction review, financial reports, payroll portal, Fina dashboard | Native finance operations and dashboards; accounting API parity |
-| Accountant / Accountant Staff | Sponsorships/transactions where permitted, projects where permitted, personal leave requests/salary statements | Group disbursements, monthly disbursements, reports | Exact assignment-scoped native workflow parity and dashboard indicators |
-| Supervisor | Sponsors, families, sponsorships, transactions, legal-age alerts | Fina review/history/report | Native Fina workflows and supervisor-specific dashboard/record scope |
-| Nanny | Families, preliminary verification, group verification, legal-age alerts, personal leave requests/salary statements | Monthly disbursements, returned funds, reports | Native disbursement/returned-fund workflows and dashboard reconciliation |
-| Administration / Staff / Social Media | Sponsor requests and personal leave requests/salary statements | Orphan forms; Administration additionally gets available families and win-back | Native beneficiary forms, follow-up workflows and real per-role dashboard metrics |
-| HR Manager / HR Staff | Employees, employee detail, attendance, leave requests/approval queue, personal salary statements | Payroll, contracts, payroll policy, incentive verification, attendance policy, payroll integrity | Native HR operational screens and dashboard metrics; manager/staff-specific action boundaries |
-| Projects Manager / Project Supervisor | Projects, project detail, progress and milestone actions | Project register link | Full dashboard metrics and remaining project-specific website workflows |
+| GM | Sponsors, families, sponsorships, sponsor requests, projects, transactions, legal-age alerts, personal leave requests/salary statements, native role metrics | Executive reports, uncovered-family/sponsorship/operational reports, win-back, incentive policy, GM payroll-period history | Native attention queue and approval workflows; web session handoff |
+| VGM | Sponsors, families, sponsorships, sponsor requests, projects, supervisors with native activate/suspend controls, FM review queue, transactions, legal-age alerts, native role metrics and sponsor assignment | Reports | Remaining VGM operational workflows; web session handoff |
+| FM | Projects, transactions, FM review queue, legal-age alerts, native role metrics | Disbursements, chart of accounts, journal, vouchers, transaction review, financial reports, payroll portal, Fina dashboard | Native finance operations and accounting API parity |
+| Accountant / Accountant Staff | Sponsorships/transactions where permitted, projects where permitted, personal leave requests/salary statements, native role metrics | Group disbursements, monthly disbursements, reports | Exact assignment-scoped native workflow parity |
+| Supervisor | Sponsors, families, sponsorships, transactions, legal-age alerts, native role metrics | Fina review/history/report | Native Fina workflows and supervisor-specific dashboard/record scope |
+| Nanny | Families, preliminary verification, group verification, legal-age alerts, personal leave requests/salary statements, native role metrics | Monthly disbursements, returned funds, reports | Native disbursement/returned-fund workflows and dashboard reconciliation |
+| Administration / Staff / Social Media | Sponsor requests, personal leave requests/salary statements, native role metrics | Orphan forms; Administration additionally gets available families and win-back | Native beneficiary forms and follow-up workflows |
+| HR Manager / HR Staff | Employees, employee detail, attendance, leave requests/approval queue, personal salary statements, native role metrics | Payroll, contracts, payroll policy, incentive verification, attendance policy, payroll integrity | Native HR operational screens; manager/staff-specific action boundaries |
+| Projects Manager / Project Supervisor | Projects, project detail, progress and milestone actions, native role metrics | Project register link | Remaining project-specific website workflows |
 
 Do not infer parity from role-specific color or a shared module list. Server-side authorization remains authoritative for every endpoint and website page.
 
@@ -157,3 +157,19 @@ Verification:
 - Flutter analysis and widget tests passed in run `40196556920` at source `d8a8e66e056d0f1535862bfefc1750592fe55a08`, including confirm/toggle/refresh behavior and read-only visibility. APK build/publication is still pending at this checkpoint.
 
 The status service test verified the update and rollback against disposable MariaDB. Local XAMPP and physical-device acceptance remain open.
+
+
+## 2026-10-25 — Mobile parity verification refresh
+
+Repository audit on `main` confirmed that every literal website route currently listed in `mobile/ahl_el_kheir_app/lib/role_tools_section.dart` exists in the repository tree. These entries remain website links, not native workflow implementations; external-browser website-session continuity is still unverified.
+
+Verified native/API milestones:
+- Role dashboard metrics: full-schema MariaDB 10.4.32 CI passed for all 14 supported non-admin role variants in run `40195397302`.
+- Role dashboard/filter widgets and Android debug APK: run `40195228074` passed at Flutter source `64da0db9eef605a8a1442e9c623e1fa3a85f80e7`.
+- Native sponsor assignment: rollback-only full-schema service test passed in run `40195979512`.
+- Native supervisor status controls: rollback-only full-schema service test passed in run `40196421650`; Flutter analyze/tests and APK artifact publication passed in run `40196556920` at source `d8a8e66e056d0f1535862bfefc1750592fe55a08`.
+- Transaction date filtering: added `tools/test_mobile_transactions_date_filter.php`, which moves three existing records to isolated 2099 boundary dates inside a transaction, verifies inclusive start/end and same-day behavior plus exclusion outside the range, and rolls all changes back. PHP lint and the full-schema MariaDB test passed in run `40198548850`: `PASS | mobile transaction date filter | inclusive start/end, same-day range, outside-bound exclusion, rollback=PASS`.
+
+The API query test complements the Flutter widget tests for same-day/multi-day filters, pagination/refresh, and reversed-range rejection. It does not replace authenticated HTTP testing against the intended local `ahl_el_kheir` database or physical-device acceptance.
+
+**Still open:** complete native implementations for several role-specific financial, HR, beneficiary-form and Fina workflows; website-session handoff for WEB links; local XAMPP/API/database verification; physical-device acceptance. Do not describe mobile parity as complete.
