@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'api/v1/**'
+      - 'mobile_web_handoff.php'
       - 'config/config.php'
       - 'config/database.php'
       - 'config/environment.php'
@@ -16,6 +17,7 @@ on:
   pull_request:
     paths:
       - 'api/v1/**'
+      - 'mobile_web_handoff.php'
       - 'config/config.php'
       - 'config/database.php'
       - 'config/environment.php'
