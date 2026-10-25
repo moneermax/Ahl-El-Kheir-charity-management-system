@@ -27,6 +27,7 @@ import 'suspension_cases_page.dart';
 import 'native_tool_page.dart';
 import 'audit_log_page.dart';
 import 'admin_users_page.dart';
+import 'admin_departments_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 
@@ -139,6 +140,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/departments/index.php') {
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => AdminDepartmentsPage(
+          english: english,
+          loadDepartments: loadAdminDepartments,
+          submitAction: submitAdminDepartmentAction,
+        ),
+      ));
+      return;
+    }
 
     final titles = <String, List<String>>{
       'modules/families/orphan_form.php': ['نموذج اليتيم', 'Orphan form'],
@@ -218,6 +229,22 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('GET', 'admin/overview.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadAdminDepartments() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'admin/departments.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitAdminDepartmentAction(Map<String, dynamic> payload) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'admin/departments_action.php', token: token, body: payload);
   }
 
   Future<Map<String, dynamic>> loadAdminUsers(String query, int page) async {
