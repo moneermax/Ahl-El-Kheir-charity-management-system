@@ -8,6 +8,7 @@ void main() {
       home: AdminUsersPage(
         english: true,
         currentUserId: 1,
+        loadOptions: () async => {'roles': [], 'departments': [], 'managers': []},
         submitAction: (_) async => {'message': 'Saved'},
         loadPage: (query, page) async => {
           'items': [
@@ -53,6 +54,7 @@ void main() {
       home: AdminUsersPage(
         english: true,
         currentUserId: 1,
+        loadOptions: () async => {'roles': [], 'departments': [], 'managers': []},
         submitAction: (_) async => {'message': 'Saved'},
         loadPage: (query, page) async {
           submittedQuery = query;
@@ -77,6 +79,7 @@ void main() {
       home: AdminUsersPage(
         english: true,
         currentUserId: 1,
+        loadOptions: () async => {'roles': [], 'departments': [], 'managers': []},
         loadPage: (_, page) async => {
           'items': [
             {'id': 8, 'username': 'staff', 'full_name': 'Staff', 'is_active': true, 'role_code': 'staff', 'role_en': 'Staff', 'page': page},
@@ -109,6 +112,7 @@ void main() {
       home: AdminUsersPage(
         english: true,
         currentUserId: 8,
+        loadOptions: () async => {'roles': [], 'departments': [], 'managers': []},
         loadPage: (_, page) async => {
           'items': [
             {'id': 8, 'username': 'admin', 'full_name': 'Admin', 'is_active': true, 'role_code': 'admin', 'role_en': 'Administrator'},
