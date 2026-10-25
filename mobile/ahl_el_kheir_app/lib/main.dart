@@ -13,7 +13,6 @@ import 'supervisors_page.dart';
 import 'families_page.dart';
 import 'admin_dashboard_page.dart';
 import 'role_dashboard_page.dart';
-import 'role_dashboard_routes.dart';
 import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
 import 'fm_review_queue_page.dart';
@@ -1283,7 +1282,6 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   'administration' || 'staff' || 'social_media' => english ? 'Organization workspace' : 'مساحة عمل المنظمة',
                   _ => english ? 'Your workspace' : 'مساحة عملك',
                 };
-                final fullDashboardPath = roleDashboardPath(roleCode);
                 final heroColors = switch (roleCode) {
                   'admin' || 'sudo' || 'super_admin' => const [Color(0xFF081527), Color(0xFF4B3F91)],
                   'general_manager' || 'gm' => const [Color(0xFF154734), Color(0xFF2E63A8)],
@@ -1357,31 +1355,6 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     roleCode: roleCode,
                     loadOverview: loadRoleDashboard,
                   ),
-                  if (fullDashboardPath != null) ...[
-                    const SizedBox(height: 16),
-                    Card(
-                      child: ListTile(
-                        leading: const CircleAvatar(
-                          child: Icon(Icons.open_in_browser_rounded),
-                        ),
-                        title: Text(english ? 'Full website dashboard' : 'لوحة الموقع الكاملة'),
-                        subtitle: Text(
-                          english
-                              ? 'Open the original dashboard and its complete set of options'
-                              : 'فتح لوحة النظام الأصلية وجميع خياراتها',
-                        ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Text('WEB'),
-                            const SizedBox(width: 6),
-                            const Icon(Icons.phone_android_rounded, size: 18),
-                          ],
-                        ),
-                        onTap: () => openNativeTool(fullDashboardPath),
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 24),
                   _HomeSectionTitle(
                     title: english ? 'Work areas' : 'مساحات العمل',
