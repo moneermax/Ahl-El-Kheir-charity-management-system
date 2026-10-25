@@ -2639,3 +2639,12 @@ Source commit: `16e6446c39ba3040a0ce4e7ab934c406ef2a23c7`. Flutter analyze/widge
 The existing website header exposes the role-aware global search at `modules/search/index.php`. The mobile header now includes a search action that opens that existing page, explicitly labelled WEB; it does not bypass the existing server-side search permissions or claim a native search implementation. As with all WEB routes, the external browser may require the user to sign in separately because mobile bearer authentication is not a website session handoff.
 
 Source commit: `7c846968f7439fbf5db359374520671590d149c5`. Flutter analyze/widget tests and APK build for this exact revision are queued at this checkpoint. Local XAMPP and physical-device acceptance remain pending.
+
+
+## 2026-10-25 — Admin recovery queue and mobile role-sidebar parity follow-up
+
+The native Sudo/admin dashboard already displayed the pending password-recovery count but did not offer a direct action. It now includes a clearly labelled WEB tool routed to the existing `modules/users/recovery.php`, whose server-side guard permits only `admin` and `hr_manager`; this dashboard entry is shown only in the admin/Sudo workspace. A widget test asserts that tapping the tile dispatches the `recovery` route.
+
+The latest role-sidebar parity slice remains in `mobile/ahl_el_kheir_app/lib/role_tools_section.dart`: GM waiver queue, VGM orphan-group management, FM opening balance/assigned nannies, accountant/accountant-staff permitted links, and orphan forms for Supervisor/Nanny. Restricted accountant pages remain hidden when the target web guard denies access. Personal profile/settings/salary-advance request and global role-aware search are also now discoverable from the mobile UI, labelled WEB where they still use the website.
+
+Source commits: `45be3327f14e5129a9fb2dbb65daa618026dd648` (admin tile), `c19938979b181b53cc01237dce2d8c34bbfa6feb` (route), `12bd0f5dd017bc233e197b95cb4ef1814aeb9261` (widget test). Flutter analysis/widget CI and APK build for the newest source revision are pending. Website-session continuity, local XAMPP/API verification, and physical-device acceptance remain open. This is incremental tool discovery, not full native parity.
