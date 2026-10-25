@@ -629,9 +629,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(english ? 'Legal age alerts' : 'تنبيه بلوغ السن القانوني',
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF0A1F44))),
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF154734))),
                         Text(english ? '${ageAlertItems.length} children need review' : '${ageAlertItems.length} طفل يحتاج إلى المراجعة',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF65756A))),
                       ],
                     )),
                   ]),
@@ -663,9 +663,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                               CircleAvatar(backgroundColor: accent.withValues(alpha: 0.12), child: Icon(Icons.person_outline_rounded, color: accent)),
                               const SizedBox(width: 12),
                               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text(item['child_name']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF0A1F44))),
+                                Text(item['child_name']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF154734))),
                                 const SizedBox(height: 3),
-                                Text('${item['mother_name'] ?? ''} • ${item['family_code'] ?? ''}', style: const TextStyle(fontSize: 12, color: Color(0xFF64748B))),
+                                Text('${item['mother_name'] ?? ''} • ${item['family_code'] ?? ''}', style: const TextStyle(fontSize: 12, color: Color(0xFF65756A))),
                                 const SizedBox(height: 6),
                                 Text('${english ? 'Birth date' : 'تاريخ الميلاد'}: ${item['birth_date'] ?? '—'}', style: const TextStyle(fontSize: 12)),
                                 const SizedBox(height: 5),
@@ -984,16 +984,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF087F8C),
-        primary: const Color(0xFF075B63),
-        secondary: const Color(0xFF0E9F9A),
+        seedColor: const Color(0xFF1E6B4E),
+        primary: const Color(0xFF15583F),
+        secondary: const Color(0xFFC89B3C),
         surface: Colors.white,
         error: const Color(0xFFB42318),
       ),
-      scaffoldBackgroundColor: const Color(0xFFF3F8F7),
+      scaffoldBackgroundColor: const Color(0xFFF6F4EE),
       visualDensity: VisualDensity.standard,
       dividerTheme: const DividerThemeData(
-        color: Color(0xFFDCE9E7),
+        color: Color(0xFFE7E2D5),
         thickness: 1,
         space: 1,
       ),
@@ -1004,23 +1004,23 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFFDCE9E7)),
+          side: const BorderSide(color: Color(0xFFE7E2D5)),
         ),
       ),
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         minVerticalPadding: 14,
         horizontalTitleGap: 14,
-        iconColor: const Color(0xFF087F8C),
-        textColor: const Color(0xFF16353A),
+        iconColor: const Color(0xFF1E6B4E),
+        textColor: const Color(0xFF20352B),
         titleTextStyle: const TextStyle(
-          color: Color(0xFF16353A),
+          color: Color(0xFF20352B),
           fontFamily: 'Cairo',
           fontSize: 14,
           fontWeight: FontWeight.w800,
         ),
         subtitleTextStyle: const TextStyle(
-          color: Color(0xFF64748B),
+          color: Color(0xFF65756A),
           fontFamily: 'Cairo',
           fontSize: 12,
           height: 1.45,
@@ -1029,27 +1029,27 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          foregroundColor: const Color(0xFF075B63),
-          backgroundColor: const Color(0xFFEAF4F2),
+          foregroundColor: const Color(0xFF15583F),
+          backgroundColor: const Color(0xFFE9F2EB),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           minimumSize: const Size(44, 44),
         ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF16353A),
+        foregroundColor: Color(0xFF20352B),
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 56,
       ),
       inputDecorationTheme: InputDecorationTheme(
-        filled: true, fillColor: const Color(0xFFF6FAF9),
+        filled: true, fillColor: const Color(0xFFFBFAF6),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB7D0CD), width: 1.2)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF8AA6C8), width: 1.5)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF087F8C), width: 2)),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFD5D9CD), width: 1.2)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFB7C7B9), width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF1E6B4E), width: 2)),
       ),
-      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF075B63), foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
+      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF15583F), foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
     navigatorKey: navigatorKey,
   home: Directionality(
       textDirection: english ? TextDirection.ltr : TextDirection.rtl,
@@ -1134,8 +1134,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                       children: [
                                         ListTile(
                                           leading: const CircleAvatar(
-                                            backgroundColor: Color(0xFFDCE7F5),
-                                            child: Icon(Icons.person_rounded, color: Color(0xFF0A1F44)),
+                                            backgroundColor: Color(0xFFE7F0E8),
+                                            child: Icon(Icons.person_rounded, color: Color(0xFF154734)),
                                           ),
                                           title: Text(user?['full_name']?.toString() ?? '',
                                             style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -1264,13 +1264,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                 final fullDashboardPath = roleDashboardPath(roleCode);
                 final heroColors = switch (roleCode) {
                   'admin' || 'sudo' || 'super_admin' => const [Color(0xFF081527), Color(0xFF4B3F91)],
-                  'general_manager' || 'gm' => const [Color(0xFF0A1F44), Color(0xFF2E63A8)],
+                  'general_manager' || 'gm' => const [Color(0xFF154734), Color(0xFF2E63A8)],
                   'vice_general_manager' || 'vgm' => const [Color(0xFF123A7A), Color(0xFF247BA0)],
                   'financial_manager' || 'fm' || 'finance' || 'accountant' || 'accountant_staff' => const [Color(0xFF123B36), Color(0xFF218C74)],
                   'supervisor' || 'nanny' => const [Color(0xFF174A63), Color(0xFF2A9D8F)],
                   'hr_manager' || 'hr_staff' => const [Color(0xFF432874), Color(0xFF8764B8)],
                   'projects_manager' || 'project_supervisor' => const [Color(0xFF753B19), Color(0xFFC56B32)],
-                  _ => const [Color(0xFF081527), Color(0xFF1F4E8C)],
+                  _ => const [Color(0xFF081527), Color(0xFF1E6B4E)],
                 };
                 return ListView(
                 padding: const EdgeInsets.all(20),
@@ -1286,7 +1286,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF0A1F44).withValues(alpha: 0.14),
+                          color: const Color(0xFF154734).withValues(alpha: 0.14),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -1453,7 +1453,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     ))),
                   if (['general_manager', 'gm', 'vice_general_manager', 'vgm'].contains(roleCode))
                     SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
-                      leading: const CircleAvatar(backgroundColor: Color(0xFFEAF2FF), child: Icon(Icons.assignment_ind_rounded, color: Color(0xFF1F4E8C))),
+                      leading: const CircleAvatar(backgroundColor: Color(0xFFE8F2E9), child: Icon(Icons.assignment_ind_rounded, color: Color(0xFF1E6B4E))),
                       title: Text(english ? 'Sponsor assignment' : 'إسناد الكفلاء'),
                       subtitle: Text(english ? 'Assign unassigned sponsors to active supervisors' : 'إسناد الكفلاء غير المسندين إلى المشرفين النشطين'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
@@ -1562,8 +1562,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         child: Card(
                           child: ListTile(
                             leading: const CircleAvatar(
-                              backgroundColor: Color(0xFFEAF3FF),
-                              child: Icon(Icons.event_available_rounded, color: Color(0xFF1F4E8C)),
+                              backgroundColor: Color(0xFFE8F2E9),
+                              child: Icon(Icons.event_available_rounded, color: Color(0xFF1E6B4E)),
                             ),
                             title: Text(english ? 'My leave requests' : 'طلبات إجازاتي'),
                             subtitle: Text(english
@@ -1633,7 +1633,7 @@ class _HomeSectionTitle extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF0A1F44),
+                    color: const Color(0xFF154734),
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -1642,7 +1642,7 @@ class _HomeSectionTitle extends StatelessWidget {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF64748B),
+                      color: const Color(0xFF65756A),
                     ),
               ),
             ],
@@ -1813,7 +1813,7 @@ class _NotificationPageState extends State<NotificationPage> {
                                           : Icons.notifications_active_rounded,
                                       color: isRead
                                           ? Colors.grey
-                                          : const Color(0xFF1F4E8C),
+                                          : const Color(0xFF1E6B4E),
                                     ),
                                     title: Text(
                                       item['title']?.toString() ?? '',
@@ -1902,10 +1902,10 @@ class OrganizationLogo extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFDCE7F5)),
+          border: Border.all(color: const Color(0xFFE7F0E8)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF0A1F44).withValues(alpha: 0.08),
+              color: const Color(0xFF154734).withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, 5),
             ),
@@ -1919,7 +1919,7 @@ class OrganizationLogo extends StatelessWidget {
             errorBuilder: (_, __, ___) => const Icon(
               Icons.volunteer_activism_rounded,
               size: 46,
-              color: Color(0xFF1F4E8C),
+              color: Color(0xFF1E6B4E),
             ),
           ),
         ),
@@ -1957,8 +1957,8 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     final en = widget.english;
     const navy950 = Color(0xFF081527);
-    const navy900 = Color(0xFF0A1F44);
-    const navy600 = Color(0xFF1F4E8C);
+    const navy900 = Color(0xFF154734);
+    const navy600 = Color(0xFF1E6B4E);
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -2085,7 +2085,7 @@ class _LoginPageState extends State<LoginPage> {
                               Text(
                                 en ? 'Secure access to Ahl El Kheir' : 'دخول آمن إلى نظام أهل الخير',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+                                style: const TextStyle(color: Color(0xFF65756A), fontSize: 12),
                               ),
                             ],
                           ),
@@ -2132,7 +2132,7 @@ class NotificationDetailPage extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
-                colors: [Color(0xFF0A1F44), Color(0xFF1F4E8C)],
+                colors: [Color(0xFF154734), Color(0xFF1E6B4E)],
               ),
               borderRadius: BorderRadius.circular(22),
             ),
@@ -2140,11 +2140,11 @@ class NotificationDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: const Color(0xFF0A1F44), fontWeight: FontWeight.w800,
+            color: const Color(0xFF154734), fontWeight: FontWeight.w800,
           )),
           if (createdAt.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(createdAt, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF64748B))),
+            Text(createdAt, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF65756A))),
           ],
           const SizedBox(height: 18),
           Card(
