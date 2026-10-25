@@ -907,3 +907,14 @@ Verified native/API milestones:
 The API query test complements the Flutter widget tests for same-day/multi-day filters, pagination/refresh, and reversed-range rejection. It does not replace authenticated HTTP testing against the intended local `ahl_el_kheir` database or physical-device acceptance.
 
 **Still open:** complete native implementations for several role-specific financial, HR, beneficiary-form and Fina workflows; website-session handoff for WEB links; local XAMPP/API/database verification; physical-device acceptance. Do not describe mobile parity as complete.
+
+
+## 2026-10-25 — Native suspension case management and date-filter integration
+
+The mobile app now opens the suspension-case register natively from the existing suspension tool route. `GET api/v1/suspensions/index.php` returns the existing case list with nanny family scope; `POST api/v1/suspensions/lift.php` is restricted server-side to administrator/VGM roles and performs case, beneficiary, and linked sponsorship updates in one transaction, followed by best-effort audit logging. The native page supports refresh, active/lifted case visibility, bilingual reason labels, and a confirmation step before lifting. Non-age suspension creation and other non-native workflows remain outside this slice.
+
+Full-schema PHP verification passed in run `40199009847`, including the rollback-only service output: `PASS | mobile legal-age suspension service | suspend/lift, linked sponsorship pause/resume, duplicate guard, role/scope guards, rollback`. The harness also checks administrator/nanny case-list visibility, nanny scope, and lift capability. Flutter analyze and the widget suite passed on source `e754b9e30cd3fbf51ad77192fbec8bcb087906b6` in run `40199177461`; Android debug APK build/artifact publication was still in progress at the time of this documentation update.
+
+Transaction date filtering also has a rollback-only full-schema test: run `40198548850` passed `PASS | mobile transaction date filter | inclusive start/end, same-day range, outside-bound exclusion, rollback=PASS`.
+
+Still open: authenticated API/database runtime against the intended local `ahl_el_kheir` instance, physical-device acceptance, website-session continuity for remaining WEB links, and full native parity for financial, HR, beneficiary-form and Fina workflows. Do not describe the app as feature-complete.

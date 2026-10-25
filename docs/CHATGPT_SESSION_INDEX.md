@@ -2573,3 +2573,14 @@ The status service test verified the update and rollback against disposable Mari
 ## 2026-10-25 — Mobile app continuation evidence
 
 The mobile parity evidence matrix was refreshed. A repository route audit confirmed every website path in the mobile role-tools list exists, while noting these WEB links still depend on external-browser session continuity. Native role dashboard metrics passed full-schema MariaDB CI for 14 roles (run 40195397302); sponsor assignment and supervisor status service rollback tests passed (runs 40195979512 and 40196421650); the latest source with supervisor controls passed Flutter analyze/tests and APK publication (run 40196556920). A rollback-only transaction date-boundary harness passed PHP lint and full-schema MariaDB CI in run 40198548850: inclusive start/end, same-day range, outside-bound exclusion, rollback=PASS. Local authenticated API/database and physical-device checks remain pending. Native financial, HR, beneficiary-form and Fina workflow parity remains incomplete; do not claim the mobile app is feature-complete.
+
+
+## 2026-10-25 — Native suspension case management and date-filter integration
+
+The mobile app now opens the suspension-case register natively from the existing suspension tool route. `GET api/v1/suspensions/index.php` returns the existing case list with nanny family scope; `POST api/v1/suspensions/lift.php` is restricted server-side to administrator/VGM roles and performs case, beneficiary, and linked sponsorship updates in one transaction, followed by best-effort audit logging. The native page supports refresh, active/lifted case visibility, bilingual reason labels, and a confirmation step before lifting. Non-age suspension creation and other non-native workflows remain outside this slice.
+
+Full-schema PHP verification passed in run `40199009847`, including the rollback-only service output: `PASS | mobile legal-age suspension service | suspend/lift, linked sponsorship pause/resume, duplicate guard, role/scope guards, rollback`. The harness also checks administrator/nanny case-list visibility, nanny scope, and lift capability. Flutter analyze and the widget suite passed on source `e754b9e30cd3fbf51ad77192fbec8bcb087906b6` in run `40199177461`; Android debug APK build/artifact publication was still in progress at the time of this documentation update.
+
+Transaction date filtering also has a rollback-only full-schema test: run `40198548850` passed `PASS | mobile transaction date filter | inclusive start/end, same-day range, outside-bound exclusion, rollback=PASS`.
+
+Still open: authenticated API/database runtime against the intended local `ahl_el_kheir` instance, physical-device acceptance, website-session continuity for remaining WEB links, and full native parity for financial, HR, beneficiary-form and Fina workflows. Do not describe the app as feature-complete.
