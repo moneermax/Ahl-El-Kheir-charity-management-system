@@ -46,15 +46,11 @@ try {
              FROM family_children fc
              INNER JOIN families f ON f.id = fc.family_id
              WHERE fc.id = ?
-               AND fc.is_active = 1
-               AND fc.birth_date IS NOT NULL
-               AND fc.birth_date <= DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 90 DAY), INTERVAL 18 YEAR)
-               AND fc.birth_date >= DATE_SUB(CURDATE(), INTERVAL 21 YEAR)
              FOR UPDATE",
             [(int)$childId]
         );
         if (!$child) {
-            throw new OutOfBoundsException('The child is no longer eligible for the legal-age alert action.');
+            throw new OutOfBoundsException('The child record was not found.');
         }
         if ($role === 'nanny' && (int)$child['nanny_id'] !== $userId) {
             $pdo->rollBack();
@@ -72,6 +68,17 @@ try {
         );
         if ($existing) {
             throw new DomainException('An active suspension already exists for this child.');
+        }
+
+        $eligible = dbFetchOne(
+            "SELECT id FROM family_children
+             WHERE id = ? AND is_active = 1 AND birth_date IS NOT NULL
+               AND birth_date <= DATE_SUB(DATE_ADD(CURDATE(), INTERVAL 90 DAY), INTERVAL 18 YEAR)
+               AND birth_date >= DATE_SUB(CURDATE(), INTERVAL 21 YEAR)",
+            [(int)$childId]
+        );
+        if (!$eligible) {
+            throw new OutOfBoundsException('The child is no longer eligible for the legal-age alert action.');
         }
 
         dbExecute(
