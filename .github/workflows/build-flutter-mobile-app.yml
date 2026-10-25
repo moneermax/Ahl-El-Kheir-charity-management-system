@@ -12,7 +12,7 @@ on:
       api_base_url:
         description: "API v1 base URL (use HTTPS outside local development)"
         required: false
-        default: "http://192.168.18.9:8081/AhlElKheir/api/v1"
+        default: "http://192.168.18.9:881/AhlElKheir/api/v1"
         type: string
 
 permissions:
@@ -22,7 +22,7 @@ jobs:
   analyze-and-build:
     runs-on: ubuntu-latest
     env:
-      API_BASE_URL: ${{ inputs.api_base_url || 'http://192.168.18.9:8081/AhlElKheir/api/v1' }}
+      API_BASE_URL: ${{ inputs.api_base_url || 'http://192.168.18.9:881/AhlElKheir/api/v1' }}
     steps:
       - name: Check out main
         uses: actions/checkout@v4
