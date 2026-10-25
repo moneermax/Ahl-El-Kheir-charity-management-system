@@ -4623,3 +4623,16 @@ Source change: `296b318ae173e2be9383e2308266ec7235cc7cbc` updates `mobile/ahl_el
 The web stylesheet's root palette already matches the app's existing color values; the main mismatch identified was the mobile screen's generic flat composition and missing hierarchy, not evidence for inventing a new brand palette. Existing role visibility conditions, routes, API calls, and server authorization were deliberately left unchanged in this visual pass. The salary-statement API returns an empty, explicit unlinked-profile state for accounts without an employee profile; the leave API similarly scopes personal requests and restricts review queues server-side.
 
 **Verification status:** source update committed to `main`; Flutter CI and device retest are pending. Do not call this redesign runtime-verified until the new APK build succeeds and the user checks the home screen with multiple role accounts. User's current feedback is quick-test evidence, not a full acceptance run.
+
+
+## 2026-10-25 — Mobile visual redesign follow-up: compact app-bar actions
+
+User feedback after the first design pass: only the login page/header felt on-brand, the rest of the screen remained too generic, notifications should be a bell icon at the top without explanatory copy, and personal links should be represented by an account icon at the top. The user prefers a broader redesign now that core app navigation is in place.
+
+Source change: `f627d130fe36b4bfe4232891aff521f63af1b518` updates `mobile/ahl_el_kheir_app/lib/main.dart`:
+- The signed-in app bar now shows the organization logo/name and icon-only notification bell, account, and language controls; the icons have accessibility tooltips, but no explanatory text beside them.
+- Notification history is opened from the bell. Salary statements and leave requests were removed from the main work-area list and are now in the account bottom sheet alongside the signed-in user's name/role and sign-out action.
+- Shared Flutter theme styling was strengthened for the brand color scheme, dividers, list tile typography/spacing, and icon-button surfaces, in addition to the existing branded scaffold, app-bar, card, and form themes. This theme is shared by the app's routed pages; individual screens may still need focused visual refinement after a device review.
+- Existing routes, API payloads, role visibility conditions, and server-side authorization are unchanged.
+
+**Verification status:** source committed to `main`; Flutter CI and device verification pending. The user has not yet accepted the new design and has not completed detailed feature testing. Do not describe the broader redesign as complete or runtime-verified until the new APK passes CI and the user reviews it on device.
