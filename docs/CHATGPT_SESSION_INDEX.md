@@ -2322,3 +2322,7 @@ A follow-up source audit found `api/v1/projects/index.php` still defaulted a mis
 - The harness removes its temporary project, progress update, supervisor assignment, lifecycle row and approval row in cleanup. No schema or migration changes were made, and no local/production data was touched.
 - Source audit inspected transaction-time assignment revalidation and web assignment locking; no additional confirmed concurrency defect was found, so no speculative production change was made.
 - Do not run this harness against `ahl_el_kheir` or any production/development database; it explicitly requires `MOBILE_API_AUTH_TEST=1` and database `mobile_api_auth_test`.
+
+
+### 2026-10-25 — Mobile project milestone ID defect
+Source audit found the project detail API selected milestone IDs but omitted them from its JSON response, preventing the Flutter milestone maintenance actions from using the required identifier. Added the ID to the response in `20631106ae8fe9f8267779faf4c6e9a1d7608057`. Verification is pending; continue from CI/endpoint verification, then resume the mobile API role/record-scope audit. Live local Apache/MariaDB acceptance remains outstanding.
