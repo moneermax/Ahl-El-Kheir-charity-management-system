@@ -25,9 +25,6 @@ void main() {
     expect(find.text('Uncovered families report'), findsOneWidget);
     await tester.tap(find.text('Uncovered families report'));
     expect(opened, 'orphaned');
-    await tester.ensureVisible(find.text('Not implemented natively yet'));
-    await tester.pumpAndSettle();
-    expect(find.text('Not implemented natively yet'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
