@@ -2318,3 +2318,14 @@ The latest integration test commit `428decce211ab7a9cff743375679ba16f3e1fae4` pa
 ### Active task — verify Flutter menu navigation fix on device (2026-10-25)
 
 Commit 49ef28ad185f72c4d484909d29a200797d66e718 on main fixes the root cause found in mobile/ahl_el_kheir_app/lib/main.dart: app-level menu callbacks were using a build context above MaterialApp in Navigator.of(context). Added a state-owned GlobalKey<NavigatorState>, attached it to MaterialApp, and changed app-menu route pushes to use the key. User observed menu ripple/highlight but no navigation/API request; language toggle worked. Re-fetched source confirms 16 menu pushes now use the key and no context-based push remains in the home/menu section. Next: wait for the Flutter workflow to finish, obtain its APK artifact, have the user install it, then test Projects while watching Apache access.log. Close only after the page opens and a corresponding API request is observed. No PHP/schema changes; never run tools/test_mobile_api_auth_integration.php against the real ahl_el_kheir database.
+
+
+## 2026-10-25 — Mobile home-screen design and personal-link grouping
+
+The user performed a quick device test and confirmed login works with multiple user accounts and the menu links now open. This is preliminary acceptance only; the user has not completed detailed testing.
+
+Source change: `296b318ae173e2be9383e2308266ec7235cc7cbc` updates `mobile/ahl_el_kheir_app/lib/main.dart` to bring the home screen closer to the existing web system's established navy/blue, Cairo, and light-neutral design tokens. The welcome panel now uses the existing navy gradient, menu cards share rounded bordered surfaces with reduced elevation, and the flat menu is divided into **Work areas** and **My account** sections. Salary statements, leave requests, and notifications are grouped under the personal/account section instead of being mixed into the operational modules.
+
+The web stylesheet's root palette already matches the app's existing color values; the main mismatch identified was the mobile screen's generic flat composition and missing hierarchy, not evidence for inventing a new brand palette. Existing role visibility conditions, routes, API calls, and server authorization were deliberately left unchanged in this visual pass. The salary-statement API returns an empty, explicit unlinked-profile state for accounts without an employee profile; the leave API similarly scopes personal requests and restricts review queues server-side.
+
+**Verification status:** source update committed to `main`; Flutter CI and device retest are pending. Do not call this redesign runtime-verified until the new APK build succeeds and the user checks the home screen with multiple role accounts. User's current feedback is quick-test evidence, not a full acceptance run.
