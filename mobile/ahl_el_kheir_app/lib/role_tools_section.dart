@@ -49,12 +49,22 @@ class RoleToolsSection extends StatelessWidget {
                   ),
                   title: Text(tool.title),
                   subtitle: Text(tool.subtitle),
-                  trailing: const Column(
+                  trailing: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Icon(Icons.open_in_new_rounded, size: 18),
-                      SizedBox(height: 2),
-                      Text('WEB', style: TextStyle(fontSize: 9, fontWeight: FontWeight.w800)),
+                      Icon(
+                        tool.path == 'modules/families/suspensions.php'
+                            ? Icons.phone_android_rounded
+                            : Icons.open_in_new_rounded,
+                        size: 18,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tool.path == 'modules/families/suspensions.php'
+                            ? (english ? 'APP' : 'تطبيق')
+                            : 'WEB',
+                        style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
+                      ),
                     ],
                   ),
                   onTap: () => onOpen(tool.path),
