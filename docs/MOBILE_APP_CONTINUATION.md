@@ -589,3 +589,7 @@ A targeted source audit found `api/v1/projects/detail.php` selected `project_mil
 - Assertions pass: sponsor detail returns HTTP 403 and the sponsor is excluded from the supervisor's sponsor list. This verifies that direct `sponsor.supervisor_id` alone does not bypass the authoritative first-letter + gender responsibility rule.
 - Test commit: `de9af9c85a56f5f5f593ec404dda7b26753bfdb8`; [Mobile API auth integration run 40162198710](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40162198710) passed.
 - Cleanup deletes the exact temporary sponsor fixture. No production code/schema change. Local XAMPP migration-state confirmation and broader API acceptance remain open.
+
+
+## 2026-10-25 — Project milestone lifecycle authorization correction
+`api/v1/projects/milestone_action.php` now applies the same approved-project/operational-lifecycle guard as milestone creation for non-admin milestone edit/delete. This closes a source-level inconsistency where an assigned Project Supervisor could mutate a milestone on a draft or non-operational project. Production fix: `bc6f6ee0104326ee536fdaa732f1e693de739eb8`. Disposable integration regression: `c6cc08b3b646c1906392019e116a646ab038a5df`, run 40162518220 was still in progress when this note was written. Verify the workflow conclusion before marking it passed. The local XAMPP/MariaDB migration and runtime acceptance gates remain open. Never run `tools/test_mobile_api_auth_integration.php` outside the exact disposable CI database `mobile_api_auth_test` with `MOBILE_API_AUTH_TEST=1`.
