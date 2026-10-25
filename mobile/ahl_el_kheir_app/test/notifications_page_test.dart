@@ -27,6 +27,7 @@ void main() {
               'pages': 1,
             },
             markRead: (_) async {},
+            openRelatedLink: (_) async {},
           ),
         ),
       ),
@@ -65,6 +66,7 @@ void main() {
               'pages': 1,
             };
           },
+          openRelatedLink: (_) async {},
           markRead: (id) async {
             expect(id, 42);
             markReadCalls++;
@@ -105,6 +107,7 @@ void main() {
               'pages': 1,
             };
           },
+          openRelatedLink: (_) async {},
           markRead: (_) async => throw Exception('network failure'),
         ),
       ),
@@ -140,6 +143,7 @@ void main() {
             'page': 1,
             'pages': 1,
           },
+          openRelatedLink: (_) async {},
           markRead: (_) async => markReadCalls++,
         ),
       ),
