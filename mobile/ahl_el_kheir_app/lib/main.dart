@@ -228,6 +228,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       return;
     }
     if (relativePath == 'modules/reports/index.php') {
+      const reportOverviewRoles = [
+        'admin', 'general_manager', 'vice_general_manager', 'supervisor',
+        'accountant', 'accountant_staff', 'financial_manager', 'nanny',
+        'hr_manager', 'hr_staff',
+      ];
+      if (!reportOverviewRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english
+              ? 'General reports are not available for this role.'
+              : 'التقارير العامة غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
       openReportsPage();
       return;
     }
