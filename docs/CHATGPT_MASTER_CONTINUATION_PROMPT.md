@@ -2346,4 +2346,9 @@ Source change: `f627d130fe36b4bfe4232891aff521f63af1b518` updates `mobile/ahl_el
 ## Latest mobile app continuation — 2026-10-25
 
 The active user-selected direction for the Flutter app is a modern professional dashboard in the existing navy/blue palette. They explicitly require a password visibility eye and a forgot-password link on login. Source work at `ca16265515612bfa18442dcd59a987baaa303e0e` includes the responsive module dashboard, compact header without the visible role pill, password visibility, launch to the existing website recovery workflow, account-sheet navigation-context fix, notification details with related-link handling, and opening the canonical orphan form in the external browser from child records. Read `docs/MOBILE_APP_CONTINUATION.md` for the exact commit sequence. Latest Flutter CI and physical-phone verification are still pending; do not claim success until verified.
+### CI correction follow-up — 2026-10-25
+
+The first Flutter analyzer run for this work exposed concrete integration errors: a duplicate notification-tile `onTap` and required callbacks missing from the existing widget tests after constructor changes. The notification tap now uses one handler, mark-read failure stops navigation (preserving the prior error behavior), and tests provide explicit no-op callbacks where external navigation is not under test.
+
+Correction commits: `e622c2c98aa4dea9462da5d0a632fe795cca5b56` (notification handler) and test callback updates through `c30c10b8e1a6df3f9ac2e197dc4363748419df22`. The new Flutter workflow runs for these commits are still pending/in progress at documentation time. Do not claim analysis, tests, or APK build passed until the latest run confirms it.
 
