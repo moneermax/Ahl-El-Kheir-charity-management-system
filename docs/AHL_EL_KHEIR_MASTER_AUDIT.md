@@ -5125,3 +5125,18 @@ Correction to the earlier in-progress checkpoint: GitHub Actions run [4019917746
 The PHP full-schema rollback-only suspension case/suspend/lift test passed in run `40199009847`; transaction date-boundary integration passed in run `40198548850`. This is automated CI evidence, not proof of live local XAMPP/API/database behavior or physical-device acceptance.
 
 The mobile parity work is not complete: non-age suspension creation, native financial/HR/beneficiary-form/Fina workflows, and website-session continuity for remaining WEB links are still open. Do not claim full native feature parity until those gaps are implemented and verified.
+
+
+## 2026-10-25 — Mobile role-tool parity continuation
+
+Source-only continuation on `main` after the user reported that the mobile dashboards omitted many tools visible in the existing web system. The checked-in web dashboards remain the source of truth; do not replace them with a common role menu or infer permissions from role names alone.
+
+This slice restores dashboard entries already evidenced by existing web dashboard routes:
+- GM: sponsor assignment and the complete sponsor-request pipeline.
+- VGM: sponsor assignment and supervisor management.
+- Administration/Staff/Social Media: the complete sponsor-request pipeline alongside the existing new/contacted queues.
+- Existing native sponsor-assignment, supervisor-list/status, and suspension workflows are routed into the app rather than launched in an external browser.
+
+Commits: `2dc812eadedf47c600eb043e1cad84fbc37bfbad` (role tools), `651456187d01dc693dc666f2c8f1388b8f4e975c` (native routing), `35e9e3e350c996eeaf618987abc0458da33cf745` (widget tests).
+
+Verification boundary: source edits are committed; Flutter analysis/widget CI for this exact revision and real-device acceptance are not yet confirmed. This is one incremental parity slice, not completion of all dashboards. Continue role-by-role against actual web dashboard links and route guards, preserve restricted-tool regression tests, and keep external WEB links clearly labelled until their authenticated session continuity is proven. Local XAMPP/API and physical-device verification remain separate acceptance gates.
