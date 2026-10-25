@@ -55,6 +55,9 @@ jobs:
             api/v1/sponsors/assignment_options.php
             api/v1/sponsors/assignment_service.php
             api/v1/supervisors/index.php
+            tools/test_mobile_supervisor_status_service.php
+            api/v1/supervisors/action.php
+            api/v1/supervisors/action_service.php
             api/v1/sponsors/detail.php
             api/v1/sponsor_requests/index.php
             api/v1/sponsor_requests/action.php
@@ -260,6 +263,7 @@ jobs:
           php tools/test_mobile_api_suspension_service.php
           php tools/test_mobile_role_dashboard_queries.php
           php tools/test_mobile_sponsor_assignment_service.php
+          php tools/test_mobile_supervisor_status_service.php
 
   hr-job-description-migrations:
     runs-on: ubuntu-latest
