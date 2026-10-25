@@ -2696,3 +2696,10 @@ Continue native parity work inside the app only. The shared admin dashboard's ro
 ## 2026-10-25 — Native audit register follow-up
 
 The mobile audit-log route now has a read-only authenticated API at `api/v1/audit/index.php`, plus native search and pagination. It follows the existing web authorization boundary (administrator and General Manager read access); no audit deletion action is exposed in the app. Widget coverage and PHP lint inclusion are committed. The specific CI run for these latest changes still needs to be checked before claiming them verified. Android run 40215385941 is confirmed successful and published artifact `ahl-el-kheir-flutter-android-debug-apk` (77,487,052 bytes; SHA-256 `a02fbca24a2e9a14915bc895ec999ef4108f2854a3caf6e8d57ae5e3f5dc2d5b`). Continue with actual CI evidence and then next native workflow; no browser handoff and no speculative permission expansion.
+
+
+## 2026-10-25 — Audit API role-guard correction and current Android artifact
+
+- Flutter build workflow run [40217046629](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40217046629) completed successfully for app source `69c35a22978976db13b2d62942f08a87a7ee18d9`: Dart analysis, widget tests, debug APK build and artifact publication all passed. Artifact `ahl-el-kheir-flutter-android-debug-apk`, 77,483,457 bytes, SHA-256 `166dcafc2b9f3c51cc6330231b4e6b5ca3a789f03bf7dcd1e789bc8f775d813c`, expires 2026-11-24.
+- Source review found a concrete authorization mismatch in the newly added audit API: `ak_api_authenticated_user()` normalizes `sudo` and `super_admin` to `admin`, but the existing `modules/logs/audit.php` checks the persisted role exactly and permits only `admin` and `general_manager`. The API now checks `raw_role_code` so it matches the web guard; no permissions were broadened. Correction commit: `b54fc8bd6af618313f20a16adf7e5283c63eccf4`.
+- The corrected API endpoint still needs its own PHP lint and role-matrix CI confirmation. No local XAMPP/API or physical-device verification is claimed. Continue native parity from current `main`; keep existing role guards authoritative and avoid external-browser handoffs.
