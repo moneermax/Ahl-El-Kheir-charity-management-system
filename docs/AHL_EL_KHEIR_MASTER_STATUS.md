@@ -4554,3 +4554,7 @@ A concrete project-detail contract mismatch was found: `api/v1/projects/detail.p
 ## 2026-10-25 — Mobile API milestone verification checkpoint
 
 The project-detail milestone ID contract and assignment-revocation guard now have disposable-database HTTP integration coverage. Harness commit eebe53983eed73e9899ca9cf5d85754497e3e092 passed [Mobile API auth integration run 40160569643](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40160569643). CI imported the checked-in schema, applied the mobile-session migration, and exercised the PHP endpoints against disposable MariaDB. Local XAMPP migration state and live local role/record-scope/action acceptance remain unverified. Do not run the harness against ahl_el_kheir.
+
+
+## 2026-10-25 — Mobile notification isolation CI checkpoint
+The disposable MariaDB HTTP integration harness now verifies that another user's notification is not returned to the authenticated account and cannot be marked read by that account. Test commit `ab2a6173e596f88ed4e7c2fb6e962e40e5429192`; [workflow run 40161671591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40161671591) completed successfully. No production endpoint/schema change. Local XAMPP migration state and full local role/record-scope/action acceptance remain open. Do not run the harness against `ahl_el_kheir`.
