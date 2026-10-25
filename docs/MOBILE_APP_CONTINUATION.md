@@ -625,3 +625,13 @@ Added seven test assertions to `tools/test_mobile_api_auth_integration.php` usin
 - `api/v1/accounting/fm_review_queue.php`
 
 The existing HR employee-directory denial assertion is retained, making eight read-endpoint role-denial checks across this set. No production source changed. Commit: `d62656a87dd77f187254b7f342c425e6dac0dcbf`. At checkpoint time, the GitHub combined commit status returned no status entries and the workflow-run lookup returned none; therefore this test change is **not yet runtime/CI verified**. Do not describe the added assertions as passing until a completed run is observed. The harness guard still restricts execution to disposable `mobile_api_auth_test` with `MOBILE_API_AUTH_TEST=1`.
+
+
+## 2026-10-25 — Mobile API authorization audit continuation
+
+- The user synchronized local `main` through `2c70cdee`; the reported working tree is clean.
+- Added four more role-boundary assertions in `tools/test_mobile_api_auth_integration.php` at commit `fbf83136ace25fb80c3f51f82b529552aa311d85`: HR staff must receive HTTP 403 for nanny group verification GET, preliminary verification GET, group verification action POST, and preliminary verification action POST.
+- Together with the previously added seven nanny-denial checks and existing HR employee-directory denial, the harness now covers these additional cross-role read/action boundaries. The harness still refuses to run unless `MOBILE_API_AUTH_TEST=1` and the selected DB is exactly `mobile_api_auth_test`; do not run it against `ahl_el_kheir`.
+- Source inspection of the nanny endpoints confirms both action routes check the live authenticated role before reading request input or performing writes. The four assertions are regression coverage, not evidence of a newly discovered production defect.
+- **Verification remains pending.** The repository workflow currently visible for mobile is the Flutter Android build workflow, scoped to Flutter paths; the GitHub status endpoint returned no commit checks for the recent PHP integration-test commits. No passing result is claimed for these assertions. Local runtime acceptance against the disposable CI database and the user's local app remains outstanding.
+- Continue auditing remaining endpoint scopes and record only source-confirmed findings. Keep local runtime acceptance open; do not run the integration harness against the real `ahl_el_kheir` database.
