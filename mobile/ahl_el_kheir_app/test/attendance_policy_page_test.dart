@@ -21,6 +21,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('OK'));
     await tester.pumpAndSettle();
+    await tester.dragUntilVisible(find.text('Save version'), find.byType(ListView).first, const Offset(0, -400));
+    await tester.pumpAndSettle();
+    expect(tester.getCenter(find.text('Save version')).dy, lessThan(600));
     await tester.tap(find.text('Save version'));
     await tester.pumpAndSettle();
     expect(find.textContaining('V1 · Mobile test policy'),findsOneWidget);
