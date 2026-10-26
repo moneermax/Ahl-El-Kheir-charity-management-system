@@ -48,10 +48,15 @@ if ($action === 'create_batch') {
         $pdo = db();
         try {
             $pdo->beginTransaction();
-            $lockedGroup = dbFetchOne('SELECT id FROM orphan_groups WHERE id=? FOR UPDATE', [$groupId]);
+            $lockedGroup = dbFetchOne('SELECT id, verification_status FROM orphan_groups WHERE id=? FOR UPDATE', [$groupId]);
             if (!$lockedGroup) {
                 $pdo->rollBack();
                 $skipped[] = ['group_id'=>$groupId,'reason'=>'group_not_found'];
+                continue;
+            }
+            if (!in_array((string)$lockedGroup['verification_status'], ['submitted','approved','pending'], true)) {
+                $pdo->rollBack();
+                $skipped[] = ['group_id'=>$groupId,'reason'=>'group_not_eligible'];
                 continue;
             }
             $exists = dbFetchOne(
