@@ -10,12 +10,20 @@ class AdminDisbursementsPage extends StatefulWidget {
     this.roleCode = 'admin',
     this.pickReceipt,
     this.submitItemConfirmation,
+    this.loadEligibleGroups,
+    this.createBatches,
+    this.pickTransferReceipt,
+    this.submitTransfer,
   });
 
   final bool english;
   final String roleCode;
   final Future<PlatformFile?> Function()? pickReceipt;
   final Future<Map<String, dynamic>> Function(int itemId, PlatformFile receipt)? submitItemConfirmation;
+  final Future<Map<String, dynamic>> Function(String month)? loadEligibleGroups;
+  final Future<Map<String, dynamic>> Function(String month, List<int> groupIds)? createBatches;
+  final Future<PlatformFile?> Function()? pickTransferReceipt;
+  final Future<Map<String, dynamic>> Function(int batchId, PlatformFile receipt)? submitTransfer;
   final Future<Map<String, dynamic>> Function({
     required String month,
     required String status,
@@ -127,11 +135,30 @@ class _AdminDisbursementsPageState extends State<AdminDisbursementsPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Text(t('سجل للقراءة فقط', 'Read-only register'),
+                    Text(t('سجل التحويلات الشهرية', 'Monthly disbursement register'),
                         style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
                     const SizedBox(height: 6),
-                    Text(t('متابعة الدفعات وحالاتها دون تنفيذ أي إجراء مالي من التطبيق.',
-                        'Review batches and statuses without performing financial actions.')),
+                    Text(t('متابعة الدفعات وتنفيذ الإجراءات المتاحة حسب صلاحية الدور.',
+                        'Review batches and use the actions available to your role.')),
+                    if (['admin', 'financial_manager', 'general_manager', 'accountant_staff'].contains(widget.roleCode)
+                        && widget.loadEligibleGroups != null && widget.createBatches != null) ...[
+                      const SizedBox(height: 10),
+                      OutlinedButton.icon(
+                        key: const Key('disbursements-create-batches'),
+                        onPressed: loading ? null : () async {
+                          final created = await Navigator.of(context).push<bool>(MaterialPageRoute<bool>(
+                            builder: (_) => DisbursementBatchCreatePage(
+                              english: widget.english,
+                              loadEligibleGroups: widget.loadEligibleGroups!,
+                              createBatches: widget.createBatches!,
+                            ),
+                          ));
+                          if (created == true && mounted) await refresh();
+                        },
+                        icon: const Icon(Icons.playlist_add_rounded),
+                        label: Text(t('إنشاء دفعات الشهر', 'Create monthly batches')),
+                      ),
+                    ],
                     const SizedBox(height: 12),
                     TextField(
                       key: const Key('disbursements-month-filter'),
@@ -217,6 +244,8 @@ class _AdminDisbursementsPageState extends State<AdminDisbursementsPage> {
                         loadDetail: widget.loadDetail,
                         pickReceipt: widget.pickReceipt,
                         submitItemConfirmation: widget.submitItemConfirmation,
+                        pickTransferReceipt: widget.pickTransferReceipt,
+                        submitTransfer: widget.submitTransfer,
                       ),
                     ));
                   },
@@ -287,6 +316,8 @@ class AdminDisbursementDetailPage extends StatefulWidget {
     this.roleCode = 'admin',
     this.pickReceipt,
     this.submitItemConfirmation,
+    this.pickTransferReceipt,
+    this.submitTransfer,
   });
 
   final bool english;
@@ -294,6 +325,8 @@ class AdminDisbursementDetailPage extends StatefulWidget {
   final String roleCode;
   final Future<PlatformFile?> Function()? pickReceipt;
   final Future<Map<String, dynamic>> Function(int itemId, PlatformFile receipt)? submitItemConfirmation;
+  final Future<PlatformFile?> Function()? pickTransferReceipt;
+  final Future<Map<String, dynamic>> Function(int batchId, PlatformFile receipt)? submitTransfer;
   final Future<Map<String, dynamic>> Function(int id, int page) loadDetail;
 
   @override
@@ -309,6 +342,8 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
   int pages = 1;
   final Map<int, PlatformFile> selectedReceipts = {};
   final Set<int> busyItems = {};
+  PlatformFile? selectedTransferReceipt;
+  bool transferBusy = false;
 
   String t(String ar, String en) => widget.english ? en : ar;
   String money(dynamic value) {
@@ -376,6 +411,36 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
     }
   }
 
+  Future<void> pickTransferReceiptFile() async {
+    final picker = widget.pickTransferReceipt;
+    if (picker == null) return;
+    try {
+      final file = await picker();
+      if (!mounted || file == null) return;
+      setState(() => selectedTransferReceipt = file);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> transferBatch() async {
+    final receipt = selectedTransferReceipt;
+    final submit = widget.submitTransfer;
+    if (receipt == null || submit == null || transferBusy) return;
+    setState(() => transferBusy = true);
+    try {
+      await submit(widget.batchId, receipt);
+      if (!mounted) return;
+      setState(() => selectedTransferReceipt = null);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('تم التحويل وترحيل القيد المحاسبي.', 'Transfer completed and accounting journal posted.'))));
+      await refresh(requestedPage: page);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => transferBusy = false);
+    }
+  }
+
   String itemStatus(String value) => switch (value) {
     'paid' => t('تم الصرف', 'Paid'),
     'pending' => t('معلق', 'Pending'),
@@ -411,6 +476,26 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
                   Text('${t('تم الصرف', 'Paid')}: ${batch['items_paid'] ?? 0} · ${money(batch['paid_amount'])}'),
                   Text('${t('معلق', 'Pending')}: ${batch['items_pending'] ?? 0} · ${money(batch['pending_amount'])}'),
                   Text('${t('مرتجع', 'Returned')}: ${batch['items_returned'] ?? 0} · ${money(batch['returned_amount'])}'),
+                  if (['admin', 'financial_manager', 'general_manager'].contains(widget.roleCode)
+                      && batch['status']?.toString() == 'pending_approval'
+                      && widget.pickTransferReceipt != null && widget.submitTransfer != null) ...[
+                    const Divider(height: 24),
+                    OutlinedButton.icon(
+                      key: const Key('disbursement-pick-transfer-receipt'),
+                      onPressed: transferBusy ? null : pickTransferReceiptFile,
+                      icon: const Icon(Icons.attach_file_rounded),
+                      label: Text(selectedTransferReceipt?.name ?? t('اختيار إيصال التحويل (إجباري)', 'Choose transfer receipt (required)')),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      key: const Key('disbursement-submit-transfer'),
+                      onPressed: selectedTransferReceipt != null && !transferBusy ? transferBatch : null,
+                      icon: transferBusy
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.account_balance_wallet_rounded),
+                      label: Text(t('تأكيد التحويل وترحيل القيد', 'Transfer and post accounting')),
+                    ),
+                  ],
                 ]),
               ),
             ),
@@ -468,10 +553,151 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
                 OutlinedButton(onPressed: loading || page >= pages ? null : () => refresh(requestedPage: page + 1), child: Text(t('التالي', 'Next'))),
               ]),
             const SizedBox(height: 12),
-            if (widget.roleCode != 'nanny') Text(t('عرض فقط — إجراءات الدفعات غير متاحة لهذا الدور بعد.', 'Read-only — batch actions are not yet available for this role.'), style: Theme.of(context).textTheme.bodySmall),
+            if (widget.roleCode != 'nanny') Text(t('لا تتوفر إجراءات أخرى للدفعة في هذه الشاشة حالياً.', 'Other batch actions are not available on this screen yet.'), style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
       ),
     );
   }
+}
+
+class DisbursementBatchCreatePage extends StatefulWidget {
+  const DisbursementBatchCreatePage({super.key, required this.english, required this.loadEligibleGroups, required this.createBatches});
+  final bool english;
+  final Future<Map<String, dynamic>> Function(String month) loadEligibleGroups;
+  final Future<Map<String, dynamic>> Function(String month, List<int> groupIds) createBatches;
+  @override
+  State<DisbursementBatchCreatePage> createState() => _DisbursementBatchCreatePageState();
+}
+
+class _DisbursementBatchCreatePageState extends State<DisbursementBatchCreatePage> {
+  late final TextEditingController monthController;
+  List<Map<String, dynamic>> groups = [];
+  final Set<int> selectedGroupIds = {};
+  bool loading = true;
+  bool submitting = false;
+  String? error;
+  String? loadedMonth;
+  String t(String ar, String en) => widget.english ? en : ar;
+  String money(dynamic value) {
+    final amount = num.tryParse(value?.toString() ?? '') ?? 0;
+    return amount.toStringAsFixed(2).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
+  }
+  @override
+  void initState() {
+    super.initState();
+    final now = DateTime.now();
+    monthController = TextEditingController(text: '${now.year}-${now.month.toString().padLeft(2, '0')}');
+    loadGroups();
+  }
+  @override
+  void dispose() { monthController.dispose(); super.dispose(); }
+  Future<void> loadGroups() async {
+    final month = monthController.text.trim();
+    if (!RegExp(r'^\d{4}-(0[1-9]|1[0-2])$').hasMatch(month)) {
+      setState(() => error = t('أدخل الشهر بصيغة YYYY-MM.', 'Enter the month as YYYY-MM.'));
+      return;
+    }
+    setState(() { loading = true; error = null; });
+    try {
+      final response = await widget.loadEligibleGroups(month);
+      final raw = response['eligible_groups'];
+      if (!mounted) return;
+      setState(() {
+        groups = raw is List ? raw.whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() : [];
+        loadedMonth = response['eligible_month']?.toString() ?? month;
+        selectedGroupIds.clear();
+      });
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => loading = false);
+    }
+  }
+  Future<void> createSelected() async {
+    final month = monthController.text.trim();
+    if (!RegExp(r'^\d{4}-(0[1-9]|1[0-2])$').hasMatch(month)) {
+      setState(() => error = t('أدخل الشهر بصيغة YYYY-MM.', 'Enter the month as YYYY-MM.'));
+      return;
+    }
+    if (loadedMonth != month) {
+      await loadGroups();
+      if (!mounted || loadedMonth != month) return;
+    }
+    if (selectedGroupIds.isEmpty) {
+      setState(() => error = t('اختر مجموعة واحدة على الأقل.', 'Select at least one group.'));
+      return;
+    }
+    setState(() { submitting = true; error = null; });
+    try {
+      final response = await widget.createBatches(month, selectedGroupIds.toList()..sort());
+      if (!mounted) return;
+      final created = int.tryParse(response['created_count']?.toString() ?? '') ?? 0;
+      final skipped = int.tryParse(response['skipped_count']?.toString() ?? '') ?? 0;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(t('نتيجة إنشاء الدفعات', 'Batch creation result')),
+          content: Text(t('تم إنشاء $created دفعة وتخطي $skipped مجموعة.', 'Created $created batch(es) and skipped $skipped group(s).')),
+          actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(t('متابعة', 'Continue')))],
+        ),
+      );
+      if (!mounted) return;
+      Navigator.pop(context, created > 0);
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => submitting = false);
+    }
+  }
+  @override
+  Widget build(BuildContext context) => Scaffold(
+    appBar: AppBar(title: Text(t('إنشاء دفعات الشهر', 'Create monthly batches'))),
+    body: RefreshIndicator(
+      onRefresh: loadGroups,
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Card(child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+              Text(t('المجموعات المؤهلة', 'Eligible groups'), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800)),
+              const SizedBox(height: 6),
+              Text(t('تظهر المجموعات التي لديها تحقق مكتمل للأسرة لهذا الشهر. تُنشأ الدفعة بانتظار الاعتماد فقط.', 'Only groups with fully verified families for this month are shown. Created batches remain pending approval.')),
+              const SizedBox(height: 12),
+              TextField(key: const Key('disbursement-create-month'), controller: monthController, textDirection: TextDirection.ltr,
+                decoration: InputDecoration(labelText: t('الشهر (YYYY-MM)', 'Month (YYYY-MM)'), border: const OutlineInputBorder())),
+              const SizedBox(height: 8),
+              OutlinedButton.icon(onPressed: loading || submitting ? null : loadGroups, icon: const Icon(Icons.refresh_rounded), label: Text(t('تحميل المجموعات', 'Load eligible groups'))),
+              if (loadedMonth != null) Text(t('شهر المجموعات: $loadedMonth', 'Groups month: $loadedMonth')),
+              if (loading) const LinearProgressIndicator(),
+              if (error != null) Padding(padding: const EdgeInsets.only(top: 8), child: Text(error!, style: const TextStyle(color: Color(0xFFB42318)))),
+            ]),
+          )),
+          if (!loading && error == null && groups.isEmpty) Card(child: Padding(padding: const EdgeInsets.all(16), child: Text(t('لا توجد مجموعات مؤهلة لهذا الشهر.', 'No eligible groups for this month.')))),
+          for (final group in groups)
+            Card(child: CheckboxListTile(
+              key: Key('disbursement-group-${group['id']}'),
+              value: selectedGroupIds.contains(int.tryParse(group['id']?.toString() ?? '') ?? 0),
+              onChanged: loading || submitting ? null : (checked) {
+                final id = int.tryParse(group['id']?.toString() ?? '') ?? 0;
+                if (id < 1) return;
+                setState(() {
+                  if (checked == true) selectedGroupIds.add(id);
+                  else selectedGroupIds.remove(id);
+                  error = null;
+                });
+              },
+              title: Text(group['group_name']?.toString() ?? t('مجموعة', 'Group'), style: const TextStyle(fontWeight: FontWeight.w800)),
+              subtitle: Text('${t('المربية', 'Nanny')}: ${group['nanny_name'] ?? '—'} · ${t('الأطفال', 'Children')}: ${group['orphan_count'] ?? 0} · ${t('المتوقع', 'Expected')}: ${money(group['expected_amount'])}'),
+              controlAffinity: ListTileControlAffinity.leading,
+            )),
+          const SizedBox(height: 12),
+          FilledButton.icon(key: const Key('disbursement-create-submit'), onPressed: loading || submitting ? null : createSelected,
+            icon: submitting ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.playlist_add_check_rounded),
+            label: Text(t('إنشاء الدفعات المحددة', 'Create selected batches'))),
+        ],
+      ),
+    ),
+  );
 }
