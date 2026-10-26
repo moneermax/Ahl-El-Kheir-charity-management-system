@@ -88,8 +88,8 @@ function mobileApiMultipartRequest(string $path, array $fields, string $fileFiel
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor','general_manager')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
-if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'], $roles['general_manager'])) {
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor','general_manager','staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'], $roles['general_manager'], $roles['staff'])) {
     throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff, project_supervisor and financial_manager roles.');
 }
 $user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
@@ -397,6 +397,13 @@ try {
     $orphanFamilySnapshotStmt = $pdo->prepare('SELECT father_death_cause,mother_marital_status,updated_by,updated_at FROM families WHERE id=(SELECT family_id FROM family_children WHERE id=?)');
     $orphanFamilySnapshotStmt->execute([$testOrphanFormChildId]);
     $testOrphanFormFamilySnapshot = $orphanFamilySnapshotStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    $orphanFormsList = mobileApiRequest('/api/v1/families/orphan_forms.php?q=' . rawurlencode((string)$pdo->query('SELECT child_name FROM family_children WHERE id=' . $testOrphanFormChildId)->fetchColumn()), 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $orphanFormsList['status'] === 200
+        && is_array($orphanFormsList['json']['data']['children'] ?? null)
+        && in_array($testOrphanFormChildId, array_map(static fn(array $row): int => (int)($row['id'] ?? 0), $orphanFormsList['json']['data']['children']), true),
+        'administrator can search the native orphan forms index'
+    );
     $orphanFormRead = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'GET', null, $adminToken, 20);
     mobileApiExpect(
         $orphanFormChildId > 0 && $orphanFormRead['status'] === 200
@@ -404,6 +411,19 @@ try {
         && is_array($orphanFormRead['json']['data']['options']['health'] ?? null),
         'administrator can open native orphan form with schema-backed fields and dropdown options'
     );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['staff'], $userId]);
+    $staffLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($staffLogin['status'] === 200 && isset($staffLogin['json']['data']['access_token']), 'staff login succeeds for orphan forms read-only scope integration');
+    $staffToken = (string)$staffLogin['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $staffToken);
+    $staffOrphanList = mobileApiRequest('/api/v1/families/orphan_forms.php', 'GET', null, $staffToken);
+    mobileApiExpect($staffOrphanList['status'] === 200 && ($staffOrphanList['json']['data']['read_only'] ?? false) === true, 'staff can browse orphan forms as read-only like the existing web page');
+    $staffOrphanRead = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'GET', null, $staffToken);
+    mobileApiExpect($staffOrphanRead['status'] === 200 && ($staffOrphanRead['json']['data']['can_edit'] ?? true) === false, 'staff can view but cannot edit orphan form details');
+    $staffOrphanSave = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'POST', ['values' => ['health_status' => (string)($testOrphanFormChildSnapshot['health_status'] ?? 'سليم')]], $staffToken);
+    mobileApiExpect($staffOrphanSave['status'] === 403, 'staff cannot edit orphan form fields');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+
     $invalidOrphanForm = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'POST', ['values' => ['health_status' => 'not-a-valid-health-option']], $adminToken);
     mobileApiExpect($invalidOrphanForm['status'] === 422, 'native orphan form rejects unsupported health options');
     $orphanSnapshot = $testOrphanFormChildSnapshot ?? [];

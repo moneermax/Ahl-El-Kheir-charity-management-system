@@ -173,7 +173,7 @@ class RoleToolsSection extends StatelessWidget {
             t('الطلبات التي تمت متابعتها', 'Contacted sponsor requests', 'متابعة الطلبات التي تم التواصل بشأنها', 'Review sponsor requests already contacted', 'modules/sponsors/contacted_requests.php', Icons.mark_email_read_outlined),
             if (role == 'administration') t('الأسر المتاحة للكفالة', 'Families available for sponsorship', 'متابعة الأسر غير المغطاة', 'Review families without active sponsorship', 'modules/administration/available_families.php', Icons.home_work_outlined),
             if (role == 'administration') t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة حملات استرجاع الكفلاء', 'Review sponsor win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
-            t('استمارات الأيتام', 'Orphan forms', 'عرض وإدارة الاستمارات', 'Browse and manage forms', 'modules/families/orphan_forms_index.php', Icons.assignment_outlined),
+            t('استمارات الأيتام', 'Orphan forms', 'بحث وفتح الاستمارات ضمن نطاق الصلاحيات', 'Search and open forms within role and family scope', 'modules/families/orphan_forms_index.php', Icons.assignment_outlined),
             t('ملفي الشخصي', 'My profile', 'عرض وتحديث بيانات الحساب', 'View and update your account profile', 'modules/users/profile.php', Icons.account_circle_outlined),
           ]),
         ];

@@ -9,7 +9,7 @@ if (!in_array($method, ['GET','POST'], true)) {
 }
 $user = ak_api_authenticated_user();
 $role = (string)($user['raw_role_code'] ?? '');
-$allowedRoles = ['admin','vice_general_manager','general_manager','supervisor','nanny','accountant','accountant_staff','administration','social_media'];
+$allowedRoles = ['admin','vice_general_manager','general_manager','supervisor','nanny','accountant','accountant_staff','administration','staff','social_media'];
 $editableRoles = ['admin','vice_general_manager','supervisor','nanny'];
 if (!in_array($role, $allowedRoles, true)) {
     ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Orphan form access is not permitted for this role.']]);

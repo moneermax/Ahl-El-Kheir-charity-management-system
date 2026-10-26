@@ -44,6 +44,7 @@ import 'payroll_integrity_page.dart';
 import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
 import 'employment_states_page.dart';
+import 'orphan_forms_index_page.dart';
 import 'package:file_picker/file_picker.dart';
 
 void main() => runApp(const AhlElKheirApp());
@@ -253,6 +254,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     if (relativePath == 'modules/logs/audit.php') {
       openAuditLogPage();
+      return;
+    }
+    if (relativePath == 'modules/families/orphan_forms_index.php') {
+      const viewRoles = ['admin','vice_general_manager','general_manager','supervisor','nanny','accountant','accountant_staff','administration','staff','social_media'];
+      if (!viewRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Orphan forms are not available for this role.' : 'استمارات الأيتام غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => OrphanFormsIndexPage(
+        english: english, loadForms: loadOrphanForms, openForm: openOrphanFormPage,
+      )));
       return;
     }
     if (relativePath == 'modules/hr/employment_states.php') {
@@ -489,6 +503,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         assignSponsor: submitSponsorAssignment,
       ),
     ));
+  }
+
+  Future<Map<String, dynamic>> loadOrphanForms(String query) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final suffix = query.trim().isEmpty ? '' : '?q=' + Uri.encodeQueryComponent(query.trim());
+    return call('GET', 'families/orphan_forms.php' + suffix, token: token);
   }
 
   Future<Map<String, dynamic>> loadEmploymentStates() async {
