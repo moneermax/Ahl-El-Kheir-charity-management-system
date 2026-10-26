@@ -2140,6 +2140,11 @@ try {
     $testManualJournalEntryId = (int)($r['json']['data']['entry']['id'] ?? 0);
     mobileApiExpect($r['status'] === 201 && $testManualJournalEntryId > 0 && ($r['json']['data']['entry']['is_balanced'] ?? false) === true, 'manual journal creates a balanced posted entry atomically');
 
+    $r = mobileApiRequest('/api/v1/accounting/journal.php', 'POST', [
+        'action' => 'void_manual_entry', 'entry_id' => $testManualJournalEntryId, 'reason' => 'Creator self-void attempt',
+    ], $token);
+    mobileApiExpect($r['status'] === 409 && ($r['json']['error']['code'] ?? '') === 'journal_void_conflict', 'journal creator cannot void their own manual entry');
+
     $actorStmt = $pdo->prepare('SELECT id, role_id, is_active, password_change_required FROM users WHERE id <> ? ORDER BY id LIMIT 1');
     $actorStmt->execute([$userId]);
     $actor = $actorStmt->fetch(PDO::FETCH_ASSOC);
