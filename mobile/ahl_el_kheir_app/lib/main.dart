@@ -49,6 +49,7 @@ import 'admin_backup_page.dart';
 import 'payroll_integrity_page.dart';
 import 'payroll_management_page.dart';
 import 'account_settings_page.dart';
+import 'password_recovery_page.dart';
 import 'payroll_policy_page.dart';
 import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
@@ -698,6 +699,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/users/password_recovery_request.php') {
+      openPasswordRecoveryPage();
+      return;
+    }
     if (relativePath == 'modules/users/settings.php') {
       openAccountSettingsPage();
       return;
@@ -842,6 +847,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('POST', 'auth/change_password.php', token: token, body: body);
+  }
+
+  Future<Map<String, dynamic>> submitPasswordRecoveryRequest(String identity) async {
+    return call('POST', 'auth/password_recovery_request.php', body: {'identity': identity});
+  }
+
+  void openPasswordRecoveryPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => PasswordRecoveryPage(
+        english: english,
+        submitRequest: submitPasswordRecoveryRequest,
+      ),
+    ));
   }
 
   void openAccountSettingsPage() {
@@ -2444,7 +2462,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               buildRevision: mobileBuildRevision,
               onConfigureApi: configureApiBaseUrl,
               onTestApi: testApiConnection,
-              onForgotPassword: () => openNativeTool('modules/users/password_recovery_request.php'),
+              onForgotPassword: openPasswordRecoveryPage,
             )
           : Scaffold(
               appBar: PreferredSize(
