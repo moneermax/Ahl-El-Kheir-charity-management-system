@@ -42,6 +42,7 @@ void main() {
       submitAction: (body) async { submitted.add(Map<String, dynamic>.from(body)); return {}; },
       pickProof: () async => null,
       uploadProof: (id, month, year, proof, legacy) async => {},
+      loadProof: (id) async => {'bytes': Uint8List.fromList([37, 80, 68, 70]), 'mime': 'application/pdf', 'filename': 'proof.pdf'},
     )));
     await tester.pumpAndSettle();
     expect(find.text('Payroll management'), findsOneWidget);
@@ -72,6 +73,7 @@ void main() {
       loadPage: (month, year) async => pageData(rows),
       submitAction: (body) async => {'action': body['action']},
       pickProof: () async => PlatformFile(name: 'transfer.pdf', size: 8, bytes: Uint8List.fromList([37, 80, 68, 70, 45, 49, 46, 52])),
+      loadProof: (id) async => {'bytes': Uint8List.fromList([37, 80, 68, 70]), 'mime': 'application/pdf', 'filename': 'proof.pdf'},
       uploadProof: (id, month, year, proof, legacy) async {
         uploadedId = id;
         uploadedLegacy = legacy;
