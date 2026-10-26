@@ -41,6 +41,8 @@ void main() {
       loadDocument: (_) async => <String, dynamic>{},
       onOpenResult: (_, __) {},
     )));
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
     expect(find.text('Monthly disbursements'), findsOneWidget);
   });
 
