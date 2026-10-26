@@ -20,7 +20,8 @@ Updated: 2026-10-26
 - `api/v1/fina/review.php` provides the existing role-scoped pending queue/history and POST approve/return actions. Approval calls `fina_post_collection_journal()` and updates status inside one database transaction; creator self-approval/self-return remains blocked (`362c0ad`, `bafbb14`).
 - `mobile/ahl_el_kheir_app/lib/fina_review_page.dart` provides native pending review and recent history. Existing role-tools paths for `fina_payment_review.php` and `fina_payment_history.php` now route to this page instead of a web page (`a55b16f`, `c8f48d5`, `b6b58e6`).
 - `mobile/ahl_el_kheir_app/test/fina_review_page_test.dart` covers pending/history rendering and verifies the UI does not offer self-review (`e9ede18`, `6fb6f9f`).
-- The native form includes the external-source contact/detail fields, sponsor selection/autofill, and optional receipt attachment.
+- The native form includes the external-source contact/detail fields, sponsor selection/autofill, and optional receipt attachment. Stale sponsor-search responses are invalidated when the selection or source type changes (`92da8b6`).
+- The multipart Flutter request was repaired to build its URI without nested string interpolation (`d126ad6`).
 - `mobile/ahl_el_kheir_app/test/fina_collection_page_test.dart` adds a widget test for external-source submission (`b5be391`, `da7fdc4`). The test has been added but has not been executed in this environment.
 - The collection remains `pending`; the API does not create a journal during registration. Finance review/history is still not implemented as a native workflow.
 
