@@ -79,6 +79,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
       body: RefreshIndicator(
         onRefresh: refresh,
         child: ListView(
+          key: const Key('admin-dashboard-list'),
           padding: const EdgeInsets.fromLTRB(18, 18, 18, 30),
           children: [
             Container(
