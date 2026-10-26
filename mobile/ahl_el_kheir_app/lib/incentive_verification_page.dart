@@ -41,7 +41,7 @@ class _IncentiveVerificationPageState extends State<IncentiveVerificationPage>{
         const SizedBox(height:12),
         TextField(controller:note,maxLength:2000,maxLines:3,decoration:InputDecoration(labelText:t('ملاحظة التحقق (اختيارية)','Verification note (optional)'))),
       ]),
-      actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:Text(t('إلغاء','Cancel'))),FilledButton(onPressed:()=>Navigator.pop(context,true),child:Text(t('تأكيد التحقق','Confirm verification'))],
+      actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:Text(t('إلغاء','Cancel'))),FilledButton(onPressed:()=>Navigator.pop(context,true),child:Text(t('تأكيد التحقق','Confirm verification')))],
     ))??false;
     if(!yes){note.dispose();return;}
     setState(() { saving=true; error=null; notice=null; });
