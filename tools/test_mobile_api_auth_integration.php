@@ -101,6 +101,9 @@ $knownPassword = 'MobileApi-CI-Only-2026!';
 $testStart = date('Y-m-d H:i:s');
 $testTokenHashes = [];
 $testPasswordChangeRecoveryIds = [];
+$testRecoveryRequestId = 0;
+$testRecoveryNotificationMaxId = 0;
+$testRecoveryNotificationsTouched = false;
 try {
     $recoveryStmt = $pdo->prepare("SELECT id FROM password_recovery_requests WHERE user_id = ? AND status = 'approved'");
     $recoveryStmt->execute([$userId]);
@@ -2074,6 +2077,35 @@ try {
     $r = mobileApiRequest('/api/v1/auth/logout.php', 'POST', [], $changedPasswordToken);
     mobileApiExpect($r['status'] === 200 && ($r['json']['data']['signed_out'] ?? false) === true, 'new-password test session is revoked');
 
+    $recoveryFixture = dbFetchOne(
+        "SELECT u.id, u.username FROM users u
+         WHERE u.is_active = 1
+           AND NOT EXISTS (SELECT 1 FROM password_recovery_requests pr WHERE pr.user_id = u.id AND pr.status = 'pending')
+         ORDER BY u.id LIMIT 1"
+    );
+    if ($recoveryFixture) {
+        $testRecoveryNotificationMaxId = (int)$pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn();
+        $testRecoveryNotificationsTouched = true;
+        $recoveryIdentity = (string)$recoveryFixture['username'];
+        $r = mobileApiRequest('/api/v1/auth/password_recovery_request.php', 'POST', ['identity' => $recoveryIdentity]);
+        mobileApiExpect($r['status'] === 200 && ($r['json']['data']['request_received'] ?? false) === true, 'password recovery request accepts an active account identity');
+        $genericRecoveryMessage = (string)($r['json']['data']['message'] ?? '');
+        $testRecoveryRequestId = (int)$pdo->query('SELECT id FROM password_recovery_requests WHERE user_id=' . (int)$recoveryFixture['id'] . " AND status='pending' ORDER BY id DESC LIMIT 1")->fetchColumn();
+        mobileApiExpect($testRecoveryRequestId > 0, 'password recovery request creates a pending review record');
+        $r = mobileApiRequest('/api/v1/auth/password_recovery_request.php', 'POST', ['identity' => $recoveryIdentity]);
+        $pendingCount = (int)$pdo->query("SELECT COUNT(*) FROM password_recovery_requests WHERE user_id=" . (int)$recoveryFixture['id'] . " AND status='pending'")->fetchColumn();
+        mobileApiExpect($r['status'] === 200 && $pendingCount === 1, 'duplicate password recovery requests do not create duplicate pending rows');
+        $r = mobileApiRequest('/api/v1/auth/password_recovery_request.php', 'POST', ['identity' => 'missing-' . bin2hex(random_bytes(6)) . '@example.test']);
+        mobileApiExpect($r['status'] === 200 && ($r['json']['data']['message'] ?? '') === $genericRecoveryMessage, 'password recovery response does not reveal whether an account exists');
+    } else {
+        $pendingFixture = dbFetchOne("SELECT u.id, u.username FROM users u WHERE u.is_active=1 AND EXISTS (SELECT 1 FROM password_recovery_requests pr WHERE pr.user_id=u.id AND pr.status='pending') ORDER BY u.id LIMIT 1");
+        mobileApiExpect($pendingFixture !== null, 'password recovery test requires an active user fixture');
+        $beforePending = (int)$pdo->query("SELECT COUNT(*) FROM password_recovery_requests WHERE user_id=" . (int)$pendingFixture['id'] . " AND status='pending'")->fetchColumn();
+        $r = mobileApiRequest('/api/v1/auth/password_recovery_request.php', 'POST', ['identity' => (string)$pendingFixture['username']]);
+        $afterPending = (int)$pdo->query("SELECT COUNT(*) FROM password_recovery_requests WHERE user_id=" . (int)$pendingFixture['id'] . " AND status='pending'")->fetchColumn();
+        mobileApiExpect($r['status'] === 200 && $beforePending === $afterPending, 'existing pending recovery request is not duplicated');
+    }
+
     $pdo->prepare('UPDATE users SET password_change_required=0 WHERE id=?')->execute([$userId]);
     $r = mobileApiRequest('/api/v1/auth/logout.php', 'POST', [], $token);
     mobileApiExpect($r['status'] === 200 && ($r['json']['data']['signed_out'] ?? false) === true, 'logout revokes the bearer session');
@@ -2084,6 +2116,13 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testRecoveryRequestId > 0) {
+        $pdo->prepare('DELETE FROM password_recovery_requests WHERE id=?')->execute([$testRecoveryRequestId]);
+    }
+    if ($testRecoveryNotificationsTouched) {
+        $pdo->prepare("DELETE FROM notifications WHERE id > ? AND type='recovery'")
+            ->execute([$testRecoveryNotificationMaxId]);
+    }
     if ($testIncentiveAwardId > 0) {
         $outbox = $pdo->prepare('SELECT notification_id FROM hr_incentive_notification_outbox WHERE award_id=?');
         $outbox->execute([$testIncentiveAwardId]);
