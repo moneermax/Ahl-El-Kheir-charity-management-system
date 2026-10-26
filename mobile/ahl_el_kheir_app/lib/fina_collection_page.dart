@@ -129,7 +129,7 @@ class _FinaCollectionPageState extends State<FinaCollectionPage> {
         if (id == null || id < 1) throw Exception(t('أدخل رقم كفيل صحيحاً.','Enter a valid sponsor ID.'));
         payload['sponsor_id'] = id;
       }
-      final result = await widget.submitCollection(payload);
+      await widget.submitCollection(payload);
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(t('تم تسجيل التحصيل وإرساله للمراجعة.','Collection submitted for review.'))));
       name.clear(); sponsorId.clear(); sponsorSearch.clear();
@@ -161,7 +161,18 @@ class _FinaCollectionPageState extends State<FinaCollectionPage> {
           DropdownMenuItem(value:'organization',child:Text(t('منظمة / جهة','Organization'))),
           DropdownMenuItem(value:'other',child:Text(t('أخرى','Other'))),
           DropdownMenuItem(value:'sponsor',child:Text(t('كفيل مسجل','Registered sponsor'))),
-        ],onChanged:saving?null:(v){if(v!=null)setState(()=>sourceType=v);}),
+        ],onChanged:saving?null:(v){
+          if(v==null)return;
+          setState((){
+            sourceType=v;
+            sponsorId.clear();
+            sponsorSearch.clear();
+            sponsorOptions=[];
+            if(v!='sponsor'){
+              sourcePhone.clear(); sourceAltPhone.clear(); sourceEmail.clear(); sourceAddress.clear();
+            }
+          });
+        }),
         const SizedBox(height:10),
         if (sourceType == 'sponsor') ...[
           TextField(
