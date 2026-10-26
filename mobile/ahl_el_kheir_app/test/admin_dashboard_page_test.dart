@@ -154,4 +154,26 @@ void main() {
     expect(openedTool, 'fina_dashboard');
   });
 
+
+  testWidgets('administrator has a native payroll management entry', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    String? openedTool;
+    await tester.pumpWidget(MaterialApp(home: AdminDashboardPage(
+      english: true,
+      fullName: 'System Administrator',
+      roleCode: 'admin',
+      loadOverview: () async => {'stats': <String, dynamic>{}, 'recent_audit': <Map<String, dynamic>>[], 'server': {'database_connected': true, 'php_version': '8.2'}},
+      onOpenTool: (tool) => openedTool = tool,
+      onOpenAgeAlerts: () {},
+    )));
+    await tester.pumpAndSettle();
+    final scrollable = find.descendant(of: find.byKey(const Key('admin-dashboard-list')), matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-payroll')), 180, scrollable: scrollable);
+    expect(find.byKey(const Key('admin-tool-payroll')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('admin-tool-payroll')));
+    expect(openedTool, 'payroll');
+    expect(tester.takeException(), isNull);
+  });
+
 }
