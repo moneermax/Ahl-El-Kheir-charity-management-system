@@ -5410,3 +5410,7 @@ The native global-search screen now includes monthly disbursement search for the
 - **Verification boundary:** Flutter analysis/tests and APK build for the correction are pending; local XAMPP and physical-device connectivity remain unverified. Do not claim device success before evidence.
 - **Visual identity:** current source uses a distinct violet/amber native palette with a lavender-tinted background, not the website's navy/blue theme. Earlier teal notes were stale relative to commits `4681bab` and `8807322`.
 - **Search parity:** archived project-document search and authenticated private file delivery are implemented in the native search center; API integration passed in run `40335923994`. Broader search-role parity and other native workflows remain open. No browser handoffs.
+
+## 2026-10-26 — Vice General Manager native disbursement read access
+
+Source audit confirmed the existing web monthly-disbursement page allows `vice_general_manager` to view the register, while the native GET API omitted that role. Commit `1fb5efe34b85a6f484c50e7420e4218b74e7031c` adds VGM to the read endpoint and native global-search category only. All mutation capabilities remain false for VGM, and action endpoints were not widened. Added a widget test for VGM search visibility, disposable-MariaDB integration asserting read access and no create/transfer/void/reopen/confirm capabilities, and explicit PHP lint for the endpoint. CI is pending; no device acceptance is claimed.
