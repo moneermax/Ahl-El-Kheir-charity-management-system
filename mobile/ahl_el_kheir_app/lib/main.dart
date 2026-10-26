@@ -543,6 +543,21 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       openJournalPage();
       return;
     }
+    if (relativePath == 'modules/accounting/disbursements.php') {
+      const allowedRoles = [
+        'admin', 'financial_manager', 'general_manager', 'accountant_staff', 'nanny',
+      ];
+      if (!allowedRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english
+              ? 'Monthly disbursements are not available for this role.'
+              : 'التحويلات الشهرية غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      openAdminDisbursements();
+      return;
+    }
     if (relativePath == 'modules/accounting/fina_dashboard.php') {
       openFinaDashboard();
       return;
