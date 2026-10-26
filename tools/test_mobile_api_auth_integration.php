@@ -83,6 +83,8 @@ $testLeaveId = 0;
 $testLeaveEmployeeId = 0;
 $testLeaveAttendanceDate = '';
 $testSponsorId = 0;
+$testFinaSourceId = 0;
+$testFinaCollectionId = 0;
 $testAccountId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
@@ -145,6 +147,80 @@ try {
     $adminToken = (string)$adminLogin['json']['data']['access_token'];
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
+
+    $unauthenticatedFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
+        'source_type' => 'person', 'source_name' => 'Unauthenticated fixture',
+        'amount' => '10.00', 'method' => 'cash', 'date' => date('Y-m-d'),
+    ]);
+    mobileApiExpect($unauthenticatedFina['status'] === 401, 'Fina collection creation requires bearer authentication');
+
+    $invalidFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
+        'source_type' => 'person', 'source_name' => 'Invalid amount fixture',
+        'amount' => '0', 'method' => 'cash', 'date' => date('Y-m-d'),
+    ], $adminToken);
+    mobileApiExpect(
+        $invalidFina['status'] === 422 && ($invalidFina['json']['error']['code'] ?? '') === 'invalid_amount',
+        'Fina collection creation rejects zero amounts before writing data'
+    );
+
+    $finaName = 'Mobile Fina API fixture ' . bin2hex(random_bytes(5));
+    $createdFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
+        'source_type' => 'person',
+        'source_name' => $finaName,
+        'amount' => '125.50',
+        'method' => 'cash',
+        'date' => date('Y-m-d'),
+        'purpose_note' => 'Disposable integration fixture',
+        'description' => 'Must remain pending until reviewed',
+    ], $adminToken, 20);
+    $testFinaCollectionId = (int)($createdFina['json']['data']['id'] ?? 0);
+    $finaRow = null;
+    if ($testFinaCollectionId > 0) {
+        $stmt = $pdo->prepare('SELECT fina_source_id,status,amount,accounting_journal_id,created_by FROM fina_collections WHERE id=?');
+        $stmt->execute([$testFinaCollectionId]);
+        $finaRow = $stmt->fetch();
+        $testFinaSourceId = (int)($finaRow['fina_source_id'] ?? 0);
+    }
+    mobileApiExpect(
+        $createdFina['status'] === 201
+        && $testFinaCollectionId > 0
+        && $finaRow
+        && $finaRow['status'] === 'pending'
+        && (float)$finaRow['amount'] === 125.50
+        && $finaRow['accounting_journal_id'] === null
+        && (int)$finaRow['created_by'] === $userId,
+        'administrator can register a Fina collection as pending without posting a journal'
+    );
+    $finaJournalCount = $pdo->prepare("SELECT COUNT(*) FROM journal_entries WHERE reference_type='fina_collection' AND reference_id=?");
+    $finaJournalCount->execute([$testFinaCollectionId]);
+    mobileApiExpect((int)$finaJournalCount->fetchColumn() === 0, 'Fina registration creates no accounting journal entry');
+
+    $finaQueue = mobileApiRequest('/api/v1/fina/review.php', 'GET', null, $adminToken, 20);
+    $foundFinaPending = false;
+    foreach (($finaQueue['json']['data']['pending'] ?? []) as $item) {
+        if ((int)($item['id'] ?? 0) === $testFinaCollectionId) $foundFinaPending = true;
+    }
+    mobileApiExpect(
+        $finaQueue['status'] === 200
+        && ($finaQueue['json']['data']['can_review'] ?? false) === true
+        && $foundFinaPending,
+        'Fina pending review queue exposes the newly registered collection'
+    );
+
+    $selfApprove = mobileApiRequest('/api/v1/fina/review.php', 'POST', [
+        'id' => $testFinaCollectionId, 'action' => 'approve',
+    ], $adminToken);
+    $pendingAfterSelfApprove = $pdo->prepare('SELECT status,accounting_journal_id FROM fina_collections WHERE id=?');
+    $pendingAfterSelfApprove->execute([$testFinaCollectionId]);
+    $afterSelfApprove = $pendingAfterSelfApprove->fetch();
+    mobileApiExpect(
+        $selfApprove['status'] === 422
+        && $afterSelfApprove
+        && $afterSelfApprove['status'] === 'pending'
+        && $afterSelfApprove['accounting_journal_id'] === null,
+        'Fina creator cannot approve their own collection and no journal is posted'
+    );
+
     $finance = mobileApiRequest('/api/v1/admin/finance_overview.php', 'GET', null, $adminToken, 20);
     $financeData = $finance['json']['data'] ?? [];
     mobileApiExpect(
@@ -209,6 +285,14 @@ try {
         mobileApiExpect($sudoLogin['status'] === 200 && isset($sudoLogin['json']['data']['access_token']), 'sudo login succeeds for exact-role denial test');
         $sudoToken = (string)$sudoLogin['json']['data']['access_token'];
         $testTokenHashes[] = hash('sha256', $sudoToken);
+        $deniedFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
+            'source_type' => 'person', 'source_name' => 'Sudo denied fixture',
+            'amount' => '10.00', 'method' => 'cash', 'date' => date('Y-m-d'),
+        ], $sudoToken);
+        mobileApiExpect(
+            $deniedFina['status'] === 403 && ($deniedFina['json']['error']['code'] ?? '') === 'forbidden',
+            'Sudo cannot create Fina collections when the existing API policy permits only admin and financial_manager'
+        );
         $deniedFinance = mobileApiRequest('/api/v1/admin/finance_overview.php', 'GET', null, $sudoToken, 20);
         mobileApiExpect(
             $deniedFinance['status'] === 403 && ($deniedFinance['json']['error']['code'] ?? '') === 'forbidden',
@@ -717,6 +801,14 @@ try {
     }
     if ($testForeignNannyFamilyId > 0) {
         $pdo->prepare('DELETE FROM families WHERE id=?')->execute([$testForeignNannyFamilyId]);
+    }
+    if ($testFinaCollectionId > 0) {
+        $pdo->prepare("DELETE FROM notifications WHERE title='تحصيل فينا الخير بانتظار المراجعة' AND created_at>=?")
+            ->execute([$testStart]);
+        $pdo->prepare('DELETE FROM fina_collections WHERE id=?')->execute([$testFinaCollectionId]);
+    }
+    if ($testFinaSourceId > 0) {
+        $pdo->prepare('DELETE FROM fina_sources WHERE id=?')->execute([$testFinaSourceId]);
     }
     if ($testSponsorId > 0) {
         $pdo->prepare('DELETE FROM sponsors WHERE id=?')->execute([$testSponsorId]);
