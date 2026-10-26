@@ -50,7 +50,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     if (['admin','vice_general_manager','general_manager','supervisor'].contains(r)) result.add('sponsors');
     if (['admin','vice_general_manager','general_manager','supervisor','accountant'].contains(r)) result.add('sponsorships');
     // This endpoint authorizes the persisted raw role, unlike the other list APIs.
-    if (['admin','financial_manager','general_manager','accountant_staff','nanny'].contains(widget.roleCode)) result.add('payments');
+    if (['admin','financial_manager','general_manager','vice_general_manager','accountant_staff','nanny'].contains(widget.roleCode)) result.add('payments');
     if (['admin','general_manager','vice_general_manager','financial_manager','accountant','supervisor','nanny','accountant_staff','administration','projects_manager','project_supervisor','staff'].contains(searchPermissionRole)) result.add('documents');
     return result;
   }

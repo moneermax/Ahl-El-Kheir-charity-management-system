@@ -5,7 +5,7 @@ require_once dirname(__DIR__) . '/_bootstrap.php';
 ak_api_require_method('GET');
 $user = ak_api_authenticated_user();
 $role = (string)($user['raw_role_code'] ?? $user['role_code'] ?? '');
-$allowedRoles = ['admin', 'financial_manager', 'general_manager', 'accountant_staff', 'nanny'];
+$allowedRoles = ['admin', 'financial_manager', 'general_manager', 'vice_general_manager', 'accountant_staff', 'nanny'];
 if (!in_array($role, $allowedRoles, true)) {
     ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'This role cannot access monthly disbursements.']]);
 }

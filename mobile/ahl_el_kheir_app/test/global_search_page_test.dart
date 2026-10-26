@@ -33,6 +33,17 @@ void main() {
     expect(find.text('The website and external pages will not be opened.'),findsNothing);
   });
 
+  testWidgets('vice general manager sees the read-only monthly disbursement search scope', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: GlobalSearchPage(
+      roleCode: 'vice_general_manager',
+      english: true,
+      loadSearch: (_, __, ___) async => throw StateError('search should not run before user submits'),
+      loadDocument: (_) async => <String, dynamic>{},
+      onOpenResult: (_, __) {},
+    )));
+    expect(find.text('Monthly disbursements'), findsOneWidget);
+  });
+
   testWidgets('monthly disbursement search opens the matching native register query',(tester)async{
     String? openedType;
     Map<String,dynamic>? openedItem;

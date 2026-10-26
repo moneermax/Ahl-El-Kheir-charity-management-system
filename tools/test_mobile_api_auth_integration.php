@@ -88,8 +88,8 @@ function mobileApiMultipartRequest(string $path, array $fields, string $fileFiel
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_manager','hr_staff','project_supervisor','financial_manager','supervisor','general_manager','accountant','accountant_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
-if (!isset($roles['admin'], $roles['nanny'], $roles['hr_manager'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'], $roles['general_manager'])) {
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_manager','hr_staff','project_supervisor','financial_manager','supervisor','general_manager','vice_general_manager','accountant','accountant_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['admin'], $roles['nanny'], $roles['hr_manager'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'], $roles['general_manager'], $roles['vice_general_manager'])) {
     throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff, project_supervisor and financial_manager roles.');
 }
 $user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
@@ -232,6 +232,22 @@ try {
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
     $hrStaffDocumentSearch = mobileApiRequest('/api/v1/search/documents.php?q=receipt', 'GET', null, $token);
     mobileApiExpect($hrStaffDocumentSearch['status'] === 403, 'HR Staff is denied archived document search because the existing search permission matrix excludes documents');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['vice_general_manager'], $userId]);
+    $vgmLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($vgmLogin['status'] === 200 && isset($vgmLogin['json']['data']['access_token']), 'vice general manager login succeeds for read-only disbursement access');
+    $vgmToken = (string)$vgmLogin['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $vgmToken);
+    $vgmDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $vgmToken, 20);
+    $vgmCapabilities = $vgmDisbursements['json']['data']['capabilities'] ?? [];
+    mobileApiExpect(
+        $vgmDisbursements['status'] === 200
+        && ($vgmCapabilities['can_create_batches'] ?? true) === false
+        && ($vgmCapabilities['can_transfer'] ?? true) === false
+        && ($vgmCapabilities['can_void'] ?? true) === false
+        && ($vgmCapabilities['can_reopen'] ?? true) === false
+        && ($vgmCapabilities['can_confirm_items'] ?? true) === false,
+        'vice general manager can read monthly disbursements but receives no mutation capabilities'
+    );
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $adminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($adminLogin['status'] === 200 && isset($adminLogin['json']['data']['access_token']), 'administrator login succeeds for finance overview integration');
