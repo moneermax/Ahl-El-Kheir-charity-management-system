@@ -323,6 +323,35 @@ try {
         'vice general manager can read monthly disbursements but receives no mutation capabilities'
     );
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $voucherCountBeforeRead = (int)$pdo->query('SELECT COUNT(*) FROM vouchers')->fetchColumn();
+    $voucherJournalCountBeforeRead = (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type IN ('voucher','voucher_void')")->fetchColumn();
+    $r = mobileApiRequest('/api/v1/accounting/vouchers.php', 'GET', null, $token);
+    $voucherData = $r['json']['data'] ?? [];
+    $voucherRows = $voucherData['vouchers'] ?? null;
+    $cashAccounts = $voucherData['cash_accounts'] ?? null;
+    mobileApiExpect($r['status'] === 200
+        && is_array($voucherRows)
+        && is_array($cashAccounts)
+        && count($cashAccounts) === 3
+        && ($voucherData['can_issue'] ?? false) === true
+        && ($voucherData['can_void'] ?? false) === true,
+        'authorized Financial Manager can load the native voucher register and current cash balances');
+    $r = mobileApiRequest('/api/v1/accounting/vouchers.php?vtype=receipt', 'GET', null, $token);
+    $receiptRows = $r['json']['data']['vouchers'] ?? [];
+    mobileApiExpect($r['status'] === 200
+        && is_array($receiptRows)
+        && count(array_filter($receiptRows, static fn($row) => ($row['voucher_type'] ?? '') !== 'receipt')) === 0,
+        'voucher register type filter returns receipts only');
+    $r = mobileApiRequest('/api/v1/accounting/vouchers.php?vtype=unknown', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'invalid_voucher_type', 'voucher register rejects unsupported type filters');
+    $r = mobileApiRequest('/api/v1/accounting/vouchers.php', 'POST', ['action' => 'create_voucher'], $token);
+    mobileApiExpect($r['status'] === 405, 'read-only voucher API rejects mutations until the native action workflow is implemented');
+    mobileApiExpect(
+        (int)$pdo->query('SELECT COUNT(*) FROM vouchers')->fetchColumn() === $voucherCountBeforeRead
+        && (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type IN ('voucher','voucher_void')")->fetchColumn() === $voucherJournalCountBeforeRead,
+        'voucher register reads do not mutate vouchers or accounting journals'
+    );
+
     $fmLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($fmLogin['status'] === 200 && isset($fmLogin['json']['data']['access_token']), 'financial manager login succeeds for native sponsor search');
     $fmToken = (string)$fmLogin['json']['data']['access_token'];
@@ -2140,6 +2169,8 @@ try {
 
     $r = mobileApiRequest('/api/v1/accounting/journal.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'forbidden', 'journal API denies roles outside the web journal allowlist');
+    $r = mobileApiRequest('/api/v1/accounting/vouchers.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'forbidden', 'voucher API denies roles outside the web voucher allowlist');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
     $r = mobileApiRequest('/api/v1/accounting/journal.php?from=2026-99-99', 'GET', null, $token);
     mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'invalid_date', 'journal API rejects invalid date filters');

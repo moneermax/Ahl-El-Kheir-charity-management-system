@@ -103,6 +103,7 @@ jobs:
             api/v1/transactions/index.php
             api/v1/accounting/fm_review_queue.php
             api/v1/accounting/fm_review_queue_action.php
+            api/v1/accounting/vouchers.php
             api/v1/sponsorships/index.php
             api/v1/sponsorships/detail.php
             modules/hr/contract_builder.php
