@@ -498,6 +498,16 @@ try {
         && array_key_exists('approved_amount', $finaDashboard['json']['data']),
         'administrator can load the native Fina dashboard summary'
     );
+    $employmentStates = mobileApiRequest('/api/v1/hr/employment_states.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $employmentStates['status'] === 200
+        && is_array($employmentStates['json']['data']['states'] ?? null)
+        && is_array($employmentStates['json']['data']['employees'] ?? null)
+        && is_array($employmentStates['json']['data']['metrics'] ?? null)
+        && ($employmentStates['json']['data']['read_only'] ?? false) === true,
+        'administrator can load the read-only employment state catalog and employee history'
+    );
+
     $payrollIntegrity = mobileApiRequest('/api/v1/hr/payroll_integrity.php', 'GET', null, $adminToken, 30);
     mobileApiExpect(
         $payrollIntegrity['status'] === 200
@@ -579,6 +589,8 @@ try {
     mobileApiExpect($nannyFinancialReport['status'] === 403, 'nanny cannot access financial reports');
     $nannyLogoUpload = mobileApiMultipartRequest('/api/v1/admin/settings.php', [], 'site_logo', 'logo.png', $logoBytes, 'image/png', $nannyFinaToken);
     mobileApiExpect($nannyLogoUpload['status'] === 403, 'nanny cannot upload the organization logo');
+    $nannyEmploymentStates = mobileApiRequest('/api/v1/hr/employment_states.php', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyEmploymentStates['status'] === 403, 'nanny cannot access employment state records');
     $nannyPayrollIntegrity = mobileApiRequest('/api/v1/hr/payroll_integrity.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyPayrollIntegrity['status'] === 403, 'nanny cannot access payroll integrity checks');
     $nannyDatabase = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $nannyFinaToken);

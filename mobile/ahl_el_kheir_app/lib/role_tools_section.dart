@@ -189,7 +189,7 @@ class RoleToolsSection extends StatelessWidget {
             t('بناء العقود', 'Contract builder', 'إنشاء ومتابعة عقود الموظفين', 'Create and manage employee contracts', 'modules/hr/contract_builder.php', Icons.description_outlined),
             t('سياسة الرواتب', 'Payroll policy', 'إعدادات وسياسات الرواتب', 'Payroll settings and policies', 'modules/hr/payroll_policy.php', Icons.policy_outlined),
             if (role == 'hr_manager') ...[
-              t('حالات التوظيف', 'Employment states', 'إدارة حالات العمل وفق الصلاحيات', 'Manage employment states within permissions', 'modules/hr/employment_states.php', Icons.work_history_outlined),
+              t('حالات التوظيف', 'Employment states', 'عرض الحالات الحالية وسجلها دون تعديل البيانات', 'Review current employment states and history (read-only)', 'modules/hr/employment_states.php', Icons.work_history_outlined),
               t('سياسة الحوافز', 'Incentive policy', 'إدارة سياسة الحوافز', 'Manage incentive policy', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
               t('عكس الرواتب', 'Payroll reversal', 'إجراءات عكس الرواتب المصرح بها', 'Authorized payroll reversal operations', 'modules/hr/payroll_reversal.php', Icons.undo_rounded),
               t('التحقق من الحوافز', 'Incentive verification', 'مراجعة الحوافز', 'Review incentives', 'modules/hr/incentive_verification.php', Icons.verified_outlined),

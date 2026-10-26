@@ -43,6 +43,7 @@ import 'admin_backup_page.dart';
 import 'payroll_integrity_page.dart';
 import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
+import 'employment_states_page.dart';
 import 'package:file_picker/file_picker.dart';
 
 void main() => runApp(const AhlElKheirApp());
@@ -252,6 +253,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     if (relativePath == 'modules/logs/audit.php') {
       openAuditLogPage();
+      return;
+    }
+    if (relativePath == 'modules/hr/employment_states.php') {
+      if (!['hr_manager', 'admin'].contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Employment states are restricted to HR Manager and administrator roles.' : 'الحالة الوظيفية متاحة لمدير الموارد البشرية والمسؤول فقط.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => EmploymentStatesPage(english: english, loadPage: loadEmploymentStates),
+      ));
       return;
     }
     if (relativePath == 'modules/hr/gm_payroll_period_history.php') {
@@ -476,6 +489,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         assignSponsor: submitSponsorAssignment,
       ),
     ));
+  }
+
+  Future<Map<String, dynamic>> loadEmploymentStates() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/employment_states.php', token: token);
   }
 
   Future<Map<String, dynamic>> loadGmPayrollHistory() async {

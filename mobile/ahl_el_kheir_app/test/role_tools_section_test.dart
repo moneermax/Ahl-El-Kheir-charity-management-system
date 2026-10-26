@@ -89,6 +89,7 @@ void main() {
 
     expect(find.text('Report center'), findsOneWidget);
     expect(find.text('Payroll integrity'), findsOneWidget);
+    expect(find.text('Review current employment states and history (read-only)'), findsOneWidget);
     expect(find.text('Read-only checks for payroll and accounting consistency'), findsOneWidget);
     expect(find.text('Password recovery requests'), findsOneWidget);
     expect(find.text('Contract builder'), findsOneWidget);

@@ -42,6 +42,7 @@ jobs:
             api/v1/hr/attendance.php
             api/v1/hr/employee_detail.php
             api/v1/hr/my_salary_statements.php
+            api/v1/hr/employment_states.php
             api/v1/hr/payroll_integrity.php
             api/v1/hr/gm_payroll_period_history.php
             api/v1/hr/gm_payroll_period_report.php
