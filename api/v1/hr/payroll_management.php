@@ -132,6 +132,19 @@ try {
     $payrollId = filter_var($input['payroll_id'] ?? null, FILTER_VALIDATE_INT);
     $actorId = (int)$user['id'];
 
+    if (in_array($action, ['upload_payment_proof', 'upload_legacy_payment_evidence', 'confirm_transfer'], true)) {
+        if ($payrollId === false || $payrollId === null || $payrollId <= 0) {
+            throw new InvalidArgumentException('A valid payroll row is required.');
+        }
+        $periodRow = dbFetchOne(
+            'SELECT id FROM payroll WHERE id = ? AND month = ? AND year = ? LIMIT 1',
+            [(int)$payrollId, $month, $year]
+        );
+        if (!$periodRow) {
+            throw new DomainException('The payroll row does not belong to the selected period.');
+        }
+    }
+
     if ($action === 'generate') {
         $policy = hrPayrollPolicyGetActive($pdo, $periodEnd);
         if (!$policy) throw new DomainException('No payroll policy is effective at the end of this period.');
