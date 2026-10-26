@@ -338,6 +338,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         roleCode: user?['role_code']?.toString() ?? '',
         english: english,
         loadSearch: loadGlobalSearch,
+        loadDocument: loadArchivedDocument,
         onOpenResult: (type, item) {
           final id = int.tryParse(item['id']?.toString() ?? '');
           if (id == null || id < 1) return;
@@ -366,6 +367,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       case 'families': return loadFamilies(query, '', page);
       case 'sponsors': return loadSponsors(query, '', '', page);
       case 'sponsorships': return loadSponsorships(query, 'all', '', page);
+      case 'documents': return loadArchivedDocuments(query, page);
       case 'payments':
         return loadAdminDisbursements(month: '', status: 'all', query: query, page: page).then((response) {
           final pagination = response['pagination'];
@@ -378,6 +380,35 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         });
       default: throw const ApiFailure('This search category is not available natively yet.');
     }
+  }
+
+  Future<Map<String, dynamic>> loadArchivedDocuments(String query, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final encodedQuery = Uri.encodeQueryComponent(query);
+    return call('GET', 'search/documents.php?q=' + encodedQuery + '&page=' + page.toString(), token: token);
+  }
+
+  Future<Map<String, dynamic>> loadArchivedDocument(int versionId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final uri = Uri.parse(apiBaseUrl.replaceFirst(RegExp(r'/+$'), '') + '/search/document_file.php?version_id=' + versionId.toString());
+    final response = await http.get(uri, headers: {'Accept': 'application/pdf,image/*,application/octet-stream', 'Authorization': 'Bearer ' + token}).timeout(const Duration(seconds: 30));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      Map<String, dynamic> decoded = {};
+      try {
+        final value = jsonDecode(utf8.decode(response.bodyBytes));
+        if (value is Map) decoded = Map<String, dynamic>.from(value);
+      } catch (_) {}
+      final failure = decoded['error'];
+      final message = failure is Map ? (failure['message'] ?? (english ? 'Archived document could not be opened.' : 'تعذر فتح المستند المؤرشف.')).toString() : (english ? 'Archived document could not be opened.' : 'تعذر فتح المستند المؤرشف.');
+      throw ApiFailure(message, statusCode: response.statusCode);
+    }
+    final mime = (response.headers['content-type'] ?? 'application/octet-stream').split(';').first.toLowerCase();
+    final disposition = response.headers['content-disposition'] ?? '';
+    final match = RegExp(r'filename="([^"]+)"').firstMatch(disposition);
+    final filename = match?.group(1) ?? 'archived-document-' + versionId.toString();
+    return {'bytes': response.bodyBytes, 'mime': mime, 'filename': filename};
   }
 
   Future<void> openNativeTool(String relativePath, {Map<String, String>? queryParameters}) async {
