@@ -285,6 +285,17 @@ try {
         && stripos($archiveFileHeaders, 'Content-Type: application/pdf') !== false,
         'authorized archive version streams private PDF bytes inside the native API'
     );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['project_supervisor'], $userId]);
+    $scopedArchiveSearch = mobileApiRequest('/api/v1/search/documents.php?q=' . rawurlencode('Mobile API archive fixture unique'), 'GET', null, $token, 20);
+    mobileApiExpect(
+        $scopedArchiveSearch['status'] === 200
+        && (int)($scopedArchiveSearch['json']['data']['total'] ?? -1) === 0
+        && ($scopedArchiveSearch['json']['data']['items'] ?? []) === [],
+        'project supervisor without approved launch or assignment cannot discover the archived document'
+    );
+    $scopedArchiveFile = mobileApiRequest('/api/v1/search/document_file.php?version_id=' . $testArchiveVersionId, 'GET', null, $token, 20);
+    mobileApiExpect($scopedArchiveFile['status'] === 404, 'out-of-scope project supervisor cannot stream the archived file');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $archiveSearch = mobileApiRequest('/api/v1/search/documents.php?q=__mobile_api_no_match__', 'GET', null, $adminToken, 20);
     mobileApiExpect(
         $archiveSearch['status'] === 200
