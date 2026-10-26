@@ -3,7 +3,33 @@ name: Salary advance verification
 on:
   push:
     branches: [main]
+    paths:
+      - 'api/v1/**'
+      - 'modules/**'
+      - 'tools/**'
+      - 'config/**'
+      - 'database/**'
+      - 'lang/**'
+      - 'assets/**'
+      - '*.php'
+      - '*.sql'
+      - '.htaccess'
+      - 'composer.json'
+      - '.github/workflows/php-syntax-check.yml'
   pull_request:
+    paths:
+      - 'api/v1/**'
+      - 'modules/**'
+      - 'tools/**'
+      - 'config/**'
+      - 'database/**'
+      - 'lang/**'
+      - 'assets/**'
+      - '*.php'
+      - '*.sql'
+      - '.htaccess'
+      - 'composer.json'
+      - '.github/workflows/php-syntax-check.yml'
   workflow_dispatch:
 
 permissions:
