@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS hr_attendance_policy_versions (
     effective_from DATE NOT NULL,
     working_start_time TIME NOT NULL DEFAULT '07:00:00',
     working_end_time TIME NOT NULL DEFAULT '16:00:00',
+    working_days VARCHAR(13) NOT NULL DEFAULT '1,2,3,4,5',
     attendance_cutoff_time TIME NOT NULL DEFAULT '16:00:00',
     absence_finalization_time TIME NOT NULL DEFAULT '16:00:00',
     auto_login_attendance TINYINT(1) NOT NULL DEFAULT 1,

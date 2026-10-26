@@ -13,6 +13,8 @@ on:
       - 'database/migrations/2026-10-24_mobile_api_sessions.sql'
       - 'database/migrations/2026-10-25_mobile_web_handoffs.sql'
       - 'database/migrations/2026-09-17_fina_standalone_schema.sql'
+      - 'database/migrations/2026-10-05_hr_attendance_policy.sql'
+      - 'database/migrations/2026-10-26_hr_attendance_policy_working_days.sql'
       - 'tools/test_mobile_api_auth_integration.php'
       - 'tools/test_mobile_admin_users_action_service.php'
       - 'modules/hr/lib_employee_provisioning.php'
@@ -79,6 +81,8 @@ jobs:
           set -euo pipefail
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/ahl_el_kheir.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-09-17_fina_standalone_schema.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-05_hr_attendance_policy.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-26_hr_attendance_policy_working_days.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-24_mobile_api_sessions.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-24_mobile_api_sessions.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-25_mobile_web_handoffs.sql
