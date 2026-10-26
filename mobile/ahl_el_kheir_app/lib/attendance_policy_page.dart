@@ -136,7 +136,7 @@ class _AttendancePolicyPageState extends State<AttendancePolicyPage> {
           const SizedBox(height:8),
           if(active==null) Text(t('لا توجد سياسة سارية. لن يتم احتساب الحضور التلقائي حتى إصدار سياسة.','No active policy. Automatic attendance remains unavailable until a policy is issued.'))
           else ...[
-            Text('V${active!['version_no']} · ${active!['policy_name']}',style:const TextStyle(fontWeight:FontWeight.w800,color:green)),
+            Text('V${active!['version_no']} · ${active!['policy_name']}',style:TextStyle(fontWeight:FontWeight.w800,color:scheme.primary)),
             Text('${active!['effective_from']} · ${active!['working_start_time'].toString().substring(0,5)}–${active!['working_end_time'].toString().substring(0,5)}'),
             Text(t('أيام العمل: ','Working days: ')+_daysLabel(active!['working_days'],dayNames)),
             Text(t('حد الحضور: ','Attendance cutoff: ')+active!['attendance_cutoff_time'].toString().substring(0,5)+' · '+t('تثبيت الغياب: ','Absence finalization: ')+active!['absence_finalization_time'].toString().substring(0,5)),
