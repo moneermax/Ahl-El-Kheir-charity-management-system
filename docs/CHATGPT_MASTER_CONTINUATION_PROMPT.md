@@ -2769,3 +2769,8 @@ Continue autonomously without asking the user to type proceed between routine st
 
 
 Continuation correction — 2026-10-26: workflow 40288510863 showed API 36 on the generated app alone did not fix the plugin subproject; Gradle still reported :file_picker compiled against android-34. Commit d408c1b4d756a8a151f6e7fff120061c595efdac upgrades file_picker to ^10.3.6, and API 36 remains explicit in generated app config. Finance Manager now has native Fina registration and review/history routes; app role gating matches API roles admin and financial_manager. Continue from [run 40289421824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289421824), inspect exact logs if it fails, and do not hand off an APK until build and publication pass. Continue mobile parity audit after the current build gate; do not reopen closed HR/payroll/i18n work.
+
+
+## Mobile Fina API verification update — 2026-10-26
+
+The new disposable-schema integration gate passed in [run 40289622000](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289622000): unauthenticated creation denial, invalid amount rejection, pending creation, no journal at creation, pending queue visibility, and self-approval denial with pending status/no journal. The checked-in Fina standalone migration is applied in the test workflow; cleanup is verified by harness structure. Do not overstate coverage: multipart receipt upload, notification-failure isolation, local XAMPP, and device PDF preview remain unverified. Follow current APK build [run 40289711691](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289711691) through artifact publication; continue autonomously through failures.
