@@ -80,9 +80,9 @@ Responses use `{"ok":true,"data":...}` or `{"ok":false,"error":{"code":"…","me
 
 ## 2026-10-24 — Physical-phone API URL and original branding correction
 
-- User confirmed the phone-testing host is laptop LAN IP `192.168.18.9` and Apache port `881`, matching the prior QR-scanner setup. Flutter default and manual workflow default now use `http://192.168.18.9:881/AhlElKheir/api/v1`; this is for the current local network only and can change if the IP changes.
+- Historical correction: this checkpoint incorrectly recorded port `881`. Later direct evidence in this document confirmed Apache listens on port `8081`, port `881` has no listener, and the phone browser receives the expected JSON HTTP 405 from `http://192.168.18.9:8081/AhlElKheir/api/v1/auth/login.php`. Current app/workflow defaults are port `8081`; commit `da04d0fea8e73f505fa521546e653ca4e263e0c0` also fixes the subsequent regression that rewrote saved port-8081 URLs to 881.
 - Reworked the Flutter login and signed-in shell to use the website's navy palette (`#0A1F44`, `#1F4E8C`), Arabic RTL-first branded card layout, improved field/button styling, and the actual organization logo source. The build workflow copies the existing website asset `assets/img/logo.jpg` into Flutter assets before dependency resolution/tests/build; it does not create a replacement logo.
-- Updated API URL does not itself prove connectivity or successful login. Phone and PC must share the network, Windows Firewall must permit Apache on port 881, and the URL must be reachable from the phone. The `mobile_api_sessions` migration is still not confirmed applied to `ahl_el_kheir`; do not use real credentials until migration and local API/runtime/security checks pass.
+- The API URL alone does not prove connectivity or successful login. Phone and PC must share the network, Windows Firewall must permit Apache on port 8081, and the URL must be reachable from the phone. The user later confirmed the `mobile_api_sessions` migration was applied to `ahl_el_kheir`; do not repeat it. Physical-device acceptance of the latest APK remains open.
 - Verification status: source change committed; GitHub Actions analysis/test/build and artifact upload pending. Physical-device UI and HTTP checks remain pending.
 
 
