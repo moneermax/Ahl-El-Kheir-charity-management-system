@@ -14,7 +14,7 @@ void main(){
   expect(find.text('Orphan form'),findsOneWidget);
   expect(find.text('Test child'),findsOneWidget);
   await tester.enterText(find.byType(TextFormField).first,'Sudanese');
-  await tester.ensureVisible(find.text('Save form'));
+  await tester.dragUntilVisible(find.text('Save form'), find.byType(ListView), const Offset(0, -300));
   await tester.pumpAndSettle();
   await tester.tap(find.text('Save form'));
   await tester.pumpAndSettle();
