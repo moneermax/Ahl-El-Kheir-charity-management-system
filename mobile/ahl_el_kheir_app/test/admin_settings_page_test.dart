@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:file_picker/file_picker.dart';
@@ -34,7 +35,7 @@ void main() {
             },
           };
         },
-        pickLogo: () async => PlatformFile(name: 'logo.png', size: 1, bytes: [137]),
+        pickLogo: () async => PlatformFile(name: 'logo.png', size: 1, bytes: Uint8List.fromList([137])),
         uploadLogo: (file) async => {'site_logo': 'assets/uploads/logo_test.png'},
         saveSettings: (values) async {
           saved = Map<String, dynamic>.from(values);
