@@ -3,6 +3,21 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/main.dart';
 
 void main() {
+  test('migrates only the known stale local API endpoint from port 881', () {
+    expect(
+      migrateKnownLegacyApiBaseUrl('http://192.168.18.9:881/AhlElKheir/api/v1'),
+      'http://192.168.18.9:8081/AhlElKheir/api/v1',
+    );
+    expect(
+      migrateKnownLegacyApiBaseUrl('http://192.168.18.9:8081/AhlElKheir/api/v1'),
+      'http://192.168.18.9:8081/AhlElKheir/api/v1',
+    );
+    expect(
+      migrateKnownLegacyApiBaseUrl('http://other-host:881/AhlElKheir/api/v1'),
+      'http://other-host:881/AhlElKheir/api/v1',
+    );
+  });
+
   test('API probe rejects a malformed base URL without network access', () async {
     final result = await probeApiEndpoint('http://example.com', english: false);
     expect(result.success, isFalse);
