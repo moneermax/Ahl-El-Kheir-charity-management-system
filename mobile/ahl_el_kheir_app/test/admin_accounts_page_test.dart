@@ -11,9 +11,9 @@ void main(){
       submitAction:(payload)async{submitted=payload;return {'id':8};},
     )));
     await tester.pumpAndSettle();
-    expect(find.text('Chart of accounts'),findOneWidget);
-    expect(find.text('1100 — Cash'),findOneWidget);
-    expect(find.textContaining('1,234.50'),findOneWidget);
+    expect(find.text('Chart of accounts'),findsOneWidget);
+    expect(find.text('1100 — Cash'),findsOneWidget);
+    expect(find.textContaining('1,234.50'),findsOneWidget);
     await tester.enterText(find.byKey(const Key('account-code-input')),'654321');
     await tester.enterText(find.byKey(const Key('account-name-ar-input')),'Test account');
     await tester.enterText(find.byKey(const Key('account-name-en-input')),'Test account English');

@@ -16,13 +16,13 @@ class _AdminAccountsPageState extends State<AdminAccountsPage>{
   String money(num v)=>v.toStringAsFixed(2).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'),(m)=>',');
   String typeLabel(String value)=>switch(value){'asset'=>t('أصول','Asset'),'liability'=>t('التزامات','Liability'),'equity'=>t('حقوق ملكية','Equity'),'revenue'=>t('إيرادات','Revenue'),'expense'=>t('مصروفات','Expense'),_=>value};
   Future<void> refresh()async{
-    setState(()=>{loading=true,error=null});
+    setState(() { loading = true; error = null; });
     try{final d=await widget.loadAccounts();final raw=d['items'];if(mounted)setState(()=>items=raw is List?raw.whereType<Map>().map((x)=>Map<String,dynamic>.from(x)).toList():<Map<String,dynamic>>[]);}
     catch(e){if(mounted)setState(()=>error=e.toString());}
     finally{if(mounted)setState(()=>loading=false);}
   }
   Future<void> create()async{
-    setState(()=>{saving=true,error=null});
+    setState(() { saving = true; error = null; });
     try{
       await widget.submitAction({'action':'create','code':code.text.trim(),'name_ar':nameAr.text.trim(),'name_en':nameEn.text.trim(),'account_type':type});
       if(!mounted)return;
@@ -41,7 +41,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage>{
       actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:Text(t('إلغاء','Cancel'))),FilledButton(onPressed:()=>Navigator.pop(context,true),child:Text(t('تأكيد','Confirm')))],
     ));
     if(yes!=true||!mounted)return;
-    setState(()=>{saving=true,error=null});
+    setState(() { saving = true; error = null; });
     try{await widget.submitAction({'action':'toggle_status','id':id});await refresh();}
     catch(e){if(mounted)setState(()=>error=e.toString());}
     finally{if(mounted)setState(()=>saving=false);}

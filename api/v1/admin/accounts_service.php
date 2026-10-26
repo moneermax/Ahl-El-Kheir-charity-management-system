@@ -31,7 +31,6 @@ function ak_api_admin_account_action(array $input): array {
         $type=(string)($input['account_type']??'');
         if (!preg_match('/^\d{3,6}$/',$code)) throw new AkAdminAccountException(422,'invalid_account_code','Account code must contain 3 to 6 digits.');
         if ($nameAr==='') throw new AkAdminAccountException(422,'account_name_required','Arabic account name is required.');
-        if (mb_strlen($nameAr,'UTF-8')>150 || mb_strlen($nameEn,'UTF-8')>150) throw new AkAdminAccountException(422,'account_name_too_long','Account names must not exceed 150 characters.');
         if (!in_array($type,['asset','liability','equity','revenue','expense'],true)) throw new AkAdminAccountException(422,'invalid_account_type','Invalid account type.');
         if (dbFetchOne('SELECT id FROM accounts WHERE code=? LIMIT 1',[$code])) throw new AkAdminAccountException(409,'duplicate_account_code','An account with this code already exists.');
         dbExecute('INSERT INTO accounts (code,name_ar,name_en,account_type) VALUES (?,?,?,?)',[$code,$nameAr,$nameEn!==''?$nameEn:null,$type]);
