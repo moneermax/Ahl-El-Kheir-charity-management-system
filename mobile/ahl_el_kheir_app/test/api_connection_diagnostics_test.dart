@@ -3,19 +3,19 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/main.dart';
 
 void main() {
-  test('uses port 881 by default and migrates only the known stale local API endpoint from port 8081', () {
-    expect(defaultMobileApiBaseUrl, 'http://192.168.18.9:881/AhlElKheir/api/v1');
-    expect(
-      migrateKnownLegacyApiBaseUrl('http://192.168.18.9:881/AhlElKheir/api/v1'),
-      'http://192.168.18.9:881/AhlElKheir/api/v1',
-    );
+  test('uses the verified phone-facing port 8081 and migrates only the known stale local API endpoint from port 881', () {
+    expect(defaultMobileApiBaseUrl, 'http://192.168.18.9:8081/AhlElKheir/api/v1');
     expect(
       migrateKnownLegacyApiBaseUrl('http://192.168.18.9:8081/AhlElKheir/api/v1'),
-      'http://192.168.18.9:881/AhlElKheir/api/v1',
+      'http://192.168.18.9:8081/AhlElKheir/api/v1',
     );
     expect(
-      migrateKnownLegacyApiBaseUrl('http://other-host:8081/AhlElKheir/api/v1'),
-      'http://other-host:8081/AhlElKheir/api/v1',
+      migrateKnownLegacyApiBaseUrl('http://192.168.18.9:881/AhlElKheir/api/v1'),
+      'http://192.168.18.9:8081/AhlElKheir/api/v1',
+    );
+    expect(
+      migrateKnownLegacyApiBaseUrl('http://other-host:881/AhlElKheir/api/v1'),
+      'http://other-host:881/AhlElKheir/api/v1',
     );
   });
 

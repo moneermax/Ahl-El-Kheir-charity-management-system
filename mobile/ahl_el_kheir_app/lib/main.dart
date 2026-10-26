@@ -56,7 +56,7 @@ import 'employment_states_page.dart';
 import 'orphan_forms_index_page.dart';
 import 'package:file_picker/file_picker.dart';
 
-const defaultMobileApiBaseUrl = 'http://192.168.18.9:881/AhlElKheir/api/v1';
+const defaultMobileApiBaseUrl = 'http://192.168.18.9:8081/AhlElKheir/api/v1';
 
 void main() => runApp(const AhlElKheirApp());
 String? normalizeApiBaseUrl(String value) {
@@ -79,11 +79,11 @@ String migrateKnownLegacyApiBaseUrl(String value) {
   if (uri != null
       && uri.scheme == 'http'
       && uri.host == '192.168.18.9'
-      && uri.port == 8081
+      && uri.port == 881
       && uri.path == '/AhlElKheir/api/v1'
       && !uri.hasQuery
       && !uri.hasFragment) {
-    return uri.replace(port: 881).toString();
+    return uri.replace(port: 8081).toString();
   }
   return value;
 }
@@ -248,8 +248,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       if (normalizedBaseUrl != null) {
         apiBaseUrl = migrateKnownLegacyApiBaseUrl(normalizedBaseUrl);
         if (apiBaseUrl != normalizedBaseUrl) {
-          // A previous mobile build saved the wrong local port 8081.
-          // Migrate only that exact known endpoint to the phone-facing Apache port 881;
+          // A previous mobile build saved the stale local port 881.
+          // Migrate only that exact known endpoint to the verified phone-facing port 8081;
           // preserve other hosts and custom API URLs.
           await storage.write(key: apiBaseUrlKey, value: apiBaseUrl);
         }
@@ -298,7 +298,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                 keyboardType: TextInputType.url,
                 textDirection: TextDirection.ltr,
                 decoration: const InputDecoration(
-                  labelText: 'http://192.168.x.x:881/AhlElKheir/api/v1',
+                  labelText: 'http://192.168.x.x:8081/AhlElKheir/api/v1',
                   border: OutlineInputBorder(),
                 ),
               ),
