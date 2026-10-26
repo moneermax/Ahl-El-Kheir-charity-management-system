@@ -2853,3 +2853,7 @@ Added `GET api/v1/reports/detail.php` and a shared native report page for financ
 - The separate Salary Advance verification workflow still has its previously known full-schema invocation-guard failure (`Refusing to run outside mobile_api_auth_test with MOBILE_API_AUTH_TEST=1`); its PHP lint, MariaDB 10.4, HR migration and rescheduling jobs pass. Do not change closed salary-advance behavior to suppress this unrelated harness guard.
 - Local XAMPP/API/database and physical-device acceptance remain unverified. Native payroll operations and other role-specific workflows remain open; no external-browser handoff is allowed.
 
+## 2026-10-26 — Native HR payroll source audit
+
+Created `docs/MOBILE_HR_PAYROLL_CONTINUATION.md` in commit `7ef743068c1c4b14063801ec5972bad3d4235484`. The next mobile work is a native payroll-management API and Flutter screen using the existing payroll engine and proof-transfer helpers. Source audit confirms exact management roles (`hr_manager`, `hr_staff`, `financial_manager`, `admin`), draft-only amount edits, separate approval, prepared-proof upload, explicit proof-backed transfer confirmation with transactional accounting, and legacy evidence that cannot mutate paid history. No payroll source, database, or accounting data was changed in this audit step. The existing transfer migration must be applied to disposable MariaDB in CI before testing the new endpoint. Local XAMPP and physical-device acceptance remain separate gates.
+
