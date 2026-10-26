@@ -48,6 +48,7 @@ import 'admin_database_page.dart';
 import 'admin_backup_page.dart';
 import 'payroll_integrity_page.dart';
 import 'payroll_management_page.dart';
+import 'account_settings_page.dart';
 import 'payroll_policy_page.dart';
 import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
@@ -634,6 +635,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/users/settings.php') {
+      openAccountSettingsPage();
+      return;
+    }
     if (relativePath == 'modules/users/recovery.php') {
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
         builder: (_) => AdminRecoveryPage(
@@ -766,6 +771,23 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         SnackBar(content: Text(labels), duration: const Duration(seconds: 4)),
       );
     }
+  }
+
+  Future<Map<String, dynamic>> submitPasswordChange(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'auth/change_password.php', token: token, body: body);
+  }
+
+  void openAccountSettingsPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AccountSettingsPage(
+        english: english,
+        submitPasswordChange: submitPasswordChange,
+      ),
+    ));
   }
 
   Future<void> logout() async {
@@ -2487,11 +2509,11 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                         ListTile(
                                           leading: const Icon(Icons.settings_outlined),
                                           title: Text(english ? 'Account settings' : 'إعدادات الحساب'),
-                                          subtitle: Text(english ? 'Native workflow pending' : 'لم تُنفذ داخل التطبيق بعد'),
-                                          trailing: const Icon(Icons.phone_android_rounded, size: 18),
+                                          subtitle: Text(english ? 'Change your password securely' : 'تغيير كلمة المرور بأمان'),
+                                          trailing: const Icon(Icons.chevron_right_rounded, size: 18),
                                           onTap: () {
                                             Navigator.pop(sheetContext);
-                                            openNativeTool('modules/users/settings.php');
+                                            openAccountSettingsPage();
                                           },
                                         ),
                                         ListTile(
