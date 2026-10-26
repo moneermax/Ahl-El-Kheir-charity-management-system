@@ -34,6 +34,7 @@ import 'admin_settings_page.dart';
 import 'reports_page.dart';
 import 'orphaned_families_report_page.dart';
 import 'fina_collection_page.dart';
+import 'fina_review_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 String? normalizeApiBaseUrl(String value) {
@@ -491,6 +492,32 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'fina/sponsors.php?$encoded', token: token);
   }
 
+  Future<Map<String, dynamic>> loadFinaReview() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('GET', 'fina/review.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitFinaReviewAction(Map<String, dynamic> payload) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'fina/review.php', token: token, body: payload);
+  }
+
+  void openFinaReviewPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => FinaReviewPage(
+        english: english,
+        loadReview: loadFinaReview,
+        submitAction: submitFinaReviewAction,
+      ),
+    ));
+  }
+
   Future<Map<String, dynamic>> submitFinaCollection(Map<String, dynamic> payload) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
@@ -776,7 +803,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openAdminDisbursements();
         return;
       case 'fina_collection':
+      case 'modules/transactions/fina_payment_create.php':
         openFinaCollectionPage();
+        return;
+      case 'modules/accounting/fina_payment_review.php':
+      case 'modules/accounting/fina_payment_history.php':
+        openFinaReviewPage();
         return;
       case 'users':
         openNativeTool('modules/users/index.php');
