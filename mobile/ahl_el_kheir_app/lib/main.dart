@@ -377,7 +377,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
           english: english,
           loadFamilies: loadFamilies,
           loadDetail: loadFamilyDetail,
-          openOrphanForm: (childId) => openNativeTool('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()}),
+          openOrphanForm: (childId) => openOrphanFormPage(childId),
         ),
       ));
       return;
@@ -1123,7 +1123,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail)));
         return;
       case 'families':
-        navigator.push(MaterialPageRoute<void>(builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openNativeTool('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()}))));
+        navigator.push(MaterialPageRoute<void>(builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openOrphanFormPage(childId))));
         return;
       case 'sponsorships':
         navigator.push(MaterialPageRoute<void>(builder: (_) => SponsorshipsPage(english: english, loadSponsorships: loadSponsorships, loadDetail: loadSponsorshipDetail)));
@@ -1444,10 +1444,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                           familyId: familyId,
                                           english: english,
                                           loadDetail: loadFamilyDetail,
-                                          openOrphanForm: (childId) => openNativeTool(
-                                            'modules/families/orphan_form.php',
-                                            queryParameters: {'child': childId.toString()},
-                                          ),
+                                          openOrphanForm: (childId) => openOrphanFormPage(childId),
                                         ),
                                       ));
                                     },
@@ -2262,7 +2259,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       subtitle: Text(english ? 'Browse families within your role scope' : 'استعراض الأسر وفق صلاحيات حسابك'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
                       onTap: () => navigatorKey.currentState?.push(MaterialPageRoute<void>(
-                        builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openNativeTool('modules/families/orphan_form.php', queryParameters: {'child': childId.toString()})),
+                        builder: (_) => FamiliesPage(english: english, loadFamilies: loadFamilies, loadDetail: loadFamilyDetail, openOrphanForm: (childId) => openOrphanFormPage(childId)),
                       )),
                     ))),
                   if (user?['role_code']?.toString() == 'nanny')
