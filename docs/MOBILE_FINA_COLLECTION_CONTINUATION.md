@@ -8,7 +8,7 @@ Updated: 2026-10-26
 - `mobile/ahl_el_kheir_app/lib/fina_collection_page.dart`: native Arabic/English registration form.
 - `mobile/ahl_el_kheir_app/lib/main.dart`: native navigation and authenticated API call.
 - API authorization accepts canonical `admin` and `financial_manager` roles. The API re-checks the bearer session and current role.
-- Existing Fina tables and transaction-review notification helper are reused. Creation is transactional; review notification is isolated after commit.
+- Existing Fina tables and transaction-review notification helper are reused. Creation is transactional; review notification is isolated after commit. A notification exception is logged and cannot turn a committed save into an API failure (commit `7b122fd131ccd2ffb9d078b7cbd4e26397fc96e6`).
 - No journal is posted during creation. The existing Finance Manager approval workflow remains responsible for approval and journal posting.
 - No schema changes were made.
 
