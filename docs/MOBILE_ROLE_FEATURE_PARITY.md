@@ -345,3 +345,9 @@ The home-screen search icon now opens a native search center for families, spons
 - Selecting a result opens the existing native monthly-disbursement register with the exact batch ID prefilled as the query; it does not open a browser or create a second financial-data path.
 - Added widget coverage for Finance Manager visibility and native result routing. Dart analysis and the full widget suite passed in workflow [40325180234](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40325180234) at app source `17feccacfa312ba1982fdb0e0549fce1809c42d7`. Android APK build/publication was still running at the time of this documentation update; do not claim artifact publication until that run completes.
 - Still open: archived project-document search/preview and broader role parity with `config/search_permissions.php`. Local XAMPP/API/database and physical-device acceptance remain unverified.
+
+## 2026-10-26 — API connection regression and archive search checkpoint
+
+The app/workflow default had regressed to port 881, and startup migration changed the known correct `192.168.18.9:8081` endpoint back to 881. Commit `da04d0fea8e73f505fa521546e653ca4e263e0c0` restores 8081 and updates diagnostic tests. Automated verification for this correction is pending; physical-device connectivity remains unverified.
+
+Native global search currently includes families, sponsors, sponsorships, role-limited monthly disbursements, and archived project documents with in-app private file retrieval. Archive search/streaming integration passed in run `40335923994`. Do not call search full web parity: remaining role/category visibility parity and other role-specific native workflows are still open. No external browser handoffs. Current app visual identity is violet/amber with lavender surfaces, intentionally different from the original web palette.
