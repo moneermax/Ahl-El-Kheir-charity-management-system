@@ -325,3 +325,10 @@ The earlier rows above are corrected by the current source:
 - Flutter analysis and all 105 widget tests, Android debug APK build and publication passed in [run 40318833316](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40318833316) for source `339440d1747abdf4388188bcb8809cead65c3df7`. Artifact ID `12647679265` is 102,218,468 bytes and expires 2026-11-25; uploaded ZIP SHA-256 `c30a9d0fe19579c72ebc25cfd75f027d37dc2553f82631b0d81b03e2bc9916f0`. Expanded draft-edit/approval API tests passed in [run 40319313245](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40319313245).
 - Native role parity remains incomplete. Local XAMPP/API/database and physical-device acceptance have not been verified. No external-browser handoff is allowed.
 
+
+
+## 2026-10-26 — Distinct native visual identity and next parity item
+
+The user explicitly requested that the mobile app's general theme, style, and colors differ from the original web system. The app-wide Flutter theme and prominent shared native surfaces were updated to a distinct deep-teal (`#115E59`), bright-teal (`#20A39E`), coral (`#E07A5F`), slate, and cool-light palette. This intentionally does not mirror the website's navy/blue styling. Arabic RTL, English LTR, Cairo font, organization identity, and server-side role checks are preserved. The palette refresh's Flutter analysis/widget/build CI must be confirmed; no local/device visual acceptance is claimed.
+
+**Next parity priority:** replace the home-screen `Global search (WEB)` placeholder with native search. The authoritative scope matrix is `config/search_permissions.php::ak_search_allowed_types()` / `ak_search_can_type()`, and record-level visibility rules live in `modules/search/index.php`. The native API must not widen roles or record visibility, must use the actual schema, and must never perform a browser handoff. Search types without a safe native implementation must be explicitly disabled rather than queried speculatively.
