@@ -123,6 +123,9 @@ $testBackupName = '';
 $testLogoPath = '';
 $testPreviousLogoValue = null;
 $testLogoSettingExisted = false;
+$testOrphanFormChildId = 0;
+$testOrphanFormChildSnapshot = null;
+$testOrphanFormFamilySnapshot = null;
 $testDisbursementId = 0;
 $testDisbursementItemId = 0;
 $testDisbursementReturnItemId = 0;
@@ -387,6 +390,13 @@ try {
         'administrator can upload a validated logo and update the organization logo setting'
     );
     $orphanFormChildId = (int)$pdo->query('SELECT id FROM family_children ORDER BY id LIMIT 1')->fetchColumn();
+    $testOrphanFormChildId = $orphanFormChildId;
+    $orphanChildSnapshotStmt = $pdo->prepare('SELECT nationality,health_status,health_status_other,psychological_state,psychological_state_other,guardian_name,guardian_relationship,updated_at FROM family_children WHERE id=?');
+    $orphanChildSnapshotStmt->execute([$testOrphanFormChildId]);
+    $testOrphanFormChildSnapshot = $orphanChildSnapshotStmt->fetch(PDO::FETCH_ASSOC) ?: null;
+    $orphanFamilySnapshotStmt = $pdo->prepare('SELECT father_death_cause,mother_marital_status,updated_by,updated_at FROM families WHERE id=(SELECT family_id FROM family_children WHERE id=?)');
+    $orphanFamilySnapshotStmt->execute([$testOrphanFormChildId]);
+    $testOrphanFormFamilySnapshot = $orphanFamilySnapshotStmt->fetch(PDO::FETCH_ASSOC) ?: null;
     $orphanFormRead = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'GET', null, $adminToken, 20);
     mobileApiExpect(
         $orphanFormChildId > 0 && $orphanFormRead['status'] === 200
@@ -396,6 +406,24 @@ try {
     );
     $invalidOrphanForm = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'POST', ['values' => ['health_status' => 'not-a-valid-health-option']], $adminToken);
     mobileApiExpect($invalidOrphanForm['status'] === 422, 'native orphan form rejects unsupported health options');
+    $orphanSnapshot = $testOrphanFormChildSnapshot ?? [];
+    $orphanFamilySnapshot = $testOrphanFormFamilySnapshot ?? [];
+    $savedOrphanForm = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $testOrphanFormChildId, 'POST', ['values' => [
+        'nationality' => (string)($orphanSnapshot['nationality'] ?? 'سودانية'),
+        'health_status' => (string)($orphanSnapshot['health_status'] ?? 'سليم'),
+        'health_status_other' => (string)($orphanSnapshot['health_status_other'] ?? ''),
+        'psychological_state' => (string)($orphanSnapshot['psychological_state'] ?? 'سليم'),
+        'psychological_state_other' => (string)($orphanSnapshot['psychological_state_other'] ?? ''),
+        'guardian_name' => (string)($orphanSnapshot['guardian_name'] ?? ''),
+        'guardian_relationship' => (string)($orphanSnapshot['guardian_relationship'] ?? ''),
+        'father_death_cause' => (string)($orphanFamilySnapshot['father_death_cause'] ?? ''),
+        'mother_marital_status' => (string)($orphanFamilySnapshot['mother_marital_status'] ?? 'أرملة'),
+    ]], $adminToken, 20);
+    mobileApiExpect(
+        $savedOrphanForm['status'] === 200
+        && (int)($savedOrphanForm['json']['data']['child']['id'] ?? 0) === $testOrphanFormChildId,
+        'administrator can save the native orphan form through the existing family schema'
+    );
     $financialReport = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-10-01&to=2026-10-31', 'GET', null, $adminToken, 20);
     mobileApiExpect($financialReport['status'] === 200 && is_array($financialReport['json']['data']['rows'] ?? null), 'administrator can load native financial report rows');
     foreach ([
@@ -1268,6 +1296,22 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testOrphanFormChildId > 0 && is_array($testOrphanFormChildSnapshot) && is_array($testOrphanFormFamilySnapshot)) {
+        $pdo->prepare('UPDATE family_children SET nationality=?,health_status=?,health_status_other=?,psychological_state=?,psychological_state_other=?,guardian_name=?,guardian_relationship=?,updated_at=? WHERE id=?')
+            ->execute([
+                $testOrphanFormChildSnapshot['nationality'],$testOrphanFormChildSnapshot['health_status'],$testOrphanFormChildSnapshot['health_status_other'],
+                $testOrphanFormChildSnapshot['psychological_state'],$testOrphanFormChildSnapshot['psychological_state_other'],$testOrphanFormChildSnapshot['guardian_name'],
+                $testOrphanFormChildSnapshot['guardian_relationship'],$testOrphanFormChildSnapshot['updated_at'],$testOrphanFormChildId,
+            ]);
+        $orphanFamilyId = (int)$pdo->query('SELECT family_id FROM family_children WHERE id=' . $testOrphanFormChildId)->fetchColumn();
+        $pdo->prepare('UPDATE families SET father_death_cause=?,mother_marital_status=?,updated_by=?,updated_at=? WHERE id=?')
+            ->execute([
+                $testOrphanFormFamilySnapshot['father_death_cause'],$testOrphanFormFamilySnapshot['mother_marital_status'],
+                $testOrphanFormFamilySnapshot['updated_by'],$testOrphanFormFamilySnapshot['updated_at'],$orphanFamilyId,
+            ]);
+        $pdo->prepare("DELETE FROM audit_log WHERE entity_type='orphan_form' AND entity_id=? AND created_at>=?")
+            ->execute([$testOrphanFormChildId,$testStart]);
+    }
     if ($testLogoPath !== '') {
         @unlink(dirname(__DIR__) . '/' . $testLogoPath);
         $pdo->prepare("DELETE FROM audit_log WHERE entity_type='settings' AND new_values LIKE ? AND created_at>=?")
