@@ -55,7 +55,7 @@ function hrPayrollResolvePaymentAccount(PDO $pdo, ?int $requestedAccountId): int
     return (int)$row['id'];
 }
 
-function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
+function hrPayrollPostAccounting(PDO $pdo, array $payroll, ?int $actorUserId = null): int
 {
     require_once dirname(__DIR__) . '/accounting/lib.php';
 
@@ -167,8 +167,8 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
             $employeeName = 'ID ' . (int)$payroll['employee_id'];
         }
 
-        $createdBy = null;
-        if (class_exists('Session')) {
+        $createdBy = $actorUserId !== null && $actorUserId > 0 ? $actorUserId : null;
+        if ($createdBy === null && class_exists('Session')) {
             $sessionUserId = Session::getUserId();
             if ($sessionUserId !== null && (int)$sessionUserId > 0) {
                 $createdBy = (int)$sessionUserId;
@@ -226,7 +226,7 @@ function hrPayrollPostAccounting(PDO $pdo, array $payroll): int
     return $entryId;
 }
 
-function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int $paymentAccountId = null): void
+function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int $paymentAccountId = null, ?int $actorUserId = null, bool $initializeAccounting = true): void
 {
     if (!in_array($newStatus, ['approved', 'paid'], true)) {
         throw new RuntimeException('حالة الرواتب غير صالحة.');
@@ -241,9 +241,11 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
     // the accounting schema before entering it.
     $startedHere = !$pdo->inTransaction();
     if ($startedHere) {
-        require_once dirname(__DIR__) . '/accounting/lib.php';
-        ak_ensure_tables();
-        ak_seed_accounts();
+        if ($initializeAccounting) {
+            require_once dirname(__DIR__) . '/accounting/lib.php';
+            ak_ensure_tables();
+            ak_seed_accounts();
+        }
         $pdo->beginTransaction();
     }
 
@@ -320,7 +322,7 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
             $row['status'] = 'paid';
             $row['payment_date'] = $paymentDate;
             $row['payment_account_id'] = $paymentAccountId;
-            $entryId = hrPayrollPostAccounting($pdo, $row);
+            $entryId = hrPayrollPostAccounting($pdo, $row, $actorUserId);
             require_once __DIR__ . '/lib_salary_advance_payroll.php';
             hrSalaryAdvancePayrollApply($pdo, $row, $entryId);
 
@@ -329,7 +331,12 @@ function hrPayrollChangeStatus(PDO $pdo, int $payrollId, string $newStatus, ?int
                  SET proof_state = 'confirmed', confirmed_by_user_id = ?, confirmed_at = NOW()
                  WHERE id = ? AND proof_state = 'prepared'"
             );
-            $confirmProof->execute([class_exists('Session') ? Session::getUserId() : null, (int)$proof['id']]);
+            $proofActorUserId = $actorUserId;
+            if (($proofActorUserId === null || $proofActorUserId <= 0) && class_exists('Session')) {
+                $sessionUserId = Session::getUserId();
+                $proofActorUserId = $sessionUserId !== null && (int)$sessionUserId > 0 ? (int)$sessionUserId : null;
+            }
+            $confirmProof->execute([$proofActorUserId, (int)$proof['id']]);
             if ($confirmProof->rowCount() !== 1) {
                 throw new RuntimeException('تعذر تأكيد إثبات التحويل؛ تم إلغاء عملية الدفع والمحاسبة.');
             }
