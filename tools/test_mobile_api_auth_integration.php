@@ -145,6 +145,7 @@ $testBatchTransferTransactionId = 0;
 $testBatchTransferJournalId = 0;
 $testAccountId = 0;
 $testAttendancePolicyId = 0;
+$testPayrollPolicyId = 0;
 $testPayrollId = 0;
 $testPayrollProofStorageKey = '';
 $testPayrollMonth = 0;
@@ -887,6 +888,82 @@ try {
     mobileApiExpect($deletedAttendancePolicy['status'] === 200, 'administrator can delete a future attendance policy version');
     $pdo->prepare('DELETE FROM hr_attendance_policy_versions WHERE id=?')->execute([$testAttendancePolicyId]);
     $testAttendancePolicyId = 0;
+
+    $payrollPolicyUnauthenticated = mobileApiRequest('/api/v1/hr/payroll_policy.php', 'GET');
+    mobileApiExpect($payrollPolicyUnauthenticated['status'] === 401, 'payroll policy requires bearer authentication');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+    $payrollPolicyForbidden = mobileApiRequest('/api/v1/hr/payroll_policy.php', 'GET', null, $adminToken);
+    mobileApiExpect($payrollPolicyForbidden['status'] === 403, 'nanny is denied payroll policy management');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+
+    $payrollPolicyRead = mobileApiRequest('/api/v1/hr/payroll_policy.php', 'GET', null, $adminToken);
+    mobileApiExpect(
+        $payrollPolicyRead['status'] === 200
+        && is_array($payrollPolicyRead['json']['data']['policies'] ?? null)
+        && array_key_exists('active_policy', $payrollPolicyRead['json']['data'])
+        && ($payrollPolicyRead['json']['data']['today'] ?? '') !== '',
+        'administrator can read current and historical payroll policy versions'
+    );
+
+    $payrollPolicyDate = null;
+    for ($offset = 31; $offset <= 500; $offset++) {
+        $candidateDate = (new DateTimeImmutable('+' . $offset . ' days'))->format('Y-m-d');
+        if (!dbFetchOne('SELECT id FROM hr_payroll_policy_versions WHERE effective_from=? LIMIT 1', [$candidateDate])) {
+            $payrollPolicyDate = $candidateDate;
+            break;
+        }
+    }
+    mobileApiExpect(is_string($payrollPolicyDate), 'disposable payroll policy fixture can reserve a unique future date');
+    $createdPayrollPolicy = mobileApiRequest('/api/v1/hr/payroll_policy.php', 'POST', [
+        'action' => 'create',
+        'effective_from' => $payrollPolicyDate,
+        'absence_enabled' => false,
+        'absence_deduction_percent' => 80,
+        'unpaid_leave_enabled' => true,
+        'unpaid_leave_deduction_percent' => 75,
+        'paid_leave_deduction_percent' => 0,
+        'late_enabled' => false,
+        'early_departure_enabled' => true,
+        'overtime_enabled' => true,
+        'overtime_multiplier' => 1.5,
+        'rounding_decimals' => 3,
+        'notes' => 'Disposable mobile payroll policy fixture',
+    ], $adminToken);
+    $testPayrollPolicyId = (int)($createdPayrollPolicy['json']['data']['id'] ?? 0);
+    mobileApiExpect($createdPayrollPolicy['status'] === 201 && $testPayrollPolicyId > 0, 'administrator can create a valid future payroll policy version');
+    $payrollPolicyAfterCreate = mobileApiRequest('/api/v1/hr/payroll_policy.php', 'GET', null, $adminToken);
+    $payrollPolicyItem = null;
+    foreach (($payrollPolicyAfterCreate['json']['data']['policies'] ?? []) as $policyItem) {
+        if ((int)($policyItem['id'] ?? 0) === $testPayrollPolicyId) $payrollPolicyItem = $policyItem;
+    }
+    mobileApiExpect(
+        $payrollPolicyAfterCreate['status'] === 200 && $payrollPolicyItem
+        && ($payrollPolicyItem['absence_enabled'] ?? true) === false
+        && abs((float)($payrollPolicyItem['absence_deduction_percent'] ?? -1) - 80.0) < 0.0001
+        && ($payrollPolicyItem['unpaid_leave_enabled'] ?? false) === true
+        && abs((float)($payrollPolicyItem['unpaid_leave_deduction_percent'] ?? -1) - 75.0) < 0.0001
+        && ($payrollPolicyItem['late_enabled'] ?? true) === false
+        && ($payrollPolicyItem['early_departure_enabled'] ?? false) === true
+        && ($payrollPolicyItem['overtime_enabled'] ?? false) === true
+        && (int)($payrollPolicyItem['rounding_decimals'] ?? -1) === 3
+        && ($payrollPolicyItem['is_future'] ?? false) === true,
+        'payroll policy JSON boolean flags and version fields persist exactly'
+    );
+    $duplicatePayrollPolicy = mobileApiRequest('/api/v1/hr/payroll_policy.php', 'POST', [
+        'action' => 'create', 'effective_from' => $payrollPolicyDate,
+        'absence_deduction_percent' => 100, 'unpaid_leave_deduction_percent' => 100,
+        'paid_leave_deduction_percent' => 0, 'overtime_multiplier' => 1, 'rounding_decimals' => 2,
+    ], $adminToken);
+    mobileApiExpect($duplicatePayrollPolicy['status'] === 409, 'payroll policy rejects duplicate effective dates');
+    $invalidPaidLeavePolicy = mobileApiRequest('/api/v1/hr/payroll_policy.php', 'POST', [
+        'action' => 'create',
+        'effective_from' => (new DateTimeImmutable('+501 days'))->format('Y-m-d'),
+        'absence_deduction_percent' => 100, 'unpaid_leave_deduction_percent' => 100,
+        'paid_leave_deduction_percent' => 5, 'overtime_multiplier' => 1, 'rounding_decimals' => 2,
+    ], $adminToken);
+    mobileApiExpect($invalidPaidLeavePolicy['status'] === 422, 'payroll policy preserves the existing zero paid-leave deduction rule');
+    $pdo->prepare('DELETE FROM hr_payroll_policy_versions WHERE id=?')->execute([$testPayrollPolicyId]);
+    $testPayrollPolicyId = 0;
 
     $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
     mobileApiExpect(
@@ -1781,6 +1858,7 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testPayrollPolicyId > 0) $pdo->prepare('DELETE FROM hr_payroll_policy_versions WHERE id=?')->execute([$testPayrollPolicyId]);
     if ($testDraftPayrollId > 0) $pdo->prepare('DELETE FROM payroll WHERE id=?')->execute([$testDraftPayrollId]);
     if ($testLegacyPayrollId > 0) {
         $legacyProofLookup = $pdo->prepare('SELECT storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');

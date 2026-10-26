@@ -48,6 +48,7 @@ import 'admin_database_page.dart';
 import 'admin_backup_page.dart';
 import 'payroll_integrity_page.dart';
 import 'payroll_management_page.dart';
+import 'payroll_policy_page.dart';
 import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
 import 'employment_states_page.dart';
@@ -511,6 +512,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/hr/payroll_policy.php') {
+      if (!['hr_manager', 'hr_staff', 'admin'].contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Payroll policy is not available for this role.' : 'سياسة الرواتب غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => PayrollPolicyPage(english: english, loadPage: loadPayrollPolicy, submitAction: submitPayrollPolicyAction),
+      ));
+      return;
+    }
     if (relativePath == 'modules/hr/payroll.php') {
       if (!['hr_manager', 'hr_staff', 'financial_manager', 'admin'].contains(user?['role_code']?.toString())) {
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
@@ -779,6 +792,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         builder: (_) => GmPayrollReportPage(english: english, month: month, year: year, loadReport: loadGmPayrollReport),
       )),
     )));
+  }
+
+  Future<Map<String, dynamic>> loadPayrollPolicy() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/payroll_policy.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitPayrollPolicyAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'hr/payroll_policy.php', token: token, body: body);
   }
 
   Future<Map<String, dynamic>> loadAttendancePolicy() async {
