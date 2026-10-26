@@ -6,7 +6,7 @@ $user = ak_api_authenticated_user();
 if (!in_array((string)($user['raw_role_code'] ?? ''), ['general_manager', 'gm'], true)) {
     ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'General Manager access is required.']]);
 }
-require_once dirname(__DIR__, 2) . '/modules/hr/lib_gm_payroll_period.php';
+require_once dirname(__DIR__, 3) . '/modules/hr/lib_gm_payroll_period.php';
 try {
     $pdo = db();
     $periodRows = dbFetchAll("SELECT DISTINCT year, month FROM payroll WHERE status = 'paid' ORDER BY year DESC, month DESC");
