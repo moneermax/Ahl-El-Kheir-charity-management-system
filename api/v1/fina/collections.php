@@ -87,12 +87,17 @@ try {
         throw $e;
     }
 
-    // Notification is deliberately isolated from the committed collection.
-    ak_transaction_review_notify_fm_event(
-        $collectionId, 'fina_collection', 'تحصيل فينا الخير بانتظار المراجعة',
-        'يوجد تحصيل جديد لصالح فينا الخير بانتظار مراجعة واعتماد المدير المالي.',
-        APP_URL . 'modules/accounting/fina_payment_review.php', (int)$user['id']
-    );
+    // Notification delivery must not make a committed collection look like a failed save.
+    // Otherwise the client may retry and create a duplicate collection.
+    try {
+        ak_transaction_review_notify_fm_event(
+            $collectionId, 'fina_collection', 'تحصيل فينا الخير بانتظار المراجعة',
+            'يوجد تحصيل جديد لصالح فينا الخير بانتظار مراجعة واعتماد المدير المالي.',
+            APP_URL . 'modules/accounting/fina_payment_review.php', (int)$user['id']
+        );
+    } catch (Throwable $notificationError) {
+        error_log('Mobile Fina collection notification failed for #'.$collectionId.': '.$notificationError->getMessage());
+    }
     ak_api_json(201, ['ok'=>true,'data'=>['id'=>$collectionId,'status'=>'pending','receipt_supported'=>false]]);
 } catch (Throwable $e) {
     error_log('Mobile Fina collection creation failed: '.$e->getMessage());
