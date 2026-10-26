@@ -45,6 +45,8 @@ void main() {
     )));
     await tester.pumpAndSettle();
     expect(find.text('Payroll management'), findsOneWidget);
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(find.byKey(const Key('payroll-confirm-transfer-2')), 180, scrollable: scrollable);
     expect(find.byKey(const Key('payroll-approve-1')), findsOneWidget);
     expect(find.byKey(const Key('payroll-confirm-transfer-1')), findsNothing);
     expect(find.byKey(const Key('payroll-confirm-transfer-2')), findsOneWidget);
@@ -77,6 +79,7 @@ void main() {
       },
     )));
     await tester.pumpAndSettle();
+    await tester.scrollUntilVisible(find.byKey(const Key('payroll-pick-proof-3')), 180, scrollable: find.byType(Scrollable).first);
     await tester.tap(find.byKey(const Key('payroll-pick-proof-3')));
     await tester.pumpAndSettle();
     expect(find.text('transfer.pdf'), findsOneWidget);
