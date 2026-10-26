@@ -14,6 +14,7 @@ import 'families_page.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_finance_overview_page.dart';
 import 'admin_accounts_page.dart';
+import 'admin_disbursements_page.dart';
 import 'role_dashboard_page.dart';
 import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
@@ -447,6 +448,39 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     ));
   }
 
+  Future<Map<String, dynamic>> loadAdminDisbursements({
+    required String month,
+    required String status,
+    required String query,
+    required int page,
+  }) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final parameters = <String, String>{
+      'month': month,
+      'status': status,
+      'q': query,
+      'page': page.toString(),
+    };
+    return call('GET', 'admin/disbursements.php?${Uri(queryParameters: parameters).query}', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadAdminDisbursementDetail(int id, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'admin/disbursements.php?${Uri(queryParameters: {'id': id.toString(), 'items_page': page.toString()}).query}', token: token);
+  }
+
+  void openAdminDisbursements() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AdminDisbursementsPage(
+        english: english,
+        loadPage: loadAdminDisbursements,
+        loadDetail: loadAdminDisbursementDetail,
+      ),
+    ));
+  }
+
   Future<Map<String, dynamic>> loadAdminAccounts() async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -687,7 +721,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openAdminAccounts();
         return;
       case 'disbursements':
-        openNativeTool('modules/accounting/disbursements.php');
+        if (user?['role_code']?.toString() != 'admin') {
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            SnackBar(content: Text(english
+                ? 'Monthly disbursements are restricted to the administrator role.'
+                : 'التحويلات الشهرية متاحة لدور المسؤول فقط.')),
+          );
+          return;
+        }
+        openAdminDisbursements();
         return;
       case 'fina_collection':
         openNativeTool('modules/transactions/fina_payment_create.php');
