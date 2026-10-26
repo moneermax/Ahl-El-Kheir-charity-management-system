@@ -66,9 +66,15 @@ void main() {
 
     expect(find.text('Monthly disbursements'), findsOneWidget);
     expect(find.text('Results: 1'), findsOneWidget);
-    expect(find.text('Nanny One'), findsOneWidget);
     expect(requested?['status'], 'all');
 
+    final scrollable = find.byType(Scrollable).first;
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('disbursement-batch-4')),
+      180,
+      scrollable: scrollable,
+    );
+    expect(find.text('Nanny One'), findsOneWidget);
     await tester.tap(find.byKey(const Key('disbursement-batch-4')));
     await tester.pumpAndSettle();
 
