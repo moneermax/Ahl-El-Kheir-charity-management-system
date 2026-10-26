@@ -77,12 +77,18 @@ jobs:
 
       - name: Build debug APK
         working-directory: mobile/ahl_el_kheir_app
-        run: flutter build apk --debug --dart-define=API_BASE_URL="$API_BASE_URL"
+        run: flutter build apk --debug --dart-define=API_BASE_URL="$API_BASE_URL" --dart-define=MOBILE_BUILD_REVISION="$GITHUB_SHA"
+
+      - name: Record build provenance
+        run: |
+          printf "source_commit=%s\\napi_base_url=%s\\n" "$GITHUB_SHA" "$API_BASE_URL" > mobile-build-info.txt
 
       - name: Publish Android APK
         uses: actions/upload-artifact@v4
         with:
           name: ahl-el-kheir-flutter-android-debug-apk
-          path: mobile/ahl_el_kheir_app/build/app/outputs/flutter-apk/app-debug.apk
+          path: |
+            mobile/ahl_el_kheir_app/build/app/outputs/flutter-apk/app-debug.apk
+            mobile-build-info.txt
           if-no-files-found: error
           retention-days: 30
