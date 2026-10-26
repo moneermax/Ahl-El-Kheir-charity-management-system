@@ -88,8 +88,8 @@ function mobileApiMultipartRequest(string $path, array $fields, string $fileFiel
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
-if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'])) {
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor','general_manager')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'], $roles['general_manager'])) {
     throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff, project_supervisor and financial_manager roles.');
 }
 $user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
@@ -507,6 +507,21 @@ try {
         && ($payrollIntegrity['json']['data']['read_only'] ?? false) === true,
         'administrator can run all eight read-only payroll integrity checks, including reversal audit, against the full schema (HTTP ' . $payrollIntegrity['status'] . '; response ' . json_encode($payrollIntegrity['json']) . ')'
     );
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['general_manager'], $userId]);
+    $gmLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($gmLogin['status'] === 200 && isset($gmLogin['json']['data']['access_token']), 'general manager login succeeds for payroll period history integration');
+    $gmToken = (string)$gmLogin['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $gmToken);
+    $gmHistory = mobileApiRequest('/api/v1/hr/gm_payroll_period_history.php', 'GET', null, $gmToken, 30);
+    mobileApiExpect($gmHistory['status'] === 200 && is_array($gmHistory['json']['data']['periods'] ?? null) && ($gmHistory['json']['data']['read_only'] ?? false) === true, 'general manager can load read-only payroll period history');
+    $gmReport = mobileApiRequest('/api/v1/hr/gm_payroll_period_report.php?month=10&year=2026', 'GET', null, $gmToken, 30);
+    mobileApiExpect($gmReport['status'] === 200 && ($gmReport['json']['data']['period'] ?? '') === '2026-10' && is_array($gmReport['json']['data']['employees'] ?? null) && ($gmReport['json']['data']['read_only'] ?? false) === true, 'general manager can load the read-only payroll period report');
+    $gmInvalidPeriod = mobileApiRequest('/api/v1/hr/gm_payroll_period_report.php?month=13&year=2026', 'GET', null, $gmToken);
+    mobileApiExpect($gmInvalidPeriod['status'] === 422, 'payroll period report rejects an invalid month');
+    $gmDeniedIntegrity = mobileApiRequest('/api/v1/hr/payroll_integrity.php', 'GET', null, $gmToken);
+    mobileApiExpect($gmDeniedIntegrity['status'] === 403, 'general manager cannot access HR-manager-only payroll integrity diagnostics');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
     $databaseUsers = mobileApiRequest('/api/v1/admin/database.php?table=users', 'GET', null, $adminToken, 20);
     $databaseColumnNames = array_map(

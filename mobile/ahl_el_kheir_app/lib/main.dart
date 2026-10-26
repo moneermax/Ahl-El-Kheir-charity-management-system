@@ -41,6 +41,8 @@ import 'fina_dashboard_page.dart';
 import 'admin_database_page.dart';
 import 'admin_backup_page.dart';
 import 'payroll_integrity_page.dart';
+import 'gm_payroll_history_page.dart';
+import 'gm_payroll_report_page.dart';
 import 'package:file_picker/file_picker.dart';
 
 void main() => runApp(const AhlElKheirApp());
@@ -250,6 +252,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
     if (relativePath == 'modules/logs/audit.php') {
       openAuditLogPage();
+      return;
+    }
+    if (relativePath == 'modules/hr/gm_payroll_period_history.php') {
+      if (!['general_manager', 'gm'].contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Payroll period history is restricted to the General Manager role.' : 'سجل فترات الرواتب متاح للمدير العام فقط.')),
+        );
+        return;
+      }
+      openGmPayrollHistory();
       return;
     }
     if (relativePath == 'modules/hr/payroll_integrity.php') {
@@ -464,6 +476,27 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         assignSponsor: submitSponsorAssignment,
       ),
     ));
+  }
+
+  Future<Map<String, dynamic>> loadGmPayrollHistory() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/gm_payroll_period_history.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadGmPayrollReport(int month, int year) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/gm_payroll_period_report.php?month=$month&year=$year', token: token);
+  }
+
+  void openGmPayrollHistory() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => GmPayrollHistoryPage(
+      english: english, loadHistory: loadGmPayrollHistory,
+      openReport: (month, year) => navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => GmPayrollReportPage(english: english, month: month, year: year, loadReport: loadGmPayrollReport),
+      )),
+    )));
   }
 
   Future<Map<String, dynamic>> loadPayrollIntegrity() async {

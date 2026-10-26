@@ -100,7 +100,7 @@ class RoleToolsSection extends StatelessWidget {
             t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة الحملات المفتوحة', 'Review open win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
             t('سياسة الحوافز', 'Incentive policy', 'مراجعة واعتماد سياسة الحوافز', 'Review and approve incentive policy', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
             t('إعفاء السلف', 'Salary advance waivers', 'مراجعة قرارات إعفاء السلف واعتمادها', 'Review and approve salary-advance waiver decisions', 'modules/hr/salary_advance_waiver_gm.php', Icons.handshake_outlined),
-            t('سجل فترات الرواتب', 'Payroll period history', 'مراجعة سجل فترات الرواتب', 'Review payroll period history', 'modules/hr/gm_payroll_period_history.php', Icons.payments_outlined),
+            t('سجل فترات الرواتب', 'Payroll period history', 'سجل الصرف وكشوف الموظفين داخل التطبيق', 'Review payroll payment periods and employee reports in-app', 'modules/hr/gm_payroll_period_history.php', Icons.payments_outlined),
             t('سجل تعليقات الكفالات', 'Sponsorship suspension cases', 'عرض حالات تعليق الكفالات', 'View sponsorship suspension cases', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
         ];
