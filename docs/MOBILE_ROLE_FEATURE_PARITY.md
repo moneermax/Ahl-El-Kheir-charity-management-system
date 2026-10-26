@@ -242,3 +242,8 @@ The PHP lint job passed in run `40217995457`; the mobile API auth integration jo
 - Added `GET api/v1/reports/orphaned_families.php` with role guard from the same registry, city/status filters, family/child counts and monthly need values. The native screen opens existing family detail inside the app. It does not create a browser handoff. Report pages not implemented natively remain disabled and labelled as not ready.
 - Added native reports center and uncovered-families screens, in-app routing for the existing reports tool, and widget tests. PHP lint passed in workflow run `40218906611`. Flutter analysis and widget tests passed in run [40219066747](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40219066747); Android debug APK build/artifact publication was still running at this checkpoint.
 - The endpoints use the report registry's exact role list, not normalized dashboard roles. Local XAMPP API/data-role verification and physical-device acceptance remain unverified. Native parity remains incomplete; do not install an intermediate APK or treat the reports hub as implementation of every listed report.
+
+## 2026-10-26 — Admin dashboard authorization visibility correction
+
+The administrator dashboard no longer presents Departments, Settings, Password Recovery, Reports or Audit as actionable links to `sudo`/`super_admin` when the existing endpoint guards deny those roles. `AdminDashboardPage` receives the raw persisted role code. User Accounts remains available to Sudo under its current API guard. The Reports tile text now accurately describes the native reports center. A widget test covers the visibility contract. No permissions were broadened; current CI and device verification remain pending.
+
