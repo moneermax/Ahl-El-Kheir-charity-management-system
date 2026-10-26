@@ -145,6 +145,11 @@ $testPayrollMonth = 0;
 $testPayrollYear = 0;
 $testPayrollEmployeeId = 0;
 $testPayrollJournalId = 0;
+$testLegacyPayrollId = 0;
+$testLegacyPayrollProofStorageKey = '';
+$testLegacyPayrollMonth = 0;
+$testLegacyPayrollYear = 0;
+$testLegacyPayrollJournalId = 0;
 $testPayrollPeriodSettingsTouched = false;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
@@ -315,6 +320,64 @@ try {
     ], $adminToken, 20);
     $journalCountAfterDuplicate = (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type='payroll' AND reference_id=" . $testPayrollId . " AND status='posted'")->fetchColumn();
     mobileApiExpect($duplicatePayrollConfirm['status'] === 409 && $journalCountAfterDuplicate === 1, 'duplicate payroll transfer confirmation is rejected without duplicate journal posting');
+
+    $legacyExpenseAccountId = (int)$pdo->query("SELECT id FROM accounts WHERE code='5200' LIMIT 1")->fetchColumn();
+    mobileApiExpect($legacyExpenseAccountId > 0, 'legacy evidence fixture has the existing payroll expense account');
+    for ($candidateYear = 2099; $candidateYear >= 2090 && $testLegacyPayrollMonth === 0; $candidateYear--) {
+        for ($candidateMonth = 12; $candidateMonth >= 1; $candidateMonth--) {
+            if ($candidateYear === $testPayrollYear && $candidateMonth === $testPayrollMonth) continue;
+            $exists = $pdo->prepare('SELECT id FROM payroll WHERE employee_id=? AND month=? AND year=? LIMIT 1');
+            $exists->execute([$testPayrollEmployeeId, $candidateMonth, $candidateYear]);
+            if (!$exists->fetchColumn()) {
+                $testLegacyPayrollMonth = $candidateMonth;
+                $testLegacyPayrollYear = $candidateYear;
+                break;
+            }
+        }
+    }
+    mobileApiExpect($testLegacyPayrollMonth > 0 && $testLegacyPayrollYear > 0, 'legacy evidence fixture has a second unique payroll period');
+    $legacyPaymentDate = sprintf('%04d-%02d-15', $testLegacyPayrollYear, $testLegacyPayrollMonth);
+    $pdo->prepare(
+        "INSERT INTO payroll
+          (employee_id,month,year,basic_salary,allowances,overtime,deductions,salary_advance_deduction,net_salary,status,payment_date,payment_account_id,accounting_status)
+         VALUES (?,?,?,500,0,0,0,0,500,'paid',?,?,'posted')"
+    )->execute([$testPayrollEmployeeId, $testLegacyPayrollMonth, $testLegacyPayrollYear, $legacyPaymentDate, $testPayrollAccountId]);
+    $testLegacyPayrollId = (int)$pdo->lastInsertId();
+    $pdo->prepare(
+        "INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by)
+         VALUES (?,?,?,'payroll',?,'posted',?)"
+    )->execute(['MOB-LEGACY-' . $testLegacyPayrollId, $legacyPaymentDate, 'Disposable legacy payroll evidence fixture', $testLegacyPayrollId, $userId]);
+    $testLegacyPayrollJournalId = (int)$pdo->lastInsertId();
+    $pdo->prepare('INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,500,0,?),(?,?,0,500,?)')
+        ->execute([$testLegacyPayrollJournalId,$legacyExpenseAccountId,'Legacy payroll expense',$testLegacyPayrollJournalId,$testPayrollAccountId,'Legacy payroll transfer']);
+    $pdo->prepare('UPDATE payroll SET accounting_entry_id=? WHERE id=?')->execute([$testLegacyPayrollJournalId,$testLegacyPayrollId]);
+    $legacyUpload = mobileApiMultipartRequest(
+        '/api/v1/hr/payroll_management.php',
+        ['action'=>'upload_legacy_payment_evidence','payroll_id'=>(string)$testLegacyPayrollId,'month'=>(string)$testLegacyPayrollMonth,'year'=>(string)$testLegacyPayrollYear],
+        'proof_file','legacy-payroll-proof.pdf',$payrollProofBytes,'application/pdf',$adminToken
+    );
+    $legacyProofStmt = $pdo->prepare('SELECT proof_state,storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
+    $legacyProofStmt->execute([$testLegacyPayrollId]);
+    $legacyProof = $legacyProofStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $testLegacyPayrollProofStorageKey = (string)($legacyProof['storage_key'] ?? '');
+    $legacyPayrollStmt = $pdo->prepare('SELECT status,payment_date,accounting_status,accounting_entry_id FROM payroll WHERE id=?');
+    $legacyPayrollStmt->execute([$testLegacyPayrollId]);
+    $legacyPayrollAfter = $legacyPayrollStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $legacyJournalLines = $pdo->prepare('SELECT COUNT(*) AS line_count,ROUND(SUM(debit),2) AS debit_total,ROUND(SUM(credit),2) AS credit_total FROM journal_lines WHERE entry_id=?');
+    $legacyJournalLines->execute([$testLegacyPayrollJournalId]);
+    $legacyJournalAfter = $legacyJournalLines->fetch(PDO::FETCH_ASSOC) ?: [];
+    mobileApiExpect(
+        $legacyUpload['status'] === 200
+        && ($legacyProof['proof_state'] ?? '') === 'legacy_evidence'
+        && ($legacyPayrollAfter['status'] ?? '') === 'paid'
+        && ($legacyPayrollAfter['payment_date'] ?? '') === $legacyPaymentDate
+        && ($legacyPayrollAfter['accounting_status'] ?? '') === 'posted'
+        && (int)($legacyPayrollAfter['accounting_entry_id'] ?? 0) === $testLegacyPayrollJournalId
+        && (int)($legacyJournalAfter['line_count'] ?? 0) === 2
+        && (float)($legacyJournalAfter['debit_total'] ?? 0) === 500.0
+        && (float)($legacyJournalAfter['credit_total'] ?? 0) === 500.0,
+        'legacy evidence attaches without changing paid history, payment date, journal link or balanced accounting'
+    );
 
     $adminNannyActionDenied = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
         'action' => 'confirm_item', 'item_id' => 1,
@@ -1540,8 +1603,22 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testLegacyPayrollId > 0) {
+        $legacyProofLookup = $pdo->prepare('SELECT storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
+        $legacyProofLookup->execute([$testLegacyPayrollId]);
+        $storedLegacyProofKey = (string)($legacyProofLookup->fetchColumn() ?: $testLegacyPayrollProofStorageKey);
+        if ($storedLegacyProofKey !== '' && preg_match('/^[a-f0-9]{64}\\.(pdf|jpg|png)$/', $storedLegacyProofKey)) {
+            $legacyProofPath = dirname(__DIR__) . '/storage/private/payroll-proofs/' . $storedLegacyProofKey;
+            if (is_file($legacyProofPath)) @unlink($legacyProofPath);
+        }
+        $pdo->prepare('DELETE FROM hr_payroll_payment_proofs WHERE payroll_id=?')->execute([$testLegacyPayrollId]);
+        $pdo->prepare('UPDATE payroll SET accounting_entry_id=NULL WHERE id=?')->execute([$testLegacyPayrollId]);
+        $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([$testLegacyPayrollJournalId]);
+        $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([$testLegacyPayrollJournalId]);
+        $pdo->prepare('DELETE FROM payroll WHERE id=?')->execute([$testLegacyPayrollId]);
+    }
     if ($testPayrollId > 0) {
-        $payrollProofLookup = $pdo->prepare('SELECT storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
+        $payrollProofLookup = $pdo.prepare('SELECT storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
         $payrollProofLookup->execute([$testPayrollId]);
         $storedPayrollProofKey = (string)($payrollProofLookup->fetchColumn() ?: $testPayrollProofStorageKey);
         if ($storedPayrollProofKey !== '' && preg_match('/^[a-f0-9]{64}\\.(pdf|jpg|png)$/', $storedPayrollProofKey)) {
