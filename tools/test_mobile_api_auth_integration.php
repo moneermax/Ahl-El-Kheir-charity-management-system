@@ -150,6 +150,9 @@ $testLegacyPayrollProofStorageKey = '';
 $testLegacyPayrollMonth = 0;
 $testLegacyPayrollYear = 0;
 $testLegacyPayrollJournalId = 0;
+$testDraftPayrollId = 0;
+$testDraftPayrollMonth = 0;
+$testDraftPayrollYear = 0;
 $testPayrollPeriodSettingsTouched = false;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
@@ -393,7 +396,70 @@ try {
         && (float)($legacyJournalAfter['debit_total'] ?? 0) === 500.0
         && (float)($legacyJournalAfter['credit_total'] ?? 0) === 500.0,
         'legacy evidence attaches without changing paid history, payment date, journal link or balanced accounting'
+    ); 
+
+    for ($candidateYear = 2099; $candidateYear >= 2090 && $testDraftPayrollMonth === 0; $candidateYear--) {
+        for ($candidateMonth = 12; $candidateMonth >= 1; $candidateMonth--) {
+            if (($candidateYear === $testPayrollYear && $candidateMonth === $testPayrollMonth)
+                || ($candidateYear === $testLegacyPayrollYear && $candidateMonth === $testLegacyPayrollMonth)) continue;
+            $exists = $pdo->prepare('SELECT id FROM payroll WHERE employee_id=? AND month=? AND year=? LIMIT 1');
+            $exists->execute([$testPayrollEmployeeId, $candidateMonth, $candidateYear]);
+            if (!$exists->fetchColumn()) {
+                $testDraftPayrollMonth = $candidateMonth;
+                $testDraftPayrollYear = $candidateYear;
+                break;
+            }
+        }
+    }
+    mobileApiExpect($testDraftPayrollMonth > 0 && $testDraftPayrollYear > 0, 'draft payroll fixture has a third unique period');
+    $pdo->prepare(
+        "INSERT INTO payroll
+          (employee_id,month,year,basic_salary,allowances,overtime,deductions,salary_advance_deduction,net_salary,status)
+         VALUES (?,?,?,1000,0,0,0,0,1000,'draft')"
+    )->execute([$testPayrollEmployeeId, $testDraftPayrollMonth, $testDraftPayrollYear]);
+    $testDraftPayrollId = (int)$pdo->lastInsertId();
+    $draftEdit = mobileApiRequest('/api/v1/hr/payroll_management.php', 'POST', [
+        'action'=>'update_amounts','payroll_id'=>$testDraftPayrollId,'month'=>$testDraftPayrollMonth,'year'=>$testDraftPayrollYear,
+        'allowances'=>100,'overtime'=>25,'deductions'=>50,
+    ], $adminToken, 20);
+    $draftAfterEditStmt = $pdo->prepare('SELECT status,basic_salary,allowances,overtime,deductions,attendance_deduction,salary_advance_deduction,incentive_amount,net_salary FROM payroll WHERE id=?');
+    $draftAfterEditStmt->execute([$testDraftPayrollId]);
+    $draftAfterEdit = $draftAfterEditStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $draftExpectedNet = round(
+        (float)($draftAfterEdit['basic_salary'] ?? 0)
+        + (float)($draftAfterEdit['allowances'] ?? 0)
+        + (float)($draftAfterEdit['overtime'] ?? 0)
+        - (float)($draftAfterEdit['deductions'] ?? 0)
+        - (float)($draftAfterEdit['attendance_deduction'] ?? 0)
+        - (float)($draftAfterEdit['salary_advance_deduction'] ?? 0)
+        + (float)($draftAfterEdit['incentive_amount'] ?? 0),
+        2
     );
+    mobileApiExpect(
+        $draftEdit['status'] === 200
+        && ($draftAfterEdit['status'] ?? '') === 'draft'
+        && (float)($draftAfterEdit['allowances'] ?? 0) === 100.0
+        && (float)($draftAfterEdit['overtime'] ?? 0) === 25.0
+        && (float)($draftAfterEdit['deductions'] ?? 0) === 50.0
+        && (float)($draftAfterEdit['net_salary'] ?? 0) === $draftExpectedNet,
+        'native payroll draft edits retain draft status and recompute net from all payroll components'
+    );
+    $draftApprove = mobileApiRequest('/api/v1/hr/payroll_management.php', 'POST', [
+        'action'=>'approve','payroll_id'=>$testDraftPayrollId,'month'=>$testDraftPayrollMonth,'year'=>$testDraftPayrollYear,
+    ], $adminToken, 20);
+    $draftAfterApproveStmt = $pdo->prepare('SELECT status,accounting_status,accounting_entry_id FROM payroll WHERE id=?');
+    $draftAfterApproveStmt->execute([$testDraftPayrollId]);
+    $draftAfterApprove = $draftAfterApproveStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $draftJournalCount = (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type='payroll' AND reference_id=" . $testDraftPayrollId)->fetchColumn();
+    mobileApiExpect(
+        $draftApprove['status'] === 200
+        && ($draftAfterApprove['status'] ?? '') === 'approved'
+        && ($draftAfterApprove['accounting_status'] ?? '') === 'ready'
+        && empty($draftAfterApprove['accounting_entry_id'])
+        && $draftJournalCount === 0,
+        'native payroll approval changes only draft status and does not mark paid or post a journal'
+    );
+
 
     $adminNannyActionDenied = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
         'action' => 'confirm_item', 'item_id' => 1,
@@ -1619,6 +1685,7 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testDraftPayrollId > 0) $pdo->prepare('DELETE FROM payroll WHERE id=?')->execute([$testDraftPayrollId]);
     if ($testLegacyPayrollId > 0) {
         $legacyProofLookup = $pdo->prepare('SELECT storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
         $legacyProofLookup->execute([$testLegacyPayrollId]);
