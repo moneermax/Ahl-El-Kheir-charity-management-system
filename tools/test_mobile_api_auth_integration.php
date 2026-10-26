@@ -1258,7 +1258,11 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
-    if ($testLogoPath !== '') @unlink(dirname(__DIR__) . '/' . $testLogoPath);
+    if ($testLogoPath !== '') {
+        @unlink(dirname(__DIR__) . '/' . $testLogoPath);
+        $pdo->prepare("DELETE FROM audit_log WHERE entity_type='settings' AND new_values LIKE ? AND created_at>=?")
+            ->execute(['%' . $testLogoPath . '%', $testStart]);
+    }
     if ($testLogoSettingExisted) {
         $pdo->prepare('INSERT INTO settings (setting_key,setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)')
             ->execute(['site_logo', (string)$testPreviousLogoValue]);
