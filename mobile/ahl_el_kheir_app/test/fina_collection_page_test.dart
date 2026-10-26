@@ -19,7 +19,9 @@ void main() {
 
     await tester.enterText(find.byWidgetPredicate((widget) => widget is TextField && widget.decoration?.labelText == 'اسم مصدر الأموال *'), 'متبرع تجريبي');
     await tester.enterText(find.byWidgetPredicate((widget) => widget is TextField && widget.decoration?.labelText == 'المبلغ *'), '125.50');
-    await tester.tap(find.widgetWithText(FilledButton, 'إرسال للمراجعة المالية'));
+    final submitButton = find.widgetWithText(FilledButton, 'إرسال للمراجعة المالية');
+    await tester.ensureVisible(submitButton);
+    await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);
