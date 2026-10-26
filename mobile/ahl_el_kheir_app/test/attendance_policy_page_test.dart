@@ -41,7 +41,12 @@ void main() {
     expect(find.text('Weekly working days'), findsOneWidget);
     expect(find.text('Auto check-in on login'), findsOneWidget);
     expect(find.text('Automatic absence finalization'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.text('Policy version history'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
     expect(find.text('Policy version history'), findsOneWidget);
-    expect(find.text('Current policy'), findsWidgets);
+    expect(find.textContaining('Current policy'), findsWidgets);
   });
 }
