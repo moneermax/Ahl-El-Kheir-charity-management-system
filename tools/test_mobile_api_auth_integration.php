@@ -85,6 +85,7 @@ $testLeaveAttendanceDate = '';
 $testSponsorId = 0;
 $testFinaSourceId = 0;
 $testFinaCollectionId = 0;
+$testBackupName = '';
 $testAccountId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
@@ -156,6 +157,36 @@ try {
         && count($databaseIndex['json']['data']['tables']) > 0,
         'administrator can list real database tables and row counts'
     );
+    $backupList = mobileApiRequest('/api/v1/admin/backups.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $backupList['status'] === 200
+        && is_array($backupList['json']['data']['backups'] ?? null),
+        'administrator can list available database backup files'
+    );
+    $createdBackup = mobileApiRequest('/api/v1/admin/backups.php', 'POST', ['action' => 'create'], $adminToken, 45);
+    $testBackupName = (string)($createdBackup['json']['data']['backup']['filename'] ?? '');
+    $backupPath = dirname(__DIR__) . '/storage/backups/' . $testBackupName;
+    mobileApiExpect(
+        $createdBackup['status'] === 201
+        && preg_match('/^backup_[0-9]{8}_[0-9]{6}_[a-f0-9]{6}\\.sql$/', $testBackupName) === 1
+        && is_file($backupPath)
+        && filesize($backupPath) > 500,
+        'administrator can create a real SQL backup on the disposable database'
+    );
+    $downloadedBackup = mobileApiRequest('/api/v1/admin/backups.php?download=' . rawurlencode($testBackupName), 'GET', null, $adminToken, 30);
+    mobileApiExpect(
+        $downloadedBackup['status'] === 200
+        && strlen($downloadedBackup['raw']) > 500
+        && str_contains($downloadedBackup['raw'], 'CREATE TABLE'),
+        'administrator can download the generated SQL backup through the authenticated API'
+    );
+    $deletedBackup = mobileApiRequest('/api/v1/admin/backups.php', 'POST', ['action' => 'delete', 'filename' => $testBackupName], $adminToken, 20);
+    mobileApiExpect(
+        $deletedBackup['status'] === 200
+        && !is_file($backupPath),
+        'administrator can delete a selected backup file after the API action'
+    );
+
     $finaDashboard = mobileApiRequest('/api/v1/fina/dashboard.php', 'GET', null, $adminToken, 20);
     mobileApiExpect(
         $finaDashboard['status'] === 200
@@ -197,6 +228,10 @@ try {
     mobileApiExpect($nannyFinaDashboard['status'] === 403, 'nanny cannot access the Fina dashboard');
     $nannyDatabase = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyDatabase['status'] === 403, 'nanny cannot access the administrator database browser');
+    $nannyBackupList = mobileApiRequest('/api/v1/admin/backups.php', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyBackupList['status'] === 403, 'nanny cannot list database backups');
+    $nannyBackupCreate = mobileApiRequest('/api/v1/admin/backups.php', 'POST', ['action' => 'create'], $nannyFinaToken);
+    mobileApiExpect($nannyBackupCreate['status'] === 403, 'nanny cannot create database backups');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
     $unauthenticatedFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
@@ -226,6 +261,11 @@ try {
     ], $adminToken, 20);
     $testFinaCollectionId = (int)($createdFina['json']['data']['id'] ?? 0);
     $finaRow = null;
+    if ($testBackupName !== '') {
+        @unlink(dirname(__DIR__) . '/storage/backups/' . basename($testBackupName));
+        $pdo->prepare("DELETE FROM audit_log WHERE entity_type IN ('database','backup') AND new_values LIKE ?")
+            ->execute(['%' . $testBackupName . '%']);
+    }
     if ($testFinaCollectionId > 0) {
         $stmt = $pdo->prepare('SELECT fina_source_id,status,amount,accounting_journal_id,created_by FROM fina_collections WHERE id=?');
         $stmt->execute([$testFinaCollectionId]);
