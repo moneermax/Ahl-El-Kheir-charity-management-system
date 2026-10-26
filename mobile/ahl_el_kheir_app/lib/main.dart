@@ -921,7 +921,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openNativeTool('modules/system/backup.php');
         return;
       case 'database':
-        if (user?['raw_role_code']?.toString() != 'admin') {
+        if (user?['role_code']?.toString() != 'admin') {
           ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
             SnackBar(content: Text(english
                 ? 'Database browser is restricted to the administrator role.'
