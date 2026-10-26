@@ -65,6 +65,7 @@ class _FinaCollectionPageState extends State<FinaCollectionPage> {
   }
 
   void selectSponsor(Map<String, dynamic> sponsor) {
+    sponsorQueryVersion++;
     setState(() {
       sponsorId.text = (sponsor['id'] ?? '').toString();
       sponsorSearch.text = (sponsor['full_name'] ?? '').toString();
@@ -164,6 +165,8 @@ class _FinaCollectionPageState extends State<FinaCollectionPage> {
         ],onChanged:saving?null:(v){
           if(v==null)return;
           setState((){
+            sponsorQueryVersion++;
+            if(sourceType=='sponsor' && v!='sponsor') name.clear();
             sourceType=v;
             sponsorId.clear();
             sponsorSearch.clear();
