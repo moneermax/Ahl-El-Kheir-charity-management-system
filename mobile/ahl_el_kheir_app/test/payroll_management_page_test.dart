@@ -52,6 +52,7 @@ void main() {
     expect(find.byKey(const Key('payroll-confirm-transfer-1')), findsNothing);
     await tester.scrollUntilVisible(find.byKey(const Key('payroll-confirm-transfer-2')), 180, scrollable: scrollable);
     expect(find.byKey(const Key('payroll-confirm-transfer-2')), findsOneWidget);
+    expect(find.byKey(const Key('payroll-view-proof-2')), findsOneWidget);
     await tester.tap(find.byKey(const Key('payroll-confirm-transfer-2')));
     await tester.pumpAndSettle();
     expect(find.text('Confirm transfer execution'), findsOneWidget);
