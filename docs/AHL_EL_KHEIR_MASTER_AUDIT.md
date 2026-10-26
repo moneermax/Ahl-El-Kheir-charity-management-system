@@ -4473,7 +4473,7 @@ GitHub Actions run 40060794073 completed dependency resolution and Dart analysis
 
 
 ## 2026-10-24 — Flutter physical-device connection and brand alignment
-Finding: the first APK defaulted to `10.0.2.2:8081`, which is an Android-emulator host, not the user's physical handset. User confirmed local laptop host `192.168.18.9`, Apache port `881`. Source now targets that LAN URL and uses the existing website logo and navy design tokens. This is a source-level correction only; CI, handset connectivity, API migration, and runtime authentication remain unverified.
+Historical note corrected: the old checkpoint incorrectly recorded Apache port `881`. Direct local and phone-browser checks later confirmed port `8081` is reachable and `881` has no listener. Current app/workflow defaults use `192.168.18.9:8081`; the mobile-session migration was later confirmed applied. Current native design uses violet/amber with lavender surfaces. CI does not replace physical-device acceptance.
 
 
 ## 2026-10-24 — Flutter theme CI analyzer finding
@@ -4994,7 +4994,7 @@ The earlier shared Flutter home was materially different from `dashboard/admin_d
 Source commits on `main`:
 - `8f659a0cec3ae9d565dd8bba98297da2f94b7639`: expose native leave requests and salary statements from the mobile workspace.
 - `842e4382bcf922f9c67b82fcc414abdd7e72fba8` and `9e3044d842c1893bf685ef2bb87ae253a7d2c150`: add a role-specific quick-tools section derived from each existing web dashboard. Website-only links are labelled WEB and remain subject to website server-side authorization; this is navigation coverage, not native workflow parity.
-- `fbc30ebf5c1df671e6fcca6b07c39963abe3661e` and `a2eb57da68fde5a1cb206732ed4781df609c0382`: align the mobile API default and Android workflow default with the documented phone LAN endpoint `http://192.168.18.9:881/AhlElKheir/api/v1`. The previous 8081 default did not match the documented phone-facing Apache port and is superseded.
+- Historical correction: those commits restored 881 based on incorrect documentation. The verified local/phone-browser port is 8081; no listener was found on 881. Commit `da04d0fea8e73f505fa521546e653ca4e263e0c0` restores 8081 and corrects saved-URL migration.
 
 The workspace now exposes the existing native personal leave-request page and finalized salary-statement page, and adds role-scoped quick links matching the real GM, VGM, FM, Accountant, Supervisor, Nanny, Administration/Staff, HR, and Projects dashboard routes. The API enforces leave-queue permissions and returns salary statements only for paid payrolls posted to accounting. No account without a linked employee profile is given another employee's records.
 
