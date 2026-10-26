@@ -5414,3 +5414,15 @@ The native global-search screen now includes monthly disbursement search for the
 ## 2026-10-26 — Vice General Manager native disbursement read access
 
 Source audit confirmed the existing web monthly-disbursement page allows `vice_general_manager` to view the register, while the native GET API omitted that role. Commit `1fb5efe34b85a6f484c50e7420e4218b74e7031c` adds VGM to the read endpoint and native global-search category only. All mutation capabilities remain false for VGM, and action endpoints were not widened. Added a widget test for VGM search visibility, disposable-MariaDB integration asserting read access and no create/transfer/void/reopen/confirm capabilities, and explicit PHP lint for the endpoint. CI is pending; no device acceptance is claimed.
+
+
+## 2026-10-26 — Mobile API error traced to stale APK artifact
+
+The user's reported login error was investigated against the actual current source and the APK previously supplied. The APK link previously provided pointed to workflow run `40318833316`, built from source commit `339440d1747abdf4388188bcb8809cead65c3df7`. The current `main` was already 95 commits ahead at `4a628f789d717273517a6fd42ef2bb6d34673a56`; comparing those refs shows `mobile/ahl_el_kheir_app/lib/main.dart` changed by 427 lines (362 additions, 65 deletions), and the older artifact source lacks `probeApiEndpoint`, `migrateKnownLegacyApiBaseUrl`, and the current host/port-specific connection diagnostics. Therefore the previous device test used a stale APK; it did not test the then-current source. This was an artifact handoff mistake, not evidence that the current source's API fix failed.
+
+Corrective changes now on `main`:
+- `c04ebc24e18aea00f75df6598b312e455bea0e48`: Flutter APK build embeds `MOBILE_BUILD_REVISION=$GITHUB_SHA` and publishes `mobile-build-info.txt` alongside the APK.
+- `5216d8f8230688935c6eaeccbc20178d8a6b0d1c`: login screen displays the shortened source revision so a stale installation can be identified before testing.
+- `a24cbdd88a0b4a112bbb4fc631337e1c44f08942` and `df18877c5a99c4c12ad5dc2dc59cade622e1f64d`: update API diagnostic regression tests and expected build label.
+
+The source still defaults to `http://192.168.18.9:8081/AhlElKheir/api/v1` and migrates only the exact previously saved `192.168.18.9:881/AhlElKheir/api/v1` URL. The build/provenance workflow and login revision indicator are committed; CI analysis, tests, APK publication, and actual phone connectivity for this new head must be checked before sending another APK for acceptance. Do not ask the user to retest the stale artifact. No external-browser handoff is permitted. The app intentionally uses a distinct violet/amber/pink visual identity rather than copying the web palette.
