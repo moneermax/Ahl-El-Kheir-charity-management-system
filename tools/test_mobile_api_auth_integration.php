@@ -139,6 +139,13 @@ $testBatchTransferTransactionId = 0;
 $testBatchTransferJournalId = 0;
 $testAccountId = 0;
 $testAttendancePolicyId = 0;
+$testPayrollId = 0;
+$testPayrollProofStorageKey = '';
+$testPayrollMonth = 0;
+$testPayrollYear = 0;
+$testPayrollEmployeeId = 0;
+$testPayrollJournalId = 0;
+$testPayrollPeriodSettingsTouched = false;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -197,12 +204,117 @@ try {
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['supervisor'], $userId]);
     $supervisorDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $token);
     mobileApiExpect($supervisorDisbursements['status'] === 403, 'supervisor role is denied monthly disbursements because the existing web page does not permit it');
+    $supervisorPayroll = mobileApiRequest('/api/v1/hr/payroll_management.php?month=10&year=2026', 'GET', null, $token);
+    mobileApiExpect($supervisorPayroll['status'] === 403, 'supervisor is denied native payroll management by the existing web role boundary');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $adminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($adminLogin['status'] === 200 && isset($adminLogin['json']['data']['access_token']), 'administrator login succeeds for finance overview integration');
     $adminToken = (string)$adminLogin['json']['data']['access_token'];
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
+
+    $payrollRead = mobileApiRequest('/api/v1/hr/payroll_management.php?month=10&year=2026', 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $payrollRead['status'] === 200
+        && ($payrollRead['json']['data']['period'] ?? '') === '2026-10'
+        && is_array($payrollRead['json']['data']['rows'] ?? null)
+        && ($payrollRead['json']['data']['read_only'] ?? false) === true
+        && ($payrollRead['json']['data']['transfer_schema_available'] ?? false) === true,
+        'administrator can read native payroll rows, account choices and transfer-proof state'
+    );
+    $payrollInvalidPeriod = mobileApiRequest('/api/v1/hr/payroll_management.php?month=13&year=2026', 'GET', null, $adminToken);
+    mobileApiExpect($payrollInvalidPeriod['status'] === 422, 'native payroll management rejects invalid periods');
+
+    $testPayrollEmployeeId = (int)$pdo->query(
+        "SELECT e.id FROM employees e
+         WHERE NOT EXISTS (
+           SELECT 1 FROM hr_salary_advance_requests r
+           WHERE r.employee_id=e.id AND r.status='disbursed' AND COALESCE(r.outstanding_balance,0)>0
+         )
+         ORDER BY e.id LIMIT 1"
+    )->fetchColumn();
+    $testPayrollAccountId = (int)$pdo->query("SELECT id FROM accounts WHERE code='1200' AND is_active=1 ORDER BY id LIMIT 1")->fetchColumn();
+    mobileApiExpect($testPayrollEmployeeId > 0 && $testPayrollAccountId > 0, 'payroll proof fixture has an employee without outstanding salary advances and the existing active 1200 account');
+    for ($candidateYear = 2099; $candidateYear >= 2090 && $testPayrollMonth === 0; $candidateYear--) {
+        for ($candidateMonth = 12; $candidateMonth >= 1; $candidateMonth--) {
+            $exists = $pdo->prepare('SELECT id FROM payroll WHERE employee_id=? AND month=? AND year=? LIMIT 1');
+            $exists->execute([$testPayrollEmployeeId, $candidateMonth, $candidateYear]);
+            if (!$exists->fetchColumn()) {
+                $testPayrollMonth = $candidateMonth;
+                $testPayrollYear = $candidateYear;
+                break;
+            }
+        }
+    }
+    mobileApiExpect($testPayrollMonth > 0 && $testPayrollYear > 0, 'disposable payroll test period is unique for the selected employee');
+    $pdo->prepare(
+        "INSERT INTO payroll
+          (employee_id,month,year,basic_salary,allowances,overtime,deductions,salary_advance_deduction,net_salary,status,payment_account_id,accounting_status)
+         VALUES (?,?,?,500,0,0,0,0,500,'approved',?,'ready')"
+    )->execute([$testPayrollEmployeeId, $testPayrollMonth, $testPayrollYear, $testPayrollAccountId]);
+    $testPayrollId = (int)$pdo->lastInsertId();
+
+    $payrollProofBytes = "%PDF-1.4\n% Disposable mobile payroll proof fixture\n%%EOF\n";
+    $uploadPayrollProof = mobileApiMultipartRequest(
+        '/api/v1/hr/payroll_management.php',
+        ['action'=>'upload_payment_proof','payroll_id'=>(string)$testPayrollId,'month'=>(string)$testPayrollMonth,'year'=>(string)$testPayrollYear],
+        'proof_file','payroll-proof.pdf',$payrollProofBytes,'application/pdf',$adminToken
+    );
+    $payrollProofRow = $pdo->prepare('SELECT proof_state,storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
+    $payrollProofRow->execute([$testPayrollId]);
+    $proofAfterUpload = $payrollProofRow->fetch(PDO::FETCH_ASSOC) ?: [];
+    $testPayrollProofStorageKey = (string)($proofAfterUpload['storage_key'] ?? '');
+    $statusAfterProof = $pdo->prepare('SELECT status,accounting_status FROM payroll WHERE id=?');
+    $statusAfterProof->execute([$testPayrollId]);
+    $afterProofPayroll = $statusAfterProof->fetch(PDO::FETCH_ASSOC) ?: [];
+    $journalCountAfterProof = (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type='payroll' AND reference_id=" . $testPayrollId)->fetchColumn();
+    mobileApiExpect(
+        $uploadPayrollProof['status'] === 200
+        && ($proofAfterUpload['proof_state'] ?? '') === 'prepared'
+        && ($afterProofPayroll['status'] ?? '') === 'approved'
+        && ($afterProofPayroll['accounting_status'] ?? '') === 'ready'
+        && $journalCountAfterProof === 0,
+        'uploading a payroll proof stores prepared evidence only and does not pay or post accounting'
+    );
+
+    $wrongPeriodConfirm = mobileApiRequest('/api/v1/hr/payroll_management.php', 'POST', [
+        'action'=>'confirm_transfer','payroll_id'=>$testPayrollId,'month'=>$testPayrollMonth === 12 ? 11 : $testPayrollMonth + 1,'year'=>$testPayrollYear,
+    ], $adminToken);
+    mobileApiExpect($wrongPeriodConfirm['status'] === 409, 'payroll transfer confirmation rejects a row outside the selected period');
+
+    $confirmPayroll = mobileApiRequest('/api/v1/hr/payroll_management.php', 'POST', [
+        'action'=>'confirm_transfer','payroll_id'=>$testPayrollId,'month'=>$testPayrollMonth,'year'=>$testPayrollYear,
+    ], $adminToken, 20);
+    $confirmedPayrollStmt = $pdo->prepare('SELECT status,accounting_status,accounting_entry_id FROM payroll WHERE id=?');
+    $confirmedPayrollStmt->execute([$testPayrollId]);
+    $confirmedPayroll = $confirmedPayrollStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $confirmedProofStmt = $pdo->prepare('SELECT proof_state,confirmed_by_user_id,confirmed_at FROM hr_payroll_payment_proofs WHERE payroll_id=?');
+    $confirmedProofStmt->execute([$testPayrollId]);
+    $confirmedProof = $confirmedProofStmt->fetch(PDO::FETCH_ASSOC) ?: [];
+    $testPayrollJournalId = (int)($confirmedPayroll['accounting_entry_id'] ?? 0);
+    $journalBalance = $pdo->prepare('SELECT ROUND(COALESCE(SUM(debit),0),2) AS debit_total,ROUND(COALESCE(SUM(credit),0),2) AS credit_total FROM journal_lines WHERE entry_id=?');
+    $journalBalance->execute([$testPayrollJournalId]);
+    $balanced = $journalBalance->fetch(PDO::FETCH_ASSOC) ?: [];
+    $journalActorStmt = $pdo->prepare('SELECT created_by FROM journal_entries WHERE id=?');
+    $journalActorStmt->execute([$testPayrollJournalId]);
+    mobileApiExpect(
+        $confirmPayroll['status'] === 200
+        && ($confirmedPayroll['status'] ?? '') === 'paid'
+        && ($confirmedPayroll['accounting_status'] ?? '') === 'posted'
+        && $testPayrollJournalId > 0
+        && ($confirmedProof['proof_state'] ?? '') === 'confirmed'
+        && (int)($confirmedProof['confirmed_by_user_id'] ?? 0) === $userId
+        && !empty($confirmedProof['confirmed_at'])
+        && (float)($balanced['debit_total'] ?? 0) === 500.0
+        && (float)($balanced['credit_total'] ?? 0) === 500.0
+        && (int)$journalActorStmt->fetchColumn() === $userId,
+        'explicit payroll transfer confirmation atomically records actor, paid status, confirmed proof and balanced posted accounting'
+    );
+    $duplicatePayrollConfirm = mobileApiRequest('/api/v1/hr/payroll_management.php', 'POST', [
+        'action'=>'confirm_transfer','payroll_id'=>$testPayrollId,'month'=>$testPayrollMonth,'year'=>$testPayrollYear,
+    ], $adminToken, 20);
+    $journalCountAfterDuplicate = (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type='payroll' AND reference_id=" . $testPayrollId . " AND status='posted'")->fetchColumn();
+    mobileApiExpect($duplicatePayrollConfirm['status'] === 409 && $journalCountAfterDuplicate === 1, 'duplicate payroll transfer confirmation is rejected without duplicate journal posting');
 
     $adminNannyActionDenied = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
         'action' => 'confirm_item', 'item_id' => 1,
@@ -1428,6 +1540,25 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testPayrollId > 0) {
+        $payrollProofLookup = $pdo->prepare('SELECT storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
+        $payrollProofLookup->execute([$testPayrollId]);
+        $storedPayrollProofKey = (string)($payrollProofLookup->fetchColumn() ?: $testPayrollProofStorageKey);
+        if ($storedPayrollProofKey !== '' && preg_match('/^[a-f0-9]{64}\\.(pdf|jpg|png)$/', $storedPayrollProofKey)) {
+            $proofPath = dirname(__DIR__) . '/storage/private/payroll-proofs/' . $storedPayrollProofKey;
+            if (is_file($proofPath)) @unlink($proofPath);
+        }
+        $pdo->prepare("DELETE FROM notifications WHERE created_at>=? AND (link LIKE ? OR link LIKE ?)")
+            ->execute([$testStart, '%payroll_statement.php?id=' . $testPayrollId, '%gm_payroll_period_report.php?month=' . $testPayrollMonth . '&year=' . $testPayrollYear]);
+        $pdo->prepare('DELETE FROM hr_payroll_payment_proofs WHERE payroll_id=?')->execute([$testPayrollId]);
+        $journalIds = $pdo->prepare("SELECT id FROM journal_entries WHERE reference_type='payroll' AND reference_id=?");
+        $journalIds->execute([$testPayrollId]);
+        foreach ($journalIds->fetchAll(PDO::FETCH_COLUMN) as $journalId) {
+            $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([(int)$journalId]);
+            $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([(int)$journalId]);
+        }
+        $pdo->prepare('DELETE FROM payroll WHERE id=?')->execute([$testPayrollId]);
+    }
     if ($testAttendancePolicyId > 0) $pdo->prepare('DELETE FROM hr_attendance_policy_versions WHERE id=?')->execute([$testAttendancePolicyId]);
     if ($testOrphanFormChildId > 0 && is_array($testOrphanFormChildSnapshot) && is_array($testOrphanFormFamilySnapshot)) {
         $pdo->prepare('UPDATE family_children SET nationality=?,health_status=?,health_status_other=?,psychological_state=?,psychological_state_other=?,guardian_name=?,guardian_relationship=?,updated_at=? WHERE id=?')
