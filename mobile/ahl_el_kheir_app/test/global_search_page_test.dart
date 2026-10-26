@@ -18,9 +18,9 @@ void main() {
     await tester.enterText(find.byType(TextField),'FAM-001');
     await tester.tap(find.text('بحث'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('FAM-001'),findsOneWidget);
+    expect(find.text('أم أحمد · FAM-001'),findsOneWidget);
     expect(find.textContaining('أم أحمد'),findsOneWidget);
-    await tester.tap(find.textContaining('FAM-001'));
+    await tester.tap(find.text('أم أحمد · FAM-001'));
     expect(openedType,'families'); expect(openedItem?['id'],17);
   });
 
