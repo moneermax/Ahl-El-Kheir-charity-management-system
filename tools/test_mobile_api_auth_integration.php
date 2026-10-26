@@ -99,6 +99,7 @@ $userId = (int)$user['id'];
 $username = (string)$user['username'];
 $knownPassword = 'MobileApi-CI-Only-2026!';
 $testStart = date('Y-m-d H:i:s');
+$testProfileSnapshot = null;
 $testTokenHashes = [];
 $testPasswordChangeRecoveryIds = [];
 $testRecoveryRequestId = 0;
@@ -238,6 +239,62 @@ try {
     $stored = $pdo->prepare('SELECT token_hash FROM mobile_api_sessions WHERE token_hash=?');
     $stored->execute([$tokenHash]);
     mobileApiExpect((string)$stored->fetchColumn() === $tokenHash && $tokenHash !== $token, 'only the SHA-256 token hash is stored');
+
+    $profileSnapshotStmt = $pdo->prepare('SELECT full_name,email,phone,address,birth_date,gender,avatar_path FROM users WHERE id=?');
+    $profileSnapshotStmt->execute([$userId]);
+    $testProfileSnapshot = $profileSnapshotStmt->fetch(PDO::FETCH_ASSOC);
+    mobileApiExpect(is_array($testProfileSnapshot), 'profile integration has a restorable user snapshot');
+    $profileNoToken = mobileApiRequest('/api/v1/account/profile.php', 'GET');
+    mobileApiExpect($profileNoToken['status'] === 401, 'personal profile API rejects unauthenticated reads');
+    $profileRead = mobileApiRequest('/api/v1/account/profile.php', 'GET', null, $token);
+    $profileData = $profileRead['json']['data']['profile'] ?? [];
+    mobileApiExpect(
+        $profileRead['status'] === 200
+        && ($profileData['username'] ?? '') === $username
+        && array_key_exists('has_avatar', $profileData)
+        && !array_key_exists('avatar_path', $profileData),
+        'authenticated profile read returns personal fields without exposing the stored avatar path'
+    );
+    $profileGender = in_array((string)($testProfileSnapshot['gender'] ?? ''), ['male','ذكر'], true)
+        ? 'ذكر'
+        : (in_array((string)($testProfileSnapshot['gender'] ?? ''), ['female','أنثى'], true) ? 'أنثى' : '');
+    $profileUpdate = mobileApiRequest('/api/v1/account/profile.php', 'POST', [
+        'action' => 'update_profile',
+        'full_name' => (string)$testProfileSnapshot['full_name'],
+        'email' => (string)($testProfileSnapshot['email'] ?? ''),
+        'phone' => (string)($testProfileSnapshot['phone'] ?? ''),
+        'address' => (string)($testProfileSnapshot['address'] ?? ''),
+        'birth_date' => (string)($testProfileSnapshot['birth_date'] ?? ''),
+        'gender' => $profileGender,
+    ], $token);
+    mobileApiExpect($profileUpdate['status'] === 200 && ($profileUpdate['json']['data']['profile']['username'] ?? '') === $username, 'profile update validates and saves personal fields using the existing employee identity sync');
+    $invalidProfile = mobileApiRequest('/api/v1/account/profile.php', 'POST', [
+        'action' => 'update_profile',
+        'full_name' => (string)$testProfileSnapshot['full_name'],
+        'email' => 'not-an-email',
+        'phone' => (string)($testProfileSnapshot['phone'] ?? ''),
+        'address' => (string)($testProfileSnapshot['address'] ?? ''),
+        'birth_date' => (string)($testProfileSnapshot['birth_date'] ?? ''),
+        'gender' => $profileGender,
+    ], $token);
+    mobileApiExpect($invalidProfile['status'] === 422 && ($invalidProfile['json']['error']['code'] ?? '') === 'invalid_email', 'profile API rejects invalid email without saving the invalid update');
+
+    $avatarNoToken = mobileApiRequest('/api/v1/account/avatar.php', 'GET');
+    mobileApiExpect($avatarNoToken['status'] === 401, 'private profile photo streaming rejects unauthenticated requests');
+    $pdo->prepare('UPDATE users SET avatar_path=NULL WHERE id=?')->execute([$userId]);
+    $avatarBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADElEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', true);
+    if (!is_string($avatarBytes)) throw new RuntimeException('Could not prepare the tiny PNG fixture.');
+    $avatarUpload = mobileApiMultipartRequest('/api/v1/account/avatar.php', [], 'avatar', 'profile-test.png', $avatarBytes, 'image/png', $token);
+    mobileApiExpect($avatarUpload['status'] === 200 && ($avatarUpload['json']['data']['has_avatar'] ?? false) === true, 'valid profile photo upload stores a private image');
+    $storedAvatarPath = (string)$pdo->query('SELECT avatar_path FROM users WHERE id=' . $userId)->fetchColumn();
+    mobileApiExpect(str_starts_with($storedAvatarPath, 'storage/avatars/user_' . $userId . '_'), 'profile photo stores only the application-relative avatar path');
+    $avatarStream = mobileApiRequest('/api/v1/account/avatar.php', 'GET', null, $token);
+    $avatarContentType = '';
+    foreach ($avatarStream['headers'] as $header) if (stripos($header, 'Content-Type:') === 0) $avatarContentType = strtolower(trim(substr($header, strlen('Content-Type:'))));
+    mobileApiExpect($avatarStream['status'] === 200 && str_starts_with($avatarContentType, 'image/png') && $avatarStream['raw'] === $avatarBytes, 'authenticated profile photo stream returns the exact image bytes with a private image content type');
+    $avatarRemove = mobileApiRequest('/api/v1/account/avatar.php', 'POST', ['action' => 'remove_avatar'], $token);
+    $avatarAfterRemove = (string)($pdo->query('SELECT avatar_path FROM users WHERE id=' . $userId)->fetchColumn() ?: '');
+    mobileApiExpect($avatarRemove['status'] === 200 && $avatarAfterRemove === '', 'profile photo removal clears the database reference');
 
     // Exercise the native finance overview against the imported full schema,
     // using the existing disposable account and restoring its role afterward.
@@ -2221,6 +2278,22 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if (is_array($testProfileSnapshot)) {
+        $currentAvatarStmt = $pdo->prepare('SELECT avatar_path FROM users WHERE id=?');
+        $currentAvatarStmt->execute([$userId]);
+        $currentAvatarPath = (string)($currentAvatarStmt->fetchColumn() ?: '');
+        $originalAvatarPath = (string)($testProfileSnapshot['avatar_path'] ?? '');
+        if ($currentAvatarPath !== '' && $currentAvatarPath !== $originalAvatarPath && str_starts_with($currentAvatarPath, 'storage/avatars/')) {
+            $avatarFile = dirname(__DIR__) . '/' . $currentAvatarPath;
+            if (is_file($avatarFile)) @unlink($avatarFile);
+        }
+        $pdo->prepare('UPDATE users SET full_name=?,email=?,phone=?,address=?,birth_date=?,gender=?,avatar_path=? WHERE id=?')
+            ->execute([
+                $testProfileSnapshot['full_name'], $testProfileSnapshot['email'], $testProfileSnapshot['phone'],
+                $testProfileSnapshot['address'], $testProfileSnapshot['birth_date'], $testProfileSnapshot['gender'],
+                $testProfileSnapshot['avatar_path'], $userId,
+            ]);
+    }
     if (is_array($testJournalVoidActorSnapshot)) {
         $pdo->prepare('UPDATE users SET role_id=?, is_active=?, password_change_required=? WHERE id=?')->execute([
             $testJournalVoidActorSnapshot['role_id'], $testJournalVoidActorSnapshot['is_active'],
