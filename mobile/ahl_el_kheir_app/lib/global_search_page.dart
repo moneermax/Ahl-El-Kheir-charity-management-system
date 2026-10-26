@@ -1,13 +1,18 @@
+import 'dart:typed_data';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 typedef GlobalSearchLoader = Future<Map<String, dynamic>> Function(String type, String query, int page);
 typedef GlobalSearchOpenResult = void Function(String type, Map<String, dynamic> item);
+typedef ArchivedDocumentLoader = Future<Map<String, dynamic>> Function(int versionId);
 
 class GlobalSearchPage extends StatefulWidget {
-  const GlobalSearchPage({super.key, required this.roleCode, required this.english, required this.loadSearch, required this.onOpenResult});
+  const GlobalSearchPage({super.key, required this.roleCode, required this.english, required this.loadSearch, required this.loadDocument, required this.onOpenResult});
   final String roleCode;
   final bool english;
   final GlobalSearchLoader loadSearch;
+  final ArchivedDocumentLoader loadDocument;
   final GlobalSearchOpenResult onOpenResult;
   @override State<GlobalSearchPage> createState() => _GlobalSearchPageState();
 }
@@ -25,6 +30,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     'sudo' || 'super_admin' => 'admin',
     'gm' => 'general_manager',
     'vgm' => 'vice_general_manager',
+    'fm' || 'finance' => 'financial_manager',
     _ => widget.roleCode,
   };
 
@@ -36,6 +42,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     if (['admin','vice_general_manager','general_manager','supervisor','accountant'].contains(r)) result.add('sponsorships');
     // This endpoint authorizes the persisted raw role, unlike the other list APIs.
     if (['admin','financial_manager','general_manager','accountant_staff','nanny'].contains(widget.roleCode)) result.add('payments');
+    if (['admin','general_manager','vice_general_manager','financial_manager','accountant','supervisor','nanny','accountant_staff','administration','projects_manager','project_supervisor','staff'].contains(r)) result.add('documents');
     return result;
   }
 
@@ -47,6 +54,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     'sponsors' => t('الكفلاء','Sponsors'),
     'sponsorships' => t('الكفالات','Sponsorships'),
     'payments' => t('التحويلات الشهرية','Monthly disbursements'),
+    'documents' => t('مستندات المشاريع المؤرشفة','Archived project documents'),
     _ => type,
   };
 
@@ -70,6 +78,11 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     } finally { if (mounted) setState(()=>loading=false); }
   }
 
+  void _openResult(Map<String, dynamic> item) {
+    if (selectedType != 'documents') { widget.onOpenResult(selectedType, item); return; }
+    Navigator.of(context).push(MaterialPageRoute<void>(builder: (_) => ArchivedDocumentPreviewPage(document: item, english: widget.english, loadDocument: widget.loadDocument)));
+  }
+
   String statusLabel(String value) {
     const ar = {'active':'نشط / نشطة','pending':'قيد الانتظار','paused':'موقوف','completed':'مكتمل','inactive':'غير نشط','suspended':'موقوف','cancelled':'ملغى'};
     const en = {'active':'Active','pending':'Pending','paused':'Paused','completed':'Completed','inactive':'Inactive','suspended':'Suspended','cancelled':'Cancelled'};
@@ -80,6 +93,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     'families' => (x['mother_name']?.toString() ?? '') + ' · ' + (x['family_code']?.toString() ?? ''),
     'sponsors' => (x['full_name']?.toString() ?? '') + ' · ' + (x['sponsor_code']?.toString() ?? ''),
     'payments' => '${x['month']?.toString() ?? ''} · ${t('دفعة #','Batch #')}${x['id']?.toString() ?? ''}',
+    'documents' => (x['display_title']?.toString() ?? '') + ' · ' + (x['project_code']?.toString() ?? ''),
     _ => x['sponsorship_code']?.toString() ?? '',
   };
 
@@ -87,6 +101,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     'families' => (x['mother_phone']?.toString() ?? '') + ' · ' + t('عدد الأطفال: ','Children: ') + (x['children_count']?.toString() ?? '0') + ' · ' + statusLabel(x['status']?.toString() ?? ''),
     'sponsors' => (x['phone']?.toString() ?? '') + ' · ' + t('الكفالات النشطة: ','Active sponsorships: ') + (x['active_sponsorship_count']?.toString() ?? '0') + ' · ' + statusLabel(x['status']?.toString() ?? ''),
     'payments' => (x['group_name']?.toString() ?? '') + ' · ' + (x['nanny_name']?.toString() ?? '') + ' · ' + (x['total_amount']?.toString() ?? '0') + ' · ' + statusLabel(x['status']?.toString() ?? ''),
+    'documents' => (x['project_name']?.toString() ?? '') + ' · ' + (x['original_name']?.toString() ?? '') + ' · ' + t('الإصدار ', 'Version ') + (x['version_no']?.toString() ?? '1') + ((x['is_current_version'] == true) ? t(' · حالي', ' · Current') : ''),
     _ => (x['sponsor_name']?.toString() ?? '') + ' · ' + (x['child_name']?.toString() ?? '') + ' · ' + (x['family_code']?.toString() ?? '') + ' · ' + (double.tryParse(x['monthly_amount']?.toString() ?? '0') ?? 0).toStringAsFixed(2) + ' SDG · ' + statusLabel(x['status']?.toString() ?? ''),
   };
 
@@ -125,7 +140,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
                 title:Text(titleFor(item),maxLines:2,overflow:TextOverflow.ellipsis),
                 subtitle:Text(subtitleFor(item),maxLines:3,overflow:TextOverflow.ellipsis),
                 trailing:const Icon(Icons.chevron_right_rounded),
-                onTap:()=>widget.onOpenResult(selectedType,item),
+                onTap:()=>_openResult(item),
               ));
             })),
           ),
@@ -134,8 +149,71 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
             Text(t('صفحة ','Page ')+page.toString()+t(' من ',' of ')+pages.toString()),
             OutlinedButton(onPressed:page<pages?()=>search(targetPage:page+1):null,child:Text(t('التالي','Next'))),
           ]))),
-          Padding(padding:const EdgeInsets.fromLTRB(16,0,16,14),child:Text(t('البحث في مستندات المشاريع المؤرشفة ما زال قيد التنفيذ داخل التطبيق.','Search for archived project documents is still being implemented natively.'),textAlign:TextAlign.center,style:Theme.of(context).textTheme.bodySmall)),
+          Padding(padding:const EdgeInsets.fromLTRB(16,0,16,14),child:Text(t('تُعرض المستندات حسب صلاحيات الوصول إلى المشروع.','Documents are filtered by project access permissions.'),textAlign:TextAlign.center,style:Theme.of(context).textTheme.bodySmall)),
         ]),
+    );
+  }
+}
+
+class ArchivedDocumentPreviewPage extends StatefulWidget {
+  const ArchivedDocumentPreviewPage({super.key, required this.document, required this.english, required this.loadDocument});
+  final Map<String, dynamic> document;
+  final bool english;
+  final ArchivedDocumentLoader loadDocument;
+  @override State<ArchivedDocumentPreviewPage> createState() => _ArchivedDocumentPreviewPageState();
+}
+class _ArchivedDocumentPreviewPageState extends State<ArchivedDocumentPreviewPage> {
+  bool loading = true, saving = false;
+  String? error;
+  Uint8List? bytes;
+  String mime = 'application/octet-stream';
+  String filename = 'archived-document';
+  String t(String ar, String en) => widget.english ? en : ar;
+  @override void initState() { super.initState(); load(); }
+  Future<void> load() async {
+    setState(() { loading = true; error = null; });
+    try {
+      final id = int.tryParse(widget.document['version_id']?.toString() ?? '');
+      if (id == null || id < 1) throw StateError(t('معرّف الإصدار غير صالح.','Invalid document version ID.'));
+      final result = await widget.loadDocument(id);
+      final value = result['bytes'];
+      if (value is! Uint8List) throw StateError(t('تعذر قراءة الملف.','Could not read the document.'));
+      if (!mounted) return;
+      setState(() { bytes = value; mime = (result['mime']?.toString() ?? 'application/octet-stream').toLowerCase(); filename = result['filename']?.toString() ?? 'archived-document'; });
+    } catch (e) { if (mounted) setState(() => error = e.toString()); }
+    finally { if (mounted) setState(() => loading = false); }
+  }
+  Future<void> saveFile() async {
+    final value = bytes;
+    if (value == null || saving) return;
+    setState(() => saving = true);
+    try {
+      final path = await FilePicker.platform.saveFile(dialogTitle: t('حفظ المستند','Save document'), fileName: filename, bytes: value);
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(path == null || path.isEmpty ? t('تم إلغاء الحفظ.','Save cancelled.') : t('تم حفظ المستند.','Document saved.'))));
+    } catch (e) { if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString()))); }
+    finally { if (mounted) setState(() => saving = false); }
+  }
+  @override Widget build(BuildContext context) {
+    final title = widget.document['display_title']?.toString() ?? t('المستند المؤرشف','Archived document');
+    final canImage = mime.startsWith('image/') && bytes != null;
+    final canPdf = mime == 'application/pdf' && bytes != null;
+    return Scaffold(
+      appBar: AppBar(title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis), actions: [
+        IconButton(tooltip: t('حفظ نسخة','Save a copy'), onPressed: bytes == null || saving ? null : saveFile, icon: saving ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.download_rounded)),
+      ]),
+      body: loading ? const Center(child: CircularProgressIndicator())
+        : error != null ? Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [
+            Text(error!, textAlign: TextAlign.center), const SizedBox(height: 12),
+            OutlinedButton.icon(onPressed: load, icon: const Icon(Icons.refresh_rounded), label: Text(t('إعادة المحاولة','Try again'))),
+          ])))
+        : canPdf ? PdfViewer.data(bytes!, sourceName: filename)
+        : canImage ? InteractiveViewer(child: Center(child: Image.memory(bytes!, fit: BoxFit.contain)))
+        : Center(child: Padding(padding: const EdgeInsets.all(24), child: Column(mainAxisSize: MainAxisSize.min, children: [
+            const Icon(Icons.insert_drive_file_outlined, size: 54), const SizedBox(height: 14),
+            Text(t('تم العثور على المستند، لكن معاينته غير مدعومة داخل التطبيق. يمكنك حفظ نسخة على الجهاز.','The document was found, but its format cannot be previewed in-app. You can save a copy to the device.'), textAlign: TextAlign.center),
+            const SizedBox(height: 14),
+            FilledButton.icon(onPressed: saving ? null : saveFile, icon: const Icon(Icons.download_rounded), label: Text(t('حفظ المستند','Save document'))),
+          ]))),
     );
   }
 }
