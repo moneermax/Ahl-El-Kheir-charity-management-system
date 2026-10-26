@@ -138,6 +138,7 @@ $testBatchVerificationMonth = '2099-12';
 $testBatchTransferTransactionId = 0;
 $testBatchTransferJournalId = 0;
 $testAccountId = 0;
+$testAttendancePolicyId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -476,6 +477,67 @@ try {
     }
     $invalidReportRange = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-11-01&to=2026-10-01', 'GET', null, $adminToken);
     mobileApiExpect($invalidReportRange['status'] === 422, 'native report rejects reversed date ranges');
+    $policyDate = (new DateTimeImmutable('+30 days'))->format('Y-m-d');
+    $createdAttendancePolicy = mobileApiRequest('/api/v1/hr/attendance_policy.php', 'POST', [
+        'action' => 'create',
+        'policy_name' => 'Mobile API disposable policy',
+        'effective_from' => $policyDate,
+        'working_start_time' => '07:00',
+        'working_end_time' => '16:00',
+        'working_days' => '1,2,3,4,5',
+        'attendance_cutoff_time' => '16:00',
+        'absence_finalization_time' => '15:30',
+        'auto_login_attendance' => true,
+        'auto_absence_enabled' => false,
+        'default_work_mode' => 'remote',
+        'notes' => 'Disposable CI policy',
+    ], $adminToken);
+    $testAttendancePolicyId = (int)($createdAttendancePolicy['json']['data']['id'] ?? 0);
+    mobileApiExpect($createdAttendancePolicy['status'] === 200 && $testAttendancePolicyId > 0, 'administrator can create a future attendance policy version');
+    $attendancePolicyRead = mobileApiRequest('/api/v1/hr/attendance_policy.php', 'GET', null, $adminToken);
+    $policyItem = null;
+    foreach (($attendancePolicyRead['json']['data']['policies'] ?? []) as $policy) {
+        if ((int)($policy['id'] ?? 0) === $testAttendancePolicyId) $policyItem = $policy;
+    }
+    mobileApiExpect(
+        $attendancePolicyRead['status'] === 200 && $policyItem
+        && ($policyItem['working_days'] ?? '') === '1,2,3,4,5'
+        && ($policyItem['auto_login_attendance'] ?? false) === true
+        && ($policyItem['auto_absence_enabled'] ?? true) === false
+        && ($policyItem['can_manage'] ?? false) === true,
+        'attendance policy history returns weekly schedule, automation flags and future editability'
+    );
+    $updatedAttendancePolicy = mobileApiRequest('/api/v1/hr/attendance_policy.php', 'POST', [
+        'action' => 'update', 'policy_id' => $testAttendancePolicyId,
+        'policy_name' => 'Mobile API disposable policy updated',
+        'effective_from' => $policyDate,
+        'working_start_time' => '08:00',
+        'working_end_time' => '16:00',
+        'working_days' => '1,2,3,4,5,6',
+        'attendance_cutoff_time' => '15:00',
+        'absence_finalization_time' => '14:30',
+        'auto_login_attendance' => false,
+        'auto_absence_enabled' => true,
+        'default_work_mode' => 'hybrid',
+        'notes' => 'Updated disposable CI policy',
+    ], $adminToken);
+    mobileApiExpect($updatedAttendancePolicy['status'] === 200, 'administrator can update an editable future attendance policy');
+    $invalidAttendancePolicy = mobileApiRequest('/api/v1/hr/attendance_policy.php', 'POST', [
+        'action' => 'update', 'policy_id' => $testAttendancePolicyId,
+        'policy_name' => 'Invalid policy', 'effective_from' => $policyDate,
+        'working_start_time' => '16:00', 'working_end_time' => '07:00',
+        'working_days' => '1,2,3', 'attendance_cutoff_time' => '16:00',
+        'absence_finalization_time' => '16:00', 'default_work_mode' => 'remote',
+        'auto_login_attendance' => true, 'auto_absence_enabled' => true,
+    ], $adminToken);
+    mobileApiExpect($invalidAttendancePolicy['status'] === 422, 'attendance policy rejects invalid work-time ordering without saving');
+    $deletedAttendancePolicy = mobileApiRequest('/api/v1/hr/attendance_policy.php', 'POST', [
+        'action' => 'delete', 'policy_id' => $testAttendancePolicyId,
+    ], $adminToken);
+    mobileApiExpect($deletedAttendancePolicy['status'] === 200, 'administrator can delete a future attendance policy version');
+    $pdo->prepare('DELETE FROM hr_attendance_policy_versions WHERE id=?')->execute([$testAttendancePolicyId]);
+    $testAttendancePolicyId = 0;
+
     $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
     mobileApiExpect(
         $databaseIndex['status'] === 200
@@ -580,6 +642,8 @@ try {
     mobileApiExpect($nannyFinaLogin['status'] === 200 && isset($nannyFinaLogin['json']['data']['access_token']), 'nanny login succeeds for Fina role-denial integration');
     $nannyFinaToken = (string)$nannyFinaLogin['json']['data']['access_token'];
     $testTokenHashes[] = hash('sha256', $nannyFinaToken);
+    $nannyAttendancePolicy = mobileApiRequest('/api/v1/hr/attendance_policy.php', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyAttendancePolicy['status'] === 403, 'nanny cannot read or manage attendance policy');
     $nannyCreateFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
         'source_type' => 'person', 'source_name' => 'Nanny denied fixture',
         'amount' => '10.00', 'method' => 'cash', 'date' => date('Y-m-d'),
@@ -1364,6 +1428,7 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testAttendancePolicyId > 0) $pdo->prepare('DELETE FROM hr_attendance_policy_versions WHERE id=?')->execute([$testAttendancePolicyId]);
     if ($testOrphanFormChildId > 0 && is_array($testOrphanFormChildSnapshot) && is_array($testOrphanFormFamilySnapshot)) {
         $pdo->prepare('UPDATE family_children SET nationality=?,health_status=?,health_status_other=?,psychological_state=?,psychological_state_other=?,guardian_name=?,guardian_relationship=?,updated_at=? WHERE id=?')
             ->execute([

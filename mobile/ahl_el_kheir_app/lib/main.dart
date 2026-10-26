@@ -4,6 +4,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 import 'projects_page.dart';
 import 'attendance_page.dart';
+import 'attendance_policy_page.dart';
 import 'employees_page.dart';
 import 'employee_detail_page.dart';
 import 'my_salary_statements_page.dart';
@@ -291,6 +292,24 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       openGmPayrollHistory();
       return;
     }
+    if (relativePath == 'modules/hr/attendance_policy.php') {
+      if (!['hr_manager', 'admin'].contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english
+              ? 'Attendance policy is restricted to HR Manager and administrator roles.'
+              : 'سياسة الحضور متاحة لمدير الموارد البشرية والمسؤول فقط.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => AttendancePolicyPage(
+          english: english,
+          loadPage: loadAttendancePolicy,
+          submitAction: submitAttendancePolicyAction,
+        ),
+      ));
+      return;
+    }
     if (relativePath == 'modules/hr/payroll_integrity.php') {
       if (!['hr_manager', 'admin'].contains(user?['role_code']?.toString())) {
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
@@ -549,6 +568,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         builder: (_) => GmPayrollReportPage(english: english, month: month, year: year, loadReport: loadGmPayrollReport),
       )),
     )));
+  }
+
+  Future<Map<String, dynamic>> loadAttendancePolicy() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/attendance_policy.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitAttendancePolicyAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'hr/attendance_policy.php', token: token, body: body);
   }
 
   Future<Map<String, dynamic>> loadPayrollIntegrity() async {

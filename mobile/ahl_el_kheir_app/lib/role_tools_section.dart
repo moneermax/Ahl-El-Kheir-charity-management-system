@@ -60,9 +60,9 @@ class RoleToolsSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        tool.path == 'modules/families/suspensions.php'
-                            ? (english ? 'APP' : 'تطبيق')
-                            : (english ? 'IN APP' : 'داخل التطبيق'),
+                        _isNativeTool(tool.path)
+                            ? (english ? 'IN APP' : 'داخل التطبيق')
+                            : (english ? 'NOT READY' : 'غير جاهز'),
                         style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
                       ),
                     ],
@@ -75,6 +75,32 @@ class RoleToolsSection extends StatelessWidget {
       ],
     );
   }
+
+  bool _isNativeTool(String path) => const {
+    'modules/families/suspensions.php',
+    'modules/hr/attendance_policy.php',
+    'modules/hr/payroll_integrity.php',
+    'modules/hr/employment_states.php',
+    'modules/hr/gm_payroll_period_history.php',
+    'modules/families/orphan_forms_index.php',
+    'modules/sponsors/assign.php',
+    'modules/accounting/fina_dashboard.php',
+    'modules/transactions/fina_payment_create.php',
+    'modules/accounting/fina_payment_review.php',
+    'modules/accounting/fina_payment_history.php',
+    'modules/reports/index.php',
+    'modules/reports/orphaned_families.php',
+    'modules/users/index.php',
+    'modules/departments/index.php',
+    'modules/users/recovery.php',
+    'modules/hr/employees.php',
+    'modules/hr/attendance.php',
+    'modules/hr/leaves.php',
+    'modules/projects/index.php',
+    'modules/sponsors/new_requests.php',
+    'modules/sponsors/contacted_requests.php',
+    'modules/accounting/disbursements.php',
+  }.contains(path);
 
   List<_ToolGroup> _groups(String role, bool en) {
     _Tool t(String ar, String eng, String arSub, String enSub, String path, IconData icon) =>
