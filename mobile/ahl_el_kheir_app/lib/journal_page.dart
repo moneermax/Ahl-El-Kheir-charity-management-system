@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'journal_manual_entry_page.dart';
 
 class JournalPage extends StatefulWidget {
   const JournalPage({
@@ -6,11 +7,21 @@ class JournalPage extends StatefulWidget {
     required this.english,
     required this.loadEntries,
     required this.loadEntry,
+    required this.loadAccounts,
+    required this.submitManualEntry,
+    required this.submitVoid,
+    required this.roleCode,
+    required this.currentUserId,
   });
 
   final bool english;
+  final String roleCode;
+  final int currentUserId;
   final Future<Map<String, dynamic>> Function({required String from, required String to}) loadEntries;
   final Future<Map<String, dynamic>> Function(int id) loadEntry;
+  final Future<Map<String, dynamic>> Function() loadAccounts;
+  final Future<Map<String, dynamic>> Function(Map<String, dynamic> body) submitManualEntry;
+  final Future<Map<String, dynamic>> Function(int id, String reason) submitVoid;
 
   @override
   State<JournalPage> createState() => _JournalPageState();
@@ -24,6 +35,7 @@ class _JournalPageState extends State<JournalPage> {
   List<Map<String, dynamic>> entries = [];
 
   String t(String ar, String en) => widget.english ? en : ar;
+  bool get canManage => ['admin', 'sudo', 'super_admin', 'financial_manager', 'fm'].contains(widget.roleCode);
 
   @override
   void initState() {
@@ -46,6 +58,17 @@ class _JournalPageState extends State<JournalPage> {
     } finally {
       if (mounted) setState(() => loading = false);
     }
+  }
+
+  Future<void> createEntry() async {
+    final saved = await Navigator.of(context).push<bool>(MaterialPageRoute<bool>(
+      builder: (_) => JournalManualEntryPage(
+        english: widget.english,
+        loadAccounts: widget.loadAccounts,
+        submitEntry: widget.submitManualEntry,
+      ),
+    ));
+    if (saved == true && mounted) await refresh();
   }
 
   Future<void> chooseDate({required bool start}) async {
@@ -75,6 +98,9 @@ class _JournalPageState extends State<JournalPage> {
         english: widget.english,
         entryId: id,
         loadEntry: widget.loadEntry,
+        roleCode: widget.roleCode,
+        currentUserId: widget.currentUserId,
+        submitVoid: widget.submitVoid,
       ),
     ));
   }
@@ -173,7 +199,10 @@ class _JournalPageState extends State<JournalPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(t('اليومية المحاسبية', 'Accounting journal')),
-        actions: [IconButton(tooltip: t('تحديث', 'Refresh'), onPressed: loading ? null : refresh, icon: const Icon(Icons.refresh_rounded))],
+        actions: [
+          if (canManage) IconButton(tooltip: t('قيد جديد', 'New entry'), onPressed: loading ? null : createEntry, icon: const Icon(Icons.add_rounded)),
+          IconButton(tooltip: t('تحديث', 'Refresh'), onPressed: loading ? null : refresh, icon: const Icon(Icons.refresh_rounded)),
+        ],
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -225,18 +254,21 @@ class _JournalPageState extends State<JournalPage> {
 }
 
 class JournalEntryDetailPage extends StatefulWidget {
-  const JournalEntryDetailPage({super.key, required this.english, required this.entryId, required this.loadEntry});
+  const JournalEntryDetailPage({super.key, required this.english, required this.entryId, required this.loadEntry, required this.roleCode, required this.currentUserId, required this.submitVoid});
   final bool english;
   final int entryId;
+  final String roleCode;
+  final int currentUserId;
   final Future<Map<String, dynamic>> Function(int id) loadEntry;
+  final Future<Map<String, dynamic>> Function(int id, String reason) submitVoid;
 
   @override
   State<JournalEntryDetailPage> createState() => _JournalEntryDetailPageState();
 }
 
 class _JournalEntryDetailPageState extends State<JournalEntryDetailPage> {
-  bool loading = true;
-  String? error;
+  bool loading = true, voiding = false;
+  String? error, notice;
   Map<String, dynamic>? entry;
   List<Map<String, dynamic>> lines = [];
   String t(String ar, String en) => widget.english ? en : ar;
@@ -257,6 +289,45 @@ class _JournalEntryDetailPageState extends State<JournalEntryDetailPage> {
       if (mounted) setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  bool get canVoid {
+    final current = entry;
+    if (current == null || !['admin', 'sudo', 'super_admin', 'financial_manager', 'fm'].contains(widget.roleCode)) return false;
+    const automatedTypes = {'transaction', 'transaction_void', 'disbursement', 'disbursement_return', 'disbursement_void', 'item_return', 'voucher', 'voucher_void', 'payroll', 'manual_void'};
+    final referenceType = current['reference_type']?.toString() ?? '';
+    final voidedAt = current['voided_at']?.toString() ?? '';
+    final creatorId = int.tryParse(current['created_by']?.toString() ?? '');
+    return current['status'] == 'posted' && voidedAt.isEmpty && !automatedTypes.contains(referenceType) && creatorId != widget.currentUserId;
+  }
+
+  Future<void> voidEntry() async {
+    final controller = TextEditingController();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(t('إبطال القيد اليدوي', 'Void manual journal entry')),
+        content: TextField(controller: controller, maxLength: 255, decoration: InputDecoration(labelText: t('سبب الإبطال', 'Reason for voiding'))),
+        actions: [
+          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(t('إلغاء', 'Cancel'))),
+          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()), child: Text(t('تأكيد الإبطال', 'Confirm void'))),
+        ],
+      ),
+    );
+    controller.dispose();
+    if (reason == null) return;
+    setState(() { voiding = true; error = null; notice = null; });
+    try {
+      await widget.submitVoid(widget.entryId, reason);
+      if (mounted) {
+        setState(() => notice = t('تم إبطال القيد وإنشاء قيد عكسي متوازن.', 'The entry was voided and a balanced reversal was created.'));
+        await load();
+      }
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => voiding = false);
     }
   }
 
@@ -302,6 +373,19 @@ class _JournalEntryDetailPageState extends State<JournalEntryDetailPage> {
                                   _JournalMessage(
                                     text: '${t('تم الإبطال', 'Voided')}: ${current['void_reason'] ?? '—'}',
                                     isError: true,
+                                  ),
+                                ],
+                                if (notice != null) ...[
+                                  const SizedBox(height: 8),
+                                  _JournalMessage(text: notice!, isError: false),
+                                ],
+                                if (canVoid) ...[
+                                  const SizedBox(height: 12),
+                                  FilledButton.icon(
+                                    onPressed: voiding ? null : voidEntry,
+                                    icon: voiding ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2)) : const Icon(Icons.gpp_bad_outlined),
+                                    label: Text(t('إبطال القيد', 'Void entry')),
+                                    style: FilledButton.styleFrom(backgroundColor: s.error),
                                   ),
                                 ],
                               ],
