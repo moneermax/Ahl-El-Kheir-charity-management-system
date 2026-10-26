@@ -45,6 +45,7 @@ void main() {
     await tester.tap(find.text('1100 · Cash').last);
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byType(DropdownButtonFormField<int>).at(1));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(DropdownButtonFormField<int>).at(1));
     await tester.pumpAndSettle();
     await tester.tap(find.text('4100 · Revenue').last);

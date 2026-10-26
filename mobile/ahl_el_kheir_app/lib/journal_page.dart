@@ -303,19 +303,15 @@ class _JournalEntryDetailPageState extends State<JournalEntryDetailPage> {
   }
 
   Future<void> voidEntry() async {
-    final controller = TextEditingController();
     final reason = await showDialog<String>(
       context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(t('إبطال القيد اليدوي', 'Void manual journal entry')),
-        content: TextField(controller: controller, maxLength: 255, decoration: InputDecoration(labelText: t('سبب الإبطال', 'Reason for voiding'))),
-        actions: [
-          TextButton(onPressed: () => Navigator.of(dialogContext).pop(), child: Text(t('إلغاء', 'Cancel'))),
-          FilledButton(onPressed: () => Navigator.of(dialogContext).pop(controller.text.trim()), child: Text(t('تأكيد الإبطال', 'Confirm void'))),
-        ],
+      builder: (_) => _VoidReasonDialog(
+        title: t('إبطال القيد اليدوي', 'Void manual journal entry'),
+        reasonLabel: t('سبب الإبطال', 'Reason for voiding'),
+        cancelLabel: t('إلغاء', 'Cancel'),
+        confirmLabel: t('تأكيد الإبطال', 'Confirm void'),
       ),
     );
-    controller.dispose();
     if (reason == null) return;
     setState(() { voiding = true; error = null; notice = null; });
     try {
@@ -460,4 +456,52 @@ class _JournalMessage extends StatelessWidget {
       child: Text(text, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
     );
   }
+}
+
+
+class _VoidReasonDialog extends StatefulWidget {
+  const _VoidReasonDialog({
+    required this.title,
+    required this.reasonLabel,
+    required this.cancelLabel,
+    required this.confirmLabel,
+  });
+
+  final String title;
+  final String reasonLabel;
+  final String cancelLabel;
+  final String confirmLabel;
+
+  @override
+  State<_VoidReasonDialog> createState() => _VoidReasonDialogState();
+}
+
+class _VoidReasonDialogState extends State<_VoidReasonDialog> {
+  final controller = TextEditingController();
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(widget.title),
+    content: TextField(
+      controller: controller,
+      maxLength: 255,
+      decoration: InputDecoration(labelText: widget.reasonLabel),
+    ),
+    actions: [
+      TextButton(
+        onPressed: () => Navigator.of(context).pop(),
+        child: Text(widget.cancelLabel),
+      ),
+      FilledButton(
+        onPressed: () => Navigator.of(context).pop(controller.text.trim()),
+        child: Text(widget.confirmLabel),
+      ),
+    ],
+  );
 }
