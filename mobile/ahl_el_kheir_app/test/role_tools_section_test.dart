@@ -142,7 +142,7 @@ void main() {
     ));
 
     expect(find.text('Review Fina collections'), findsOneWidget);
-    expect(find.text('Monthly disbursements'), findsOneWidget);
+    expect(find.text('Monthly disbursements'), findsNothing);
     expect(find.text('Record Fina collection'), findsNothing);
   });
 
@@ -162,6 +162,7 @@ void main() {
     expect(find.text('Fina Al-Khair dashboard'), findsOneWidget);
     expect(find.text('Record Fina collection'), findsOneWidget);
     expect(find.text('Review Fina collections'), findsOneWidget);
+    expect(find.text('Monthly disbursements'), findsOneWidget);
   });
 
   testWidgets('VGM suspension cases are labelled as a native app workflow', (tester) async {
