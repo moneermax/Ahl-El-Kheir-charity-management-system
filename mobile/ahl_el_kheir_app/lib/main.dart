@@ -738,6 +738,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       openPasswordRecoveryPage();
       return;
     }
+    if (relativePath == 'modules/users/profile.php') {
+      openMyProfilePage();
+      return;
+    }
     if (relativePath == 'modules/users/settings.php') {
       openAccountSettingsPage();
       return;
