@@ -33,6 +33,7 @@ import 'admin_recovery_page.dart';
 import 'admin_settings_page.dart';
 import 'reports_page.dart';
 import 'orphaned_families_report_page.dart';
+import 'fina_collection_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 String? normalizeApiBaseUrl(String value) {
@@ -481,6 +482,32 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     ));
   }
 
+  Future<Map<String, dynamic>> submitFinaCollection(Map<String, dynamic> payload) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    return call('POST', 'fina/collections.php', token: token, body: payload);
+  }
+
+  void openFinaCollectionPage() {
+    final role = user?['role_code']?.toString() ?? '';
+    if (!['admin', 'sudo', 'super_admin', 'financial_manager', 'fm', 'finance'].contains(role)) {
+      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+        SnackBar(content: Text(english
+            ? 'Fina collection registration is restricted to Finance Manager and Administrator.'
+            : 'تسجيل تحصيلات فينا الخير متاح للمدير المالي والمسؤول فقط.')),
+      );
+      return;
+    }
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => FinaCollectionPage(
+        english: english,
+        submitCollection: submitFinaCollection,
+      ),
+    ));
+  }
+
   Future<Map<String, dynamic>> loadAdminAccounts() async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -732,7 +759,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openAdminDisbursements();
         return;
       case 'fina_collection':
-        openNativeTool('modules/transactions/fina_payment_create.php');
+        openFinaCollectionPage();
         return;
       case 'users':
         openNativeTool('modules/users/index.php');
