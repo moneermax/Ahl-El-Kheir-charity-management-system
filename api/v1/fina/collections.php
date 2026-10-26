@@ -49,6 +49,20 @@ $receiptFullPath = null;
 try {
     fina_ensure_tables();
 
+    $source = null;
+    if ($sourceType === 'sponsor') {
+        if ($sponsorId < 1) $fail(422,'sponsor_required','Select a valid active sponsor.');
+        $source = fina_source_from_sponsor($sponsorId);
+        if (!$source || (string)($source['status'] ?? '') !== 'active') $fail(422,'invalid_sponsor','The selected sponsor is not active or does not exist.');
+        $sourceName = (string)$source['full_name'];
+        $sourcePhone = (string)($source['phone'] ?? '');
+        $sourceAltPhone = (string)($source['alt_phone'] ?? '');
+        $sourceEmail = (string)($source['email'] ?? '');
+        $sourceAddress = (string)($source['address'] ?? '');
+    } elseif ($sourceName === '') {
+        $fail(422,'source_name_required','Source name is required.');
+    }
+
     // Keep the native upload contract aligned with the existing web Fina form.
     // Uploads are optional; accepted formats and size match the existing workflow.
     if (isset($_FILES['receipt_file']) && (int)($_FILES['receipt_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
@@ -84,19 +98,6 @@ try {
             throw new RuntimeException('Unable to persist Fina receipt upload.');
         }
         $receiptPath = 'storage/receipts/' . $filename;
-    }
-    $source = null;
-    if ($sourceType === 'sponsor') {
-        if ($sponsorId < 1) $fail(422,'sponsor_required','Select a valid active sponsor.');
-        $source = fina_source_from_sponsor($sponsorId);
-        if (!$source || (string)($source['status'] ?? '') !== 'active') $fail(422,'invalid_sponsor','The selected sponsor is not active or does not exist.');
-        $sourceName = (string)$source['full_name'];
-        $sourcePhone = (string)($source['phone'] ?? '');
-        $sourceAltPhone = (string)($source['alt_phone'] ?? '');
-        $sourceEmail = (string)($source['email'] ?? '');
-        $sourceAddress = (string)($source['address'] ?? '');
-    } elseif ($sourceName === '') {
-        $fail(422,'source_name_required','Source name is required.');
     }
 
     $pdo = db();
