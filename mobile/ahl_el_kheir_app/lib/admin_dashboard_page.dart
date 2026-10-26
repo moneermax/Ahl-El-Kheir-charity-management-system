@@ -315,7 +315,7 @@ class _SectionHeading extends StatelessWidget {
 }
 
 class _ToolTile extends StatelessWidget {
-  const _ToolTile({required this.icon, required this.color, required this.title, required this.description, required this.onTap, this.tag});
+  const _ToolTile({super.key, required this.icon, required this.color, required this.title, required this.description, required this.onTap, this.tag});
   final IconData icon;
   final Color color;
   final String title;
