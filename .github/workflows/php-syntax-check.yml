@@ -295,7 +295,6 @@ jobs:
           php tools/test_mobile_api_suspension_service.php
           php tools/test_mobile_admin_departments_service.php
           php tools/test_mobile_admin_recovery_service.php
-          php tools/test_mobile_admin_users_action_service.php
           php tools/test_mobile_transactions_date_filter.php
           php tools/test_mobile_role_dashboard_queries.php
           php tools/test_mobile_sponsor_assignment_service.php

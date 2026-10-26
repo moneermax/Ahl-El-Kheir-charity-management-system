@@ -5457,3 +5457,8 @@ Further native parity work has been committed on `main` after the stale-APK/API 
 - Native screens: `journal_page.dart` and `journal_manual_entry_page.dart`; role tools now route the journal inside Flutter. API integration coverage includes role denial, invalid date filters, detail/list, unbalanced-create rollback, successful manual create, creator self-void denial, different-reviewer void, balanced reversal, duplicate-void rejection, and cleanup. Widget tests cover list/detail, manual entry validation/submission, and reviewer void UI.
 
 These changes are committed and the workflows are configured to run, but the current GitHub Actions outcomes have not been independently retrieved in this session. Do not claim these newest paths passed CI until the actual run results are checked. No local XAMPP or physical-device result is claimed. The mobile app remains unfinished overall: full role-by-role parity, profile/photo editing, and other remaining web workflows still require audit and implementation. Keep the distinct violet/amber/pink app design; do not copy the original web theme or introduce browser handoffs.
+
+
+## Mobile CI recovery evidence — 2026-10-26
+
+APK workflow run #571 passed all stages on `2422efc2c7d38e1d86f4bed1ca7b315a48888542`. Salary verification run #3495 failed only after its full-schema job invoked the mobile admin-users service test with the wrong test database/guard; the test refused as designed. The salary workflow now omits that invocation, leaving the test in its dedicated Mobile API auth integration workflow. This is a CI configuration correction, not a change to production authorization/service behavior. Verify the resulting workflow run before marking it closed. Device connectivity remains unverified.
