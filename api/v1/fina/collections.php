@@ -12,7 +12,8 @@ if (!in_array($role, ['admin', 'financial_manager'], true)) {
     ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Fina collection registration is restricted to Finance Manager and Administrator.']]);
 }
 
-$input = ak_api_read_json();
+$contentType = strtolower((string)($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''));
+$input = str_contains($contentType, 'multipart/form-data') ? $_POST : ak_api_read_json();
 $sourceType = trim((string)($input['source_type'] ?? 'person'));
 $sponsorId = (int)($input['sponsor_id'] ?? 0);
 $sourceName = trim((string)($input['source_name'] ?? ''));
@@ -42,8 +43,48 @@ if ($amount <= 0 || $amount > 999999999999.99) $fail(422,'invalid_amount','Amoun
 if (strlen($sourceName)>255 || strlen($sourcePhone)>80 || strlen($sourceAltPhone)>80 || strlen($sourceEmail)>255 || strlen($sourceAddress)>1000 || strlen($sourceIdNumber)>120 || strlen($sourceReference)>255 || strlen($contactPerson)>255 || strlen($sourceDetails)>5000 || strlen($purpose)>2000 || strlen($description)>5000) $fail(422,'field_too_long','One or more fields exceed the allowed length.');
 if ($sourceEmail !== '' && !filter_var($sourceEmail, FILTER_VALIDATE_EMAIL)) $fail(422,'invalid_email','Source email address is invalid.');
 
+$receiptPath = null;
+$receiptFullPath = null;
+
 try {
     fina_ensure_tables();
+
+    // Keep the native upload contract aligned with the existing web Fina form.
+    // Uploads are optional; accepted formats and size match the existing workflow.
+    if (isset($_FILES['receipt_file']) && (int)($_FILES['receipt_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        $file = $_FILES['receipt_file'];
+        if ((int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || !is_uploaded_file((string)($file['tmp_name'] ?? ''))) {
+            $fail(422, 'receipt_upload_failed', 'The receipt upload could not be processed.');
+        }
+        $extension = strtolower(pathinfo((string)($file['name'] ?? ''), PATHINFO_EXTENSION));
+        if (!in_array($extension, ['jpg', 'jpeg', 'png', 'pdf'], true)) {
+            $fail(422, 'invalid_receipt_type', 'Receipt must be JPG, PNG, or PDF.');
+        }
+        if ((int)($file['size'] ?? 0) <= 0 || (int)$file['size'] > 10 * 1024 * 1024) {
+            $fail(422, 'invalid_receipt_size', 'Receipt must be no larger than 10 MB.');
+        }
+        $mime = (new finfo(FILEINFO_MIME_TYPE))->file((string)$file['tmp_name']);
+        $allowedMimes = [
+            'jpg' => ['image/jpeg'],
+            'jpeg' => ['image/jpeg'],
+            'png' => ['image/png'],
+            'pdf' => ['application/pdf', 'application/x-pdf'],
+        ];
+        if (!is_string($mime) || !in_array($mime, $allowedMimes[$extension], true)) {
+            $fail(422, 'receipt_content_mismatch', 'Receipt file content does not match its extension.');
+        }
+        $receiptDir = dirname(__DIR__, 3) . '/storage/receipts';
+        if (!is_dir($receiptDir) && !mkdir($receiptDir, 0775, true) && !is_dir($receiptDir)) {
+            throw new RuntimeException('Unable to prepare Fina receipt storage.');
+        }
+        $filename = 'FINA-MOBILE-' . date('YmdHis') . '-' . bin2hex(random_bytes(6)) . '.' . $extension;
+        $receiptFullPath = $receiptDir . '/' . $filename;
+        if (!move_uploaded_file((string)$file['tmp_name'], $receiptFullPath)) {
+            $receiptFullPath = null;
+            throw new RuntimeException('Unable to persist Fina receipt upload.');
+        }
+        $receiptPath = 'storage/receipts/' . $filename;
+    }
     $source = null;
     if ($sourceType === 'sponsor') {
         if ($sponsorId < 1) $fail(422,'sponsor_required','Select a valid active sponsor.');
@@ -76,8 +117,8 @@ try {
         }
         if ($sourceId < 1) throw new RuntimeException('Unable to create Fina source.');
         dbExecute(
-            "INSERT INTO fina_collections (fina_source_id,amount,currency_code,payment_method,collection_date,receipt_path,purpose_note,description,status,created_by) VALUES (?,?,?,?,?,NULL,?,?,'pending',?)",
-            [$sourceId,$amount,APP_CURRENCY_CODE,$method,$date,$purpose?:null,$description?:null,(int)$user['id']]
+            "INSERT INTO fina_collections (fina_source_id,amount,currency_code,payment_method,collection_date,receipt_path,purpose_note,description,status,created_by) VALUES (?,?,?,?,?,?,?,?, 'pending',?)",
+            [$sourceId,$amount,APP_CURRENCY_CODE,$method,$date,$receiptPath,$purpose?:null,$description?:null,(int)$user['id']]
         );
         $collectionId = (int)dbLastInsertId();
         if ($collectionId < 1) throw new RuntimeException('Unable to create Fina collection.');
@@ -100,6 +141,9 @@ try {
     }
     ak_api_json(201, ['ok'=>true,'data'=>['id'=>$collectionId,'status'=>'pending','receipt_supported'=>false]]);
 } catch (Throwable $e) {
+    if ($receiptFullPath !== null && is_file($receiptFullPath)) {
+        @unlink($receiptFullPath);
+    }
     error_log('Mobile Fina collection creation failed: '.$e->getMessage());
     $fail(500,'fina_collection_failed','The Fina collection could not be saved.');
 }
