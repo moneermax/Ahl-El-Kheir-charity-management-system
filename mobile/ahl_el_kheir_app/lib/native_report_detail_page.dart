@@ -55,14 +55,14 @@ class _NativeReportDetailPageState extends State<NativeReportDetailPage> {
     'orphan_verified':t('اليتيم متحقق','Orphan verified'),'mother_verified':t('الأم متحقق منها','Mother verified'),
     'bank_verified':t('البنك متحقق','Bank verified'),'fully_verified':t('مكتمل التحقق','Fully verified'),
     'employee_count':t('الموظفون','Employees'),'total_employees':t('إجمالي الموظفين','Total employees'),
-    'active_employees':t('الموظفون النشطون','Active employees'),'total_days':t('أيام الحضور','Days'),
+    'active_employees':t('الموظفون النشطون','Active employees'),
     'present':t('حاضر','Present'),'absent':t('غائب','Absent'),'late':t('متأخر','Late'),
     'half_day':t('نصف يوم','Half day'),'on_leave':t('إجازة','On leave'),'employee_code':t('رمز الموظف','Employee code'),
     'leave_type':t('نوع الإجازة','Leave type'),'leave_count':t('عدد الإجازات','Leaves'),
     'pending':t('معلق','Pending'),'approved':t('معتمد','Approved'),'rejected':t('مرفوض','Rejected'),
     'year':t('السنة','Year'),'total_basic':t('الراتب الأساسي','Basic salary'),'total_allowances':t('البدلات','Allowances'),
     'total_deductions':t('الاستقطاعات','Deductions'),'total_overtime':t('الإضافي','Overtime'),'total_net':t('صافي الرواتب','Net payroll'),
-    'draft_count':t('مسودة','Draft'),'approved_count':t('معتمد','Approved'),'paid_count':t('مدفوع','Paid'),
+    'draft_count':t('مسودة','Draft'),'approved_count':t('معتمد','Approved'),
   })[key] ?? key;
   @override
   void initState(){super.initState();type=types[widget.reportKey]!.first;final now=DateTime.now();from=DateTime(now.year,now.month,1);to=DateTime(now.year,now.month,now.day);refresh();}
