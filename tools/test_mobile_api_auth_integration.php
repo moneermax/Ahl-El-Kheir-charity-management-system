@@ -157,6 +157,7 @@ $testBatchTransferTransactionId = 0;
 $testBatchTransferJournalId = 0;
 $testAccountId = 0;
 $testJournalEntryId = 0;
+$testVoucherId = 0;
 $testManualJournalEntryId = 0;
 $testJournalReversalEntryId = 0;
 $testJournalVoidActorSnapshot = null;
@@ -352,13 +353,47 @@ try {
         'voucher register type filter returns receipts only');
     $r = mobileApiRequest('/api/v1/accounting/vouchers.php?vtype=unknown', 'GET', null, $token);
     mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'invalid_voucher_type', 'voucher register rejects unsupported type filters');
-    $r = mobileApiRequest('/api/v1/accounting/vouchers.php', 'POST', ['action' => 'create_voucher'], $token);
-    mobileApiExpect($r['status'] === 405, 'read-only voucher API rejects mutations until the native action workflow is implemented');
-    mobileApiExpect(
-        (int)$pdo->query('SELECT COUNT(*) FROM vouchers')->fetchColumn() === $voucherCountBeforeRead
-        && (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type IN ('voucher','voucher_void')")->fetchColumn() === $voucherJournalCountBeforeRead,
-        'voucher register reads do not mutate vouchers or accounting journals'
-    );
+    $otherAccounts = $voucherData['other_accounts'] ?? [];
+    mobileApiExpect(is_array($otherAccounts)
+        && count(array_filter($otherAccounts, static fn($account) => ($account['account_type'] ?? '') === 'revenue')) > 0
+        && count(array_filter($otherAccounts, static fn($account) => ($account['account_type'] ?? '') === 'expense')) > 0,
+        'voucher register returns active revenue and expense accounts for native issuance');
+    $invalidIssue = mobileApiRequest('/api/v1/accounting/vouchers.php', 'POST', ['action'=>'issue_voucher'], $token);
+    mobileApiExpect($invalidIssue['status']===422 && ($invalidIssue['json']['error']['code']??'')==='invalid_voucher_type','voucher issue validates invalid type before mutation');
+    mobileApiExpect((int)$pdo->query('SELECT COUNT(*) FROM vouchers')->fetchColumn()===$voucherCountBeforeRead
+        && (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type IN ('voucher','voucher_void')")->fetchColumn()===$voucherJournalCountBeforeRead,
+        'voucher reads and rejected issue requests do not mutate accounting records');
+    $cashAccountId=(int)$cashAccounts[0]['id'];
+    $revenues=array_values(array_filter($otherAccounts,static fn($a)=>($a['account_type']??'')==='revenue'));
+    $issuePayload=['action'=>'issue_voucher','voucher_type'=>'receipt','voucher_date'=>date('Y-m-d'),'amount'=>1.23,
+        'cash_account_id'=>$cashAccountId,'other_account_id'=>(int)$revenues[0]['id'],'party_name'=>'Mobile API isolated test',
+        'description'=>'Integration test receipt','reference_number'=>'MOB-'.bin2hex(random_bytes(4))];
+    $r=mobileApiRequest('/api/v1/accounting/vouchers.php','POST',$issuePayload,$token);
+    $testVoucherId=(int)($r['json']['data']['id']??0); $issuedEntryId=(int)($r['json']['data']['entry_id']??0);
+    mobileApiExpect($r['status']===201&&$testVoucherId>0&&$issuedEntryId>0&&($r['json']['data']['status']??'')==='posted'
+        &&preg_match('/^RV-[0-9]+$/',(string)($r['json']['data']['voucher_no']??''))===1,
+        'Financial Manager can issue a posted receipt voucher with generated numbering');
+    $issuedCheck=$pdo->prepare("SELECT v.status,v.entry_id,je.status journal_status,je.reference_type,COUNT(jl.id) line_count,COALESCE(SUM(jl.debit),0) debit_total,COALESCE(SUM(jl.credit),0) credit_total FROM vouchers v JOIN journal_entries je ON je.id=v.entry_id LEFT JOIN journal_lines jl ON jl.entry_id=je.id WHERE v.id=? GROUP BY v.id,je.id");
+    $issuedCheck->execute([$testVoucherId]); $issued=$issuedCheck->fetch(PDO::FETCH_ASSOC);
+    mobileApiExpect($issued&&$issued['status']==='posted'&&(int)$issued['entry_id']===$issuedEntryId&&$issued['journal_status']==='posted'
+        &&$issued['reference_type']==='voucher'&&(int)$issued['line_count']===2&&abs((float)$issued['debit_total']-1.23)<0.000001
+        &&abs((float)$issued['credit_total']-1.23)<0.000001,'issued voucher and journal are committed and balanced');
+    $shortReason=mobileApiRequest('/api/v1/accounting/vouchers.php','POST',['action'=>'void_voucher','voucher_id'=>$testVoucherId,'reason'=>'x'],$token);
+    mobileApiExpect($shortReason['status']===422&&($shortReason['json']['error']['code']??'')==='invalid_void_reason','voucher void requires a meaningful reason');
+    $void=mobileApiRequest('/api/v1/accounting/vouchers.php','POST',['action'=>'void_voucher','voucher_id'=>$testVoucherId,'reason'=>'Isolated API test reversal'],$token);
+    $reversalId=(int)($void['json']['data']['reversal_entry_id']??0);
+    mobileApiExpect($void['status']===200&&$reversalId>0&&($void['json']['data']['status']??'')==='voided','Financial Manager can void through a reversal entry');
+    $reversalCheck=$pdo->prepare("SELECT v.status,COUNT(jl.id) line_count,COALESCE(SUM(jl.debit),0) debit_total,COALESCE(SUM(jl.credit),0) credit_total FROM vouchers v JOIN journal_entries je ON je.reference_type='voucher_void' AND je.reference_id=v.id LEFT JOIN journal_lines jl ON jl.entry_id=je.id WHERE v.id=? AND je.id=? GROUP BY v.id,je.id");
+    $reversalCheck->execute([$testVoucherId,$reversalId]); $reversed=$reversalCheck->fetch(PDO::FETCH_ASSOC);
+    mobileApiExpect($reversed&&$reversed['status']==='voided'&&(int)$reversed['line_count']===2
+        &&abs((float)$reversed['debit_total']-1.23)<0.000001&&abs((float)$reversed['credit_total']-1.23)<0.000001,
+        'voided voucher preserves original and records a balanced reversal');
+    $duplicateVoid=mobileApiRequest('/api/v1/accounting/vouchers.php','POST',['action'=>'void_voucher','voucher_id'=>$testVoucherId,'reason'=>'Duplicate attempt'],$token);
+    mobileApiExpect($duplicateVoid['status']===422&&($duplicateVoid['json']['error']['code']??'')==='voucher_void_rejected','duplicate voucher void is rejected');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['general_manager'],$userId]);
+    $deniedIssue=mobileApiRequest('/api/v1/accounting/vouchers.php','POST',$issuePayload,$token);
+    mobileApiExpect($deniedIssue['status']===403&&($deniedIssue['json']['error']['code']??'')==='forbidden','General Manager cannot issue vouchers');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'],$userId]);
 
     $fmLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($fmLogin['status'] === 200 && isset($fmLogin['json']['data']['access_token']), 'financial manager login succeeds for native sponsor search');
@@ -2545,6 +2580,16 @@ try {
     }
     if ($testSponsorId > 0) {
         $pdo->prepare('DELETE FROM sponsors WHERE id=?')->execute([$testSponsorId]);
+    }
+    if ($testVoucherId > 0) {
+        $pdo->prepare("DELETE FROM audit_log WHERE entity_type='vouchers' AND entity_id=?")->execute([$testVoucherId]);
+        $voucherJournalLookup=$pdo->prepare("SELECT id FROM journal_entries WHERE reference_type IN ('voucher','voucher_void') AND reference_id=?");
+        $voucherJournalLookup->execute([$testVoucherId]);
+        foreach($voucherJournalLookup->fetchAll(PDO::FETCH_COLUMN) as $voucherJournalId) {
+            $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([(int)$voucherJournalId]);
+            $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([(int)$voucherJournalId]);
+        }
+        $pdo->prepare('DELETE FROM vouchers WHERE id=?')->execute([$testVoucherId]);
     }
     if ($testAccountId > 0) {
         $pdo->prepare('DELETE FROM accounts WHERE id=?')->execute([$testAccountId]);
