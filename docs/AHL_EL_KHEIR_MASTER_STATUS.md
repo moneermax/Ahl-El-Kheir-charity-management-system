@@ -5081,3 +5081,14 @@ Native Fina dashboard, collection registration, review/history, exact persisted-
 ## 2026-10-26 — Mobile report detail implementation (verification pending)
 
 Native report detail source now covers financial, sponsorship, operational, and HR report families through the existing role-based report registry, with validated date filters and native result tables. Flutter analysis, widget tests, Android debug APK build, and artifact publication passed in run `40298607464` for app source `9ab66cd9ff69ceb1553cb69f2d91e066cc4cd34c`; disposable MariaDB API integration passed in run `40298934944` for all four report families, reversed-date rejection, database backup actions, and role-denial checks. Local XAMPP/database and physical-device acceptance have not been performed. Mobile role parity is not complete while other role-specific workflows remain.
+
+## 2026-10-26 — Native mobile application continuation
+
+The Flutter app remains an incremental native client of the existing PHP API, not a replacement backend and not yet full parity with the web application.
+
+Current verified coverage includes native Fina collection/review, admin database and backup tools, native report detail, role-scoped monthly disbursement actions, beneficiary/orphan forms, sponsor assignment, HR employment-state listing, and attendance-policy management. Attendance-policy API integration passed in [run 40310902190](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40310902190). Android source `4952889a754138467d8af61077090e879096f028` passed Dart analysis, the full Flutter widget suite, debug APK build and artifact publication in [run 40314527960](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40314527960). Artifact `ahl-el-kheir-flutter-android-debug-apk` is 102,203,303 bytes and expires 2026-11-25.
+
+A concrete API connectivity regression was corrected: the mobile app and build workflow had reverted to port 8081 instead of the documented phone-facing port 881. Commits `486912b34bedc580584022653aa0d2ec7ec11cd7` and `4952889a754138467d8af61077090e879096f028` restore port 881; the API base remains configurable inside the app.
+
+Still open: full native role parity, native payroll operations and remaining role-specific finance/HR workflows, local XAMPP/API/database verification, and physical-device acceptance. No external-browser handoff is permitted. Do not describe the app as complete or production-ready until those gates pass.
+
