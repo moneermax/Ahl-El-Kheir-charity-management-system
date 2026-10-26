@@ -117,6 +117,6 @@ class _OrphanFormPageState extends State<OrphanFormPage>{
           if(error!=null)Text(error!,style:const TextStyle(color:Colors.red)),
           if(canEdit)FilledButton.icon(onPressed:saving?null:save,icon:saving?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):const Icon(Icons.save_rounded),
             label:Text(saving?t('جارٍ الحفظ…','Saving…'):t('حفظ الاستمارة','Save form'))),
-        ]);
+        ]));
   }
 }
