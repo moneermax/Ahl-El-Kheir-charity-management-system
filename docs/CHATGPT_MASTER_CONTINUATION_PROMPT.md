@@ -2734,3 +2734,8 @@ The PHP lint job passed in run `40217995457`; the mobile API auth integration jo
 
 Latest mobile source change passes the persisted `roleCode` into `AdminDashboardPage`. Exact-admin-only dashboard links (Departments, Settings, Password Recovery, Reports and Audit) are hidden for `sudo`/`super_admin` where existing API/web guards reject them; user administration remains visible to `sudo`. The Reports tile now describes the implemented native reports center accurately. Regression test added. Verify current GitHub Actions run before distributing an APK; local XAMPP API and phone acceptance remain unverified. Continue native role parity from `main`; do not broaden server permissions without source evidence.
 
+
+
+## Current mobile continuation — 2026-10-26
+
+The administrator dashboard role-visibility regression is CI-verified. Flutter run [40273273719](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40273273719) passed analysis, all Flutter widget tests, Android debug APK build and artifact publication at `9c57765ab408afa43c1d81823e2aa7a5af1ec703`. Published artifact: `ahl-el-kheir-flutter-android-debug-apk`, 77,507,377 bytes, SHA-256 `0c195da7469284f95aa8d7664874b2c62534ed096060e88f263844c9ce62279c`, expires 2026-11-25. Continue from current `main`; do not reopen the closed role-visibility test without regression evidence. Remaining work includes local authenticated XAMPP/API/database verification, physical-device acceptance, and unfinished native workflows. No external-browser handoff and no permission broadening.

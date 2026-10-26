@@ -5031,3 +5031,8 @@ The PHP lint job passed in run `40217995457`; the mobile API auth integration jo
 
 The admin dashboard now receives the persisted role code and hides Departments, Settings, Password Recovery, Reports, and Audit from `sudo`/`super_admin` because their current server guards do not authorize those roles. Native user administration remains available to `sudo` under its existing API policy. This is a UI/role-guard alignment only; no server permission was widened. Reports is no longer inaccurately described as wholly unavailable. Widget regression coverage was added; check CI before claiming verification. Local API/device acceptance is still outstanding.
 
+
+
+## 2026-10-26 — Mobile administrator dashboard CI milestone
+
+Verified: Flutter workflow [40273273719](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40273273719) passed Dart analysis, all widget tests, Android debug APK build and publication at source/test revision `9c57765ab408afa43c1d81823e2aa7a5af1ec703`. The Sudo role-visibility regression test passes; no server permissions or database schema were changed. Published artifact `ahl-el-kheir-flutter-android-debug-apk` is 77,507,377 bytes (SHA-256 `0c195da7469284f95aa8d7664874b2c62534ed096060e88f263844c9ce62279c`; expires 2026-11-25). Still outstanding: authenticated runtime verification against the intended local XAMPP/API/database and physical-device acceptance. Native role parity remains incomplete.

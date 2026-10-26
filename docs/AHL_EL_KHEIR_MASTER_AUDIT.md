@@ -5328,3 +5328,8 @@ The PHP lint job passed in run `40217995457`; the mobile API auth integration jo
 
 Evidence: `AdminDashboardPage` previously rendered shared tool entries for `admin`, `sudo`, and `super_admin`, while the underlying endpoints preserve narrower exact-role guards. This produced entries that could open a native screen but then be rejected by the API. The dashboard now receives `roleCode` and only renders the Departments, Settings, Password Recovery, Reports and Audit entries for exact `admin`; user administration remains available for `sudo` as allowed by its endpoint. The Reports tile text was corrected to match the existing native reports center. A widget test covers `sudo` visibility and user-directory access. No permission change or database change was made. Await the current CI run and do not claim local or physical-device verification.
 
+
+
+## 2026-10-26 — Admin dashboard role-visibility regression: CI PASS
+
+Workflow [40273273719](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40273273719) completed successfully. Dart analysis, the complete Flutter widget suite, debug APK build and publication passed for revision `9c57765ab408afa43c1d81823e2aa7a5af1ec703`. The test confirms Sudo can open native User Accounts and does not see exact-admin-only Departments, System Settings, Password Recovery, Reports or Audit tiles. This is alignment to existing authorization guards, not a permission expansion. Artifact `ahl-el-kheir-flutter-android-debug-apk`: 77,507,377 bytes; SHA-256 `0c195da7469284f95aa8d7664874b2c62534ed096060e88f263844c9ce62279c`; expires 2026-11-25. No local XAMPP/API or physical-device result is implied. Native parity work remains open.

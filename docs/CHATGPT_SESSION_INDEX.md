@@ -2793,3 +2793,8 @@ The PHP lint job passed in run `40217995457`; the mobile API auth integration jo
 - `AdminDashboardPage` now receives the persisted role code. The listed tools are shown only for exact `admin`, matching the relevant existing guards; native user administration remains available to `sudo` because its API supports that role. The Reports tile description now reflects the implemented native reports center rather than saying the whole center is unavailable.
 - Added a narrow-phone widget regression test for `sudo` visibility and retained the existing admin recovery-route test. Source commits: `158a42c1037029e6aa8027cf5aadc1bb22cbe181`, `9bc902b6f5bbee664f1fcdaf0716f79f8b577e0b`, `b679a9312ef4946aacbce12974137abf26b62211`. CI and APK publication for this change must be confirmed before distributing a new build. Local XAMPP/API and physical-device acceptance remain unverified.
 
+
+
+## 2026-10-26 — Mobile admin role-guard test and APK verified
+
+Flutter workflow [40273273719](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40273273719) passed Dart analysis, the full Flutter widget-test suite, Android debug APK build, and artifact publication at app/test source `9c57765ab408afa43c1d81823e2aa7a5af1ec703`. The Sudo dashboard regression test verifies that user administration remains available while exact-admin-only Departments, Settings, Password Recovery, Reports and Audit tiles are absent. Artifact: `ahl-el-kheir-flutter-android-debug-apk`, 77,507,377 bytes, SHA-256 `0c195da7469284f95aa8d7664874b2c62534ed096060e88f263844c9ce62279c`, expires 2026-11-25. Local XAMPP/API and physical-device acceptance remain open; mobile feature parity is not complete.

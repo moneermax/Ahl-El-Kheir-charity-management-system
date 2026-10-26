@@ -247,3 +247,8 @@ The PHP lint job passed in run `40217995457`; the mobile API auth integration jo
 
 The administrator dashboard no longer presents Departments, Settings, Password Recovery, Reports or Audit as actionable links to `sudo`/`super_admin` when the existing endpoint guards deny those roles. `AdminDashboardPage` receives the raw persisted role code. User Accounts remains available to Sudo under its current API guard. The Reports tile text now accurately describes the native reports center. A widget test covers the visibility contract. No permissions were broadened; current CI and device verification remain pending.
 
+
+
+## 2026-10-26 — Admin dashboard role visibility CI verified
+
+The role-visibility test and Android build are now CI PASS. Workflow [40273273719](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40273273719) passed Dart analysis, the full Flutter widget suite, APK build and publication at source `9c57765ab408afa43c1d81823e2aa7a5af1ec703`. Sudo sees and can open native User Accounts; exact-admin-only Departments, Settings, Password Recovery, Reports and Audit are absent. No backend permission change was made. Artifact `ahl-el-kheir-flutter-android-debug-apk` (77,507,377 bytes, SHA-256 `0c195da7469284f95aa8d7664874b2c62534ed096060e88f263844c9ce62279c`) expires 2026-11-25. This proves automated CI only. Authenticated local XAMPP/API/database and physical-device acceptance remain unverified; the other native parity gaps listed above remain open.
