@@ -33,25 +33,23 @@ class _IncentiveVerificationPageState extends State<IncentiveVerificationPage>{
   }).toList();
 
   Future<void> verify(Map<String,dynamic> event) async{
-    final note=TextEditingController();
-    final yes=await showDialog<bool>(context:context,builder:(context)=>AlertDialog(
-      title:Text(t('تأكيد إنجاز وإصدار حافز','Verify achievement and issue award')),
-      content:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-        Text(t('سيُسجل الاستحقاق ويُثبت محاسبياً إذا اجتازت قواعد العمل والعملة. هذا لا يعني أن الحافز صُرف.','This records the earned award and posts its recognition journal if eligibility and currency rules pass. It does not mean the award was paid.')),
-        const SizedBox(height:12),
-        TextField(controller:note,maxLength:2000,maxLines:3,decoration:InputDecoration(labelText:t('ملاحظة التحقق (اختيارية)','Verification note (optional)'))),
-      ]),
-      actions:[TextButton(onPressed:()=>Navigator.pop(context,false),child:Text(t('إلغاء','Cancel'))),FilledButton(onPressed:()=>Navigator.pop(context,true),child:Text(t('تأكيد التحقق','Confirm verification')))],
-    ))??false;
-    if(!yes){note.dispose();return;}
+    final note=await showDialog<String?>(
+      context:context,
+      builder:(context)=>_IncentiveVerificationDialog(
+        english:widget.english,
+        title:t('تأكيد إنجاز وإصدار حافز','Verify achievement and issue award'),
+        explanation:t('سيُسجل الاستحقاق ويُثبت محاسبياً إذا اجتازت قواعد العمل والعملة. هذا لا يعني أن الحافز صُرف.','This records the earned award and posts its recognition journal if eligibility and currency rules pass. It does not mean the award was paid.'),
+      ),
+    );
+    if(note==null)return;
     setState(() { saving=true; error=null; notice=null; });
     try{
-      final result=await widget.submitAction({'action':'verify_event','event_id':event['id'],'verification_note':note.text.trim()});
+      final result=await widget.submitAction({'action':'verify_event','event_id':event['id'],'verification_note':note});
       if(!mounted)return;
       setState(()=>notice=result['message']?.toString()??t('تمت معالجة الحدث.','Event processed.'));
       await refresh();
     }catch(e){if(mounted)setState(()=>error=e.toString());}
-    finally{note.dispose();if(mounted)setState(()=>saving=false);}
+    finally{if(mounted)setState(()=>saving=false);}
   }
 
   Widget eventCard(Map<String,dynamic> e){
@@ -116,4 +114,30 @@ class _Info extends StatelessWidget{
   const _Info({required this.label,required this.value});
   final String label,value;
   @override Widget build(BuildContext context)=>Container(constraints:const BoxConstraints(minWidth:130),padding:const EdgeInsets.all(10),decoration:BoxDecoration(color:Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha:.5),borderRadius:BorderRadius.circular(12)),child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[Text(label,style:Theme.of(context).textTheme.bodySmall),const SizedBox(height:3),Text(value,style:Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight:FontWeight.w800))]));
+}
+
+
+class _IncentiveVerificationDialog extends StatefulWidget {
+  const _IncentiveVerificationDialog({required this.english,required this.title,required this.explanation});
+  final bool english;
+  final String title,explanation;
+  @override State<_IncentiveVerificationDialog> createState()=>_IncentiveVerificationDialogState();
+}
+
+class _IncentiveVerificationDialogState extends State<_IncentiveVerificationDialog>{
+  final note=TextEditingController();
+  String t(String ar,String en)=>widget.english?en:ar;
+  @override void dispose(){note.dispose();super.dispose();}
+  @override Widget build(BuildContext context)=>AlertDialog(
+    title:Text(widget.title),
+    content:SingleChildScrollView(child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.stretch,children:[
+      Text(widget.explanation),
+      const SizedBox(height:12),
+      TextField(controller:note,maxLength:2000,maxLines:3,decoration:InputDecoration(labelText:t('ملاحظة التحقق (اختيارية)','Verification note (optional)'))),
+    ])),
+    actions:[
+      TextButton(onPressed:()=>Navigator.pop(context),child:Text(t('إلغاء','Cancel'))),
+      FilledButton(onPressed:()=>Navigator.pop(context,note.text.trim()),child:Text(t('تأكيد التحقق','Confirm verification'))),
+    ],
+  );
 }
