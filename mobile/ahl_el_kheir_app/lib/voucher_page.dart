@@ -70,29 +70,25 @@ class _VoucherPageState extends State<VoucherPage> {
 
   Future<void> _voidVoucher(Map<String, dynamic> voucher) async {
     if (!_canVoid || _actionBusy || widget.voidVoucher == null || voucher['status']?.toString() != 'posted') return;
-    final controller = TextEditingController();
-    final reason = await showDialog<String>(context: context, builder: (ctx) => AlertDialog(
-      title: Text(t('إبطال السند', 'Void voucher')),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        Text(t('سيُنشأ قيد عكسي مع الاحتفاظ بالقيد الأصلي.', 'A reversing journal entry will be created; the original entry is preserved.')),
-        TextField(key: const Key('voucher-void-reason'), controller: controller, autofocus: true, maxLines: 3,
-          decoration: InputDecoration(labelText: t('سبب الإبطال', 'Void reason'), border: const OutlineInputBorder())),
-      ]),
-      actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx), child: Text(t('إلغاء', 'Cancel'))),
-        FilledButton(onPressed: () { final v=controller.text.trim(); if(v.length>=3) Navigator.pop(ctx,v); }, child: Text(t('إبطال السند','Void voucher'))),
-      ],
-    ));
-    controller.dispose();
+    final reason = await showDialog<String>(
+      context: context,
+      builder: (_) => VoucherVoidDialog(english: widget.english),
+    );
     if (reason == null || !mounted) return;
     setState(() => _actionBusy = true);
     try {
       await widget.voidVoucher!(int.tryParse(voucher['id']?.toString() ?? '') ?? 0, reason);
-      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('تم إبطال السند وإنشاء القيد العكسي.','Voucher voided and reversal entry created.'))));
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(t('تم إبطال السند وإنشاء القيد العكسي.', 'Voucher voided and reversal entry created.'))),
+      );
       await _load();
-    } catch(e) {
-      if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('${t('تعذر إبطال السند','Could not void voucher')}: $e')));
-    } finally { if(mounted) setState(()=>_actionBusy=false); }
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('${t('تعذر إبطال السند', 'Could not void voucher')}: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _actionBusy = false);
+    }
   }
 
   String _money(dynamic value) {
@@ -310,4 +306,49 @@ class _VoucherIssueDialogState extends State<VoucherIssueDialog> {
       if(_error!=null) Padding(padding:const EdgeInsets.only(top:8),child:Text(_error!,style:TextStyle(color:Theme.of(context).colorScheme.error))),
     ])))),actions:[TextButton(onPressed:_busy?null:()=>Navigator.pop(context,false),child:Text(t('إلغاء','Cancel'))),FilledButton(onPressed:_busy?null:_submit,child:_busy?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):Text(t('إصدار وترحيل','Issue and post')))]);
   }
+}
+
+
+class VoucherVoidDialog extends StatefulWidget {
+  const VoucherVoidDialog({super.key, required this.english});
+  final bool english;
+  @override
+  State<VoucherVoidDialog> createState() => _VoucherVoidDialogState();
+}
+
+class _VoucherVoidDialogState extends State<VoucherVoidDialog> {
+  final _controller = TextEditingController();
+  String t(String ar, String en) => widget.english ? en : ar;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(t('إبطال السند', 'Void voucher')),
+    content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+      Text(t('سيُنشأ قيد عكسي مع الاحتفاظ بالقيد الأصلي.', 'A reversing journal entry will be created; the original entry is preserved.')),
+      const SizedBox(height: 12),
+      TextField(
+        key: const Key('voucher-void-reason'),
+        controller: _controller,
+        autofocus: true,
+        maxLines: 3,
+        decoration: InputDecoration(labelText: t('سبب الإبطال', 'Void reason'), border: const OutlineInputBorder()),
+      ),
+    ]),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context), child: Text(t('إلغاء', 'Cancel'))),
+      FilledButton(
+        onPressed: () {
+          final value = _controller.text.trim();
+          if (value.length >= 3) Navigator.pop(context, value);
+        },
+        child: Text(t('إبطال السند', 'Void voucher')),
+      ),
+    ],
+  );
 }
