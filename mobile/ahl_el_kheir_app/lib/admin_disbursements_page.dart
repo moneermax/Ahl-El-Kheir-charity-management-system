@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 
 class AdminDisbursementsPage extends StatefulWidget {
   const AdminDisbursementsPage({
@@ -6,9 +7,15 @@ class AdminDisbursementsPage extends StatefulWidget {
     required this.english,
     required this.loadPage,
     required this.loadDetail,
+    this.roleCode = 'admin',
+    this.pickReceipt,
+    this.submitItemConfirmation,
   });
 
   final bool english;
+  final String roleCode;
+  final Future<PlatformFile?> Function()? pickReceipt;
+  final Future<Map<String, dynamic>> Function(int itemId, PlatformFile receipt)? submitItemConfirmation;
   final Future<Map<String, dynamic>> Function({
     required String month,
     required String status,
@@ -206,7 +213,10 @@ class _AdminDisbursementsPageState extends State<AdminDisbursementsPage> {
                       builder: (_) => AdminDisbursementDetailPage(
                         english: widget.english,
                         batchId: id,
+                        roleCode: widget.roleCode,
                         loadDetail: widget.loadDetail,
+                        pickReceipt: widget.pickReceipt,
+                        submitItemConfirmation: widget.submitItemConfirmation,
                       ),
                     ));
                   },
@@ -274,10 +284,16 @@ class AdminDisbursementDetailPage extends StatefulWidget {
     required this.english,
     required this.batchId,
     required this.loadDetail,
+    this.roleCode = 'admin',
+    this.pickReceipt,
+    this.submitItemConfirmation,
   });
 
   final bool english;
   final int batchId;
+  final String roleCode;
+  final Future<PlatformFile?> Function()? pickReceipt;
+  final Future<Map<String, dynamic>> Function(int itemId, PlatformFile receipt)? submitItemConfirmation;
   final Future<Map<String, dynamic>> Function(int id, int page) loadDetail;
 
   @override
@@ -291,6 +307,8 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
   List<Map<String, dynamic>> items = [];
   int page = 1;
   int pages = 1;
+  final Map<int, PlatformFile> selectedReceipts = {};
+  final Set<int> busyItems = {};
 
   String t(String ar, String en) => widget.english ? en : ar;
   String money(dynamic value) {
@@ -325,6 +343,36 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
       if (mounted) setState(() => error = e.toString());
     } finally {
       if (mounted) setState(() => loading = false);
+    }
+  }
+
+  Future<void> pickReceiptForItem(int itemId) async {
+    final picker = widget.pickReceipt;
+    if (picker == null) return;
+    try {
+      final file = await picker();
+      if (!mounted || file == null) return;
+      setState(() => selectedReceipts[itemId] = file);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> confirmItem(int itemId) async {
+    final file = selectedReceipts[itemId];
+    final submit = widget.submitItemConfirmation;
+    if (file == null || submit == null || busyItems.contains(itemId)) return;
+    setState(() => busyItems.add(itemId));
+    try {
+      await submit(itemId, file);
+      if (!mounted) return;
+      setState(() => selectedReceipts.remove(itemId));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(t('تم تأكيد استلام الأسرة وإرفاق الإيصال.', 'Family receipt confirmed successfully.'))));
+      await refresh(requestedPage: page);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => busyItems.remove(itemId));
     }
   }
 
@@ -370,12 +418,45 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
             Text(t('تفاصيل الأسر', 'Family items'), style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900)),
             for (final item in items)
               Card(
-                child: ListTile(
-                  title: Text(item['mother_name']?.toString().trim().isNotEmpty == true
-                      ? item['mother_name'].toString()
-                      : (item['family_code']?.toString() ?? t('أسرة', 'Family'))),
-                  subtitle: Text('${item['family_code'] ?? ''} · ${t('الأطفال', 'Children')}: ${item['children_count'] ?? 0} · ${itemStatus(item['status']?.toString() ?? '')}'),
-                  trailing: Text(money(item['amount']), style: const TextStyle(fontWeight: FontWeight.w800)),
+                child: Padding(
+                  padding: const EdgeInsets.all(12),
+                  child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                    ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      title: Text(item['mother_name']?.toString().trim().isNotEmpty == true
+                          ? item['mother_name'].toString()
+                          : (item['family_code']?.toString() ?? t('أسرة', 'Family'))),
+                      subtitle: Text('${item['family_code'] ?? ''} · ${t('الأطفال', 'Children')}: ${item['children_count'] ?? 0} · ${itemStatus(item['status']?.toString() ?? '')}'),
+                      trailing: Text(money(item['amount']), style: const TextStyle(fontWeight: FontWeight.w800)),
+                    ),
+                    if (widget.roleCode == 'nanny'
+                        && ['transferred', 'received'].contains(batch['status']?.toString())
+                        && item['status']?.toString() == 'pending'
+                        && widget.pickReceipt != null
+                        && widget.submitItemConfirmation != null) ...[
+                      OutlinedButton.icon(
+                        key: Key('disbursement-pick-receipt-${item['id']}'),
+                        onPressed: busyItems.contains(int.tryParse(item['id']?.toString() ?? '') ?? 0)
+                            ? null
+                            : () => pickReceiptForItem(int.tryParse(item['id']?.toString() ?? '') ?? 0),
+                        icon: const Icon(Icons.attach_file_rounded),
+                        label: Text(selectedReceipts[int.tryParse(item['id']?.toString() ?? '') ?? 0]?.name
+                            ?? t('اختيار إيصال الاستلام', 'Choose receipt file')),
+                      ),
+                      const SizedBox(height: 6),
+                      FilledButton.icon(
+                        key: Key('disbursement-confirm-item-${item['id']}'),
+                        onPressed: selectedReceipts.containsKey(int.tryParse(item['id']?.toString() ?? '') ?? 0)
+                            && !busyItems.contains(int.tryParse(item['id']?.toString() ?? '') ?? 0)
+                            ? () => confirmItem(int.tryParse(item['id']?.toString() ?? '') ?? 0)
+                            : null,
+                        icon: busyItems.contains(int.tryParse(item['id']?.toString() ?? '') ?? 0)
+                            ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                            : const Icon(Icons.check_circle_outline_rounded),
+                        label: Text(t('تأكيد الاستلام', 'Confirm receipt')),
+                      ),
+                    ],
+                  ]),
                 ),
               ),
             if (!loading && items.isEmpty && error == null)
@@ -387,7 +468,7 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
                 OutlinedButton(onPressed: loading || page >= pages ? null : () => refresh(requestedPage: page + 1), child: Text(t('التالي', 'Next'))),
               ]),
             const SizedBox(height: 12),
-            Text(t('عرض فقط — لا يمكن تعديل الدفعات أو تأكيدها من هذه الشاشة.', 'Read-only — batches cannot be changed or confirmed from this screen.'), style: Theme.of(context).textTheme.bodySmall),
+            if (widget.roleCode != 'nanny') Text(t('عرض فقط — إجراءات الدفعات غير متاحة لهذا الدور بعد.', 'Read-only — batch actions are not yet available for this role.'), style: Theme.of(context).textTheme.bodySmall),
           ],
         ),
       ),
