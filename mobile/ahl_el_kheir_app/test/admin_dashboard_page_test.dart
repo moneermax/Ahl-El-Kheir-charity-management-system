@@ -80,6 +80,8 @@ void main() {
 
     await scrollTo('User accounts');
     expect(find.text('User accounts'), findsOneWidget);
+    await tester.tap(find.text('User accounts'));
+    expect(openedTool, 'users');
 
     // Check each role-specific group only after its section is built in the
     // lazy list; trying to scroll to a deliberately absent tile throws.
@@ -99,9 +101,6 @@ void main() {
     expect(find.byKey(const Key('admin-tool-audit')), findsNothing,
         reason: 'Audit tile must not be advertised to Sudo.');
 
-    await scrollTo('User accounts');
-    await tester.tap(find.text('User accounts'));
-    expect(openedTool, 'users');
     expect(tester.takeException(), isNull);
   });
 
