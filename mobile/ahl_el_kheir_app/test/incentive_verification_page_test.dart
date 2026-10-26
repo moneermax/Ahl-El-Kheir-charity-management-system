@@ -4,6 +4,10 @@ import 'package:ahl_el_kheir_app/incentive_verification_page.dart';
 
 void main(){
   testWidgets('HR Manager sees only eligible pending events as actionable',(tester)async{
+    tester.view.physicalSize=const Size(1000,1800);
+    tester.view.devicePixelRatio=1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
     await tester.pumpWidget(MaterialApp(home:IncentiveVerificationPage(
       english:true,
       loadEvents:()async=>{'events':[
@@ -15,15 +19,15 @@ void main(){
     await tester.pumpAndSettle();
     expect(find.text('Incentive verification'),findsOneWidget);
     expect(find.text('New sponsor'),findsOneWidget);
-    expect(find.text('Verify and issue award'),findsOneWidget);
-    expect(find.text('Verify and issue award'),findsOneWidget);
-    await tester.drag(find.byType(ListView).last,const Offset(0,-1000));
-    await tester.pumpAndSettle();
     expect(find.text('Collection'),findsOneWidget);
     expect(find.text('Routine collection incentives are disabled; the event remains preserved without an award.'),findsOneWidget);
     expect(find.text('Verify and issue award'),findsOneWidget);
+    await tester.tap(find.text('Verified'));
+    await tester.pumpAndSettle();
+    expect(find.text('No events in this filter.'),findsOneWidget);
     await tester.tap(find.text('All'));
     await tester.pumpAndSettle();
+    expect(find.text('Collection'),findsOneWidget);
   });
 
   testWidgets('incentive verification confirmation submits note and refreshes',(tester)async{
