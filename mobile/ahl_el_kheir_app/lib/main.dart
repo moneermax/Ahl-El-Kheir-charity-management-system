@@ -70,6 +70,20 @@ String? normalizeApiBaseUrl(String value) {
   return normalized;
 }
 
+String migrateKnownLegacyApiBaseUrl(String value) {
+  final uri = Uri.tryParse(value);
+  if (uri != null
+      && uri.scheme == 'http'
+      && uri.host == '192.168.18.9'
+      && uri.port == 881
+      && uri.path == '/AhlElKheir/api/v1'
+      && !uri.hasQuery
+      && !uri.hasFragment) {
+    return uri.replace(port: 8081).toString();
+  }
+  return value;
+}
+
 class ApiProbeResult {
   const ApiProbeResult(this.success, this.message);
   final bool success;
@@ -227,7 +241,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     try {
       final savedBaseUrl = await storage.read(key: apiBaseUrlKey);
       final normalizedBaseUrl = savedBaseUrl == null ? null : normalizeApiBaseUrl(savedBaseUrl);
-      if (normalizedBaseUrl != null) apiBaseUrl = normalizedBaseUrl;
+      if (normalizedBaseUrl != null) {
+        apiBaseUrl = migrateKnownLegacyApiBaseUrl(normalizedBaseUrl);
+        if (apiBaseUrl != normalizedBaseUrl) {
+          // A previous mobile build saved the documented-but-unreachable port 881.
+          // Migrate only that exact known local endpoint; preserve other custom hosts.
+          await storage.write(key: apiBaseUrlKey, value: apiBaseUrl);
+        }
+      }
       final token = await storage.read(key: tokenKey);
       if (token != null && token.isNotEmpty) {
         final data = await call('GET', 'auth/me.php', token: token);
