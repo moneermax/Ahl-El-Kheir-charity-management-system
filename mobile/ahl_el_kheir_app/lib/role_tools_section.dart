@@ -31,11 +31,7 @@ class RoleToolsSection extends StatelessWidget {
             padding: const EdgeInsetsDirectional.only(start: 2, bottom: 8, top: 8),
             child: Text(
               group.title,
-              style: const TextStyle(
-                color: Color(0xFF115E59),
-                fontSize: 14,
-                fontWeight: FontWeight.w800,
-              ),
+              style: TextStyle(color: Theme.of(context).colorScheme.primary, fontSize: 14, fontWeight: FontWeight.w800),
             ),
           ),
           for (final tool in group.tools)
@@ -44,8 +40,8 @@ class RoleToolsSection extends StatelessWidget {
               child: Card(
                 child: ListTile(
                   leading: CircleAvatar(
-                    backgroundColor: const Color(0xFFDDF4F0),
-                    child: Icon(tool.icon, color: const Color(0xFF0F766E)),
+                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                    child: Icon(tool.icon, color: Theme.of(context).colorScheme.primary),
                   ),
                   title: Text(tool.title),
                   subtitle: Text(tool.subtitle),
@@ -270,11 +266,11 @@ class _SectionTitle extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(title, style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: const Color(0xFF115E59), fontWeight: FontWeight.w800,
+              color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.w800,
             )),
             const SizedBox(height: 3),
             Text(subtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: const Color(0xFF61717D), height: 1.45,
+              color: Theme.of(context).colorScheme.onSurfaceVariant, height: 1.45,
             )),
           ],
         ),

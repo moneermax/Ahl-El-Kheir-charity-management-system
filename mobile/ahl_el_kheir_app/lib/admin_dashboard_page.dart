@@ -66,12 +66,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF172B3A);
-    const muted = Color(0xFF61717D);
-    const canvas = Color(0xFFF3F7FA);
-    const violet = Color(0xFF0F766E);
-    const cyan = Color(0xFF20A39E);
-    const orange = Color(0xFFE07A5F);
+    const ink = Color(0xFF251B35);
+    const muted = Color(0xFF756B84);
+    const canvas = Color(0xFFF8F5FF);
+    const violet = Color(0xFF5B21B6);
+    const amber = Color(0xFFF59E0B);
+    const orange = Color(0xFFDB2777);
     const rose = Color(0xFFB9535B);
 
     return Scaffold(
@@ -89,7 +89,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF123B46), Color(0xFF115E59), Color(0xFF20A39E)],
+                  colors: [Color(0xFF3B0764), Color(0xFF5B21B6), Color(0xFF7C3AED)],
                 ),
                 boxShadow: [
                   BoxShadow(color: violet.withValues(alpha: .20), blurRadius: 28, offset: const Offset(0, 12)),
@@ -127,7 +127,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   const SizedBox(height: 10),
                   Text(t('إدارة المستخدمين والبيانات والمالية وأدوات حماية النظام من مساحة واحدة.',
                     'Manage accounts, core records, finance and system protection from one workspace.'),
-                    style: const TextStyle(color: Color(0xFFE4F1F2), fontSize: 12, height: 1.7)),
+                    style: const TextStyle(color: Color(0xFFEDE9FE), fontSize: 12, height: 1.7)),
                   const SizedBox(height: 16),
                   Wrap(spacing: 8, runSpacing: 8, children: [
                     _StatusPill(label: t('قاعدة البيانات', 'Database'), value: server['database_connected'] == true ? t('متصلة', 'Connected') : t('غير متاحة', 'Unavailable'), good: server['database_connected'] == true),
@@ -158,12 +158,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               children: [
                 _MetricCard(label: t('المستخدمون', 'Users'), value: metric('users'), icon: Icons.groups_rounded, color: violet),
                 _MetricCard(label: t('الكفلاء', 'Sponsors'), value: metric('sponsors'), icon: Icons.volunteer_activism_rounded, color: orange),
-                _MetricCard(label: t('الأسر', 'Families'), value: metric('families'), icon: Icons.home_work_rounded, color: cyan),
+                _MetricCard(label: t('الأسر', 'Families'), value: metric('families'), icon: Icons.home_work_rounded, color: amber),
                 _MetricCard(label: t('الكفالات', 'Sponsorships'), value: metric('sponsorships'), icon: Icons.handshake_rounded, color: rose),
                 _MetricCard(label: t('طلبات استعادة كلمة المرور', 'Pending recovery'), value: metric('pending_recovery'), icon: Icons.password_rounded, color: const Color(0xFFB9535B)),
-                _MetricCard(label: t('إشعارات غير مقروءة', 'Unread notifications'), value: metric('unread_notifications'), icon: Icons.notifications_active_rounded, color: const Color(0xFF20A39E)),
-                _MetricCard(label: t('سجلات التدقيق', 'Audit records'), value: metric('audit_log'), icon: Icons.fact_check_rounded, color: const Color(0xFF61717D)),
-                _MetricCard(label: t('إعدادات النظام', 'System settings'), value: metric('settings'), icon: Icons.settings_suggest_rounded, color: const Color(0xFF0F766E)),
+                _MetricCard(label: t('إشعارات غير مقروءة', 'Unread notifications'), value: metric('unread_notifications'), icon: Icons.notifications_active_rounded, color: const Color(0xFFF59E0B)),
+                _MetricCard(label: t('سجلات التدقيق', 'Audit records'), value: metric('audit_log'), icon: Icons.fact_check_rounded, color: const Color(0xFF756B84)),
+                _MetricCard(label: t('إعدادات النظام', 'System settings'), value: metric('settings'), icon: Icons.settings_suggest_rounded, color: const Color(0xFF5B21B6)),
               ],
             ),
             const SizedBox(height: 24),
@@ -174,21 +174,21 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             if (widget.roleCode == 'admin') _ToolTile(key: const Key('admin-tool-settings'), icon: Icons.settings_rounded, color: violet, title: t('إعدادات النظام', 'System settings'), description: t('إعدادات أصلية متاحة لدور المسؤول فقط', 'Native settings available to the administrator role only'), tag: t('المسؤول فقط', 'ADMIN ONLY'), onTap: () => widget.onOpenTool('settings')),
             if (widget.roleCode == 'admin') _ToolTile(key: const Key('admin-tool-recovery'), icon: Icons.password_rounded, color: violet, title: t('طلبات استعادة كلمة المرور', 'Password recovery requests'), description: t('مراجعة طلبات استعادة الحسابات المعلقة', 'Review pending account recovery requests'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('recovery')),
             const SizedBox(height: 22),
-            _SectionHeading(title: t('البيانات الأساسية', 'CORE RECORDS'), subtitle: t('السجلات التشغيلية الرئيسية', 'Primary operational records'), icon: Icons.hub_rounded, color: cyan),
+            _SectionHeading(title: t('البيانات الأساسية', 'CORE RECORDS'), subtitle: t('السجلات التشغيلية الرئيسية', 'Primary operational records'), icon: Icons.hub_rounded, color: amber),
             const SizedBox(height: 10),
             _ToolTile(icon: Icons.volunteer_activism_rounded, color: orange, title: t('الكفلاء', 'Sponsors'), description: t('سجل الكفلاء وبياناتهم', 'Sponsor directory and records'), onTap: () => widget.onOpenTool('sponsors')),
-            _ToolTile(icon: Icons.assignment_ind_rounded, color: cyan, title: t('إسناد الكفلاء', 'Sponsor assignment'), description: t('إسناد الكفلاء غير المسندين للمشرفين النشطين', 'Assign unassigned sponsors to active supervisors'), onTap: () => widget.onOpenTool('sponsor_assignment')),
-            _ToolTile(icon: Icons.family_restroom_rounded, color: cyan, title: t('الأسر', 'Families'), description: t('سجل الأسر والبيانات المرتبطة بها', 'Family records and linked information'), onTap: () => widget.onOpenTool('families')),
+            _ToolTile(icon: Icons.assignment_ind_rounded, color: amber, title: t('إسناد الكفلاء', 'Sponsor assignment'), description: t('إسناد الكفلاء غير المسندين للمشرفين النشطين', 'Assign unassigned sponsors to active supervisors'), onTap: () => widget.onOpenTool('sponsor_assignment')),
+            _ToolTile(icon: Icons.family_restroom_rounded, color: amber, title: t('الأسر', 'Families'), description: t('سجل الأسر والبيانات المرتبطة بها', 'Family records and linked information'), onTap: () => widget.onOpenTool('families')),
             _ToolTile(icon: Icons.handshake_rounded, color: rose, title: t('الكفالات', 'Sponsorships'), description: t('سجل الكفالات وعلاقاتها', 'Sponsorship records and relationships'), onTap: () => widget.onOpenTool('sponsorships')),
-            if (widget.roleCode == 'admin') _ToolTile(key: const Key('admin-tool-reports'), icon: Icons.query_stats_rounded, color: cyan, title: t('التقارير', 'Reports'), description: t('مركز التقارير والتقرير المتاح داخل التطبيق', 'Reports center and supported reports are available in the app'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('reports')),
+            if (widget.roleCode == 'admin') _ToolTile(key: const Key('admin-tool-reports'), icon: Icons.query_stats_rounded, color: amber, title: t('التقارير', 'Reports'), description: t('مركز التقارير والتقرير المتاح داخل التطبيق', 'Reports center and supported reports are available in the app'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('reports')),
             const SizedBox(height: 22),
             _SectionHeading(title: t('التشغيل والأفراد', 'OPERATIONS & PEOPLE'), subtitle: t('شاشات الهاتف المتاحة للإدارة', 'Native mobile workflows available to administrators'), icon: Icons.workspaces_rounded, color: violet),
             const SizedBox(height: 10),
             _ToolTile(icon: Icons.work_rounded, color: violet, title: t('المشروعات', 'Projects'), description: t('متابعة المشروعات والتقدم والمعالم', 'Review projects, progress and milestones'), onTap: () => widget.onOpenTool('projects')),
             _ToolTile(icon: Icons.badge_rounded, color: violet, title: t('الموظفون', 'Employees'), description: t('دليل الموظفين وتفاصيل ملفاتهم', 'Employee directory and profile details'), onTap: () => widget.onOpenTool('employees')),
             if (widget.roleCode == 'admin') _ToolTile(key: const Key('admin-tool-payroll'), icon: Icons.payments_rounded, color: violet, title: t('إدارة الرواتب', 'Payroll management'), description: t('إدارة الفترات والمسودات وإثباتات التحويل', 'Manage payroll periods, drafts and transfer proofs'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('payroll')),
-            _ToolTile(icon: Icons.fact_check_rounded, color: cyan, title: t('الحضور والانصراف', 'Attendance'), description: t('مراجعة سجلات الحضور حسب التاريخ', 'Review attendance by date'), onTap: () => widget.onOpenTool('attendance')),
-            _ToolTile(icon: Icons.supervisor_account_rounded, color: cyan, title: t('المشرفون', 'Supervisors'), description: t('عرض المشرفين والتكليفات والحالة', 'Review supervisors, assignments and status'), onTap: () => widget.onOpenTool('supervisors')),
+            _ToolTile(icon: Icons.fact_check_rounded, color: amber, title: t('الحضور والانصراف', 'Attendance'), description: t('مراجعة سجلات الحضور حسب التاريخ', 'Review attendance by date'), onTap: () => widget.onOpenTool('attendance')),
+            _ToolTile(icon: Icons.supervisor_account_rounded, color: amber, title: t('المشرفون', 'Supervisors'), description: t('عرض المشرفين والتكليفات والحالة', 'Review supervisors, assignments and status'), onTap: () => widget.onOpenTool('supervisors')),
             _ToolTile(icon: Icons.campaign_rounded, color: orange, title: t('طلبات الرعاية', 'Sponsor requests'), description: t('مراجعة طلبات الرعاية وحالاتها', 'Review sponsor leads and statuses'), onTap: () => widget.onOpenTool('sponsor_requests')),
             _ToolTile(icon: Icons.rule_folder_rounded, color: orange, title: t('طابور المراجعة المالية', 'Financial review queue'), description: t('مراجعة التحصيلات والقرارات المالية', 'Review pending collections and finance decisions'), onTap: () => widget.onOpenTool('fm_review_queue')),
             const SizedBox(height: 22),
@@ -218,9 +218,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               ...audit.map((item) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE1E8EF))),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE8E0F4))),
                 child: Row(children: [
-                  Container(width: 38, height: 38, decoration: BoxDecoration(color: const Color(0xFFF8EFD9), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.receipt_long_rounded, color: violet)),
+                  Container(width: 38, height: 38, decoration: BoxDecoration(color: const Color(0xFFFEF3C7), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.receipt_long_rounded, color: violet)),
                   const SizedBox(width: 11),
                   Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                     Text(item['action']?.toString() ?? '—', style: const TextStyle(color: ink, fontWeight: FontWeight.w800, fontSize: 13)),
@@ -273,7 +273,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE1E8EF)), boxShadow: [BoxShadow(color: color.withValues(alpha: .06), blurRadius: 14, offset: const Offset(0, 5))]),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE8E0F4)), boxShadow: [BoxShadow(color: color.withValues(alpha: .06), blurRadius: 14, offset: const Offset(0, 5))]),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -289,11 +289,11 @@ class _MetricCard extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: AlignmentDirectional.centerStart,
-          child: Text(value.toString(), style: const TextStyle(color: Color(0xFF172B3A), fontSize: 24, fontWeight: FontWeight.w900)),
+          child: Text(value.toString(), style: const TextStyle(color: Color(0xFF251B35), fontSize: 24, fontWeight: FontWeight.w900)),
         ),
         const SizedBox(height: 4),
         Text(label, maxLines: 2, overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Color(0xFF61717D), fontSize: 11, height: 1.25, fontWeight: FontWeight.w700)),
+          style: const TextStyle(color: Color(0xFF756B84), fontSize: 11, height: 1.25, fontWeight: FontWeight.w700)),
       ],
     ),
   );
@@ -311,9 +311,9 @@ class _SectionHeading extends StatelessWidget {
     Container(width: 42, height: 42, decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(14)), child: Icon(icon, color: color)),
     const SizedBox(width: 11),
     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: const TextStyle(color: Color(0xFF172B3A), fontSize: 14, fontWeight: FontWeight.w900)),
+      Text(title, style: const TextStyle(color: Color(0xFF251B35), fontSize: 14, fontWeight: FontWeight.w900)),
       const SizedBox(height: 2),
-      Text(subtitle, style: const TextStyle(color: Color(0xFF61717D), fontSize: 11, height: 1.4)),
+      Text(subtitle, style: const TextStyle(color: Color(0xFF756B84), fontSize: 11, height: 1.4)),
     ])),
   ]);
 }
@@ -330,7 +330,7 @@ class _ToolTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(bottom: 8),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE1E8EF))),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE8E0F4))),
     child: Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(17),
@@ -339,8 +339,8 @@ class _ToolTile extends StatelessWidget {
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       leading: Container(width: 42, height: 42, decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(13)), child: Icon(icon, color: color)),
-      title: Text(title, style: const TextStyle(color: Color(0xFF172B3A), fontWeight: FontWeight.w800, fontSize: 13)),
-      subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(description, style: const TextStyle(color: Color(0xFF61717D), fontSize: 11, height: 1.4))),
+      title: Text(title, style: const TextStyle(color: Color(0xFF251B35), fontWeight: FontWeight.w800, fontSize: 13)),
+      subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(description, style: const TextStyle(color: Color(0xFF756B84), fontSize: 11, height: 1.4))),
       trailing: Column(mainAxisSize: MainAxisSize.min, children: [
         if (tag != null) Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
@@ -349,7 +349,7 @@ class _ToolTile extends StatelessWidget {
             style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.w900)),
         ),
         const SizedBox(height: 2),
-        const Icon(Icons.chevron_right_rounded, color: Color(0xFF9CA99E), size: 20),
+        const Icon(Icons.chevron_right_rounded, color: Color(0xFF9A8FA8), size: 20),
       ]),
       ),
     ),

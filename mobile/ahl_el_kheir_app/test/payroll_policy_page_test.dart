@@ -20,6 +20,8 @@ void main() {
     expect(find.text('Payroll policy'),findsOneWidget);
     expect(find.text('Current active policy'),findsOneWidget);
     expect(find.text('Create a future version'),findsOneWidget);
+    await tester.ensureVisible(find.text('Policy version history'));
+    await tester.pumpAndSettle();
     expect(find.text('Policy version history'),findsOneWidget);
     expect(find.textContaining('V1 · 2026-10-05'),findsWidgets);
     expect(find.text('Active now'),findsWidgets);
@@ -33,6 +35,8 @@ void main() {
       loadPage:() async=>{'today':'2026-10-26','active_policy':null,'next_policy':null,'policies':[]},
       submitAction:(_) async {submitted=true;return {'message':'created'};},
     )));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Create policy version'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Create policy version'));
     await tester.pumpAndSettle();

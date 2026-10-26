@@ -123,14 +123,14 @@ class _AttendancePolicyPageState extends State<AttendancePolicyPage> {
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF1E6B4E);
+    final scheme = Theme.of(context).colorScheme;
     final dayNames = widget.english ? const ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'] : const ['الاثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت','الأحد'];
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F4EE),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(title: Text(t('سياسة الحضور والانصراف','Attendance policy')),actions:[IconButton(tooltip:t('تحديث','Refresh'),onPressed:loading||saving?null:refresh,icon:const Icon(Icons.refresh_rounded))]),
       body: RefreshIndicator(onRefresh:refresh,child:ListView(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.all(14),children:[
-        if(notice!=null) Card(color:const Color(0xFFE7F6EC),child:Padding(padding:const EdgeInsets.all(12),child:Text(notice!,style:const TextStyle(color:green)))),
-        if(error!=null) Card(color:const Color(0xFFFFE9E9),child:Padding(padding:const EdgeInsets.all(12),child:Text(error!,style:const TextStyle(color:Color(0xFFB42318))))),
+        if(notice!=null) Card(color:scheme.primaryContainer,child:Padding(padding:const EdgeInsets.all(12),child:Text(notice!,style:TextStyle(color:scheme.onPrimaryContainer)))),
+        if(error!=null) Card(color:scheme.errorContainer,child:Padding(padding:const EdgeInsets.all(12),child:Text(error!,style:TextStyle(color:scheme.onErrorContainer)))),
         Card(child:Padding(padding:const EdgeInsets.all(15),child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
           Text(t('السياسة السارية','Active policy'),style:const TextStyle(fontSize:17,fontWeight:FontWeight.w800)),
           const SizedBox(height:8),
@@ -190,7 +190,7 @@ class _AttendancePolicyPageState extends State<AttendancePolicyPage> {
           Text('V${p['version_no']} · ${p['policy_name']}',style:const TextStyle(fontWeight:FontWeight.w800)),
           Text('${p['effective_from']} · ${p['working_start_time'].toString().substring(0,5)}–${p['working_end_time'].toString().substring(0,5)}'),
           Text(t('النمط: ','Mode: ')+t(p['default_work_mode']=='remote'?'عن بُعد':p['default_work_mode']=='onsite'?'من المكتب':'هجين',p['default_work_mode']=='remote'?'Remote':p['default_work_mode']=='onsite'?'On-site':'Hybrid')+' · '+t('أيام العمل: ','Working days: ')+_daysLabel(p['working_days'],dayNames)),
-          if(p['locked_by_attendance']==true)Text(t('مقفلة بعد تسجيل حركة حضور اليوم','Locked after operational attendance today'),style:const TextStyle(color:Color(0xFFB42318),fontWeight:FontWeight.w700)),
+          if(p['locked_by_attendance']==true)Text(t('مقفلة بعد تسجيل حركة حضور اليوم','Locked after operational attendance today'),style:TextStyle(color:Theme.of(context).colorScheme.error,fontWeight:FontWeight.w700)),
           Wrap(spacing:8,children:[OutlinedButton(onPressed:saving||p['can_manage']!=true?null:()=>_edit(p),child:Text(t('تعديل','Edit')),),TextButton(onPressed:saving||p['can_manage']!=true?null:()=>_delete(p),child:Text(t('حذف','Delete')))]),
         ]))),
       ])),

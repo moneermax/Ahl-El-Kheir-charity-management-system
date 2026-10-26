@@ -72,16 +72,10 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final en = widget.english;
-    const ink = Color(0xFF172B3A);
-    const muted = Color(0xFF61717D);
-    const accents = [
-      Color(0xFF0F766E),
-      Color(0xFF20A39E),
-      Color(0xFF8FAE91),
-      Color(0xFFE07A5F),
-      Color(0xFF6D9B82),
-      Color(0xFFB9535B),
-    ];
+    final scheme = Theme.of(context).colorScheme;
+    const ink = Color(0xFF251B35);
+    const muted = Color(0xFF756B84);
+    const accents = [Color(0xFF5B21B6), Color(0xFFF59E0B), Color(0xFFDB2777), Color(0xFF7C3AED), Color(0xFFB45309), Color(0xFF9333EA)];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -111,14 +105,14 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
         const SizedBox(height: 12),
         if (error != null)
           Card(
-            color: const Color(0xFFFFF1EC),
+            color: scheme.errorContainer,
             child: Padding(
               padding: const EdgeInsets.all(14),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(en ? 'Dashboard data could not be loaded.' : 'تعذر تحميل بيانات لوحة التحكم.',
-                    style: const TextStyle(color: Color(0xFFB42318), fontWeight: FontWeight.w700)),
+                    style: TextStyle(color: scheme.error, fontWeight: FontWeight.w700)),
                   const SizedBox(height: 6),
                   Text(error!, style: const TextStyle(color: muted, fontSize: 11)),
                   Align(

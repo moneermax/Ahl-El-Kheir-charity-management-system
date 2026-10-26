@@ -37,7 +37,7 @@ class _EmploymentStatesPageState extends State<EmploymentStatesPage> {
   }
   @override
   Widget build(BuildContext context) => Scaffold(
-    backgroundColor: const Color(0xFFF6F4EE),
+    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
     appBar: AppBar(title: Text(t('الحالة الوظيفية','Employment states')), actions: [IconButton(tooltip: t('تحديث','Refresh'), onPressed: loading ? null : refresh, icon: const Icon(Icons.refresh_rounded))]),
     body: RefreshIndicator(onRefresh: refresh, child: ListView(physics: const AlwaysScrollableScrollPhysics(), padding: const EdgeInsets.all(16), children: [
       Card(child: Padding(padding: const EdgeInsets.all(15), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
@@ -45,7 +45,7 @@ class _EmploymentStatesPageState extends State<EmploymentStatesPage> {
         const SizedBox(height: 5),
         Text(t('يعرض الحالة الحالية وسجلها دون تغيير أي بيانات.','Displays current employment state and history without changing data.')),
         if (loading) const Padding(padding: EdgeInsets.only(top: 10), child: LinearProgressIndicator()),
-        if (error != null) Text(error!, style: const TextStyle(color: Color(0xFFB42318))),
+        if (error != null) Text(error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
         const SizedBox(height: 12),
         Wrap(spacing: 10, runSpacing: 10, children: [
           _StateMetric(label: t('الحالات المعرفة','Defined states'), value: metrics['defined_states'] ?? states.length),
@@ -62,7 +62,7 @@ class _EmploymentStatesPageState extends State<EmploymentStatesPage> {
         const SizedBox(height: 8),
         Card(child: Padding(padding: const EdgeInsets.all(13), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text('${e['full_name'] ?? ''}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
-          Text((e['employee_code'] ?? '').toString(), style: const TextStyle(color: Color(0xFF667085), fontSize: 12)),
+          Text((e['employee_code'] ?? '').toString(), style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 12)),
           const Divider(),
           _StateRow(label: t('الحالة الوظيفية','Employment state'), value: (widget.english ? e['state_name_en'] : e['state_name'])?.toString() ?? '—'),
           _StateRow(label: t('رمز الحالة','State code'), value: e['state_code']?.toString() ?? '—'),
@@ -82,10 +82,10 @@ class _StateMetric extends StatelessWidget {
   Widget build(BuildContext context) => Container(
     constraints: const BoxConstraints(minWidth: 115),
     padding: const EdgeInsets.all(11),
-    decoration: BoxDecoration(color: const Color(0xFFE9F2EB), borderRadius: BorderRadius.circular(10)),
+    decoration: BoxDecoration(color: Theme.of(context).colorScheme.primaryContainer, borderRadius: BorderRadius.circular(10)),
     child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
       Text(label, style: const TextStyle(fontSize: 11)), const SizedBox(height: 4),
-      Text(value.toString(), style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF15583F))),
+      Text(value.toString(), style: TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Theme.of(context).colorScheme.onPrimaryContainer)),
     ]),
   );
 }
