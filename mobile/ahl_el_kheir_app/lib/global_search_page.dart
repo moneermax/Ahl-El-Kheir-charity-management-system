@@ -145,7 +145,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
             : RefreshIndicator(onRefresh:()=>search(targetPage:page),child:ListView.separated(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.fromLTRB(16,4,16,16),itemCount:items.length,separatorBuilder:(_,__)=>const SizedBox(height:8),itemBuilder:(context,index){
               final item=items[index];
               return Card(child:ListTile(
-                leading:CircleAvatar(child:Icon(switch(selectedType){'families'=>Icons.family_restroom_rounded,'sponsors'=>Icons.volunteer_activism_rounded,'payments'=>Icons.account_balance_wallet_rounded,_=>Icons.handshake_rounded})),
+                leading:CircleAvatar(child:Icon(switch(selectedType){'families'=>Icons.family_restroom_rounded,'sponsors'=>Icons.volunteer_activism_rounded,'payments'=>Icons.account_balance_wallet_rounded,'documents'=>Icons.description_rounded,_=>Icons.handshake_rounded})),
                 title:Text(titleFor(item),maxLines:2,overflow:TextOverflow.ellipsis),
                 subtitle:Text(subtitleFor(item),maxLines:3,overflow:TextOverflow.ellipsis),
                 trailing:const Icon(Icons.chevron_right_rounded),
