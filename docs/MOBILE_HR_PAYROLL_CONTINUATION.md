@@ -68,3 +68,12 @@ The feature is not complete until the native screen and endpoints are implemente
 - Updated `.github/workflows/mobile-api-auth-integration.yml` in commit `2940a305d9cde2410b7ab0f701f86b7fd410abc0` to apply the existing 2026-10-20 payroll transfer migration to the disposable test database.
 - This is an implementation checkpoint, not a verified feature yet. API lint/integration, mobile UI, widget tests, and APK build remain pending.
 
+## Implementation step 4 — Native Flutter payroll screen and routing
+
+- Added `mobile/ahl_el_kheir_app/lib/payroll_management_page.dart` in commit `9a3ce4e8da95d65c09a49f4ec2a64d38291ab617`.
+- The screen supports period loading, payroll generation/draft refresh, draft amount editing, individual and all-draft approval, period default and employee-specific active account assignment, private proof upload, and explicit confirmation of prepared transfers. It distinguishes new transfer proof from legacy paid evidence and presents a separate confirmation dialog before the payment/accounting action.
+- Added widget coverage for the separate approval/confirmation boundary and proof upload in commit `cb448a14ad37ee9af00b45f9d3c383e85d12fc6c`.
+- Wired authenticated GET/POST/multipart methods and the native route in `main.dart`, restored via a Git blob/tree commit to avoid large-file truncation in the contents API: `1b02e638cccc93a9088b20573a5b865e71169763`. Added the Finance Manager payroll tool in `role_tools_section.dart` commit `35ea753944f59fb28a34eca3ad17cc0a84540c7b`.
+- The first contents-API write to the large `main.dart` duplicated its suffix and failed Flutter analysis; this was traced to replacement-string interpolation of the Dart regex `r'/+$'`. The file has been reconstructed from last-known-good source `4952889a754138467d8af61077090e879096f028` plus the intended additions, committed using Git blob/tree/commit APIs, and checked to contain a single `LoginPage` declaration. The new Flutter gate is [run 40317872315](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40317872315); do not claim its analysis/widget/APK results until the run completes.
+- API integration already passed in [run 40317519179](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40317519179), including exact-role denial, invalid period rejection, proof upload remaining prepared with no payment/journal, wrong-period confirmation denial, explicit actor capture, balanced posting, and duplicate-confirmation protection.
+
