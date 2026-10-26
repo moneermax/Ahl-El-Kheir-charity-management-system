@@ -5363,3 +5363,8 @@ Evidence: [Flutter run 40287521591](https://github.com/moneermax/Ahl-El-Kheir-ch
 
 
 Mobile build root-cause correction — 2026-10-26: the Gradle failure persisted after setting the generated app compile SDK to API 36 because the task was :file_picker:checkDebugAarMetadata and the plugin subproject itself still declared android-34. Commit d408c1b4d756a8a151f6e7fff120061c595efdac upgrades file_picker to ^10.3.6, whose 10.3.x Android configuration uses flutter.compileSdkVersion; the app compile SDK override is retained. Latest run [40289421824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289421824) must verify dependency resolution, analyzer, all widget tests, APK build, and artifact publication. Finance Manager Fina routes and exact role gate were corrected separately and have a new widget test. No claim of APK/device acceptance until run completion.
+
+
+## 2026-10-26 — Fina API integration evidence
+
+Run [40289622000](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289622000) completed successfully against the checked-in schema plus the standalone Fina migration on disposable MariaDB. The live endpoint harness proved authentication is required, zero amounts are rejected, admin collection creation stores pending status, no journal is posted during registration, the pending queue returns the created record, and a creator cannot approve their own collection (status remains pending and journal remains absent). Test fixture cleanup is built into the harness. Not covered: multipart receipt upload, notification-failure isolation, local XAMPP/database, or device PDF preview. APK build remains a separate gate at run 40289711691.
