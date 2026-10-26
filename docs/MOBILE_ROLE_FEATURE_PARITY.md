@@ -282,14 +282,14 @@ The native Finance Manager tools now expose Fina collection registration plus pe
 
 Disposable MariaDB API integration run [40289622000](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289622000) passed collection authentication/validation, pending creation without journal, review queue visibility, and creator self-approval denial. The subsequent exact-role correction is in commit `0e037b009dc9eb49385f79097a16975df5066b5e`; its role-denial integration and current Flutter widget/build checks are pending in [run 40290143225](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40290143225) and [run 40290143259](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40290143259). No local XAMPP/API or physical-device acceptance is claimed.
 
-**Still open:** native disbursement actions, other role-specific finance workflows, HR/payroll operations, beneficiary/orphan forms, and remaining reports; local XAMPP/API/database verification and physical-device acceptance. Do not describe mobile role parity as complete.
+Correction — 2026-10-26: Native monthly-disbursement actions, beneficiary/orphan forms, and HR/payroll management have since been implemented and verified in later checkpoints below. **Still open:** remaining role-specific finance/HR workflows and reports, local XAMPP/API/database verification, and physical-device acceptance. Do not describe mobile role parity as complete.
 
 
 ## 2026-10-26 — Native read-only database browser (verification pending)
 
 The administrator dashboard's native read-only database browser uses exact persisted `raw_role_code === admin`, validates table names against `information_schema`, performs no DDL or writes, limits each result to 50 rows, and sanitizes binary/oversized values. The authenticated native backup API creates a real SQL dump, delivers it as binary, and supports deletion. Disposable MariaDB integration passed these database/backup operations and nanny denial in [run 40291447241](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40291447241). Flutter analysis, widget tests, APK build and publication remain pending at [run 40291627186](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40291627186).
 
-Database backup is still not native. Do not claim full mobile parity: other role-specific finance, HR, beneficiary-form, and report workflows remain open; local XAMPP/API/database and physical-device acceptance remain separate gates.
+Correction — 2026-10-26: Native database backup is implemented and has passed disposable MariaDB integration, as documented above. Do not claim full mobile parity: other role-specific finance/HR workflows and reports remain open; local XAMPP/API/database and physical-device acceptance remain separate gates.
 
 
 ## 2026-10-26 — Native Fina dashboard summary
