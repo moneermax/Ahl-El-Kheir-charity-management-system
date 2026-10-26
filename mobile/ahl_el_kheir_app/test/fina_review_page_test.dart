@@ -47,9 +47,10 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('مصدر تجريبي'), findsOneWidget);
-    expect(find.textContaining('جهة سابقة'), findsOneWidget);
     expect(find.text('لا يمكنك مراجعة تحصيل سجلته بنفسك.'), findsOneWidget);
     expect(find.text('اعتماد وترحيل'), findsNothing);
+    await tester.scrollUntilVisible(find.textContaining('جهة سابقة'), 250);
+    expect(find.textContaining('جهة سابقة'), findsOneWidget);
     expect(find.textContaining('القيد المحاسبي: #44'), findsOneWidget);
   });
 }
