@@ -1,11 +1,11 @@
-import 'dart:typed_data';
+import 'dart:convert';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/profile_page.dart';
 
 void main() {
-  final png = Uint8List.fromList([137, 80, 78, 71, 13, 10, 26, 10]);
+  final png = base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAAC0lEQVR4nGNgAAIAAAUAAXpeqz8AAAAASUVORK5CYII=');
   Map<String, dynamic> sampleProfile({bool hasAvatar = false}) => {
     'id': 12, 'username': 'profile-test', 'full_name': 'Test User', 'email': 'test@example.test',
     'phone': '0123456789', 'address': 'Test address', 'birth_date': '1990-01-02',

@@ -78,12 +78,17 @@ void main() {
     });
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Unbalanced entry');
-    await tester.tap(find.byType(DropdownButtonFormField<int>).at(0));
+    final firstAccountDropdown = find.byType(DropdownButtonFormField<int>).at(0);
+    await tester.ensureVisible(firstAccountDropdown);
+    await tester.pumpAndSettle();
+    await tester.tap(firstAccountDropdown);
     await tester.pumpAndSettle();
     await tester.tap(find.text('1100 · Cash').last);
     await tester.pumpAndSettle();
-    await tester.ensureVisible(find.byType(DropdownButtonFormField<int>).at(1));
-    await tester.tap(find.byType(DropdownButtonFormField<int>).at(1));
+    final secondAccountDropdown = find.byType(DropdownButtonFormField<int>).at(1);
+    await tester.scrollUntilVisible(secondAccountDropdown, 200, scrollable: find.byType(Scrollable).first);
+    await tester.pumpAndSettle();
+    await tester.tap(secondAccountDropdown);
     await tester.pumpAndSettle();
     await tester.tap(find.text('4100 · Revenue').last);
     await tester.pumpAndSettle();
