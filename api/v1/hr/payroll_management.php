@@ -265,10 +265,10 @@ try {
     ak_api_json(409, ['ok' => false, 'error' => ['code' => 'payroll_conflict', 'message' => $e->getMessage()]]);
 } catch (PDOException $e) {
     error_log('Mobile payroll management database failure: ' . $e->getMessage());
-    ak_api_json(500, ['ok' => false, 'error' => ['code' => 'payroll_management_failed', 'message' => 'The payroll operation could not be completed.']);
+    ak_api_json(500, ['ok' => false, 'error' => ['code' => 'payroll_management_failed', 'message' => 'The payroll operation could not be completed.']]);
 } catch (RuntimeException $e) {
     ak_api_json(409, ['ok' => false, 'error' => ['code' => 'payroll_operation_rejected', 'message' => $e->getMessage()]]);
 } catch (Throwable $e) {
     error_log('Mobile payroll management failed: ' . $e->getMessage());
-    ak_api_json(500, ['ok' => false, 'error' => ['code' => 'payroll_management_failed', 'message' => 'The payroll operation could not be completed.']);
+    ak_api_json(500, ['ok' => false, 'error' => ['code' => 'payroll_management_failed', 'message' => 'The payroll operation could not be completed.']]);
 }
