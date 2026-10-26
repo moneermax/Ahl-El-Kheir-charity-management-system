@@ -39,16 +39,20 @@ void main() {
     });
 
     await tester.enterText(find.byType(TextFormField).at(0), 'Test manual journal');
+    await tester.ensureVisible(find.byType(DropdownButtonFormField<int>).at(0));
     await tester.tap(find.byType(DropdownButtonFormField<int>).at(0));
     await tester.pumpAndSettle();
     await tester.tap(find.text('1100 · Cash').last);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(DropdownButtonFormField<int>).at(1));
     await tester.tap(find.byType(DropdownButtonFormField<int>).at(1));
     await tester.pumpAndSettle();
     await tester.tap(find.text('4100 · Revenue').last);
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.byType(TextFormField).at(1));
     await tester.enterText(find.byType(TextFormField).at(1), '125.00');
+    await tester.ensureVisible(find.byType(TextFormField).at(5));
     await tester.enterText(find.byType(TextFormField).at(5), '125.00');
     await tester.ensureVisible(find.text('Save and post entry'));
     await tester.tap(find.text('Save and post entry'));
@@ -80,7 +84,9 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('4100 · Revenue').last);
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byType(TextFormField).at(1));
     await tester.enterText(find.byType(TextFormField).at(1), '100');
+    await tester.ensureVisible(find.byType(TextFormField).at(5));
     await tester.enterText(find.byType(TextFormField).at(5), '90');
     await tester.ensureVisible(find.text('Save and post entry'));
     await tester.tap(find.text('Save and post entry'));
