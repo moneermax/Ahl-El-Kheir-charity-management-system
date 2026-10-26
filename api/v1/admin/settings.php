@@ -104,7 +104,7 @@ if ($method === 'POST' && str_contains($contentType, 'multipart/form-data')) {
     foreach (glob($uploadDir . '/logo*') ?: [] as $oldPath) {
         $oldName = basename($oldPath);
         if ($oldName === $filename || !is_file($oldPath)
-            || preg_match('/^logo(?:_[a-f0-9]{12})?\.(?:jpe?g|png|gif|webp)$/i', $oldName) !== 1) {
+            || preg_match('/^logo_[a-f0-9]{12}\.(?:jpe?g|png|gif|webp)$/i', $oldName) !== 1) {
             continue;
         }
         @unlink($oldPath);
