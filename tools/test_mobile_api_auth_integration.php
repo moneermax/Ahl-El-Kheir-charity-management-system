@@ -192,6 +192,10 @@ try {
 
     $r = mobileApiRequest('/api/v1/auth/me.php');
     mobileApiExpect($r['status'] === 401 && ($r['json']['error']['code'] ?? '') === 'unauthenticated', 'missing bearer token is rejected');
+    $r = mobileApiRequest('/api/v1/search/documents.php');
+    mobileApiExpect($r['status'] === 401, 'archived document search rejects unauthenticated requests');
+    $r = mobileApiRequest('/api/v1/search/document_file.php?version_id=1');
+    mobileApiExpect($r['status'] === 401, 'archived document delivery rejects unauthenticated requests');
     $r = mobileApiRequest('/api/v1/auth/login.php', 'GET');
     mobileApiExpect($r['status'] === 405, 'login rejects the wrong HTTP method');
     $r = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => 'wrong-password']);
@@ -214,12 +218,26 @@ try {
     mobileApiExpect($supervisorDisbursements['status'] === 403, 'supervisor role is denied monthly disbursements because the existing web page does not permit it');
     $supervisorPayroll = mobileApiRequest('/api/v1/hr/payroll_management.php?month=10&year=2026', 'GET', null, $token);
     mobileApiExpect($supervisorPayroll['status'] === 403, 'supervisor is denied native payroll management by the existing web role boundary');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_staff'], $userId]);
+    $hrStaffDocumentSearch = mobileApiRequest('/api/v1/search/documents.php?q=receipt', 'GET', null, $token);
+    mobileApiExpect($hrStaffDocumentSearch['status'] === 403, 'HR Staff is denied archived document search because the existing search permission matrix excludes documents');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $adminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($adminLogin['status'] === 200 && isset($adminLogin['json']['data']['access_token']), 'administrator login succeeds for finance overview integration');
     $adminToken = (string)$adminLogin['json']['data']['access_token'];
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
+    $archiveSearch = mobileApiRequest('/api/v1/search/documents.php?q=__mobile_api_no_match__', 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $archiveSearch['status'] === 200
+        && is_array($archiveSearch['json']['data']['items'] ?? null)
+        && (int)($archiveSearch['json']['data']['total'] ?? -1) === 0,
+        'administrator can query the native archived document search with pagination and no leaked file paths'
+    );
+    $archiveLongQuery = mobileApiRequest('/api/v1/search/documents.php?q=' . str_repeat('x', 101), 'GET', null, $adminToken);
+    mobileApiExpect($archiveLongQuery['status'] === 422, 'archived document search rejects overlong queries');
+    $archiveMissingVersion = mobileApiRequest('/api/v1/search/document_file.php?version_id=999999999', 'GET', null, $adminToken);
+    mobileApiExpect($archiveMissingVersion['status'] === 404, 'archived document delivery does not expose missing archive versions');
 
     $payrollRead = mobileApiRequest('/api/v1/hr/payroll_management.php?month=10&year=2026', 'GET', null, $adminToken, 20);
     mobileApiExpect(
