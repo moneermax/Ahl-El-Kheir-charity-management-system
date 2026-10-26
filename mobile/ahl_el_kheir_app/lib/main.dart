@@ -253,7 +253,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       return;
     }
     if (relativePath == 'modules/hr/payroll_integrity.php') {
-      if (!['hr_manager', 'admin'].contains(user?['raw_role_code']?.toString())) {
+      if (!['hr_manager', 'admin'].contains(user?['role_code']?.toString())) {
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
           SnackBar(content: Text(english
               ? 'Payroll integrity is restricted to HR Manager and administrator roles.'
