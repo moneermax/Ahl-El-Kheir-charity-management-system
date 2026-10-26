@@ -72,13 +72,13 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final en = widget.english;
-    const ink = Color(0xFF20352B);
-    const muted = Color(0xFF65756A);
+    const ink = Color(0xFF172B3A);
+    const muted = Color(0xFF61717D);
     const accents = [
-      Color(0xFF1E6B4E),
-      Color(0xFF478364),
+      Color(0xFF0F766E),
+      Color(0xFF20A39E),
       Color(0xFF8FAE91),
-      Color(0xFFC89B3C),
+      Color(0xFFE07A5F),
       Color(0xFF6D9B82),
       Color(0xFFB9535B),
     ];
