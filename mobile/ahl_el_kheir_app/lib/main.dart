@@ -40,6 +40,7 @@ import 'fina_review_page.dart';
 import 'fina_dashboard_page.dart';
 import 'admin_database_page.dart';
 import 'admin_backup_page.dart';
+import 'payroll_integrity_page.dart';
 import 'package:file_picker/file_picker.dart';
 
 void main() => runApp(const AhlElKheirApp());
@@ -251,6 +252,20 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       openAuditLogPage();
       return;
     }
+    if (relativePath == 'modules/hr/payroll_integrity.php') {
+      if (!['hr_manager', 'admin'].contains(user?['raw_role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english
+              ? 'Payroll integrity is restricted to HR Manager and administrator roles.'
+              : 'فحص سلامة الرواتب متاح لمدير الموارد البشرية والمسؤول فقط.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => PayrollIntegrityPage(english: english, loadChecks: loadPayrollIntegrity),
+      ));
+      return;
+    }
     if (relativePath == 'modules/reports/index.php') {
       const reportOverviewRoles = [
         'admin', 'general_manager', 'vice_general_manager', 'supervisor',
@@ -449,6 +464,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         assignSponsor: submitSponsorAssignment,
       ),
     ));
+  }
+
+  Future<Map<String, dynamic>> loadPayrollIntegrity() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/payroll_integrity.php', token: token);
   }
 
   Future<Map<String, dynamic>> loadAdminOverview() async {
