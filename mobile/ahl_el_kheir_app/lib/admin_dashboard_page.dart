@@ -5,6 +5,7 @@ class AdminDashboardPage extends StatefulWidget {
     super.key,
     required this.english,
     required this.fullName,
+    required this.roleCode,
     required this.loadOverview,
     required this.onOpenTool,
     required this.onOpenAgeAlerts,
@@ -12,6 +13,7 @@ class AdminDashboardPage extends StatefulWidget {
 
   final bool english;
   final String fullName;
+  final String roleCode;
   final Future<Map<String, dynamic>> Function() loadOverview;
   final void Function(String tool) onOpenTool;
   final VoidCallback onOpenAgeAlerts;
@@ -167,9 +169,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             _SectionHeading(title: t('إدارة النظام', 'SYSTEM ADMINISTRATION'), subtitle: t('الحسابات والبنية الأساسية', 'Accounts and organization setup'), icon: Icons.tune_rounded, color: violet),
             const SizedBox(height: 10),
             _ToolTile(icon: Icons.manage_accounts_rounded, color: violet, title: t('المستخدمون', 'User accounts'), description: t('إنشاء الحسابات وإدارة المستخدمين', 'Create and manage user accounts'), tag: t('إدارة', 'ADMIN'), onTap: () => widget.onOpenTool('users')),
-            _ToolTile(icon: Icons.apartment_rounded, color: violet, title: t('الأقسام', 'Departments'), description: t('إدارة أقسام المنظمة', 'Manage organization departments'), tag: t('إدارة', 'ADMIN'), onTap: () => widget.onOpenTool('departments')),
-                _ToolTile(icon: Icons.settings_rounded, color: violet, title: t('إعدادات النظام', 'System settings'), description: t('إعدادات أصلية متاحة لدور المسؤول فقط', 'Native settings available to the administrator role only'), tag: t('المسؤول فقط', 'ADMIN ONLY'), onTap: () => widget.onOpenTool('settings')),
-            _ToolTile(icon: Icons.password_rounded, color: violet, title: t('طلبات استعادة كلمة المرور', 'Password recovery requests'), description: t('مراجعة طلبات استعادة الحسابات المعلقة', 'Review pending account recovery requests'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('recovery')),
+            if (widget.roleCode == 'admin') _ToolTile(icon: Icons.apartment_rounded, color: violet, title: t('الأقسام', 'Departments'), description: t('إدارة أقسام المنظمة', 'Manage organization departments'), tag: t('إدارة', 'ADMIN'), onTap: () => widget.onOpenTool('departments')),
+            if (widget.roleCode == 'admin') _ToolTile(icon: Icons.settings_rounded, color: violet, title: t('إعدادات النظام', 'System settings'), description: t('إعدادات أصلية متاحة لدور المسؤول فقط', 'Native settings available to the administrator role only'), tag: t('المسؤول فقط', 'ADMIN ONLY'), onTap: () => widget.onOpenTool('settings')),
+            if (widget.roleCode == 'admin') _ToolTile(icon: Icons.password_rounded, color: violet, title: t('طلبات استعادة كلمة المرور', 'Password recovery requests'), description: t('مراجعة طلبات استعادة الحسابات المعلقة', 'Review pending account recovery requests'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('recovery')),
             const SizedBox(height: 22),
             _SectionHeading(title: t('البيانات الأساسية', 'CORE RECORDS'), subtitle: t('السجلات التشغيلية الرئيسية', 'Primary operational records'), icon: Icons.hub_rounded, color: cyan),
             const SizedBox(height: 10),
@@ -177,7 +179,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             _ToolTile(icon: Icons.assignment_ind_rounded, color: cyan, title: t('إسناد الكفلاء', 'Sponsor assignment'), description: t('إسناد الكفلاء غير المسندين للمشرفين النشطين', 'Assign unassigned sponsors to active supervisors'), onTap: () => widget.onOpenTool('sponsor_assignment')),
             _ToolTile(icon: Icons.family_restroom_rounded, color: cyan, title: t('الأسر', 'Families'), description: t('سجل الأسر والبيانات المرتبطة بها', 'Family records and linked information'), onTap: () => widget.onOpenTool('families')),
             _ToolTile(icon: Icons.handshake_rounded, color: rose, title: t('الكفالات', 'Sponsorships'), description: t('سجل الكفالات وعلاقاتها', 'Sponsorship records and relationships'), onTap: () => widget.onOpenTool('sponsorships')),
-            _ToolTile(icon: Icons.query_stats_rounded, color: cyan, title: t('التقارير', 'Reports'), description: t('مركز التقارير غير متاح داخل التطبيق حتى الآن', 'The report center is not available in the app yet'), tag: t('غير متاح بعد', 'NOT READY'), onTap: () => widget.onOpenTool('reports')),
+            if (widget.roleCode == 'admin') _ToolTile(icon: Icons.query_stats_rounded, color: cyan, title: t('التقارير', 'Reports'), description: t('مركز التقارير والتقرير المتاح داخل التطبيق', 'Reports center and supported reports are available in the app'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('reports')),
             const SizedBox(height: 22),
             _SectionHeading(title: t('التشغيل والأفراد', 'OPERATIONS & PEOPLE'), subtitle: t('شاشات الهاتف المتاحة للإدارة', 'Native mobile workflows available to administrators'), icon: Icons.workspaces_rounded, color: violet),
             const SizedBox(height: 10),
@@ -200,7 +202,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
             const SizedBox(height: 10),
             _ToolTile(icon: Icons.backup_rounded, color: rose, title: t('النسخ الاحتياطي', 'Database backup'), description: t('النسخ الاحتياطي غير متاح داخل التطبيق حتى الآن', 'Database backup is not available in the app yet'), tag: t('غير متاح بعد', 'NOT READY'), onTap: () => widget.onOpenTool('backup')),
             _ToolTile(icon: Icons.storage_rounded, color: rose, title: t('إدارة قاعدة البيانات', 'Database tools'), description: t('أدوات قاعدة البيانات غير متاحة داخل التطبيق حتى الآن', 'Database tools are not available in the app yet'), tag: t('غير متاح بعد', 'NOT READY'), onTap: () => widget.onOpenTool('database')),
-            _ToolTile(icon: Icons.fact_check_rounded, color: rose, title: t('سجل التدقيق', 'Audit log'), description: t('سجل التدقيق الكامل مع البحث والتنقل بين الصفحات', 'Full audit history with search and pagination'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('audit')),
+            if (widget.roleCode == 'admin') _ToolTile(icon: Icons.fact_check_rounded, color: rose, title: t('سجل التدقيق', 'Audit log'), description: t('سجل التدقيق الكامل مع البحث والتنقل بين الصفحات', 'Full audit history with search and pagination'), tag: t('داخل التطبيق', 'IN APP'), onTap: () => widget.onOpenTool('audit')),
             _ToolTile(icon: Icons.pause_circle_outline_rounded, color: rose, title: t('تعليق الكفالات', 'Sponsorship suspensions'), description: t('عرض حالات التعليق وإجراءات الرفع المصرح بها', 'Review suspension cases and authorized lift actions'), tag: t('تطبيق', 'APP'), onTap: () => widget.onOpenTool('suspensions')),
             const SizedBox(height: 22),
             _SectionHeading(title: t('آخر أنشطة التدقيق', 'RECENT AUDIT ACTIVITY'), subtitle: t('آخر ستة أحداث مسجلة', 'Latest six recorded events'), icon: Icons.history_rounded, color: violet),
