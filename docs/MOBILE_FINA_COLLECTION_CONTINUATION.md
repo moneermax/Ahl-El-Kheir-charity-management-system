@@ -23,12 +23,12 @@ Updated: 2026-10-26
 - `mobile/ahl_el_kheir_app/test/fina_review_page_test.dart` covers pending/history rendering and verifies the UI does not offer self-review (`e9ede18`, `6fb6f9f`).
 - The native form includes the external-source contact/detail fields, sponsor selection/autofill, and optional receipt attachment. Stale sponsor-search responses are invalidated when the selection or source type changes (`92da8b6`).
 - The multipart Flutter request was repaired to build its URI without nested string interpolation (`d126ad6`).
-- `mobile/ahl_el_kheir_app/test/fina_collection_page_test.dart` adds a widget test for external-source submission (`b5be391`, `da7fdc4`). The test has been added but has not been executed in this environment.
+- `mobile/ahl_el_kheir_app/test/fina_collection_page_test.dart` adds a widget test for external-source submission (`b5be391`, `da7fdc4`). The first CI execution exposed a test-only viewport issue; commit `1c940e0b74ba50612566be0148e3be8830f8021c` calls `ensureVisible` before tapping the submit button. Re-run CI before marking it passed.
 - New collections remain `pending`; the API does not create a journal during registration. Finance review/history is available in the native app and continues to use the existing server-side approval and accounting journal workflow.
 
 ## Verification still required
 
-1. Run Flutter dependency resolution, analyzer, all widget tests, and Android debug APK build against current `main` after adding `pdfrx`. The available execution container has no Flutter/Dart installation; check the GitHub Actions run triggered by these commits before treating the viewer as build-verified.
+1. Current CI for commit `1c940e0b74ba50612566be0148e3be8830f8021c` is rerunning dependency resolution, analyzer, widget tests, and Android debug APK build after the test viewport fix. The previous run passed Dart analysis and 84 tests, but `fina_collection_page_test.dart` failed because the submit button was below the test viewport and `tap()` did not reach it; APK build was skipped. Follow the new workflow through artifact publication before treating the viewer as build-verified.
 2. PHP lint `api/v1/fina/collections.php` and `api/v1/fina/sponsors.php`.
 3. Test the API against the checked-in schema: unauthenticated request, disallowed role, valid external-source collection, active/inactive/missing sponsor, invalid amount/date/method, valid/invalid/oversized receipt, rollback on insert failure including receipt cleanup, notification failure isolation, and confirm status stays pending with no journal entry.
 4. Verify sponsor search and multipart receipt upload on the real local XAMPP/API/database before using this for real collections.
@@ -42,3 +42,10 @@ Do not create a test collection in the user's production/local database without 
 - GitHub Actions run `40285101156` failed during Dart analysis before tests/build. The log identified a malformed duplicate trailing block in `mobile/ahl_el_kheir_app/lib/main.dart`: source after the complete `NotificationDetailPage` ended at line 2612 was appended again, beginning with a clipped fragment of the multipart Fina request and duplicating the app widget/page classes. This produced out-of-scope references and duplicate declarations.
 - Commit `defdafbd103e7f091b3761501c4dad2b88318b39` removes only that malformed trailing block, preserving the first complete app entrypoint and its Fina/API methods. The post-repair workflow is running: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40285490915
 - Do not treat the repair as verified until the current workflow finishes analyzer, tests, APK build, and artifact publication. If analysis reports further errors, inspect the new exact log before another edit.
+
+
+## Fina collection widget-test follow-up — 2026-10-26
+
+- Workflow run `40285937691` (`124f0dc6d55e504035225e70785e6c16cd8d609f`) passed Dart analysis and 84 widget tests, but one test failed: `fina_collection_page_test.dart` attempted to tap the submit button at y=1360 in a 600px-high test viewport. The `submitted` payload remained null because the tap was outside the render view. This was a test harness visibility failure, not evidence of a production form defect.
+- Commit `1c940e0b74ba50612566be0148e3be8830f8021c` updates the test to call `tester.ensureVisible(submitButton)` before tapping. New CI run `40286768725`: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40286768725
+- Current status at documentation update: the new run is queued/in progress. Do not ask for a phone install until the widget tests and APK build complete successfully.
