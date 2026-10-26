@@ -540,7 +540,31 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
 
     try {
-      final uri = Uri.parse('${apiBaseUrl.replaceFirst(RegExp(r'/+
+      final uri = Uri.parse(apiBaseUrl.replaceFirst(RegExp(r'/+$'), '') + '/fina/collections.php');
+      final request = http.MultipartRequest('POST', uri)
+        ..headers['Accept'] = 'application/json'
+        ..headers['Authorization'] = 'Bearer ' + token;
+      request.fields.addAll(fields.map((key, value) => MapEntry(key, value?.toString() ?? '')));
+      request.files.add(await http.MultipartFile.fromPath('receipt_file', receiptPath));
+      final streamed = await request.send().timeout(const Duration(seconds: 30));
+      final response = await http.Response.fromStream(streamed);
+      final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+      if (decoded is! Map<String, dynamic>) throw const FormatException();
+      if (response.statusCode < 200 || response.statusCode >= 300 || decoded['ok'] != true) {
+        final e = decoded['error'];
+        throw ApiFailure(
+          e is Map ? (e['message']?.toString() ?? 'Request failed') : 'Request failed',
+          statusCode: response.statusCode,
+        );
+      }
+      if (decoded['data'] is! Map<String, dynamic>) throw Exception('Invalid API response');
+      return decoded['data'] as Map<String, dynamic>;
+    } on ApiFailure {
+      rethrow;
+    } catch (_) {
+      throw ApiFailure(english ? 'Could not reach the API server.' : 'تعذر الاتصال بخادم API.');
+    }
+  }
 
   void openFinaCollectionPage() {
     final role = user?['role_code']?.toString() ?? '';
