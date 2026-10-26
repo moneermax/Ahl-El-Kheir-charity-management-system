@@ -419,6 +419,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/sponsors/assign.php') {
+      if (!['admin', 'vice_general_manager', 'general_manager'].contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english
+              ? 'Sponsor assignment is restricted to administrator and management roles.'
+              : 'إسناد الكفلاء متاح للمسؤول والإدارة العليا فقط.')),
+        );
+        return;
+      }
+      openSponsorAssignmentPage();
+      return;
+    }
     if (relativePath == 'modules/sponsors/index.php') {
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
         builder: (_) => SponsorsPage(english: english, loadSponsors: loadSponsors, loadDetail: loadSponsorDetail),
