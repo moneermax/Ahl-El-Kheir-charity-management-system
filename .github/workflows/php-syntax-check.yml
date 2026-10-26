@@ -40,6 +40,7 @@ jobs:
             api/v1/projects/milestone_create.php
             api/v1/projects/milestone_action.php
             api/v1/hr/attendance.php
+            api/v1/hr/attendance_policy.php
             api/v1/hr/employee_detail.php
             api/v1/hr/my_salary_statements.php
             api/v1/hr/employment_states.php
