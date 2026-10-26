@@ -47,6 +47,11 @@ void main() {
       scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Policy version history'), findsOneWidget);
-    expect(find.textContaining('Current policy'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.textContaining('V1 · Current policy'),
+      300,
+      scrollable: find.byType(Scrollable).first,
+    );
+    expect(find.textContaining('V1 · Current policy'), findsOneWidget);
   });
 }
