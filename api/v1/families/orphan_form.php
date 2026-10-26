@@ -89,6 +89,7 @@ if ($method === 'POST') {
 $sponsorships = dbFetchAll("SELECT sp.id,sp.monthly_amount,sp.start_date,sp.status,s.full_name AS sponsor_name,s.sponsor_code
     FROM sponsorships sp JOIN sponsors s ON s.id=sp.sponsor_id
     WHERE sp.child_id=? AND sp.status IN ('active','paused') ORDER BY sp.id", [(int)$childId]);
+$canSeeFinancial = in_array($role, ['admin','vice_general_manager','general_manager','supervisor','nanny'], true);
 ak_api_json(200,['ok'=>true,'data'=>[
     'can_edit'=>in_array($role,$editableRoles,true),
     'child'=>[
@@ -106,9 +107,13 @@ ak_api_json(200,['ok'=>true,'data'=>[
         'address'=>(string)($family['address']??''),'father_death_cause'=>(string)($family['father_death_cause']??''),
         'mother_marital_status'=>(string)($family['mother_marital_status']??'أرملة'),
     ],
-    'sponsorships'=>array_map(static fn(array $r):array=>[
-        'id'=>(int)$r['id'],'sponsor_name'=>(string)$r['sponsor_name'],'sponsor_code'=>(string)($r['sponsor_code']??''),
-        'monthly_amount'=>(float)$r['monthly_amount'],'start_date'=>(string)($r['start_date']??''),'status'=>(string)$r['status'],
-    ],$sponsorships),
+    'sponsorships'=>array_map(static function(array $r) use ($canSeeFinancial): array {
+        $item = [
+            'id'=>(int)$r['id'],'sponsor_name'=>(string)$r['sponsor_name'],'sponsor_code'=>(string)($r['sponsor_code']??''),
+            'start_date'=>(string)($r['start_date']??''),'status'=>(string)$r['status'],
+        ];
+        if ($canSeeFinancial) $item['monthly_amount'] = (float)$r['monthly_amount'];
+        return $item;
+    },$sponsorships),
     'options'=>$options,
 ]]);
