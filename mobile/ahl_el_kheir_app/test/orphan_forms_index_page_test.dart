@@ -15,7 +15,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Orphan forms'), findsOneWidget);
     expect(find.text('Test Child'), findsOneWidget);
-    expect(find.textContaining('F-009'), findsOneWidget);
+    expect(find.textContaining('Family: F-009'), findsOneWidget);
     await tester.tap(find.text('Test Child'));
     expect(opened, 9);
   });
