@@ -232,6 +232,14 @@ try {
     mobileApiExpect($nannyFinaReview['status'] === 403, 'nanny cannot view Fina review/history');
     $nannyFinaReceipt = mobileApiRequest('/api/v1/fina/receipt.php?id=1', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinaReceipt['status'] === 403, 'nanny cannot access Fina receipt delivery');
+    $nannyConfirmWithoutReceipt = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
+        'action' => 'confirm_item', 'item_id' => 1,
+    ], $nannyFinaToken);
+    mobileApiExpect(
+        $nannyConfirmWithoutReceipt['status'] === 422
+        && ($nannyConfirmWithoutReceipt['json']['error']['code'] ?? '') === 'receipt_required',
+        'nanny item confirmation requires a receipt before any state change'
+    );
     $nannyDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect(
         $nannyDisbursements['status'] === 200
