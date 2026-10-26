@@ -68,11 +68,11 @@ void main() {
       english: true,
       loadSearch: (type, query, page) async {
         expect(type, 'documents');
-        return {'ok': true, 'data': {'items': [
+        return {'items': [
           {'id': 19, 'version_id': 19, 'document_id': 4, 'version_no': 2, 'is_current_version': true,
            'display_title': 'Project receipt', 'project_code': 'PRJ-001', 'project_name': 'Project One',
            'original_name': 'receipt.bin', 'mime_type': 'application/octet-stream'}
-        ], 'total': 1, 'page': 1, 'pages': 1}};
+        ], 'total': 1, 'page': 1, 'pages': 1};
       },
       loadDocument: (versionId) async => {'bytes': Uint8List(0), 'mime': 'application/octet-stream', 'filename': 'receipt.bin'},
       onOpenResult: (_, __) {},
