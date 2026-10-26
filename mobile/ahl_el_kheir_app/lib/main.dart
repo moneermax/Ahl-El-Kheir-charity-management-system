@@ -619,6 +619,57 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
   }
 
+  Future<PlatformFile?> pickDisbursementReturnReceipt() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png', 'gif'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.single;
+    if (file.bytes == null || file.size <= 0 || file.size > 10 * 1024 * 1024) {
+      throw ApiFailure(english
+          ? 'Choose a PDF, JPG, PNG or GIF return receipt no larger than 10 MB.'
+          : 'اختر إيصال إرجاع PDF أو JPG أو PNG أو GIF لا يتجاوز 10 ميجابايت.');
+    }
+    return file;
+  }
+
+  Future<Map<String, dynamic>> submitNannyDisbursementReturn(
+    int batchId,
+    String reasonType,
+    String reasonDetails,
+    PlatformFile receipt,
+  ) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    if (receipt.bytes == null) throw const ApiFailure('Receipt bytes are unavailable.');
+    final uri = Uri.parse(apiBaseUrl.replaceFirst(RegExp(r'/+$'), '') + '/admin/disbursements_action.php');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer ' + token
+      ..fields['action'] = 'close_with_return'
+      ..fields['batch_id'] = batchId.toString()
+      ..fields['return_reason_type'] = reasonType
+      ..fields['return_reason_details'] = reasonDetails
+      ..files.add(http.MultipartFile.fromBytes('return_receipt', receipt.bytes!, filename: receipt.name));
+    final streamed = await request.send().timeout(const Duration(seconds: 45));
+    final response = await http.Response.fromStream(streamed);
+    Map<String, dynamic> decoded = {};
+    try {
+      final value = jsonDecode(utf8.decode(response.bodyBytes));
+      if (value is Map) decoded = Map<String, dynamic>.from(value);
+    } catch (_) {}
+    if (response.statusCode < 200 || response.statusCode >= 300 || decoded['ok'] != true) {
+      final error = decoded['error'];
+      final message = error is Map
+          ? (error['message'] ?? (english ? 'Return closure failed.' : 'تعذر إقفال الدفعة وإرجاع المبلغ.')).toString()
+          : (english ? 'Return closure failed.' : 'تعذر إقفال الدفعة وإرجاع المبلغ.');
+      throw ApiFailure(message, statusCode: response.statusCode);
+    }
+    final data = decoded['data'];
+    return data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+  }
+
   Future<PlatformFile?> pickDisbursementTransferReceipt() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -676,6 +727,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         createBatches: createDisbursementBatches,
         pickTransferReceipt: pickDisbursementTransferReceipt,
         submitTransfer: submitDisbursementTransfer,
+        pickReturnReceipt: pickDisbursementReturnReceipt,
+        submitReturn: submitNannyDisbursementReturn,
       ),
     ));
   }
