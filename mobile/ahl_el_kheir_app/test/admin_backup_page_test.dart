@@ -21,7 +21,7 @@ void main() {
     )));
     await tester.pumpAndSettle();
     expect(find.text('Database backup'), findsOneWidget);
-    expect(find.text('ahl_el_kheir'), findsOneWidget);
+    expect(find.text('Database: ahl_el_kheir'), findsOneWidget);
     expect(find.text('backup_20261026_080000_a1b2c3.sql'), findsOneWidget);
     await tester.tap(find.text('Download'));
     await tester.pumpAndSettle();
