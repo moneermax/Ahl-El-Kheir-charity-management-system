@@ -216,7 +216,8 @@ void main() {
     await tester.tap(find.byKey(const Key('disbursement-group-5')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('disbursement-create-submit')));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 250));
     expect(find.text('Created 1 batch(es) and skipped 0 group(s).'), findsOneWidget);
     await tester.tap(find.text('Continue'));
     await tester.pumpAndSettle();
