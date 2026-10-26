@@ -65,9 +65,10 @@ try {
         if (!$batch) {
             ak_api_json(404, ['ok' => false, 'error' => ['code' => 'not_found', 'message' => 'Disbursement batch was not found.']]);
         }
-        $itemsPage = max(1, (int)($_GET['items_page'] ?? 1));
         $itemsPerPage = 100;
         $itemsTotal = (int)($batch['items_total'] ?? 0);
+        $itemsPages = max(1, (int)ceil($itemsTotal / $itemsPerPage));
+        $itemsPage = min(max(1, (int)($_GET['items_page'] ?? 1)), $itemsPages);
         $items = dbFetchAll(
             "SELECT i.id, i.family_id, f.family_code, f.mother_name, i.amount, i.status, i.confirmed_at,
                     (SELECT COUNT(*) FROM family_children fc WHERE fc.family_id = f.id AND fc.is_active = 1) AS children_count
@@ -85,7 +86,7 @@ try {
                 'page' => $itemsPage,
                 'per_page' => $itemsPerPage,
                 'total' => $itemsTotal,
-                'pages' => max(1, (int)ceil($itemsTotal / $itemsPerPage)),
+                'pages' => $itemsPages,
             ],
         ]]);
     }
