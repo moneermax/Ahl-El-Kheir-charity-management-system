@@ -52,6 +52,7 @@ import 'account_settings_page.dart';
 import 'profile_page.dart';
 import 'password_recovery_page.dart';
 import 'journal_page.dart';
+import 'voucher_page.dart';
 import 'payroll_policy_page.dart';
 import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
@@ -525,6 +526,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
 
   Future<void> openNativeTool(String relativePath, {Map<String, String>? queryParameters}) async {
     // Native-only policy: never launch a website, browser, or external application.
+    if (relativePath == 'modules/accounting/vouchers.php') {
+      const viewRoles = ['admin', 'financial_manager', 'accountant_staff', 'accountant', 'general_manager', 'vice_general_manager'];
+      if (!viewRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Voucher access is not available for this role.' : 'عرض السندات غير متاح لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => VoucherPage(english: english, loadVouchers: loadVouchers),
+      ));
+      return;
+    }
     if (relativePath == 'modules/accounting/journal.php') {
       openJournalPage();
       return;
@@ -853,6 +867,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('POST', 'auth/change_password.php', token: token, body: body);
+  }
+
+  Future<Map<String, dynamic>> loadVouchers(String type) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final suffix = type.isEmpty ? '' : '?vtype=${Uri.encodeQueryComponent(type)}';
+    return call('GET', 'accounting/vouchers.php$suffix', token: token);
   }
 
   Future<Map<String, dynamic>> loadJournalEntries({required String from, required String to}) async {
