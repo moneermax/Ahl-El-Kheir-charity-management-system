@@ -50,6 +50,7 @@ import 'payroll_integrity_page.dart';
 import 'payroll_management_page.dart';
 import 'account_settings_page.dart';
 import 'password_recovery_page.dart';
+import 'journal_page.dart';
 import 'payroll_policy_page.dart';
 import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
@@ -523,6 +524,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
 
   Future<void> openNativeTool(String relativePath, {Map<String, String>? queryParameters}) async {
     // Native-only policy: never launch a website, browser, or external application.
+    if (relativePath == 'modules/accounting/journal.php') {
+      openJournalPage();
+      return;
+    }
     if (relativePath == 'modules/accounting/fina_dashboard.php') {
       openFinaDashboard();
       return;
@@ -847,6 +852,33 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('POST', 'auth/change_password.php', token: token, body: body);
+  }
+
+  Future<Map<String, dynamic>> loadJournalEntries({required String from, required String to}) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final query = <String, String>{
+      if (from.isNotEmpty) 'from': from,
+      if (to.isNotEmpty) 'to': to,
+    };
+    final suffix = query.isEmpty ? '' : '?${Uri(queryParameters: query).query}';
+    return call('GET', 'accounting/journal.php$suffix', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadJournalEntry(int id) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'accounting/journal.php?view=$id', token: token);
+  }
+
+  void openJournalPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => JournalPage(
+        english: english,
+        loadEntries: loadJournalEntries,
+        loadEntry: loadJournalEntry,
+      ),
+    ));
   }
 
   Future<Map<String, dynamic>> submitPasswordRecoveryRequest(String identity) async {
