@@ -128,6 +128,23 @@ void main() {
     expect(find.text('Record Fina collection'), findsNothing);
   });
 
+  testWidgets('finance manager gets native Fina registration and review tools', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(
+            roleCode: 'financial_manager',
+            english: true,
+            onOpen: (_) {},
+          ),
+        ),
+      ),
+    ));
+
+    expect(find.text('Record Fina collection'), findsOneWidget);
+    expect(find.text('Review Fina collections'), findsOneWidget);
+  });
+
   testWidgets('VGM suspension cases are labelled as a native app workflow', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: SingleChildScrollView(
