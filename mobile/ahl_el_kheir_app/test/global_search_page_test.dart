@@ -26,11 +26,19 @@ void main() {
     expect(openedType,'families'); expect(openedItem?['id'],17);
   });
 
-  testWidgets('finance manager sees only the monthly disbursement search backed by its existing API',(tester)async{
-    await tester.pumpWidget(MaterialApp(home:GlobalSearchPage(roleCode:'financial_manager',english:true,loadSearch:(_,__,___)async=>throw StateError('unexpected'),loadDocument: (_) async => <String, dynamic>{},
-      onOpenResult:(_,__){})));
-    expect(find.text('Monthly disbursements'),findsOneWidget);
-    expect(find.text('The website and external pages will not be opened.'),findsNothing);
+  testWidgets('finance manager sees sponsor and monthly disbursement search backed by native APIs', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: GlobalSearchPage(
+      roleCode: 'financial_manager',
+      english: true,
+      loadSearch: (_, __, ___) async => throw StateError('unexpected'),
+      loadDocument: (_) async => <String, dynamic>{},
+      onOpenResult: (_, __) {},
+    )));
+    expect(find.text('Sponsors'), findsOneWidget);
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    expect(find.text('Monthly disbursements'), findsOneWidget);
+    expect(find.text('The website and external pages will not be opened.'), findsNothing);
   });
 
   testWidgets('vice general manager sees the read-only monthly disbursement search scope', (tester) async {
