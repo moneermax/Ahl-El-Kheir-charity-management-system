@@ -317,6 +317,28 @@ void main() {
     }
   });
 
+  testWidgets('staff profile tool is labelled in-app and opens the native profile route', (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(
+            roleCode: 'staff',
+            english: true,
+            onOpen: opened.add,
+          ),
+        ),
+      ),
+    ));
+
+    final card = find.ancestor(of: find.text('My profile'), matching: find.byType(Card));
+    expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget);
+    await tester.ensureVisible(find.text('My profile'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('My profile'));
+    expect(opened, contains('modules/users/profile.php'));
+  });
+
   testWidgets('roles without extra website tools render no empty section', (tester) async {
     await tester.pumpWidget(const MaterialApp(
       home: Scaffold(
