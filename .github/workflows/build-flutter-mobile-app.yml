@@ -43,6 +43,16 @@ jobs:
         run: |
           flutter create --platforms=android --project-name ahl_el_kheir_app --org org.ahlelkheir --no-pub "$RUNNER_TEMP/ahl_el_kheir_scaffold"
           cp -R "$RUNNER_TEMP/ahl_el_kheir_scaffold/android" mobile/ahl_el_kheir_app/android
+          # Keep the app compile SDK aligned with AndroidX plugins that require API 36.
+          if [ -f mobile/ahl_el_kheir_app/android/app/build.gradle.kts ] && grep -q 'compileSdk = flutter.compileSdkVersion' mobile/ahl_el_kheir_app/android/app/build.gradle.kts; then
+            sed -i 's/compileSdk = flutter.compileSdkVersion/compileSdk = 36/' mobile/ahl_el_kheir_app/android/app/build.gradle.kts
+          elif [ -f mobile/ahl_el_kheir_app/android/app/build.gradle ] && grep -q 'compileSdkVersion flutter.compileSdkVersion' mobile/ahl_el_kheir_app/android/app/build.gradle; then
+            sed -i 's/compileSdkVersion flutter.compileSdkVersion/compileSdkVersion 36/' mobile/ahl_el_kheir_app/android/app/build.gradle
+          else
+            echo "Unable to locate expected Flutter compileSdk declaration in generated Android app Gradle file."
+            grep -R -n 'compileSdk' mobile/ahl_el_kheir_app/android/app || true
+            exit 1
+          fi
           mkdir -p mobile/ahl_el_kheir_app/assets
           cp assets/img/logo.jpg mobile/ahl_el_kheir_app/assets/organization_logo.jpg
           mkdir -p mobile/ahl_el_kheir_app/android/app/src/debug
