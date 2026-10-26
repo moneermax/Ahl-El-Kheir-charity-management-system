@@ -1731,8 +1731,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('POST', 'families/orphan_form.php?child_id=' + childId.toString(), token: token, body: {'values': values});
   }
 
-  void openOrphanFormPage(int childId) {
-    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+  Future<void> openOrphanFormPage(int childId) async {
+    final navigator = navigatorKey.currentState;
+    if (navigator == null) return;
+    await navigator.push<void>(MaterialPageRoute<void>(
       builder: (_) => OrphanFormPage(childId: childId, english: english, loadForm: loadOrphanForm, saveForm: saveOrphanForm),
     ));
   }
