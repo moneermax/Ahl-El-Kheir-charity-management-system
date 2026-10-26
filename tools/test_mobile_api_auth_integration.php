@@ -565,7 +565,6 @@ try {
         && (string)($pdo->query('SELECT status FROM disbursement_items WHERE id=' . $testDisbursementItemId)->fetchColumn()) === 'paid',
         'repeated nanny receipt confirmation is rejected without changing the paid item'
     );
-    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
     $r = mobileApiRequest('/api/v1/notifications/index.php', 'GET', null, $token);
     $listedNotificationIds = array_map(
