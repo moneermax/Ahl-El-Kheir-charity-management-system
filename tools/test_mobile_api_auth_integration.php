@@ -124,6 +124,7 @@ $testDisbursementId = 0;
 $testDisbursementItemId = 0;
 $testDisbursementReturnItemId = 0;
 $testBatchCreatedId = 0;
+$testBatchCreatedItemId = 0;
 $testBatchGroupId = 0;
 $testBatchNannyId = 0;
 $testBatchVerificationFamilyId = 0;
@@ -259,6 +260,7 @@ try {
         && $createdBatchItemCount === 1,
         'administrator creates one pending batch from a fully verified eligible group and the verified family item'
     );
+    $testBatchCreatedItemId = (int)$pdo->query('SELECT id FROM disbursement_items WHERE disbursement_id=' . $testBatchCreatedId . ' ORDER BY id LIMIT 1')->fetchColumn();
     $duplicateBatch = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
         'action' => 'create_batch',
         'month' => $testBatchVerificationMonth,
@@ -311,6 +313,55 @@ try {
         && (int)$transferCount->fetchColumn() === 1,
         'repeated transfer is rejected without posting a duplicate transaction'
     );
+
+    $pdo->prepare('UPDATE disbursement_items SET status=\'paid\',confirmed_at=NOW() WHERE id=?')->execute([$testBatchCreatedItemId]);
+    $reopenItem = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
+        'action'=>'reopen_item','item_id'=>$testBatchCreatedItemId,'reason'=>'Disposable integration reopen item',
+    ], $adminToken, 20);
+    $reopenedItemRow = $pdo->prepare('SELECT status,confirmed_at FROM disbursement_items WHERE id=?');
+    $reopenedItemRow->execute([$testBatchCreatedItemId]);
+    $reopenedItem = $reopenedItemRow->fetch(PDO::FETCH_ASSOC);
+    mobileApiExpect(
+        $reopenItem['status'] === 200
+        && (string)($reopenedItem['json']['data']['status'] ?? '') === 'pending'
+        && (string)($reopenedItem['status'] === 200 ? ($reopenedItem['status'] ?? '') : '') !== 'paid'
+        && (string)($reopenedItem['status'] ?? '') !== 'paid',
+        'reopening a paid family item returns it to pending state'
+    );
+    $pdo->prepare("UPDATE monthly_disbursements SET group_id=NULL,status='returned' WHERE id=?")->execute([$testBatchCreatedId]);
+    $reopenBatch = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
+        'action'=>'reopen_batch','batch_id'=>$testBatchCreatedId,'reason'=>'Disposable integration reopen batch',
+    ], $adminToken, 20);
+    $reopenedBatchStatus = (string)$pdo->query('SELECT status FROM monthly_disbursements WHERE id=' . $testBatchCreatedId)->fetchColumn();
+    mobileApiExpect(
+        $reopenBatch['status'] === 200
+        && ($reopenBatch['json']['data']['status'] ?? '') === 'transferred'
+        && $reopenedBatchStatus === 'transferred',
+        'reopening a returned batch restores transferred status'
+    );
+    $voidBatch = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
+        'action'=>'void_batch','batch_id'=>$testBatchCreatedId,'reason'=>'Disposable integration void',
+    ], $adminToken, 20);
+    $voidedBatch = $pdo->prepare('SELECT status,reversal_journal_id,transaction_id FROM monthly_disbursements WHERE id=?');
+    $voidedBatch->execute([$testBatchCreatedId]);
+    $voidedRow = $voidedBatch->fetch(PDO::FETCH_ASSOC);
+    $voidReversalId = (int)($voidedRow['reversal_journal_id'] ?? 0);
+    $voidReversalTotals = $pdo->query(
+        'SELECT COALESCE(SUM(debit),0) debit_total,COALESCE(SUM(credit),0) credit_total FROM journal_lines WHERE entry_id=' . $voidReversalId
+    )->fetch(PDO::FETCH_ASSOC);
+    $voidedTransactionStatus = (string)$pdo->query('SELECT status FROM transactions WHERE id=' . (int)($voidedRow['transaction_id'] ?? 0))->fetchColumn();
+    mobileApiExpect(
+        $voidBatch['status'] === 200
+        && (string)($voidedRow['status'] ?? '') === 'voided'
+        && $voidReversalId > 0
+        && $voidedTransactionStatus === 'voided'
+        && abs((float)($voidReversalTotals['debit_total'] ?? 0) - (float)($voidReversalTotals['credit_total'] ?? 0)) < 0.005,
+        'voiding a transferred batch reverses the posted journal, voids its transaction and preserves a balanced reversal'
+    );
+    $duplicateVoid = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
+        'action'=>'void_batch','batch_id'=>$testBatchCreatedId,'reason'=>'Duplicate void should be rejected',
+    ], $adminToken, 20);
+    mobileApiExpect($duplicateVoid['status'] === 409, 'a voided batch cannot be voided a second time');
 
     $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
     mobileApiExpect(
@@ -1191,7 +1242,7 @@ try {
                 $batchReceiptFile = dirname(__DIR__) . '/' . $batchReceiptPath;
                 if (is_file($batchReceiptFile)) @unlink($batchReceiptFile);
             }
-            $journalIds = $pdo->prepare("SELECT id FROM journal_entries WHERE reference_type='disbursement' AND reference_id=?");
+            $journalIds = $pdo->prepare("SELECT id FROM journal_entries WHERE reference_type IN ('disbursement','disbursement_void') AND reference_id=?");
             $journalIds->execute([$testBatchCreatedId]);
             foreach ($journalIds->fetchAll(PDO::FETCH_COLUMN) as $journalId) {
                 $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([(int)$journalId]);
@@ -1199,9 +1250,9 @@ try {
             }
             $transactionId = (int)($batchCleanupRow['transaction_id'] ?? 0);
             if ($transactionId > 0) $pdo->prepare('DELETE FROM transactions WHERE id=?')->execute([$transactionId]);
-            $pdo->prepare("DELETE FROM audit_log WHERE entity_type='monthly_disbursements' AND entity_id=? AND action IN ('DISBURSEMENT_CREATE','DISBURSEMENT_TRANSFER') AND created_at>=?")
+            $pdo->prepare("DELETE FROM audit_log WHERE entity_type='monthly_disbursements' AND entity_id=? AND action IN ('DISBURSEMENT_CREATE','DISBURSEMENT_TRANSFER','DISBURSEMENT_REOPEN_ITEM','DISBURSEMENT_REOPEN_BATCH','DISBURSEMENT_VOID') AND created_at>=?")
                 ->execute([$testBatchCreatedId,$testStart]);
-            $pdo->prepare("DELETE FROM notifications WHERE title='تم تحويل دفعة الكفالة وأصبحت متاحة للتنفيذ' AND created_at>=?")
+            $pdo->prepare("DELETE FROM notifications WHERE title IN ('تم تحويل دفعة الكفالة وأصبحت متاحة للتنفيذ','تم إعادة فتح دفعة الكفالة','تم إعادة فتح سجل أسرة في دفعة الكفالة','تم إبطال دفعة الكفالة') AND created_at>=?")
                 ->execute([$testStart]);
             $pdo->prepare('DELETE FROM disbursement_items WHERE disbursement_id=?')->execute([$testBatchCreatedId]);
             $pdo->prepare('DELETE FROM monthly_disbursements WHERE id=?')->execute([$testBatchCreatedId]);
