@@ -66,12 +66,12 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    const ink = Color(0xFF20352B);
-    const muted = Color(0xFF65756A);
-    const canvas = Color(0xFFF6F4EE);
-    const violet = Color(0xFF1E6B4E);
-    const cyan = Color(0xFF478364);
-    const orange = Color(0xFFC89B3C);
+    const ink = Color(0xFF172B3A);
+    const muted = Color(0xFF61717D);
+    const canvas = Color(0xFFF3F7FA);
+    const violet = Color(0xFF0F766E);
+    const cyan = Color(0xFF20A39E);
+    const orange = Color(0xFFE07A5F);
     const rose = Color(0xFFB9535B);
 
     return Scaffold(
@@ -89,7 +89,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 gradient: const LinearGradient(
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
-                  colors: [Color(0xFF173D2F), Color(0xFF15583F), Color(0xFF478364)],
+                  colors: [Color(0xFF123B46), Color(0xFF115E59), Color(0xFF20A39E)],
                 ),
                 boxShadow: [
                   BoxShadow(color: violet.withValues(alpha: .20), blurRadius: 28, offset: const Offset(0, 12)),
@@ -108,7 +108,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                       ),
                       const SizedBox(width: 12),
                       Expanded(child: Text(t('لوحة تحكم النظام', 'SYSTEM CONTROL CENTER'),
-                        style: const TextStyle(color: Color(0xFFE9D9A8), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.1))),
+                        style: const TextStyle(color: Color(0xFFFFE3A3), fontSize: 11, fontWeight: FontWeight.w900, letterSpacing: 1.1))),
                       IconButton(
                         tooltip: t('تحديث البيانات', 'Refresh data'),
                         constraints: const BoxConstraints.tightFor(width: 44, height: 44),
@@ -127,7 +127,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                   const SizedBox(height: 10),
                   Text(t('إدارة المستخدمين والبيانات والمالية وأدوات حماية النظام من مساحة واحدة.',
                     'Manage accounts, core records, finance and system protection from one workspace.'),
-                    style: const TextStyle(color: Color(0xFFE7EFE8), fontSize: 12, height: 1.7)),
+                    style: const TextStyle(color: Color(0xFFE4F1F2), fontSize: 12, height: 1.7)),
                   const SizedBox(height: 16),
                   Wrap(spacing: 8, runSpacing: 8, children: [
                     _StatusPill(label: t('قاعدة البيانات', 'Database'), value: server['database_connected'] == true ? t('متصلة', 'Connected') : t('غير متاحة', 'Unavailable'), good: server['database_connected'] == true),
@@ -161,9 +161,9 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
                 _MetricCard(label: t('الأسر', 'Families'), value: metric('families'), icon: Icons.home_work_rounded, color: cyan),
                 _MetricCard(label: t('الكفالات', 'Sponsorships'), value: metric('sponsorships'), icon: Icons.handshake_rounded, color: rose),
                 _MetricCard(label: t('طلبات استعادة كلمة المرور', 'Pending recovery'), value: metric('pending_recovery'), icon: Icons.password_rounded, color: const Color(0xFFB9535B)),
-                _MetricCard(label: t('إشعارات غير مقروءة', 'Unread notifications'), value: metric('unread_notifications'), icon: Icons.notifications_active_rounded, color: const Color(0xFF478364)),
-                _MetricCard(label: t('سجلات التدقيق', 'Audit records'), value: metric('audit_log'), icon: Icons.fact_check_rounded, color: const Color(0xFF65756A)),
-                _MetricCard(label: t('إعدادات النظام', 'System settings'), value: metric('settings'), icon: Icons.settings_suggest_rounded, color: const Color(0xFF1E6B4E)),
+                _MetricCard(label: t('إشعارات غير مقروءة', 'Unread notifications'), value: metric('unread_notifications'), icon: Icons.notifications_active_rounded, color: const Color(0xFF20A39E)),
+                _MetricCard(label: t('سجلات التدقيق', 'Audit records'), value: metric('audit_log'), icon: Icons.fact_check_rounded, color: const Color(0xFF61717D)),
+                _MetricCard(label: t('إعدادات النظام', 'System settings'), value: metric('settings'), icon: Icons.settings_suggest_rounded, color: const Color(0xFF0F766E)),
               ],
             ),
             const SizedBox(height: 24),
@@ -218,7 +218,7 @@ class _AdminDashboardPageState extends State<AdminDashboardPage> {
               ...audit.map((item) => Container(
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE7E2D5))),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16), border: Border.all(color: const Color(0xFFE1E8EF))),
                 child: Row(children: [
                   Container(width: 38, height: 38, decoration: BoxDecoration(color: const Color(0xFFF8EFD9), borderRadius: BorderRadius.circular(12)), child: const Icon(Icons.receipt_long_rounded, color: violet)),
                   const SizedBox(width: 11),
@@ -273,7 +273,7 @@ class _MetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.all(15),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE7E2D5)), boxShadow: [BoxShadow(color: color.withValues(alpha: .06), blurRadius: 14, offset: const Offset(0, 5))]),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(20), border: Border.all(color: const Color(0xFFE1E8EF)), boxShadow: [BoxShadow(color: color.withValues(alpha: .06), blurRadius: 14, offset: const Offset(0, 5))]),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.max,
@@ -289,11 +289,11 @@ class _MetricCard extends StatelessWidget {
         FittedBox(
           fit: BoxFit.scaleDown,
           alignment: AlignmentDirectional.centerStart,
-          child: Text(value.toString(), style: const TextStyle(color: Color(0xFF20352B), fontSize: 24, fontWeight: FontWeight.w900)),
+          child: Text(value.toString(), style: const TextStyle(color: Color(0xFF172B3A), fontSize: 24, fontWeight: FontWeight.w900)),
         ),
         const SizedBox(height: 4),
         Text(label, maxLines: 2, overflow: TextOverflow.ellipsis,
-          style: const TextStyle(color: Color(0xFF65756A), fontSize: 11, height: 1.25, fontWeight: FontWeight.w700)),
+          style: const TextStyle(color: Color(0xFF61717D), fontSize: 11, height: 1.25, fontWeight: FontWeight.w700)),
       ],
     ),
   );
@@ -311,9 +311,9 @@ class _SectionHeading extends StatelessWidget {
     Container(width: 42, height: 42, decoration: BoxDecoration(color: color.withValues(alpha: .12), borderRadius: BorderRadius.circular(14)), child: Icon(icon, color: color)),
     const SizedBox(width: 11),
     Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(title, style: const TextStyle(color: Color(0xFF20352B), fontSize: 14, fontWeight: FontWeight.w900)),
+      Text(title, style: const TextStyle(color: Color(0xFF172B3A), fontSize: 14, fontWeight: FontWeight.w900)),
       const SizedBox(height: 2),
-      Text(subtitle, style: const TextStyle(color: Color(0xFF65756A), fontSize: 11, height: 1.4)),
+      Text(subtitle, style: const TextStyle(color: Color(0xFF61717D), fontSize: 11, height: 1.4)),
     ])),
   ]);
 }
@@ -330,7 +330,7 @@ class _ToolTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     margin: const EdgeInsets.only(bottom: 8),
-    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE7E2D5))),
+    decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(17), border: Border.all(color: const Color(0xFFE1E8EF))),
     child: Material(
       color: Colors.transparent,
       borderRadius: BorderRadius.circular(17),
@@ -339,8 +339,8 @@ class _ToolTile extends StatelessWidget {
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
       leading: Container(width: 42, height: 42, decoration: BoxDecoration(color: color.withValues(alpha: .10), borderRadius: BorderRadius.circular(13)), child: Icon(icon, color: color)),
-      title: Text(title, style: const TextStyle(color: Color(0xFF20352B), fontWeight: FontWeight.w800, fontSize: 13)),
-      subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(description, style: const TextStyle(color: Color(0xFF65756A), fontSize: 11, height: 1.4))),
+      title: Text(title, style: const TextStyle(color: Color(0xFF172B3A), fontWeight: FontWeight.w800, fontSize: 13)),
+      subtitle: Padding(padding: const EdgeInsets.only(top: 3), child: Text(description, style: const TextStyle(color: Color(0xFF61717D), fontSize: 11, height: 1.4))),
       trailing: Column(mainAxisSize: MainAxisSize.min, children: [
         if (tag != null) Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
