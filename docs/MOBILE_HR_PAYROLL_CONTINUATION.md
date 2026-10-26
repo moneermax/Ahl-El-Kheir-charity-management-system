@@ -43,3 +43,11 @@
 ## Acceptance boundary
 
 The feature is not complete until the native screen and endpoints are implemented and automated checks pass. Even then, do not claim local runtime/device acceptance without evidence from the intended local installation.
+
+## Implementation step 1 — Shared management helpers extracted
+
+- Added `modules/hr/lib_payroll_management.php` in commit `474ce24b9b9c4442739db640705bd6ce9cecd756`.
+- Moved the existing `payrollEligibleEmployees()`, `payrollStateAtDate()`, and `payrollRefreshDraftBaseSalary()` functions without changing their function bodies, query predicates, or refresh ordering.
+- Updated `modules/hr/payroll.php` to require the shared library in commit `2e5c834377e8abe9de23f538b831966f67ef54df`. This is a behavior-preserving extraction so the native API can call the same period eligibility and draft-refresh logic instead of duplicating it.
+- Verification at this step is source-level only; PHP lint and regression/API integration must still pass before continuing to the next implementation step.
+
