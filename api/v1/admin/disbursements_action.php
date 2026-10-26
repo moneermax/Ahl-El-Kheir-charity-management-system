@@ -1,14 +1,264 @@
 <?php
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
+require_once dirname(__DIR__, 3) . '/modules/accounting/lib_transaction_review.php';
 ak_api_require_method('POST');
 $user = ak_api_authenticated_user();
-if ((string)($user['raw_role_code'] ?? '') !== 'nanny') {
-    ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Only the assigned nanny can confirm a family receipt.']]);
-}
+$role = (string)($user['raw_role_code'] ?? '');
 $contentType = strtolower((string)($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''));
 $input = str_contains($contentType, 'multipart/form-data') ? $_POST : ak_api_read_json();
-if (trim((string)($input['action'] ?? '')) !== 'confirm_item') {
+$action = trim((string)($input['action'] ?? ''));
+$actionRoles = [
+    'confirm_item' => ['nanny'],
+    'create_batch' => ['admin', 'financial_manager', 'general_manager', 'accountant_staff'],
+    'transfer_with_receipt' => ['admin', 'financial_manager', 'general_manager'],
+];
+if (!isset($actionRoles[$action])) {
+    ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_action','message'=>'Unsupported disbursement action.']]);
+}
+if (!in_array($role, $actionRoles[$action], true)) {
+    ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'This role cannot perform the requested disbursement action.']]);
+}
+
+if ($action === 'create_batch') {
+    $month = trim((string)($input['month'] ?? ''));
+    if (!preg_match('/^\\d{4}-(0[1-9]|1[0-2])$/', $month)) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_month','message'=>'Month must use YYYY-MM format.']]);
+    }
+    $rawGroupIds = $input['group_ids'] ?? null;
+    if (!is_array($rawGroupIds) || !$rawGroupIds) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'groups_required','message'=>'Select at least one eligible group.']]);
+    }
+    if (count($rawGroupIds) > 200) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'too_many_groups','message'=>'Select no more than 200 groups at once.']]);
+    }
+    $groupIds = [];
+    foreach ($rawGroupIds as $rawId) {
+        $groupId = filter_var($rawId, FILTER_VALIDATE_INT);
+        if (!$groupId || $groupId < 1) {
+            ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_group_id','message'=>'Each selected group ID must be valid.']]);
+        }
+        $groupIds[] = (int)$groupId;
+    }
+    $groupIds = array_values(array_unique($groupIds));
+    $created = [];
+    $skipped = [];
+    $userId = (int)$user['id'];
+    foreach ($groupIds as $groupId) {
+        $pdo = db();
+        try {
+            $pdo->beginTransaction();
+            $lockedGroup = dbFetchOne('SELECT id FROM orphan_groups WHERE id=? FOR UPDATE', [$groupId]);
+            if (!$lockedGroup) {
+                $pdo->rollBack();
+                $skipped[] = ['group_id'=>$groupId,'reason'=>'group_not_found'];
+                continue;
+            }
+            $exists = dbFetchOne(
+                "SELECT id FROM monthly_disbursements WHERE group_id=? AND month=? AND status NOT IN ('voided','cancelled') LIMIT 1",
+                [$groupId,$month]
+            );
+            if ($exists) {
+                $pdo->rollBack();
+                $skipped[] = ['group_id'=>$groupId,'reason'=>'batch_exists'];
+                continue;
+            }
+            $groupData = dbFetchOne(
+                "SELECT nga.nanny_id, og.id AS group_id,
+                        COUNT(DISTINCT fc.family_id) AS verified_families,
+                        COALESCE(SUM(sp.monthly_amount),0) AS total_amount
+                 FROM orphan_groups og
+                 LEFT JOIN nanny_group_assignments nga ON nga.group_id=og.id AND nga.end_date IS NULL
+                 LEFT JOIN group_children gc ON gc.group_id=og.id AND gc.left_date IS NULL
+                 LEFT JOIN family_children fc ON fc.id=gc.child_id
+                 INNER JOIN nanny_family_verifications v ON v.family_id=fc.family_id AND v.month=?
+                    AND v.is_orphan_verified=1 AND v.is_mother_contact_verified=1 AND v.is_bank_verified=1
+                 LEFT JOIN sponsorships sp ON sp.child_id=gc.child_id AND sp.status='active'
+                 WHERE og.id=?
+                 GROUP BY og.id, nga.nanny_id",
+                [$month,$groupId]
+            );
+            if (!$groupData || empty($groupData['nanny_id'])) {
+                $pdo->rollBack();
+                $skipped[] = ['group_id'=>$groupId,'reason'=>'nanny_not_assigned'];
+                continue;
+            }
+            if ($role === 'accountant_staff'
+                && !dbFetchOne('SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id=? AND nanny_id=? LIMIT 1', [$userId,(int)$groupData['nanny_id']])) {
+                $pdo->rollBack();
+                $skipped[] = ['group_id'=>$groupId,'reason'=>'outside_assignment'];
+                continue;
+            }
+            if ((int)$groupData['verified_families'] < 1) {
+                $pdo->rollBack();
+                $skipped[] = ['group_id'=>$groupId,'reason'=>'no_fully_verified_families'];
+                continue;
+            }
+            dbExecute(
+                "INSERT INTO monthly_disbursements
+                 (month,nanny_id,group_id,total_amount,status,expense_account_code,created_by,submitted_by,submitted_at)
+                 VALUES (?,?,?,?,'pending_approval','5110',?,?,NOW())",
+                [$month,(int)$groupData['nanny_id'],$groupId,(float)$groupData['total_amount'],$userId,$userId]
+            );
+            $disbursementId = (int)$pdo->lastInsertId();
+            $families = dbFetchAll(
+                "SELECT fc.family_id, COALESCE(SUM(sp.monthly_amount),0) AS amount
+                 FROM group_children gc
+                 INNER JOIN family_children fc ON fc.id=gc.child_id
+                 INNER JOIN nanny_family_verifications v ON v.family_id=fc.family_id
+                    AND v.month=? AND v.is_orphan_verified=1 AND v.is_mother_contact_verified=1 AND v.is_bank_verified=1
+                 LEFT JOIN sponsorships sp ON sp.child_id=gc.child_id AND sp.status='active'
+                 WHERE gc.group_id=? AND gc.left_date IS NULL
+                 GROUP BY fc.family_id",
+                [$month,$groupId]
+            );
+            if (!$families) {
+                $pdo->rollBack();
+                $skipped[] = ['group_id'=>$groupId,'reason'=>'verified_family_list_empty'];
+                continue;
+            }
+            foreach ($families as $family) {
+                dbExecute(
+                    "INSERT INTO disbursement_items
+                     (disbursement_id,family_id,amount,status,is_orphan_verified,is_mother_contact_verified,is_bank_verified)
+                     VALUES (?,?,?,'pending',1,1,1)",
+                    [$disbursementId,(int)$family['family_id'],(float)$family['amount']]
+                );
+            }
+            try {
+                dbExecute(
+                    "INSERT INTO audit_log (user_id,action,entity_type,entity_id,new_values,ip_address,user_agent,created_at)
+                     VALUES (?,'DISBURSEMENT_CREATE','monthly_disbursements',?,?,?,?,NOW())",
+                    [$userId,$disbursementId,json_encode(['month'=>$month,'group_id'=>$groupId,'items'=>count($families),'total_amount'=>(float)$groupData['total_amount']],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),(string)($_SERVER['REMOTE_ADDR']??''),(string)($_SERVER['HTTP_USER_AGENT']??'')]
+                );
+            } catch (Throwable $auditError) {
+                error_log('Mobile disbursement creation audit failed: '.$auditError->getMessage());
+            }
+            $pdo->commit();
+            $created[] = ['group_id'=>$groupId,'disbursement_id'=>$disbursementId,'items'=>count($families),'total_amount'=>(float)$groupData['total_amount']];
+        } catch (Throwable $e) {
+            if ($pdo->inTransaction()) $pdo->rollBack();
+            error_log('Mobile disbursement batch creation failed: '.$e->getMessage());
+            ak_api_json(500, ['ok'=>false,'error'=>['code'=>'batch_creation_failed','message'=>'A disbursement batch could not be created. No batch was committed for the failing group.']]);
+        }
+    }
+    ak_api_json(200, ['ok'=>true,'data'=>['month'=>$month,'created'=>$created,'skipped'=>$skipped,'created_count'=>count($created),'skipped_count'=>count($skipped)]]);
+}
+
+if ($action === 'transfer_with_receipt') {
+    $batchId = filter_var($input['batch_id'] ?? null, FILTER_VALIDATE_INT);
+    if (!$batchId || $batchId < 1) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_batch_id','message'=>'A valid disbursement batch ID is required.']]);
+    }
+    $file = $_FILES['transfer_receipt'] ?? null;
+    if (!is_array($file) || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'receipt_required','message'=>'A transfer receipt is required before the batch can be transferred.']]);
+    }
+    if ((int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || empty($file['tmp_name']) || !is_uploaded_file((string)$file['tmp_name'])) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'receipt_upload_failed','message'=>'The transfer receipt upload could not be processed.']]);
+    }
+    if ((int)($file['size'] ?? 0) <= 0 || (int)$file['size'] > 10 * 1024 * 1024) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_receipt_size','message'=>'Transfer receipt must be no larger than 10 MB.']]);
+    }
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file((string)$file['tmp_name']);
+    $transferMimes = ['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png'];
+    if (!is_string($mime) || !isset($transferMimes[$mime])) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_receipt_type','message'=>'Transfer receipt must be PDF, JPG, or PNG.']]);
+    }
+    $receiptDir = dirname(__DIR__, 3) . '/storage/receipts';
+    if (!is_dir($receiptDir) && !mkdir($receiptDir, 0775, true) && !is_dir($receiptDir)) {
+        ak_api_json(500, ['ok'=>false,'error'=>['code'=>'receipt_storage_unavailable','message'=>'Receipt storage is unavailable.']]);
+    }
+    $fullPath = null;
+    $receiptPath = null;
+    $pdo = db();
+    try {
+        $pdo->beginTransaction();
+        $batch = dbFetchOne('SELECT * FROM monthly_disbursements WHERE id=? FOR UPDATE', [(int)$batchId]);
+        if (!$batch) {
+            $pdo->rollBack();
+            ak_api_json(404, ['ok'=>false,'error'=>['code'=>'batch_not_found','message'=>'The disbursement batch was not found.']]);
+        }
+        if ((string)$batch['status'] !== 'pending_approval') {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'batch_not_pending_approval','message'=>'Only a batch awaiting approval can be transferred.']]);
+        }
+        $expenseCode = trim((string)($batch['expense_account_code'] ?: '5110'));
+        $expenseAccount = dbFetchOne('SELECT id FROM accounts WHERE code=? LIMIT 1', [$expenseCode]);
+        $cashAccount = dbFetchOne("SELECT id FROM accounts WHERE code='1100' LIMIT 1");
+        if (!$expenseAccount || !$cashAccount) {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'account_configuration_missing','message'=>'The expense or cash account required for this transfer is missing.']]);
+        }
+        $filename = 'transfer_receipt_' . (int)$batchId . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $transferMimes[$mime];
+        $fullPath = $receiptDir . '/' . $filename;
+        $receiptPath = 'storage/receipts/' . $filename;
+        if (!move_uploaded_file((string)$file['tmp_name'], $fullPath)) {
+            $pdo->rollBack();
+            ak_api_json(500, ['ok'=>false,'error'=>['code'=>'receipt_save_failed','message'=>'The transfer receipt could not be saved.']]);
+        }
+        $updated = dbExecute(
+            "UPDATE monthly_disbursements
+             SET status='transferred',transferred_at=NOW(),receipt_file_path=?,transfer_receipt_by_user_id=?,transfer_receipt_at=NOW()
+             WHERE id=? AND status='pending_approval'",
+            [$receiptPath,(int)$user['id'],(int)$batchId]
+        );
+        if ($updated !== 1) throw new RuntimeException('The batch state changed before transfer.');
+        dbExecute(
+            "INSERT INTO transactions
+             (transaction_type,reference_number,description,amount,currency_code,payment_method,transaction_date,status,created_by,created_at,payment_period,purpose_note,admin_fee_percent,admin_fee_amount,net_amount)
+             VALUES ('disbursement',CONCAT('DISB-OUT-',?),?,?,?,?, 'SDG','bank_transfer',CURDATE(),'posted',?,?, 'صرف دفعة كفالات',0,0,?)",
+            [(int)$batchId,'صرف دفعة #' . (int)$batchId . ' شهر ' . (string)$batch['month'],(float)$batch['total_amount'],(int)$user['id'],(string)$batch['month'],(float)$batch['total_amount']]
+        );
+        $transactionId = (int)$pdo->lastInsertId();
+        $entryCode = 'JE-DISB-' . (int)$batchId . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(3));
+        dbExecute(
+            "INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by,created_at)
+             VALUES (?,CURDATE(),?,'disbursement',?,'posted',?,NOW())",
+            [$entryCode,'قيد صرف دفعة #' . (int)$batchId . ' - شهر ' . (string)$batch['month'],(int)$batchId,(int)$user['id']]
+        );
+        $journalId = (int)$pdo->lastInsertId();
+        dbExecute(
+            "INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,0,?)",
+            [$journalId,(int)$expenseAccount['id'],(float)$batch['total_amount'],'صرف دفعة كفالات شهر ' . (string)$batch['month']]
+        );
+        dbExecute(
+            "INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,0,?,?)",
+            [$journalId,(int)$cashAccount['id'],(float)$batch['total_amount'],'خصم من الصندوق/البنك']
+        );
+        dbExecute('UPDATE monthly_disbursements SET transaction_id=? WHERE id=?', [$transactionId,(int)$batchId]);
+        try {
+            dbExecute(
+                "INSERT INTO audit_log (user_id,action,entity_type,entity_id,new_values,ip_address,user_agent,created_at)
+                 VALUES (?,'DISBURSEMENT_TRANSFER','monthly_disbursements',?,?,?,?,NOW())",
+                [(int)$user['id'],(int)$batchId,json_encode(['status'=>'transferred','amount'=>(float)$batch['total_amount'],'receipt'=>$receiptPath,'transaction_id'=>$transactionId,'journal_id'=>$journalId],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),(string)($_SERVER['REMOTE_ADDR']??''),(string)($_SERVER['HTTP_USER_AGENT']??'')]
+            );
+        } catch (Throwable $auditError) {
+            error_log('Mobile disbursement transfer audit failed: '.$auditError->getMessage());
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        if ($fullPath !== null && is_file($fullPath)) @unlink($fullPath);
+        error_log('Mobile disbursement transfer failed: '.$e->getMessage());
+        ak_api_json(500, ['ok'=>false,'error'=>['code'=>'transfer_failed','message'=>'The disbursement transfer could not be completed.']]);
+    }
+    try {
+        ak_transaction_review_notify_event(
+            (int)$batch['nanny_id'],
+            'تم تحويل دفعة الكفالة وأصبحت متاحة للتنفيذ',
+            'تم اعتماد تحويل دفعة الكفالة ويمكنك الآن متابعة وتأكيد بنود الأسر.',
+            APP_URL . 'modules/accounting/disbursements.php?view=' . (int)$batchId,
+            (int)$batchId,
+            'disbursement_transferred'
+        );
+    } catch (Throwable $notificationError) {
+        error_log('Mobile disbursement transfer notification failed: '.$notificationError->getMessage());
+    }
+    ak_api_json(200, ['ok'=>true,'data'=>['batch_id'=>(int)$batchId,'status'=>'transferred','transaction_id'=>$transactionId,'journal_id'=>$journalId,'receipt_file_path'=>$receiptPath]]);
+}
+
+if ($action !== 'confirm_item') {
     ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_action','message'=>'Unsupported disbursement action.']]);
 }
 $itemId = filter_var($input['item_id'] ?? null, FILTER_VALIDATE_INT);
