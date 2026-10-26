@@ -2956,3 +2956,11 @@ The salary verification workflow run [#3495](https://github.com/moneermax/Ahl-El
 - Root cause: `.github/workflows/php-syntax-check.yml` (workflow display name `Salary advance verification`) triggered on every push to `main` and every pull request, including documentation-only commits. This created redundant parallel verification runs during documentation synchronization.
 - Fixed in commit `e34aa69b477d76783df90b6d52f87808351520ed`: both push and pull-request triggers now filter for PHP/API/module/tool/config/database/language/assets and relevant root PHP/SQL/config changes, including the workflow file itself. Manual `workflow_dispatch` remains available.
 - Existing runs already started before this trigger change were not cancelled by this edit and may still finish. The new filter prevents documentation-only commits from starting more PHP verification runs. Do not claim the active-run queue is cleared until the Actions page confirms it.
+
+
+## 2026-10-26 — Native accounting disbursements route
+
+- Audited the shared native-tool route list against `mobile/ahl_el_kheir_app/lib/main.dart`. The role tools exposed `modules/accounting/disbursements.php` as a native tool, but `openNativeTool()` had no corresponding route, so selecting it showed the generic “not available natively yet” message instead of opening the already-implemented native disbursement page.
+- Fixed in commit `4444397352d8cb95316e43eb76e5f10e355fb207`: the route now calls `openAdminDisbursements()` and applies the same explicit allowed-role list as the existing `disbursements` route key (`admin`, `financial_manager`, `general_manager`, `accountant_staff`, `nanny`). The API remains authoritative for scoped data and operation capabilities.
+- Android workflow `40372872420` was queued for this exact source commit when last checked. Do not claim the change passes Flutter analysis/tests/build until that workflow completes successfully.
+- CI noise fix: commit `e34aa69b477d76783df90b6d52f87808351520ed` limits PHP verification to relevant source paths; the workflow itself passed in run `40372688782`. Documentation-only commits no longer match its trigger paths.
