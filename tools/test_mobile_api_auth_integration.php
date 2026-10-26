@@ -363,6 +363,8 @@ try {
     ], $adminToken, 20);
     mobileApiExpect($duplicateVoid['status'] === 409, 'a voided batch cannot be voided a second time');
 
+    $logoUnauth = mobileApiMultipartRequest('/api/v1/admin/settings.php', [], 'site_logo', 'logo.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/f1sAAAAASUVORK5CYII=', true), 'image/png');
+    mobileApiExpect($logoUnauth['status'] === 401, 'organization logo upload requires authentication');
     $financialReport = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-10-01&to=2026-10-31', 'GET', null, $adminToken, 20);
     mobileApiExpect($financialReport['status'] === 200 && is_array($financialReport['json']['data']['rows'] ?? null), 'administrator can load native financial report rows');
     foreach ([

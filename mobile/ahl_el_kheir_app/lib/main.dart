@@ -1043,6 +1043,43 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'admin/settings.php', token: token);
   }
 
+  Future<PlatformFile?> pickAdminLogo() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'jpeg', 'png', 'gif', 'webp'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.single;
+    if (file.bytes == null || file.bytes!.isEmpty) {
+      throw const ApiFailure('The selected logo image could not be read.', statusCode: 422);
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      throw const ApiFailure('Logo images must not exceed 2 MB.', statusCode: 422);
+    }
+    return file;
+  }
+
+  Future<Map<String, dynamic>> uploadAdminLogo(PlatformFile file) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final request = http.MultipartRequest('POST', Uri.parse(baseUrl + '/admin/settings.php'));
+    request.headers['Accept'] = 'application/json';
+    request.headers['Authorization'] = 'Bearer ' + token;
+    request.files.add(http.MultipartFile.fromBytes('site_logo', file.bytes!, filename: file.name));
+    final streamed = await request.send().timeout(const Duration(seconds: 30));
+    final response = await http.Response.fromStream(streamed);
+    dynamic decoded;
+    try { decoded = jsonDecode(response.body); } catch (_) { decoded = null; }
+    if (response.statusCode < 200 || response.statusCode >= 300 || decoded is! Map || decoded['ok'] != true) {
+      final error = decoded is Map ? decoded['error'] : null;
+      final message = error is Map ? (error['message'] ?? 'Logo upload failed.').toString() : 'Logo upload failed.';
+      throw ApiFailure(message, statusCode: response.statusCode);
+    }
+    final data = decoded['data'];
+    return data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+  }
+
   Future<Map<String, dynamic>> saveAdminSettings(Map<String, dynamic> values) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
@@ -1057,6 +1094,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         english: english,
         loadSettings: loadAdminSettings,
         saveSettings: saveAdminSettings,
+        pickLogo: pickAdminLogo,
+        uploadLogo: uploadAdminLogo,
       ),
     ));
   }

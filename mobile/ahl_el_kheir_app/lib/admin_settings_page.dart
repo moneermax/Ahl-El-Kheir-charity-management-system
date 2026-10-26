@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:file_picker/file_picker.dart';
 
 class AdminSettingsPage extends StatefulWidget {
   const AdminSettingsPage({
@@ -6,11 +7,15 @@ class AdminSettingsPage extends StatefulWidget {
     required this.english,
     required this.loadSettings,
     required this.saveSettings,
+    required this.pickLogo,
+    required this.uploadLogo,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function() loadSettings;
   final Future<Map<String, dynamic>> Function(Map<String, dynamic>) saveSettings;
+  final Future<PlatformFile?> Function() pickLogo;
+  final Future<Map<String, dynamic>> Function(PlatformFile file) uploadLogo;
 
   @override
   State<AdminSettingsPage> createState() => _AdminSettingsPageState();
@@ -25,6 +30,8 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
   final Map<String, TextEditingController> controllers = {};
   String encryption = 'tls';
   bool smtpPasswordConfigured = false;
+  bool canUploadLogo = false;
+  String logoPath = '';
 
   @override
   void initState() {
@@ -86,7 +93,7 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
       }
       controllers.clear();
       for (final entry in parsedValues.entries) {
-        if (entry.key == 'smtp_password' || entry.key == 'smtp_password_configured') continue;
+        if (entry.key == 'smtp_password' || entry.key == 'smtp_password_configured' || entry.key == 'site_logo') continue;
         controllers[entry.key] = TextEditingController(text: entry.value?.toString() ?? '');
       }
       setState(() {
@@ -95,6 +102,8 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
         encryption = parsedValues['smtp_encryption']?.toString().isNotEmpty == true
             ? parsedValues['smtp_encryption'].toString() : 'tls';
         smtpPasswordConfigured = parsedValues['smtp_password_configured'] == true;
+        canUploadLogo = data['can_upload_logo'] == true;
+        logoPath = parsedValues['site_logo']?.toString() ?? '';
       });
     } catch (e) {
       if (mounted) setState(() => error = e.toString());
@@ -118,6 +127,24 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(
         content: Text(t('تم حفظ الإعدادات.', 'Settings saved.')),
+      ));
+      await refresh();
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => saving = false);
+    }
+  }
+
+  Future<void> chooseAndUploadLogo() async {
+    final file = await widget.pickLogo();
+    if (file == null) return;
+    setState(() { saving = true; error = null; });
+    try {
+      await widget.uploadLogo(file);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(t('تم تحديث شعار المنظمة.', 'Organization logo updated.')),
       ));
       await refresh();
     } catch (e) {
@@ -191,11 +218,30 @@ class _AdminSettingsPageState extends State<AdminSettingsPage> {
               padding: const EdgeInsets.all(16),
               children: [
                 Text(
-                  t('تعديل الإعدادات المتاحة للمسؤول. لا يتم عرض كلمة مرور SMTP الحالية. رفع الشعار غير متاح في هذه النسخة من الشاشة.',
-                      'Edit the settings available to the administrator. The current SMTP password is never returned. Logo upload is not available in this screen yet.'),
+                  t('تعديل الإعدادات المتاحة للمسؤول. لا يتم عرض كلمة مرور SMTP الحالية.',
+                      'Edit the settings available to the administrator. The current SMTP password is never returned.'),
                   style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: 14),
+                if (canUploadLogo)
+                  Card(
+                    margin: const EdgeInsets.only(bottom: 14),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+                        Text(t('شعار المنظمة', 'Organization logo'), style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700)),
+                        const SizedBox(height: 6),
+                        Text(logoPath.isEmpty ? t('لم يتم تحديد شعار.', 'No logo is configured.') : logoPath),
+                        const SizedBox(height: 10),
+                        OutlinedButton.icon(
+                          onPressed: saving ? null : chooseAndUploadLogo,
+                          icon: const Icon(Icons.image_outlined),
+                          label: Text(saving ? t('جارٍ الرفع…', 'Uploading…') : t('اختيار شعار ورفعه', 'Choose and upload logo')),
+                        ),
+                        Text(t('JPG أو PNG أو GIF أو WebP، بحد أقصى 2 ميجابايت.', 'JPG, PNG, GIF or WebP; maximum 2 MB.'), style: Theme.of(context).textTheme.bodySmall),
+                      ]),
+                    ),
+                  ),
                 if (error != null)
                   Card(
                     color: Theme.of(context).colorScheme.errorContainer,

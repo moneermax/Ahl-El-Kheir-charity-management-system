@@ -50,12 +50,68 @@ foreach ($definitions as $fields) {
 }
 
 $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+$contentType = strtolower((string)($_SERVER['CONTENT_TYPE'] ?? $_SERVER['HTTP_CONTENT_TYPE'] ?? ''));
 if (!in_array($method, ['GET', 'POST'], true)) {
     header('Allow: GET, POST');
     ak_api_json(405, ['ok' => false, 'error' => ['code' => 'method_not_allowed', 'message' => 'Method not allowed.']]);
 }
 
-if ($method === 'POST') {
+if ($method === 'POST' && str_contains($contentType, 'multipart/form-data')) {
+    $file = $_FILES['site_logo'] ?? null;
+    if (!is_array($file) || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+        ak_api_json(422, ['ok' => false, 'error' => ['code' => 'logo_upload_required', 'message' => 'Choose a logo image to upload.']]);
+    }
+    $size = (int)($file['size'] ?? 0);
+    if ($size < 1 || $size > 2 * 1024 * 1024 || !is_uploaded_file((string)($file['tmp_name'] ?? ''))) {
+        ak_api_json(422, ['ok' => false, 'error' => ['code' => 'invalid_logo_file', 'message' => 'Logo images must be between 1 byte and 2 MB.']]);
+    }
+    $finfo = new finfo(FILEINFO_MIME_TYPE);
+    $mime = $finfo->file((string)$file['tmp_name']);
+    $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/gif' => 'gif', 'image/webp' => 'webp'];
+    if (!is_string($mime) || !isset($extensions[$mime])) {
+        ak_api_json(422, ['ok' => false, 'error' => ['code' => 'unsupported_logo_type', 'message' => 'Use a valid JPG, PNG, GIF, or WebP logo image.']]);
+    }
+    $root = dirname(__DIR__, 3);
+    $uploadDir = $root . '/assets/uploads';
+    if (!is_dir($uploadDir) && !@mkdir($uploadDir, 0755, true) && !is_dir($uploadDir)) {
+        ak_api_json(500, ['ok' => false, 'error' => ['code' => 'logo_storage_unavailable', 'message' => 'Logo storage is unavailable.']]);
+    }
+    $filename = 'logo_' . bin2hex(random_bytes(6)) . '.' . $extensions[$mime];
+    $destination = $uploadDir . '/' . $filename;
+    if (!move_uploaded_file((string)$file['tmp_name'], $destination)) {
+        ak_api_json(500, ['ok' => false, 'error' => ['code' => 'logo_upload_failed', 'message' => 'The logo image could not be saved.']]);
+    }
+    $logoPath = 'assets/uploads/' . $filename;
+    $previous = dbFetchOne('SELECT setting_value FROM settings WHERE setting_key=?', ['site_logo']);
+    try {
+        dbExecute('INSERT INTO settings (setting_key, setting_value) VALUES (?, ?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)', ['site_logo', $logoPath]);
+    } catch (Throwable $e) {
+        @unlink($destination);
+        error_log('Mobile organization logo setting failed: ' . $e->getMessage());
+        ak_api_json(500, ['ok' => false, 'error' => ['code' => 'logo_setting_failed', 'message' => 'The logo setting could not be updated.']]);
+    }
+    try {
+        dbExecute(
+            "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+             VALUES (?, 'UPDATE', 'settings', NULL, ?, ?, ?, ?)",
+            [(int)$user['id'], json_encode(['site_logo' => (string)($previous['setting_value'] ?? '')], JSON_UNESCAPED_UNICODE),
+             json_encode(['site_logo' => $logoPath], JSON_UNESCAPED_UNICODE),
+             (string)($_SERVER['REMOTE_ADDR'] ?? ''), (string)($_SERVER['HTTP_USER_AGENT'] ?? '')]
+        );
+    } catch (Throwable $e) {
+        error_log('Mobile organization logo audit failed: ' . $e->getMessage());
+    }
+    foreach (glob($uploadDir . '/logo*') ?: [] as $oldPath) {
+        $oldName = basename($oldPath);
+        if ($oldName === $filename || !is_file($oldPath)
+            || preg_match('/^logo(?:_[a-f0-9]{12})?\.(?:jpe?g|png|gif|webp)$/i', $oldName) !== 1) {
+            continue;
+        }
+        @unlink($oldPath);
+    }
+}
+
+if ($method === 'POST' && !str_contains($contentType, 'multipart/form-data')) {
     $input = ak_api_read_json();
     $values = $input['values'] ?? null;
     if (!is_array($values)) {
@@ -135,9 +191,10 @@ foreach ($allowed as $key => $_definition) {
     $safeValues[$key] = $key === 'smtp_password' ? '' : ($stored[$key] ?? '');
 }
 $safeValues['smtp_password_configured'] = isset($stored['smtp_password']) && $stored['smtp_password'] !== '';
+$safeValues['site_logo'] = $stored['site_logo'] ?? '';
 
 ak_api_json(200, ['ok' => true, 'data' => [
     'groups' => $definitions,
     'values' => $safeValues,
-    'can_upload_logo' => false,
+    'can_upload_logo' => true,
 ]]);

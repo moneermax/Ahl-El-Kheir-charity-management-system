@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:ahl_el_kheir_app/admin_settings_page.dart';
 
 void main() {
@@ -22,7 +23,9 @@ void main() {
                 'smtp_encryption': {'type': 'select', 'label_ar': 'تشفير SMTP', 'options': ['tls', 'ssl', 'none']},
               },
             },
+            'can_upload_logo': true,
             'values': {
+              'site_logo': 'assets/uploads/logo.png',
               'org_name_en': 'Ahl El Kheir',
               'support_email': 'support@example.org',
               'smtp_password': '',
@@ -31,6 +34,8 @@ void main() {
             },
           };
         },
+        pickLogo: () async => PlatformFile(name: 'logo.png', size: 1, bytes: [137]),
+        uploadLogo: (file) async => {'site_logo': 'assets/uploads/logo_test.png'},
         saveSettings: (values) async {
           saved = Map<String, dynamic>.from(values);
           return {'saved': true};
@@ -42,6 +47,7 @@ void main() {
     expect(find.text('System settings'), findsOneWidget);
     expect(find.text('Ahl El Kheir'), findsOneWidget);
     expect(find.textContaining('Configured'), findsOneWidget);
+    expect(find.text('Choose and upload logo'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
     await tester.enterText(find.byType(TextFormField).first, 'Ahl El Kheir Foundation');
