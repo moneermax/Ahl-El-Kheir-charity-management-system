@@ -1,6 +1,6 @@
 # Mobile role feature parity — evidence matrix
 
-Last reviewed: 2026-10-25
+Last reviewed: 2026-10-26
 Source of truth: current `main`, especially `config/functions.php::dashboard_for_role()`, `dashboard/admin_dashboard.php`, and the Flutter app under `mobile/ahl_el_kheir_app/`.
 
 ## Administrator / system developer
@@ -23,7 +23,7 @@ Additional existing mobile-native operational screens are included in the admini
 
 ### Verification status
 
-Finance overview and chart-of-accounts API/full-schema integration tests have passed; PHP lint and Flutter analyze/widget tests have passed. The newest Android APK build/publication is pending at the current checkpoint. No local XAMPP/database or physical-device runtime result is claimed.
+Finance overview and chart-of-accounts API/full-schema integration tests have passed; PHP lint, Flutter analysis, all widget tests, Android debug APK build and artifact publication have passed. No local XAMPP/database or physical-device runtime result is claimed.
 
 ## Other roles
 
@@ -31,8 +31,8 @@ The website routes each role to a distinct dashboard in `config/functions.php`: 
 
 | Role | Existing native mobile capabilities | Additional web-only placeholders surfaced in the app | Remaining parity work |
 |---|---|---|---|
-| GM | Sponsors, families, sponsorships, sponsor requests, projects, transactions, legal-age alerts, native suspension case register, personal leave requests/salary statements, native role metrics | Executive reports, uncovered-family/sponsorship/operational reports, win-back, incentive policy, GM payroll-period history | Native attention queue and approval workflows; web session handoff |
-| VGM | Sponsors, families, sponsorships, sponsor requests, projects, supervisors with native activate/suspend controls, FM review queue, transactions, legal-age alerts, native suspension register/lift, native role metrics and sponsor assignment | Reports | Remaining VGM operational workflows; web session handoff |
+| GM | Sponsors, families, sponsorships, sponsor requests, projects, transactions, legal-age alerts, native suspension case register, personal leave requests/salary statements, native role metrics | Executive reports, uncovered-family/sponsorship/operational reports, win-back, incentive policy, GM payroll-period history | Native attention queue and approval workflows; native implementation of remaining tools; no web handoff |
+| VGM | Sponsors, families, sponsorships, sponsor requests, projects, supervisors with native activate/suspend controls, FM review queue, transactions, legal-age alerts, native suspension register/lift, native role metrics and sponsor assignment | Reports | Remaining VGM operational workflows; native implementation of remaining tools; no web handoff |
 | FM | Projects, transactions, FM review queue, legal-age alerts, native role metrics | Disbursements, chart of accounts, journal, vouchers, transaction review, financial reports, payroll portal, Fina dashboard | Native finance operations and accounting API parity |
 | Accountant / Accountant Staff | Sponsorships/transactions where permitted, projects where permitted, personal leave requests/salary statements, native role metrics | Group disbursements, monthly disbursements, reports | Exact assignment-scoped native workflow parity |
 | Supervisor | Sponsors, families, sponsorships, transactions, legal-age alerts, native role metrics | Fina review/history/report | Native Fina workflows and supervisor-specific dashboard/record scope |
@@ -53,7 +53,7 @@ Source commits on `main`:
 
 The workspace now exposes the existing native personal leave-request page and finalized salary-statement page, and adds role-scoped quick links matching the real GM, VGM, FM, Accountant, Supervisor, Nanny, Administration/Staff, HR, and Projects dashboard routes. The API enforces leave-queue permissions and returns salary statements only for paid payrolls posted to accounting. No account without a linked employee profile is given another employee's records.
 
-**Still open; do not claim full completion:** role-specific dashboard metrics and operational workflows are not all native yet; website-only tools require a valid website session in the external browser; native legal-age suspension source is now implemented; automated and local runtime verification remain pending; transaction date-range end-to-end acceptance and physical-device runtime remain pending; the mobile API migration must be applied to the intended local development database before API runtime testing. The newest source checks have now passed; see the verified CI milestone below.
+**Still open; do not claim full completion:** role-specific dashboard metrics and operational workflows are not all native yet; WEB-labelled placeholders do not open an external browser; native legal-age suspension source is implemented; automated analysis/tests/build and disposable-schema API verification have passed; local XAMPP/API/database and physical-device runtime remain pending; the mobile API migration must be applied to the intended local development database before API runtime testing. The newest source checks have now passed; see the verified CI milestone below.
 
 
 ## 2026-10-25 — Native legal-age suspension action added
@@ -172,7 +172,7 @@ Verified native/API milestones:
 
 The API query test complements the Flutter widget tests for same-day/multi-day filters, pagination/refresh, and reversed-range rejection. It does not replace authenticated HTTP testing against the intended local `ahl_el_kheir` database or physical-device acceptance.
 
-**Still open:** complete native implementations for several role-specific financial, HR, beneficiary-form and Fina workflows; website-session handoff for WEB links; local XAMPP/API/database verification; physical-device acceptance. Do not describe mobile parity as complete.
+**Still open:** complete native implementations for several role-specific financial, HR, beneficiary-form and Fina workflows; native implementation of remaining WEB-labelled tools; no web handoff; local XAMPP/API/database verification; physical-device acceptance. Do not describe mobile parity as complete.
 
 
 ## 2026-10-25 — Native suspension case management and date-filter integration
@@ -183,7 +183,7 @@ Full-schema PHP verification passed in run `40199009847`, including the rollback
 
 Transaction date filtering also has a rollback-only full-schema test: run `40198548850` passed `PASS | mobile transaction date filter | inclusive start/end, same-day range, outside-bound exclusion, rollback=PASS`.
 
-Still open: authenticated API/database runtime against the intended local `ahl_el_kheir` instance, physical-device acceptance, website-session continuity for remaining WEB links, and full native parity for financial, HR, beneficiary-form and Fina workflows. Do not describe the app as feature-complete.
+Still open: authenticated API/database runtime against the intended local `ahl_el_kheir` instance, physical-device acceptance, native implementation of remaining WEB-labelled tools; no web handoff, and full native parity for financial, HR, beneficiary-form and Fina workflows. Do not describe the app as feature-complete.
 
 
 ## 2026-10-25 — Native suspension workflow Android build PASS
@@ -192,7 +192,7 @@ Correction to the earlier in-progress checkpoint: GitHub Actions run [4019917746
 
 The PHP full-schema rollback-only suspension case/suspend/lift test passed in run `40199009847`; transaction date-boundary integration passed in run `40198548850`. This is automated CI evidence, not proof of live local XAMPP/API/database behavior or physical-device acceptance.
 
-The mobile parity work is not complete: non-age suspension creation, native financial/HR/beneficiary-form/Fina workflows, and website-session continuity for remaining WEB links are still open. Do not claim full native feature parity until those gaps are implemented and verified.
+The mobile parity work is not complete: non-age suspension creation, native financial/HR/beneficiary-form/Fina workflows, and native implementation of remaining WEB-labelled tools; no web handoff are still open. Do not claim full native feature parity until those gaps are implemented and verified.
 
 
 ## 2026-10-25 — Administrator dashboard responsive checkpoint
@@ -265,3 +265,6 @@ Correction — 2026-10-26: Flutter workflow [40274952027](https://github.com/mon
 ## 2026-10-26 — Native finance and chart-of-accounts checkpoint
 
 The administrator dashboard now has native read-only Finance Overview and native Chart of Accounts screens. The latter lists account balances based on posted journal lines and supports account creation and active-status toggling using existing account columns; no runtime DDL, schema migration, or accounting-entry mutation was added. The exact-role API endpoints are `GET api/v1/admin/finance_overview.php`, `GET api/v1/admin/accounts.php`, and `POST api/v1/admin/accounts_action.php`. Live full-schema integration passed for finance metrics and chart account listing/create/toggle/zero-balance behavior in [run 40275754236](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40275754236). Flutter analysis and all widget tests passed on current app source `27ff209075056f606db2a85c6c1a16259cac9316` in [run 40276057511](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40276057511); APK build/publication is still in progress at this checkpoint, so no new APK is available yet. Local XAMPP/API/database and physical-device acceptance remain open. Chart of accounts, monthly disbursements and Fina collection are not yet full native feature parity.
+
+
+Correction — 2026-10-26: The Android build has now completed successfully. Workflow [40276057511](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40276057511) passed Dart analysis, all Flutter widget tests, debug APK build and publication for source `27ff209075056f606db2a85c6c1a16259cac9316`. Artifact `ahl-el-kheir-flutter-android-debug-apk`: 77,526,098 bytes; SHA-256 `798f2756a91c19f0a0448165907b2dbfa364c26d3465925784cbcab96e3bf144`; expires 2026-11-25. Download from the workflow run’s Artifacts section. Live API integration passed on the same backend/test source line in [run 40275754236](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40275754236). This proves CI/disposable-schema behavior only; local XAMPP/API/database and physical-device acceptance remain open. Full native feature parity is not complete.
