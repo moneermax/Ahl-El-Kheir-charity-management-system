@@ -11,25 +11,25 @@ The web role mapping routes `admin`, `sudo`, and `super_admin` to `dashboard/adm
 |---|---|---|
 | System administration | Users, departments, system settings | Users and departments have native screens; system settings now has a native form for the exact `admin` role. Logo upload remains unimplemented. Other roles do not gain access by normalization. |
 | Core records | Sponsors, families, sponsorships, reports | Sponsors, families and sponsorships open native screens. Reports now has a native role-scoped overview and uncovered-families report; other reports remain unavailable natively. |
-| Finance | Finance dashboard, chart of accounts, transaction ledger, monthly disbursements, Fina Al-Khair collection | Transaction ledger opens a native screen. Other listed tools open existing web pages in the external browser. |
-| Protection and maintenance | Database backup, database tools, audit log | Visible in the dedicated admin dashboard and opens the existing web page in the external browser. |
+| Finance | Finance dashboard, chart of accounts, transaction ledger, monthly disbursements, Fina Al-Khair collection | Finance dashboard and chart of accounts now have native screens; transaction ledger remains native. Monthly disbursements and Fina collection are still not implemented natively. Selecting any web-only placeholder shows an in-app unavailable notice; no external page is opened. |
+| Protection and maintenance | Database backup, database tools, audit log | Admin-only placeholders remain not natively implemented and display an in-app unavailable notice; no browser or external page is launched. |
 | Dashboard overview | Counts for users, sponsors, families, sponsorships; unread notifications; pending recovery requests; settings and audit counts; recent audit activity; PHP/database status | Authenticated `GET api/v1/admin/overview.php` returns record counts, recent audit entries, PHP version and database connectivity. Current mobile cards show eight metrics: users, sponsors, families, sponsorships, pending password-recovery requests, unread notifications, audit-record count, and settings count, plus recent audit activity. |
 
 Additional existing mobile-native operational screens are included in the administrator dashboard: projects, employees, attendance, supervisors, sponsor requests, financial review queue, and legal-age alerts.
 
 ### Authorization boundary
 
-`api/v1/admin/overview.php` requires the existing bearer-session authentication and restricts the response to `admin`, `sudo`, and `super_admin`. The web-only tool routes are not new API permissions; the existing website remains responsible for enforcing access when those pages open.
+`api/v1/admin/overview.php` requires the existing bearer-session authentication and restricts the response to `admin`, `sudo`, and `super_admin`. The mobile client never launches the browser or hands off to the website for web-only tools. Such selections display an in-app not-available notice; a WEB label is not native workflow coverage.
 
 ### Verification status
 
-The code is committed to `main`; automated Flutter analyze/tests/APK and PHP lint must complete successfully before calling this change verified. No local XAMPP/database or physical-device runtime result is claimed by this document.
+Finance overview and chart-of-accounts API/full-schema integration tests have passed; PHP lint and Flutter analyze/widget tests have passed. The newest Android APK build/publication is pending at the current checkpoint. No local XAMPP/database or physical-device runtime result is claimed.
 
 ## Other roles
 
-The website routes each role to a distinct dashboard in `config/functions.php`: GM, VGM, FM, accountant, supervisor, nanny, staff/administration, HR, and projects. A role-specific mobile quick-tools section now surfaces additional links derived from those actual dashboards. These links are explicitly labelled **WEB** and open the existing site; they do not count as native implementations and require a valid website session in the external browser.
+The website routes each role to a distinct dashboard in `config/functions.php`: GM, VGM, FM, accountant, supervisor, nanny, staff/administration, HR, and projects. A role-specific mobile quick-tools section surfaces additional web-only placeholders derived from those dashboards. They are labelled **WEB** to distinguish them from native features, but selecting them shows an in-app unavailable notice and does not open a browser or website.
 
-| Role | Existing native mobile capabilities | Additional website tools surfaced | Remaining parity work |
+| Role | Existing native mobile capabilities | Additional web-only placeholders surfaced in the app | Remaining parity work |
 |---|---|---|---|
 | GM | Sponsors, families, sponsorships, sponsor requests, projects, transactions, legal-age alerts, native suspension case register, personal leave requests/salary statements, native role metrics | Executive reports, uncovered-family/sponsorship/operational reports, win-back, incentive policy, GM payroll-period history | Native attention queue and approval workflows; web session handoff |
 | VGM | Sponsors, families, sponsorships, sponsor requests, projects, supervisors with native activate/suspend controls, FM review queue, transactions, legal-age alerts, native suspension register/lift, native role metrics and sponsor assignment | Reports | Remaining VGM operational workflows; web session handoff |
@@ -260,3 +260,8 @@ The administrator Finance dashboard entry now opens a native read-only overview 
 
 
 Correction — 2026-10-26: Flutter workflow [40274952027](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40274952027) has now completed successfully. Dart analysis, the full widget suite, Android debug APK build and artifact publication all passed for app source `89def08b6adde95bec648cb1349f18860b945ef5`. Published artifact `ahl-el-kheir-flutter-android-debug-apk`: 77,523,067 bytes; SHA-256 `7800554326cf99174b90550284ede7e1d44f634d48cc895dfb522f85335742a0`; expires 2026-11-25. Download via the workflow run’s Artifacts section. This is automated CI evidence only; authenticated runtime against the user’s local XAMPP/API/database and physical-device acceptance remain outstanding. The native finance page is read-only; chart of accounts, monthly disbursements and Fina collection remain unfinished natively.
+
+
+## 2026-10-26 — Native finance and chart-of-accounts checkpoint
+
+The administrator dashboard now has native read-only Finance Overview and native Chart of Accounts screens. The latter lists account balances based on posted journal lines and supports account creation and active-status toggling using existing account columns; no runtime DDL, schema migration, or accounting-entry mutation was added. The exact-role API endpoints are `GET api/v1/admin/finance_overview.php`, `GET api/v1/admin/accounts.php`, and `POST api/v1/admin/accounts_action.php`. Live full-schema integration passed for finance metrics and chart account listing/create/toggle/zero-balance behavior in [run 40275754236](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40275754236). Flutter analysis and all widget tests passed on current app source `27ff209075056f606db2a85c6c1a16259cac9316` in [run 40276057511](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40276057511); APK build/publication is still in progress at this checkpoint, so no new APK is available yet. Local XAMPP/API/database and physical-device acceptance remain open. Chart of accounts, monthly disbursements and Fina collection are not yet full native feature parity.
