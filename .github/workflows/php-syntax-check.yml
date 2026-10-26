@@ -70,6 +70,7 @@ jobs:
             api/v1/suspensions/lift.php
             api/v1/suspensions/case_service.php
             api/v1/admin/overview.php
+            api/v1/admin/finance_overview.php
             api/v1/admin/settings.php
             api/v1/reports/orphaned_families.php
             api/v1/reports/overview.php

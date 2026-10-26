@@ -12,6 +12,7 @@ import 'sponsors_page.dart';
 import 'supervisors_page.dart';
 import 'families_page.dart';
 import 'admin_dashboard_page.dart';
+import 'admin_finance_overview_page.dart';
 import 'role_dashboard_page.dart';
 import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
@@ -433,6 +434,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'admin/overview.php', token: token);
   }
 
+  Future<Map<String, dynamic>> loadAdminFinanceOverview() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'admin/finance_overview.php', token: token);
+  }
+
+  void openAdminFinanceOverview() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AdminFinanceOverviewPage(english: english, loadOverview: loadAdminFinanceOverview),
+    ));
+  }
+
   Future<Map<String, dynamic>> loadAdminDepartments() async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
@@ -633,7 +646,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         navigator.push(MaterialPageRoute<void>(builder: (_) => ProjectsPage(english: english, loadPage: loadProjects, loadDetail: loadProjectDetail, submitProgress: submitProjectProgressUpdate, createMilestone: createProjectMilestone, actOnMilestone: actOnProjectMilestone)));
         return;
       case 'finance_dashboard':
-        openNativeTool('modules/accounting/fm_dashboard.php');
+        if (user?['role_code']?.toString() != 'admin') {
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            SnackBar(content: Text(english ? 'Financial overview is restricted to the administrator role.' : 'المؤشرات المالية متاحة لدور المسؤول فقط.')),
+          );
+          return;
+        }
+        openAdminFinanceOverview();
         return;
       case 'accounts':
         openNativeTool('modules/accounting/accounts.php');

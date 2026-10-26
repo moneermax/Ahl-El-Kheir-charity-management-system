@@ -100,7 +100,33 @@ void main() {
     await scrollTo('PROTECTION & MAINTENANCE');
     expect(find.byKey(const Key('admin-tool-audit')), findsNothing,
         reason: 'Audit tile must not be advertised to Sudo.');
+    for (final key in [
+      'admin-tool-finance-dashboard', 'admin-tool-accounts', 'admin-tool-transactions',
+      'admin-tool-disbursements', 'admin-tool-fina', 'admin-tool-backup', 'admin-tool-database',
+    ]) {
+      expect(find.byKey(Key(key)), findsNothing, reason: 'Sudo must not see exact-admin-only tools: $key');
+    }
+    expect(tester.takeException(), isNull);
+  });
 
+  testWidgets('administrator sees native finance overview entry', (tester) async {
+    await tester.binding.setSurfaceSize(const Size(360, 800));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    String? openedTool;
+    await tester.pumpWidget(MaterialApp(home: AdminDashboardPage(
+      english: true,
+      fullName: 'System Administrator',
+      roleCode: 'admin',
+      loadOverview: () async => {'stats': <String, dynamic>{}, 'recent_audit': <Map<String, dynamic>>[], 'server': {'database_connected': true, 'php_version': '8.2'}},
+      onOpenTool: (tool) => openedTool = tool,
+      onOpenAgeAlerts: () {},
+    )));
+    await tester.pumpAndSettle();
+    final scrollable = find.descendant(of: find.byKey(const Key('admin-dashboard-list')), matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-finance-dashboard')), 180, scrollable: scrollable);
+    expect(find.byKey(const Key('admin-tool-finance-dashboard')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('admin-tool-finance-dashboard')));
+    expect(openedTool, 'finance_dashboard');
     expect(tester.takeException(), isNull);
   });
 
