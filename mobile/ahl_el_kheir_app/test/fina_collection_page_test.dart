@@ -20,7 +20,11 @@ void main() {
     await tester.enterText(find.byWidgetPredicate((widget) => widget is TextField && widget.decoration?.labelText == 'اسم مصدر الأموال *'), 'متبرع تجريبي');
     await tester.enterText(find.byWidgetPredicate((widget) => widget is TextField && widget.decoration?.labelText == 'المبلغ *'), '125.50');
     final submitButton = find.widgetWithText(FilledButton, 'إرسال للمراجعة المالية');
-    await tester.ensureVisible(submitButton);
+    await tester.scrollUntilVisible(
+      submitButton,
+      400,
+      scrollable: find.byType(Scrollable).first,
+    );
     await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
