@@ -26,6 +26,35 @@ void main() {
   });
 
 
+  testWidgets('GM report subpages are marked in-app and dispatch to native report routes', (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'general_manager',
+          english: true,
+          onOpen: opened.add,
+        ),
+      ),
+    ));
+
+    const reports = <String, String>{
+      'Financial report': 'modules/reports/financial.php',
+      'Sponsorship report': 'modules/reports/sponsorship.php',
+      'Operational report': 'modules/reports/operational.php',
+      'HR report': 'modules/reports/hr.php',
+    };
+    for (final entry in reports.entries) {
+      final card = find.ancestor(of: find.text(entry.key), matching: find.byType(Card));
+      expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget, reason: entry.key);
+    }
+
+    await tester.ensureVisible(find.text('Financial report'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Financial report'));
+    expect(opened, contains('modules/reports/financial.php'));
+  });
+
   testWidgets('legacy finance aliases do not see disbursements denied by the web guard', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: SingleChildScrollView(

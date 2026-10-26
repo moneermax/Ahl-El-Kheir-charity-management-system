@@ -596,6 +596,17 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       openReportsPage();
       return;
     }
+    const nativeReportPaths = <String, String>{
+      'modules/reports/financial.php': 'financial',
+      'modules/reports/sponsorship.php': 'sponsorship',
+      'modules/reports/operational.php': 'operational',
+      'modules/reports/hr.php': 'hr',
+    };
+    final nativeReportKey = nativeReportPaths[relativePath];
+    if (nativeReportKey != null) {
+      openNativeReportDetail(nativeReportKey);
+      return;
+    }
     if (relativePath == 'modules/reports/orphaned_families.php') {
       openOrphanedFamiliesReport();
       return;
