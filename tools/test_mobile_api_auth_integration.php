@@ -1753,7 +1753,7 @@ try {
     $insert->execute([$userId, $revokedHash, date('Y-m-d H:i:s', time() + 3600)]);
     $pdo->prepare('UPDATE mobile_api_sessions SET revoked_at=NOW() WHERE token_hash=?')->execute([$revokedHash]);
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $expiredToken);
-    mobileApiExpect($r['status'] === 401, 'expired sessions are rejected');
+    mobileApiExpect($r['status'] === 401, 'expired sessions are rejected (HTTP ' . $r['status'] . ', code=' . ($r['json']['error']['code'] ?? 'none') . ')');
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $revokedToken);
     mobileApiExpect($r['status'] === 401, 'revoked sessions are rejected');
 
