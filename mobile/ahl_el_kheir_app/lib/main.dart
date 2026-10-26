@@ -602,7 +602,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
 
   void openFinaCollectionPage() {
     final role = user?['role_code']?.toString() ?? '';
-    if (!['admin', 'sudo', 'super_admin', 'financial_manager', 'fm', 'finance'].contains(role)) {
+    if (!['admin', 'financial_manager'].contains(role)) {
       ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
         SnackBar(content: Text(english
             ? 'Fina collection registration is restricted to Finance Manager and Administrator.'
