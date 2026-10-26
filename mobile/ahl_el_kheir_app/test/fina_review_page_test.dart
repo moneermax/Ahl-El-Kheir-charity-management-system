@@ -1,4 +1,5 @@
 import 'package:ahl_el_kheir_app/fina_review_page.dart';
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -41,6 +42,7 @@ void main() {
           ],
         },
         submitAction: (_) async => throw StateError('Self-review must not be submitted'),
+        loadReceipt: (_) async => {'bytes': Uint8List(0), 'mime': 'image/png'},
       ),
     ));
 
