@@ -43,6 +43,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(
       home: VoucherPage(
         english: false,
+        issueVoucher: (_) async => {'ok': true},
+        voidVoucher: (_, __) async => {'ok': true},
         loadVouchers: (type) async {
           requestedTypes.add(type);
           return sample;
@@ -56,7 +58,7 @@ void main() {
     expect(find.text('Test sponsor'), findsOneWidget);
     expect(find.text('1250.50'), findsOneWidget);
     expect(find.text('8200.25'), findsOneWidget);
-    expect(find.textContaining('للقراءة فقط'), findsOneWidget);
+    expect(find.text('New voucher'), findsOneWidget);
     expect(requestedTypes, ['']);
   });
 
@@ -131,7 +133,7 @@ void main() {
     final voided=<List<Object>>[]; var loads=0;
     await tester.pumpWidget(MaterialApp(home:VoucherPage(english:true,issueVoucher:(_)async=>{'ok':true},
       voidVoucher:(id,reason)async{voided.add([id,reason]);return {'ok':true};},
-      loadVouchers:(_)async{loads++;final v=Map<String,dynamic>.from(sample['data']['vouchers'][0] as Map);if(loads>1)v['status']='voided';
+      loadVouchers:(_)async{loads++;final v=Map<String,dynamic>.from(sample['data']['vouchers'][0] as Map);v['entry_id']=90;if(loads>1)v['status']='voided';
         return {'ok':true,'data':{'vouchers':[v],'cash_accounts':sample['data']['cash_accounts'],'other_accounts':sample['data']['other_accounts'],'can_issue':false,'can_void':true,'limit':300}};}
     )));
     await tester.pumpAndSettle(); await tester.tap(find.text('Void voucher')); await tester.pumpAndSettle();
