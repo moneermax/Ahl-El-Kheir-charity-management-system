@@ -182,8 +182,12 @@ try {
     );
     $deletedBackup = mobileApiRequest('/api/v1/admin/backups.php', 'POST', ['action' => 'delete', 'filename' => $testBackupName], $adminToken, 20);
     mobileApiExpect(
-        $deletedBackup['status'] === 200
-        && !is_file($backupPath),
+        $deletedBackup['status'] === 200,
+        'administrator backup delete API returns success (HTTP ' . $deletedBackup['status'] . '; response ' . json_encode($deletedBackup['json']) . ')'
+    );
+    clearstatcache(true, $backupPath);
+    mobileApiExpect(
+        !is_file($backupPath),
         'administrator can delete a selected backup file after the API action'
     );
 
