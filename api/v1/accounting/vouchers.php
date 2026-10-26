@@ -85,7 +85,7 @@ if ($method === 'POST') {
         if (!ak_voucher_can('void',$role)) ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Voucher voiding is not allowed for this account.']]);
         $id=filter_var($input['voucher_id']??null,FILTER_VALIDATE_INT,['options'=>['min_range'=>1]]); $reason=trim((string)($input['reason']??''));
         if($id===false||$id===null) ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_voucher_id','message'=>'A valid voucher ID is required.']]);
-        if(mb_strlen($reason,'UTF-8')<3) ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_void_reason','message'=>'A void reason of at least 3 characters is required.']);
+        if(mb_strlen($reason,'UTF-8')<3) ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_void_reason','message'=>'A void reason of at least 3 characters is required.']]);
         $locked=false;
         try {
             $locked=ak_voucher_lock();
