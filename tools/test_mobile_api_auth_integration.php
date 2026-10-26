@@ -420,6 +420,12 @@ try {
     mobileApiExpect($staffOrphanList['status'] === 200 && ($staffOrphanList['json']['data']['read_only'] ?? false) === true, 'staff can browse orphan forms as read-only like the existing web page');
     $staffOrphanRead = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'GET', null, $staffToken);
     mobileApiExpect($staffOrphanRead['status'] === 200 && ($staffOrphanRead['json']['data']['can_edit'] ?? true) === false, 'staff can view but cannot edit orphan form details');
+    $staffSponsorships = $staffOrphanRead['json']['data']['sponsorships'] ?? [];
+    mobileApiExpect(
+        is_array($staffSponsorships)
+        && !array_filter($staffSponsorships, static fn(array $item): bool => array_key_exists('monthly_amount', $item)),
+        'staff orphan form response does not expose sponsorship amounts hidden by the web index'
+    );
     $staffOrphanSave = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'POST', ['values' => ['health_status' => (string)($testOrphanFormChildSnapshot['health_status'] ?? 'سليم')]], $staffToken);
     mobileApiExpect($staffOrphanSave['status'] === 403, 'staff cannot edit orphan form fields');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
