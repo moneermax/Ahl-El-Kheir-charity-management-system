@@ -2873,3 +2873,8 @@ Next native parity priority: implement the existing role-aware global search ins
 ## 2026-10-26 — Native search center (initial supported scopes)
 
 The home-screen search icon now opens an in-app native search center for families, sponsors, and sponsorships. Results use the existing authenticated API endpoints and their existing role/record-level guards; the UI exposes only categories currently accepted by those endpoints and never falls back to a browser. Search results can open the existing native family, sponsor, and sponsorship detail screens. Monthly disbursement and archived project-document search remain explicitly identified as unfinished native scopes; this is an incremental parity milestone, not completion of the original global search.
+
+
+## 2026-10-26 — Native search monthly-disbursement increment
+
+The native global-search screen now includes monthly disbursement search for the exact persisted roles accepted by `api/v1/admin/disbursements.php`: `admin`, `financial_manager`, `general_manager`, `accountant_staff`, and `nanny`. It reuses that authenticated API and opens the native disbursement register filtered to the selected batch ID; no browser handoff or parallel financial query was introduced. A role-visibility test and a result-routing test were added. Flutter analysis and the full widget suite passed in workflow [40325180234](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40325180234) for source `17feccacfa312ba1982fdb0e0549fce1809c42d7`; APK build/publication was still in progress at the time of this checkpoint. Archived project-document search/preview and broader search-role parity remain open. Local XAMPP/API/database and physical-device acceptance are not verified.
