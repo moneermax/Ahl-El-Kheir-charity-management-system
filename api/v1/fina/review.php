@@ -75,6 +75,7 @@ try {
 
         ak_api_json(200, ['ok'=>true,'data'=>[
             'can_review'=>$canReview,
+            'current_user_id'=>(int)$user['id'],
             'pending'=>$pending,
             'history'=>$history,
         ]]);
