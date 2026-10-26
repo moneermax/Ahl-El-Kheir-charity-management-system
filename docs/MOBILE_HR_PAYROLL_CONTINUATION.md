@@ -1,0 +1,45 @@
+# Native HR Payroll — Continuation Checkpoint
+
+**Date:** 2026-10-26  
+**Status:** Source/schema audit complete; implementation not yet started.  
+**Branch:** `main`  
+**Scope:** Native payroll period management in the existing Flutter app, backed by the existing procedural PHP payroll/accounting helpers.
+
+## Required boundaries
+
+- Preserve the existing web payroll workflow and its calculations; the mobile app is a native client, not a replacement payroll engine.
+- Preserve exact server-side roles from `modules/hr/payroll.php`: `hr_manager`, `hr_staff`, `financial_manager`, and `admin`.
+- Never allow General Manager or other roles to mutate payroll from the native client. Existing GM period history/report remains read-only.
+- Do not change paid payroll amounts/status, bypass payment proof, skip journal posting, or let a proof upload imply payment.
+- Do not add request-time schema changes. The transfer workflow schema is provided by `database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql`.
+- Do not alter the existing salary advance/incentive/attendance calculations or reopen closed payroll acceptance work without evidence.
+- Keep private proof files under the existing server-controlled storage contract; do not expose storage keys or direct storage paths.
+- Do not add an external-browser handoff.
+
+## Source findings confirmed on 2026-10-26
+
+- Existing native HR/payroll APIs currently cover attendance, attendance policy, payroll integrity diagnostics, GM period history/report, and employee salary statements. There is no native payroll-management API yet.
+- `modules/hr/payroll.php` is the authority for payroll management actions. It permits exact roles `hr_manager`, `hr_staff`, `financial_manager`, and `admin`.
+- Payroll period generation uses the active payroll policy effective at period end, effective salary history, hire date, and employment state category `working`; existing rows are refreshed only while draft. Existing attendance, salary-advance, and scheduled-incentive refresh helpers must remain in the calculation path.
+- Draft component edits are restricted to draft rows and recalculate attendance, salary-advance, and incentive components.
+- Approval transitions a draft to `approved` and `accounting_status='ready'`; it does not post accounting.
+- New-transfer proof upload requires an approved row, an active saved payment account, a PDF/JPG/PNG upload within the existing 10 MiB limit, and no existing proof. It records state `prepared` only.
+- Explicit transfer confirmation requires a prepared, readable private proof and saved active account; it performs the paid transition, accounting posting, salary-advance application, and proof confirmation inside the existing transaction. Employee and GM notifications happen after commit.
+- Legacy evidence upload applies only to rows already paid, posted, and journal-linked; it must not alter historical payment/accounting data.
+- Existing helper `hrPayrollChangeStatus()` relies on `Session::getUserId()` when a browser session class is loaded. The API uses bearer auth and does not load the browser session; actor IDs must be explicitly passed through any new API accounting/proof-confirmation path rather than silently lost.
+- The checked-in transfer migration creates `hr_payroll_period_settings` and `hr_payroll_payment_proofs`; the current mobile API integration workflow does not yet apply that migration. It must be included before exercising payroll transfer API paths in disposable MariaDB.
+- The checked-in schema file was not readable through the GitHub content tool in the source-audit request (empty response), so no new schema assumptions or migration changes are justified. Existing migration DDL is the current schema evidence for the transfer tables.
+
+## Implementation plan
+
+1. Add a role-protected native payroll API that returns the selected period, payroll rows, current active payroll policy, period default payment account, active account choices, and proof state. Validate period and never mutate during GET.
+2. Wire action requests to the existing payroll helpers for generation, draft amount update, approval, period/account assignment, proof upload, legacy evidence upload, and explicit transfer confirmation. Use server-validated role checks and period/row ownership checks. Avoid duplicating financial calculations where a shared existing helper can be used.
+3. Pass the authenticated API actor ID explicitly into accounting/proof confirmation helpers, preserving browser-session behavior for existing web calls.
+4. Add native Flutter payroll page and role-aware navigation. Keep actions visually separate by status; confirmation requires a saved proof and an explicit user confirmation step. Proof upload must use authenticated multipart requests and the existing file-type/size validation.
+5. Extend disposable MariaDB integration tests and the workflow to apply the existing transfer migration. Test role denial, period validation, read-only GET, proof upload state, no payment on upload, confirmation transaction, duplicate confirmation rejection, accounting balance, and historical evidence immutability. Avoid touching actual user data.
+6. Run PHP lint, Dart analysis, full widget suite, API integration, Android build and artifact publication. Document only checks that actually pass.
+7. Update the session index, master status, audit, continuation prompt and this module checkpoint. Local XAMPP/API/database and physical-device acceptance remain separate user-side gates and must not be claimed as verified here.
+
+## Acceptance boundary
+
+The feature is not complete until the native screen and endpoints are implemented and automated checks pass. Even then, do not claim local runtime/device acceptance without evidence from the intended local installation.
