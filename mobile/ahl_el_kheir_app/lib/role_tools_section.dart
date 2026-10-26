@@ -93,6 +93,7 @@ class RoleToolsSection extends StatelessWidget {
             t('التقرير التشغيلي', 'Operational report', 'مؤشرات العمل التشغيلي', 'Operational indicators', 'modules/reports/operational.php', Icons.query_stats_rounded),
             t('التقرير المالي', 'Financial report', 'مراجعة المؤشرات المالية التنفيذية', 'Review executive financial indicators', 'modules/reports/financial.php', Icons.account_balance_outlined),
             t('تقرير الموارد البشرية', 'HR report', 'مؤشرات وتقارير الموارد البشرية', 'Human resources indicators and reports', 'modules/reports/hr.php', Icons.badge_outlined),
+            t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة دفعات الكفالات الشهرية', 'Review monthly sponsorship disbursements', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
             t('مطابقة المدير العام', 'GM reconciliation', 'مراجعة المطابقة المالية المتاحة للمدير العام', 'Review reconciliation available to the General Manager', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
           ]),
           g('المتابعة والاعتماد', 'Follow-up and approvals', [

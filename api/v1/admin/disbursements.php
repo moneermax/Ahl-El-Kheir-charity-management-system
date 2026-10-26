@@ -4,8 +4,20 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
 ak_api_require_method('GET');
 $user = ak_api_authenticated_user();
-if ((string)($user['raw_role_code'] ?? $user['role_code'] ?? '') !== 'admin') {
-    ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'Administrator disbursement access is required.']]);
+$role = (string)($user['raw_role_code'] ?? $user['role_code'] ?? '');
+$allowedRoles = ['admin', 'financial_manager', 'general_manager', 'accountant_staff', 'nanny'];
+if (!in_array($role, $allowedRoles, true)) {
+    ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'This role cannot access monthly disbursements.']]);
+}
+$userId = (int)($user['id'] ?? 0);
+$scopeSql = '';
+$scopeParams = [];
+if ($role === 'nanny') {
+    $scopeSql = 'd.nanny_id = ?';
+    $scopeParams[] = $userId;
+} elseif ($role === 'accountant_staff') {
+    $scopeSql = 'EXISTS (SELECT 1 FROM accountant_nanny_assignments ana WHERE ana.accountant_id = ? AND ana.nanny_id = d.nanny_id)';
+    $scopeParams[] = $userId;
 }
 
 $month = trim((string)($_GET['month'] ?? ''));
@@ -28,6 +40,10 @@ if (strlen($query) > 100) {
 try {
     $where = [];
     $params = [];
+    if ($scopeSql !== '') {
+        $where[] = $scopeSql;
+        $params = array_merge($params, $scopeParams);
+    }
     if ($month !== '') {
         $where[] = 'd.month = ?';
         $params[] = $month;
@@ -59,8 +75,8 @@ try {
              FROM monthly_disbursements d
              LEFT JOIN users n ON n.id = d.nanny_id
              LEFT JOIN orphan_groups og ON og.id = d.group_id
-             WHERE d.id = ?",
-            [$batchId]
+             WHERE d.id = ?" . ($scopeSql !== '' ? ' AND ' . $scopeSql : ''),
+            array_merge([$batchId], $scopeParams)
         );
         if (!$batch) {
             ak_api_json(404, ['ok' => false, 'error' => ['code' => 'not_found', 'message' => 'Disbursement batch was not found.']]);
@@ -126,6 +142,6 @@ try {
         'pagination' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'pages' => $pages],
     ]]);
 } catch (Throwable $e) {
-    error_log('Mobile admin disbursements failed: ' . $e->getMessage());
+    error_log('Mobile disbursements failed: ' . $e->getMessage());
     ak_api_json(500, ['ok' => false, 'error' => ['code' => 'disbursements_failed', 'message' => 'Disbursement records could not be loaded.']]);
 }

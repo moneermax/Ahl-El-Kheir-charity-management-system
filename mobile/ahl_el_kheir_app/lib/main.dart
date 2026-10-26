@@ -949,11 +949,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openAdminAccounts();
         return;
       case 'disbursements':
-        if (user?['role_code']?.toString() != 'admin') {
+        if (!['admin', 'financial_manager', 'general_manager', 'accountant_staff', 'nanny']
+            .contains(user?['role_code']?.toString())) {
           ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
             SnackBar(content: Text(english
-                ? 'Monthly disbursements are restricted to the administrator role.'
-                : 'التحويلات الشهرية متاحة لدور المسؤول فقط.')),
+                ? 'Monthly disbursements are not available for this role.'
+                : 'التحويلات الشهرية غير متاحة لهذا الدور.')),
           );
           return;
         }

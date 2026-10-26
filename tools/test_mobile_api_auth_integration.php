@@ -142,6 +142,9 @@ try {
 
     // Exercise the native finance overview against the imported full schema,
     // using the existing disposable account and restoring its role afterward.
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['accountant'], $userId]);
+    $accountantDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $adminToken);
+    mobileApiExpect($accountantDisbursements['status'] === 403, 'accountant role is denied monthly disbursements because the existing web page does not permit it');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $adminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($adminLogin['status'] === 200 && isset($adminLogin['json']['data']['access_token']), 'administrator login succeeds for finance overview integration');
@@ -229,6 +232,18 @@ try {
     mobileApiExpect($nannyFinaReview['status'] === 403, 'nanny cannot view Fina review/history');
     $nannyFinaReceipt = mobileApiRequest('/api/v1/fina/receipt.php?id=1', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinaReceipt['status'] === 403, 'nanny cannot access Fina receipt delivery');
+    $nannyDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $nannyFinaToken);
+    mobileApiExpect(
+        $nannyDisbursements['status'] === 200
+        && is_array($nannyDisbursements['json']['data']['items'] ?? null)
+        && array_reduce(
+            $nannyDisbursements['json']['data']['items'],
+            static fn(bool $ok, array $item): bool => $ok && (int)($item['nanny_id'] ?? 0) === $userId,
+            true
+        ),
+        'nanny can access monthly disbursements but only their own batches'
+    );
+
     $nannyFinaDashboard = mobileApiRequest('/api/v1/fina/dashboard.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinaDashboard['status'] === 403, 'nanny cannot access the Fina dashboard');
     $nannyDatabase = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $nannyFinaToken);
