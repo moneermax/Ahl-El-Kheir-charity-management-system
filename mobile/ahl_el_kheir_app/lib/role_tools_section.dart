@@ -93,6 +93,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/reports/orphaned_families.php',
     'modules/users/index.php',
     'modules/departments/index.php',
+    'modules/users/profile.php',
     'modules/users/recovery.php',
     'modules/hr/employees.php',
     'modules/hr/attendance.php',
