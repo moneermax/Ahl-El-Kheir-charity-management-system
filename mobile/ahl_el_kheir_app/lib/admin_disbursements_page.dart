@@ -14,6 +14,8 @@ class AdminDisbursementsPage extends StatefulWidget {
     this.createBatches,
     this.pickTransferReceipt,
     this.submitTransfer,
+    this.pickReturnReceipt,
+    this.submitReturn,
   });
 
   final bool english;
@@ -24,6 +26,8 @@ class AdminDisbursementsPage extends StatefulWidget {
   final Future<Map<String, dynamic>> Function(String month, List<int> groupIds)? createBatches;
   final Future<PlatformFile?> Function()? pickTransferReceipt;
   final Future<Map<String, dynamic>> Function(int batchId, PlatformFile receipt)? submitTransfer;
+  final Future<PlatformFile?> Function()? pickReturnReceipt;
+  final Future<Map<String, dynamic>> Function(int batchId, String reasonType, String reasonDetails, PlatformFile receipt)? submitReturn;
   final Future<Map<String, dynamic>> Function({
     required String month,
     required String status,
@@ -246,6 +250,8 @@ class _AdminDisbursementsPageState extends State<AdminDisbursementsPage> {
                         submitItemConfirmation: widget.submitItemConfirmation,
                         pickTransferReceipt: widget.pickTransferReceipt,
                         submitTransfer: widget.submitTransfer,
+                        pickReturnReceipt: widget.pickReturnReceipt,
+                        submitReturn: widget.submitReturn,
                       ),
                     ));
                   },
@@ -318,6 +324,8 @@ class AdminDisbursementDetailPage extends StatefulWidget {
     this.submitItemConfirmation,
     this.pickTransferReceipt,
     this.submitTransfer,
+    this.pickReturnReceipt,
+    this.submitReturn,
   });
 
   final bool english;
@@ -327,6 +335,8 @@ class AdminDisbursementDetailPage extends StatefulWidget {
   final Future<Map<String, dynamic>> Function(int itemId, PlatformFile receipt)? submitItemConfirmation;
   final Future<PlatformFile?> Function()? pickTransferReceipt;
   final Future<Map<String, dynamic>> Function(int batchId, PlatformFile receipt)? submitTransfer;
+  final Future<PlatformFile?> Function()? pickReturnReceipt;
+  final Future<Map<String, dynamic>> Function(int batchId, String reasonType, String reasonDetails, PlatformFile receipt)? submitReturn;
   final Future<Map<String, dynamic>> Function(int id, int page) loadDetail;
 
   @override
@@ -344,6 +354,10 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
   final Set<int> busyItems = {};
   PlatformFile? selectedTransferReceipt;
   bool transferBusy = false;
+  final TextEditingController returnDetailsController = TextEditingController();
+  String returnReasonType = 'انقطاع الاتصال مع الأم';
+  PlatformFile? selectedReturnReceipt;
+  bool returnBusy = false;
 
   String t(String ar, String en) => widget.english ? en : ar;
   String money(dynamic value) {
@@ -358,6 +372,49 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
   void initState() {
     super.initState();
     refresh();
+  }
+
+  @override
+  void dispose() {
+    returnDetailsController.dispose();
+    super.dispose();
+  }
+
+  Future<void> pickReturnReceiptFile() async {
+    final picker = widget.pickReturnReceipt;
+    if (picker == null) return;
+    try {
+      final file = await picker();
+      if (!mounted || file == null) return;
+      setState(() => selectedReturnReceipt = file);
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
+  Future<void> closeWithReturn() async {
+    final receipt = selectedReturnReceipt;
+    final submit = widget.submitReturn;
+    if (receipt == null || submit == null || returnBusy) return;
+    if (returnReasonType == 'سبب آخر' && returnDetailsController.text.trim().isEmpty) {
+      setState(() => error = t('اكتب تفاصيل سبب الإرجاع.', 'Enter details for the selected return reason.'));
+      return;
+    }
+    setState(() { returnBusy = true; error = null; });
+    try {
+      final result = await submit(widget.batchId, returnReasonType, returnDetailsController.text.trim(), receipt);
+      if (!mounted) return;
+      setState(() => selectedReturnReceipt = null);
+      final returnedAmount = result['returned_amount'];
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(t('تم إقفال الدفعة وإرجاع ${money(returnedAmount)} إلى الصندوق.', 'Batch closed; ${money(returnedAmount)} returned to cash.')),
+      ));
+      await refresh(requestedPage: page);
+    } catch (e) {
+      if (mounted) setState(() => error = e.toString());
+    } finally {
+      if (mounted) setState(() => returnBusy = false);
+    }
   }
 
   Future<void> refresh({int requestedPage = 1}) async {
@@ -494,6 +551,63 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
                           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
                           : const Icon(Icons.account_balance_wallet_rounded),
                       label: Text(t('تأكيد التحويل وترحيل القيد', 'Transfer and post accounting')),
+                    ),
+                  ],
+                  if (widget.roleCode == 'nanny'
+                      && batch['status']?.toString() == 'transferred'
+                      && (int.tryParse(batch['items_pending']?.toString() ?? '') ?? 0) > 0
+                      && widget.pickReturnReceipt != null && widget.submitReturn != null) ...[
+                    const Divider(height: 24),
+                    Text(t('إرجاع المبلغ غير المصروف', 'Return outstanding amount'),
+                        style: const TextStyle(fontWeight: FontWeight.w900, fontSize: 15)),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      key: const Key('disbursement-return-reason'),
+                      initialValue: returnReasonType,
+                      isExpanded: true,
+                      decoration: InputDecoration(labelText: t('سبب الإرجاع', 'Return reason'), border: const OutlineInputBorder()),
+                      items: [
+                        DropdownMenuItem(value: 'انقطاع الاتصال مع الأم', child: Text(t('انقطاع الاتصال مع الأم', 'Lost contact with mother'))),
+                        DropdownMenuItem(value: 'تعذر الوصول للأسرة', child: Text(t('تعذر الوصول للأسرة', 'Unable to reach family'))),
+                        DropdownMenuItem(value: 'رفض استلام المبلغ', child: Text(t('رفض استلام المبلغ', 'Family refused payment'))),
+                        DropdownMenuItem(value: 'تغيير بيانات الحساب البنكي', child: Text(t('تغيير بيانات الحساب البنكي', 'Bank details changed'))),
+                        DropdownMenuItem(value: 'انتقال الأسرة', child: Text(t('انتقال الأسرة', 'Family relocated'))),
+                        DropdownMenuItem(value: 'وفاة المستفيد', child: Text(t('وفاة المستفيد', 'Beneficiary deceased'))),
+                        DropdownMenuItem(value: 'إيقاف الكفالة', child: Text(t('إيقاف الكفالة', 'Sponsorship stopped'))),
+                        DropdownMenuItem(value: 'سبب آخر', child: Text(t('سبب آخر', 'Other'))),
+                      ],
+                      onChanged: returnBusy ? null : (value) {
+                        if (value != null) setState(() { returnReasonType = value; error = null; });
+                      },
+                    ),
+                    if (returnReasonType == 'سبب آخر') ...[
+                      const SizedBox(height: 8),
+                      TextField(
+                        key: const Key('disbursement-return-reason-details'),
+                        controller: returnDetailsController,
+                        minLines: 2,
+                        maxLines: 4,
+                        decoration: InputDecoration(labelText: t('تفاصيل السبب (إجباري)', 'Reason details (required)'), border: const OutlineInputBorder()),
+                        onChanged: (_) { if (error != null) setState(() => error = null); },
+                      ),
+                    ],
+                    const SizedBox(height: 8),
+                    OutlinedButton.icon(
+                      key: const Key('disbursement-pick-return-receipt'),
+                      onPressed: returnBusy ? null : pickReturnReceiptFile,
+                      icon: const Icon(Icons.attach_file_rounded),
+                      label: Text(selectedReturnReceipt?.name ?? t('اختيار إيصال الإرجاع (إجباري)', 'Choose return receipt (required)')),
+                    ),
+                    const SizedBox(height: 8),
+                    FilledButton.icon(
+                      key: const Key('disbursement-submit-return'),
+                      onPressed: selectedReturnReceipt != null && !returnBusy
+                          && (returnReasonType != 'سبب آخر' || returnDetailsController.text.trim().isNotEmpty)
+                          ? closeWithReturn : null,
+                      icon: returnBusy
+                          ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                          : const Icon(Icons.assignment_return_rounded),
+                      label: Text(t('إقفال الدفعة وإرجاع المتبقي', 'Close batch and return remaining funds')),
                     ),
                   ],
                 ]),
