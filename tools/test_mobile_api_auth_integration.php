@@ -120,6 +120,9 @@ $testSponsorId = 0;
 $testFinaSourceId = 0;
 $testFinaCollectionId = 0;
 $testBackupName = '';
+$testLogoPath = '';
+$testPreviousLogoValue = null;
+$testLogoSettingExisted = false;
 $testDisbursementId = 0;
 $testDisbursementItemId = 0;
 $testDisbursementReturnItemId = 0;
@@ -365,6 +368,24 @@ try {
 
     $logoUnauth = mobileApiMultipartRequest('/api/v1/admin/settings.php', [], 'site_logo', 'logo.png', base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/f1sAAAAASUVORK5CYII=', true), 'image/png');
     mobileApiExpect($logoUnauth['status'] === 401, 'organization logo upload requires authentication');
+    $oldLogoStmt = $pdo->prepare('SELECT setting_value FROM settings WHERE setting_key=?');
+    $oldLogoStmt->execute(['site_logo']);
+    $oldLogoRow = $oldLogoStmt->fetch(PDO::FETCH_ASSOC);
+    $testLogoSettingExisted = is_array($oldLogoRow);
+    $testPreviousLogoValue = $testLogoSettingExisted ? (string)$oldLogoRow['setting_value'] : null;
+    $logoBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/f1sAAAAASUVORK5CYII=', true);
+    $logoUpload = mobileApiMultipartRequest('/api/v1/admin/settings.php', [], 'site_logo', 'logo.png', $logoBytes, 'image/png', $adminToken, 20);
+    $testLogoPath = (string)($logoUpload['json']['data']['values']['site_logo'] ?? '');
+    $testLogoFile = dirname(__DIR__) . '/' . $testLogoPath;
+    $storedLogo = $pdo->prepare('SELECT setting_value FROM settings WHERE setting_key=?');
+    $storedLogo->execute(['site_logo']);
+    mobileApiExpect(
+        $logoUpload['status'] === 200
+        && preg_match('/^assets\/uploads\/logo_[a-f0-9]{12}\.png$/', $testLogoPath) === 1
+        && is_file($testLogoFile)
+        && (string)$storedLogo->fetchColumn() === $testLogoPath,
+        'administrator can upload a validated logo and update the organization logo setting'
+    );
     $financialReport = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-10-01&to=2026-10-31', 'GET', null, $adminToken, 20);
     mobileApiExpect($financialReport['status'] === 200 && is_array($financialReport['json']['data']['rows'] ?? null), 'administrator can load native financial report rows');
     foreach ([
@@ -493,6 +514,8 @@ try {
     mobileApiExpect($nannyFinaDashboard['status'] === 403, 'nanny cannot access the Fina dashboard');
     $nannyFinancialReport = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-10-01&to=2026-10-31', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinancialReport['status'] === 403, 'nanny cannot access financial reports');
+    $nannyLogoUpload = mobileApiMultipartRequest('/api/v1/admin/settings.php', [], 'site_logo', 'logo.png', $logoBytes, 'image/png', $nannyFinaToken);
+    mobileApiExpect($nannyLogoUpload['status'] === 403, 'nanny cannot upload the organization logo');
     $nannyDatabase = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyDatabase['status'] === 403, 'nanny cannot access the administrator database browser');
     $nannyBackupList = mobileApiRequest('/api/v1/admin/backups.php', 'GET', null, $nannyFinaToken);
@@ -1235,6 +1258,13 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testLogoPath !== '') @unlink(dirname(__DIR__) . '/' . $testLogoPath);
+    if ($testLogoSettingExisted) {
+        $pdo->prepare('INSERT INTO settings (setting_key,setting_value) VALUES (?,?) ON DUPLICATE KEY UPDATE setting_value=VALUES(setting_value)')
+            ->execute(['site_logo', (string)$testPreviousLogoValue]);
+    } else {
+        $pdo->prepare('DELETE FROM settings WHERE setting_key=?')->execute(['site_logo']);
+    }
     if (is_resource($server)) {
         proc_terminate($server);
         proc_close($server);
