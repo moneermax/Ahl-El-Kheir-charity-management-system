@@ -16,6 +16,8 @@ if (!in_array((string)$user['role_code'], ['admin', 'financial_manager', 'genera
     ]]);
 }
 
+$pdo = db();
+
 if ($method === 'POST') {
     if (!in_array((string)$user['role_code'], ['admin', 'financial_manager'], true)) {
         ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'Only administrators and the Financial Manager can change manual journal entries.']]);
@@ -37,7 +39,6 @@ if ($method === 'POST') {
             ak_api_json(422, ['ok' => false, 'error' => ['code' => 'invalid_lines', 'message' => 'Journal lines are required.']]);
         }
 
-        $activeAccounts = $pdo = db();
         $accountRows = $pdo->query('SELECT id FROM accounts WHERE is_active = 1')->fetchAll(PDO::FETCH_COLUMN);
         $accountMap = array_fill_keys(array_map('intval', $accountRows), true);
         $usedAccounts = [];
@@ -160,7 +161,6 @@ if ($method === 'POST') {
             ak_api_json(422, ['ok' => false, 'error' => ['code' => 'invalid_void_reason', 'message' => 'The void reason cannot exceed 255 characters.']]);
         }
 
-        $pdo = db();
         $result = null;
         $failure = null;
         try {
