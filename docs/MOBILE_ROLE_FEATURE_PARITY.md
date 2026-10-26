@@ -381,3 +381,20 @@ Backend additions on `main`:
 Native UI: `mobile/ahl_el_kheir_app/lib/account_settings_page.dart`; account-menu routing and login retry are in `main.dart`. Widget tests cover normal password-change submission and local mismatch validation. The disposable API integration harness now covers invalid current password, mismatched confirmation, successful hash update, old-password rejection, new-password login, forced-change completion and flag clearing, and cleanup of test audit/recovery/session state. The API workflow explicitly lints both new endpoints and the login endpoint. CI results for the newest source must be checked before claiming these new paths verified; no local XAMPP/device result is claimed.
 
 Remaining account parity gaps are still open: personal profile editing/photo management and password-recovery request are not yet native. Do not label the account area fully complete. No external browser handoff is allowed. The overall app uses a distinct violet/amber/pink palette and should not be changed to copy the original web theme.
+
+
+## 2026-10-26 — Native password recovery and accounting journal workflows added
+
+Further native parity work has been committed on `main` after the stale-APK/API diagnosis and account password work.
+
+### Password recovery
+- `api/v1/auth/password_recovery_request.php` creates a pending request for an active matching username/email, avoids duplicate pending requests, and notifies active `admin`/`hr_manager` users best-effort. The response is identical for known and unknown accounts to avoid account enumeration. No DDL is performed.
+- `mobile/ahl_el_kheir_app/lib/password_recovery_page.dart` replaces the login screen's former unavailable native workflow; the app does not open the website.
+- API integration coverage checks request creation, duplicate protection, and the same generic response for unknown identities. The fixture records and removes the test request and its recovery notifications.
+
+### Accounting journal
+- `api/v1/accounting/journal.php` now supports role-protected read/list/detail, date filters, active-account listing for authorized creators, manual entry creation with active-account validation, unique account lines, decimal precision checks, balanced debit/credit totals, transactional persistence and a journal-numbering lock.
+- Manual voiding follows the existing web workflow's restrictions: only admin/Financial Manager, no automated/reversal entries, no creator self-void, no duplicate reversal, and a balanced reversing entry plus preserved original void metadata. No runtime DDL is used.
+- Native screens: `journal_page.dart` and `journal_manual_entry_page.dart`; role tools now route the journal inside Flutter. API integration coverage includes role denial, invalid date filters, detail/list, unbalanced-create rollback, successful manual create, creator self-void denial, different-reviewer void, balanced reversal, duplicate-void rejection, and cleanup. Widget tests cover list/detail, manual entry validation/submission, and reviewer void UI.
+
+These changes are committed and the workflows are configured to run, but the current GitHub Actions outcomes have not been independently retrieved in this session. Do not claim these newest paths passed CI until the actual run results are checked. No local XAMPP or physical-device result is claimed. The mobile app remains unfinished overall: full role-by-role parity, profile/photo editing, and other remaining web workflows still require audit and implementation. Keep the distinct violet/amber/pink app design; do not copy the original web theme or introduce browser handoffs.
