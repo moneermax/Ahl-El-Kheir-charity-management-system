@@ -17,11 +17,10 @@ void main() {
       ),
     ));
 
-    await tester.enterText(find.widgetWithText(TextField, 'اسم مصدر الأموال *'), 'متبرع تجريبي');
-    await tester.enterText(find.widgetWithText(TextField, 'المبلغ *'), '125.50');
+    await tester.enterText(find.byWidgetPredicate((widget) => widget is TextField && widget.decoration?.labelText == 'اسم مصدر الأموال *'), 'متبرع تجريبي');
+    await tester.enterText(find.byWidgetPredicate((widget) => widget is TextField && widget.decoration?.labelText == 'المبلغ *'), '125.50');
     await tester.tap(find.widgetWithText(FilledButton, 'إرسال للمراجعة المالية'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 100));
+    await tester.pumpAndSettle();
 
     expect(submitted, isNotNull);
     expect(submitted!['source_type'], 'person');
