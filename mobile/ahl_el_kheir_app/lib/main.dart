@@ -556,6 +556,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         english: english,
         loadReview: loadFinaReview,
         submitAction: submitFinaReviewAction,
+        loadReceipt: loadFinaReceipt,
       ),
     ));
   }
