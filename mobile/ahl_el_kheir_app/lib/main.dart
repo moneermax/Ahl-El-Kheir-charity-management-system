@@ -1339,6 +1339,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       case 'transactions':
         navigator.push(MaterialPageRoute<void>(builder: (_) => TransactionsPage(english: english, loadTransactions: loadTransactions)));
         return;
+      case 'payroll':
+        if (!['admin', 'hr_manager', 'hr_staff', 'financial_manager'].contains(user?['role_code']?.toString())) {
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            SnackBar(content: Text(english ? 'Payroll management is not available for this role.' : 'إدارة الرواتب غير متاحة لهذا الدور.')),
+          );
+          return;
+        }
+        openPayrollManagement();
+        return;
       case 'employees':
         navigator.push(MaterialPageRoute<void>(builder: (_) => EmployeesPage(english: english, loadPage: loadEmployees, openDetail: (employee) {
           final id = int.tryParse(employee['id']?.toString() ?? '');
