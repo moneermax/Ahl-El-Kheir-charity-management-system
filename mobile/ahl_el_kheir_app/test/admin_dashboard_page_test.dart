@@ -66,17 +66,37 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    expect(find.text('User accounts'), findsOneWidget);
-    expect(find.text('Departments'), findsNothing);
-    expect(find.text('System settings'), findsNothing);
-    expect(find.text('Password recovery requests'), findsNothing);
-    expect(find.text('Reports'), findsNothing);
-    expect(find.text('Audit log'), findsNothing);
+    final scrollable = find.byType(Scrollable).first;
+    Future<void> expectUnavailableTool(String label) async {
+      final target = find.text(label);
+      try {
+        await tester.scrollUntilVisible(target, 180, scrollable: scrollable);
+      } on TestFailure {
+        // Expected when a role-guarded tool is not part of this dashboard.
+      }
+      expect(target, findsNothing, reason: '$label must not be advertised to Sudo.');
+    }
 
     await tester.scrollUntilVisible(
       find.text('User accounts'),
       180,
-      scrollable: find.byType(Scrollable).first,
+      scrollable: scrollable,
+    );
+    expect(find.text('User accounts'), findsOneWidget);
+    for (final label in [
+      'Departments',
+      'System settings',
+      'Password recovery requests',
+      'Reports',
+      'Audit log',
+    ]) {
+      await expectUnavailableTool(label);
+    }
+
+    await tester.scrollUntilVisible(
+      find.text('User accounts'),
+      180,
+      scrollable: scrollable,
     );
     await tester.tap(find.text('User accounts'));
     expect(openedTool, 'users');
