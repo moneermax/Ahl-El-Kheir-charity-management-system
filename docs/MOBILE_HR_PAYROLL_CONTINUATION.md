@@ -59,3 +59,12 @@ The feature is not complete until the native screen and endpoints are implemente
 - The API can explicitly disable accounting initialization for its call path; it must rely on already-migrated accounting tables and does not execute `ak_ensure_tables()`/seeding at request time.
 - Source-only at this checkpoint; lint and the disposable full-schema integration test must verify this change.
 
+## Implementation step 3 — Initial native payroll management API
+
+- Added `api/v1/hr/payroll_management.php` in commit `17e50e06c57c65b58413e3d4e95d6c1bd697a036`; corrected response-array syntax in `993275e7f3c81b64280731e7cde946f874e341b7`; enforced selected-period scope for proof upload/confirmation in `06185be9b874e43f239d464ce128d6a1f2748dd7`.
+- The endpoint supports period-scoped read-only rows/account choices/policy metadata plus actions for generate, draft amount update, approval, period/account assignment, private proof upload, legacy evidence upload, and explicit proof-backed transfer confirmation.
+- It checks exact raw roles matching the existing web payroll page. Mutating actions use the existing payroll/transfer/accounting helpers. It deliberately uses `hrPayrollApproveSelected()` instead of `hrPayrollApproveAll()` for mobile approval so the API path does not invoke request-time accounting table initialization.
+- Transfer confirmation passes the authenticated actor ID to the shared status helper and disables runtime accounting initialization; the checked-in accounting schema must already exist. Proof upload remains `prepared` and does not mark the payroll paid.
+- Updated `.github/workflows/mobile-api-auth-integration.yml` in commit `2940a305d9cde2410b7ab0f701f86b7fd410abc0` to apply the existing 2026-10-20 payroll transfer migration to the disposable test database.
+- This is an implementation checkpoint, not a verified feature yet. API lint/integration, mobile UI, widget tests, and APK build remain pending.
+
