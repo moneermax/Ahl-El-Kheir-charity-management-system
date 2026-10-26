@@ -100,12 +100,12 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
           Padding(padding:const EdgeInsets.fromLTRB(16,16,16,8),child:DropdownButtonFormField<String>(
             initialValue:selectedType,decoration:InputDecoration(labelText:t('نطاق البحث','Search in')),
             items:available.map((v)=>DropdownMenuItem(value:v,child:Text(typeLabel(v)))).toList(),
-            onChanged:loading?null:(v){if(v!=null)setState(()=>{selectedType=v,items=[],total=0,page=1,error=null});},
+            onChanged: loading ? null : (v) { if (v != null) setState(() { selectedType = v; items = []; total = 0; page = 1; error = null; }); },
           )),
           Padding(padding:const EdgeInsets.fromLTRB(16,4,16,8),child:TextField(
             controller:queryController,textInputAction:TextInputAction.search,onSubmitted:(_)=>search(),
             decoration:InputDecoration(labelText:t('عبارة البحث','Search term'),hintText:t('الاسم أو الرقم أو الهاتف','Name, code or phone'),prefixIcon:const Icon(Icons.search_rounded),
-              suffixIcon:IconButton(tooltip:t('مسح','Clear'),onPressed:(){queryController.clear();setState(()=>{items=[],total=0,page=1,error=null});},icon:const Icon(Icons.close_rounded)),
+              suffixIcon: IconButton(tooltip: t('مسح','Clear'), onPressed: () { queryController.clear(); setState(() { items = []; total = 0; page = 1; error = null; }); }, icon: const Icon(Icons.close_rounded)),
             ),
           )),
           Padding(padding:const EdgeInsets.symmetric(horizontal:16,vertical:4),child:SizedBox(width:double.infinity,child:FilledButton.icon(onPressed:loading?null:()=>search(),icon:const Icon(Icons.search_rounded),label:Text(t('بحث','Search'))))),
