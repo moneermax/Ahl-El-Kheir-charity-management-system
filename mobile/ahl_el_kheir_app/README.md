@@ -12,6 +12,7 @@ This Flutter app lives inside the existing Ahl El Kheir repository. It is separa
 - Supervisor directory, family directory/details, and transaction listing.
 - HR employee directory/details, attendance viewing, leave-request workflow, and self-service salary statements limited to paid/accounting-posted rows.
 - Nanny group verification and monthly preliminary family verification.
+- Native Fina collection registration with active-sponsor lookup, optional receipt upload, role-scoped review/history, and in-app image/PDF receipt preview.
 
 This is incremental mobile coverage, not yet full parity with every web module. Each feature must retain the existing web workflow's role and record-scope rules; do not expose a web action in the app until its API authorization and behavior have been verified.
 
@@ -39,3 +40,7 @@ A successful build does not prove API connectivity, authorization against the li
 
 - Financial review queue: authorized financial-review roles can view pending supervisor collections/recent decisions, approve and post through the existing atomic sponsor-payment approval function, or return a pending payment with a required reason. CI passed; live local API/database acceptance remains outstanding.
 - General Manager sponsorship list/detail access now matches the existing web role boundary.
+
+## Current Fina receipt-preview checkpoint — 2026-10-26
+
+The native review screen now renders authorized PDF receipt bytes in-app using `pdfrx`; it does not open a browser or external page. The GitHub Actions workflow must pass dependency resolution, analysis, widget tests, and Android APK build for the current commit before the feature is considered build-verified. Device/API/database acceptance is still separate and has not been claimed.
