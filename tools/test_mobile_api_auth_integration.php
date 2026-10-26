@@ -122,6 +122,13 @@ $testFinaCollectionId = 0;
 $testBackupName = '';
 $testDisbursementId = 0;
 $testDisbursementItemId = 0;
+$testBatchCreatedId = 0;
+$testBatchGroupId = 0;
+$testBatchNannyId = 0;
+$testBatchVerificationFamilyId = 0;
+$testBatchVerificationMonth = '2099-12';
+$testBatchTransferTransactionId = 0;
+$testBatchTransferJournalId = 0;
 $testAccountId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
@@ -192,6 +199,105 @@ try {
         'action' => 'confirm_item', 'item_id' => 1,
     ], $adminToken);
     mobileApiExpect($adminNannyActionDenied['status'] === 403, 'administrator cannot use nanny-only family receipt confirmation action');
+
+    $eligibleBatchGroup = $pdo->query(
+        "SELECT og.id AS group_id, nga.nanny_id, fc.family_id
+         FROM orphan_groups og
+         JOIN nanny_group_assignments nga ON nga.group_id=og.id AND nga.end_date IS NULL
+         JOIN group_children gc ON gc.group_id=og.id AND gc.left_date IS NULL
+         JOIN family_children fc ON fc.id=gc.child_id AND fc.is_active=1
+         JOIN sponsorships sp ON sp.child_id=gc.child_id AND sp.status='active'
+         WHERE og.verification_status IN ('submitted','approved','pending')
+           AND NOT EXISTS (
+             SELECT 1 FROM monthly_disbursements d
+             WHERE d.group_id=og.id AND d.month='2099-12' AND d.status NOT IN ('voided','cancelled')
+           )
+         ORDER BY og.id, fc.family_id
+         LIMIT 1"
+    )->fetch(PDO::FETCH_ASSOC);
+    if (!$eligibleBatchGroup) throw new RuntimeException('The checked-in schema needs an eligible active group with an active sponsorship for batch creation integration.');
+    $testBatchGroupId = (int)$eligibleBatchGroup['group_id'];
+    $testBatchNannyId = (int)$eligibleBatchGroup['nanny_id'];
+    $testBatchVerificationFamilyId = (int)$eligibleBatchGroup['family_id'];
+    $pdo->prepare(
+        "INSERT INTO nanny_family_verifications
+         (family_id,month,nanny_id,is_orphan_verified,is_mother_contact_verified,is_bank_verified,verified_by_user_id,verified_at)
+         VALUES (?, ?, ?, 1, 1, 1, ?, NOW())"
+    )->execute([$testBatchVerificationFamilyId,$testBatchVerificationMonth,$testBatchNannyId,$testBatchNannyId]);
+    $createBatch = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
+        'action' => 'create_batch',
+        'month' => $testBatchVerificationMonth,
+        'group_ids' => [$testBatchGroupId],
+    ], $adminToken, 20);
+    $testBatchCreatedId = (int)($createBatch['json']['data']['created'][0]['disbursement_id'] ?? 0);
+    $createdBatchRow = null;
+    $createdBatchItemCount = 0;
+    if ($testBatchCreatedId > 0) {
+        $createdBatchLookup = $pdo->prepare('SELECT id,status,total_amount,transaction_id,receipt_file_path FROM monthly_disbursements WHERE id=?');
+        $createdBatchLookup->execute([$testBatchCreatedId]);
+        $createdBatchRow = $createdBatchLookup->fetch(PDO::FETCH_ASSOC);
+        $createdBatchItemCount = (int)$pdo->query('SELECT COUNT(*) FROM disbursement_items WHERE disbursement_id=' . $testBatchCreatedId)->fetchColumn();
+    }
+    mobileApiExpect(
+        $createBatch['status'] === 200
+        && ($createBatch['json']['data']['created_count'] ?? 0) === 1
+        && $testBatchCreatedId > 0
+        && (string)($createdBatchRow['status'] ?? '') === 'pending_approval'
+        && $createdBatchItemCount === 1,
+        'administrator creates one pending batch from a fully verified eligible group and the verified family item'
+    );
+    $duplicateBatch = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
+        'action' => 'create_batch',
+        'month' => $testBatchVerificationMonth,
+        'group_ids' => [$testBatchGroupId],
+    ], $adminToken, 20);
+    mobileApiExpect(
+        $duplicateBatch['status'] === 200
+        && ($duplicateBatch['json']['data']['created_count'] ?? -1) === 0
+        && ($duplicateBatch['json']['data']['skipped_count'] ?? 0) === 1,
+        'duplicate monthly batch creation is skipped without creating a second batch'
+    );
+    $transferPngBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', true);
+    if (!is_string($transferPngBytes) || $transferPngBytes === '') throw new RuntimeException('Could not prepare the in-memory transfer PNG fixture.');
+    $transferBatch = mobileApiMultipartRequest(
+        '/api/v1/admin/disbursements_action.php',
+        ['action'=>'transfer_with_receipt','batch_id'=>(string)$testBatchCreatedId],
+        'transfer_receipt','transfer.png',$transferPngBytes,'image/png',$adminToken,20
+    );
+    $transferredBatchLookup = $pdo->prepare('SELECT status,transaction_id,receipt_file_path FROM monthly_disbursements WHERE id=?');
+    $transferredBatchLookup->execute([$testBatchCreatedId]);
+    $transferredBatchRow = $transferredBatchLookup->fetch(PDO::FETCH_ASSOC);
+    $testBatchTransferTransactionId = (int)($transferredBatchRow['transaction_id'] ?? 0);
+    $testBatchTransferJournalId = (int)$pdo->query(
+        "SELECT id FROM journal_entries WHERE reference_type='disbursement' AND reference_id=" . $testBatchCreatedId . " AND status='posted' ORDER BY id DESC LIMIT 1"
+    )->fetchColumn();
+    $journalTotals = $pdo->query(
+        "SELECT COALESCE(SUM(debit),0) debit_total, COALESCE(SUM(credit),0) credit_total FROM journal_lines WHERE entry_id=" . $testBatchTransferJournalId
+    )->fetch(PDO::FETCH_ASSOC);
+    $transferReceiptPath = (string)($transferredBatchRow['receipt_file_path'] ?? '');
+    mobileApiExpect(
+        $transferBatch['status'] === 200
+        && ($transferBatch['json']['data']['status'] ?? '') === 'transferred'
+        && (string)($transferredBatchRow['status'] ?? '') === 'transferred'
+        && $testBatchTransferTransactionId > 0
+        && $testBatchTransferJournalId > 0
+        && abs((float)($journalTotals['debit_total'] ?? 0) - (float)($journalTotals['credit_total'] ?? 0)) < 0.005
+        && str_starts_with($transferReceiptPath,'storage/receipts/transfer_receipt_')
+        && is_file(dirname(__DIR__) . '/' . $transferReceiptPath),
+        'transfer receipt commits one transaction, a balanced journal and the transferred batch state'
+    );
+    $duplicateTransfer = mobileApiMultipartRequest(
+        '/api/v1/admin/disbursements_action.php',
+        ['action'=>'transfer_with_receipt','batch_id'=>(string)$testBatchCreatedId],
+        'transfer_receipt','transfer.png',$transferPngBytes,'image/png',$adminToken,20
+    );
+    $transferCount = $pdo->prepare("SELECT COUNT(*) FROM transactions WHERE reference_number=? AND status='posted'");
+    $transferCount->execute(['DISB-OUT-' . $testBatchCreatedId]);
+    mobileApiExpect(
+        $duplicateTransfer['status'] === 409
+        && (int)$transferCount->fetchColumn() === 1,
+        'repeated transfer is rejected without posting a duplicate transaction'
+    );
 
     $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
     mobileApiExpect(
@@ -1011,6 +1117,41 @@ try {
     }
     if ($testSponsorRequestId > 0) {
         $pdo->prepare('DELETE FROM sponsor_requests WHERE id=?')->execute([$testSponsorRequestId]);
+    }
+    if ($testBatchCreatedId > 0 || $testBatchGroupId > 0) {
+        if ($testBatchCreatedId < 1 && $testBatchGroupId > 0) {
+            $lookupBatch = $pdo->prepare('SELECT id FROM monthly_disbursements WHERE group_id=? AND month=? AND created_by=? ORDER BY id DESC LIMIT 1');
+            $lookupBatch->execute([$testBatchGroupId,$testBatchVerificationMonth,$userId]);
+            $testBatchCreatedId = (int)$lookupBatch->fetchColumn();
+        }
+        if ($testBatchCreatedId > 0) {
+            $batchReceiptLookup = $pdo->prepare('SELECT receipt_file_path,transaction_id FROM monthly_disbursements WHERE id=?');
+            $batchReceiptLookup->execute([$testBatchCreatedId]);
+            $batchCleanupRow = $batchReceiptLookup->fetch(PDO::FETCH_ASSOC) ?: [];
+            $batchReceiptPath = (string)($batchCleanupRow['receipt_file_path'] ?? '');
+            if (str_starts_with($batchReceiptPath, 'storage/receipts/')) {
+                $batchReceiptFile = dirname(__DIR__) . '/' . $batchReceiptPath;
+                if (is_file($batchReceiptFile)) @unlink($batchReceiptFile);
+            }
+            $journalIds = $pdo->prepare("SELECT id FROM journal_entries WHERE reference_type='disbursement' AND reference_id=?");
+            $journalIds->execute([$testBatchCreatedId]);
+            foreach ($journalIds->fetchAll(PDO::FETCH_COLUMN) as $journalId) {
+                $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([(int)$journalId]);
+                $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([(int)$journalId]);
+            }
+            $transactionId = (int)($batchCleanupRow['transaction_id'] ?? 0);
+            if ($transactionId > 0) $pdo->prepare('DELETE FROM transactions WHERE id=?')->execute([$transactionId]);
+            $pdo->prepare("DELETE FROM audit_log WHERE entity_type='monthly_disbursements' AND entity_id=? AND action IN ('DISBURSEMENT_CREATE','DISBURSEMENT_TRANSFER') AND created_at>=?")
+                ->execute([$testBatchCreatedId,$testStart]);
+            $pdo->prepare("DELETE FROM notifications WHERE title='تم تحويل دفعة الكفالة وأصبحت متاحة للتنفيذ' AND created_at>=?")
+                ->execute([$testStart]);
+            $pdo->prepare('DELETE FROM disbursement_items WHERE disbursement_id=?')->execute([$testBatchCreatedId]);
+            $pdo->prepare('DELETE FROM monthly_disbursements WHERE id=?')->execute([$testBatchCreatedId]);
+        }
+    }
+    if ($testBatchVerificationFamilyId > 0) {
+        $pdo->prepare('DELETE FROM nanny_family_verifications WHERE family_id=? AND month=? AND nanny_id=?')
+            ->execute([$testBatchVerificationFamilyId,$testBatchVerificationMonth,$testBatchNannyId]);
     }
     if ($testDisbursementItemId > 0) {
         $receiptLookup = $pdo->prepare('SELECT receipt_file_path FROM disbursement_items WHERE id=?');
