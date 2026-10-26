@@ -78,11 +78,6 @@ void main() {
       );
     }
 
-    void expectUnavailableTool(String label) {
-      expect(find.text(label), findsNothing,
-          reason: '$label must not be advertised to Sudo.');
-    }
-
     await scrollTo('User accounts');
     expect(find.text('User accounts'), findsOneWidget);
 
