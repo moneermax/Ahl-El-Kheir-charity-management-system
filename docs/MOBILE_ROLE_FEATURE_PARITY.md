@@ -337,3 +337,11 @@ The user explicitly requested that the mobile app's general theme, style, and co
 ## 2026-10-26 — Native search center (initial supported scopes)
 
 The home-screen search icon now opens a native search center for families, sponsors, and sponsorships. It calls the existing authenticated endpoints and deliberately shows only scopes supported by those endpoints for the current role, so it does not broaden access based on the broader web search matrix. Search results open native family/sponsor/sponsorship detail screens. Monthly disbursement and archived project-document search remain incomplete in the mobile search center; do not describe global search as full parity until those domains and the broader config/search_permissions.php matrix are implemented with equivalent record-level visibility.
+
+
+## 2026-10-26 — Native global search: monthly disbursement scope added
+
+- Added a native monthly-disbursement search category using the existing authenticated `api/v1/admin/disbursements.php` endpoint. The screen only exposes this category for persisted roles accepted by that endpoint: `admin`, `financial_manager`, `general_manager`, `accountant_staff`, and `nanny`. It deliberately checks the persisted role for this endpoint rather than assuming all normalized aliases are accepted.
+- Selecting a result opens the existing native monthly-disbursement register with the exact batch ID prefilled as the query; it does not open a browser or create a second financial-data path.
+- Added widget coverage for Finance Manager visibility and native result routing. Dart analysis and the full widget suite passed in workflow [40325180234](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40325180234) at app source `17feccacfa312ba1982fdb0e0549fce1809c42d7`. Android APK build/publication was still running at the time of this documentation update; do not claim artifact publication until that run completes.
+- Still open: archived project-document search/preview and broader role parity with `config/search_permissions.php`. Local XAMPP/API/database and physical-device acceptance remain unverified.
