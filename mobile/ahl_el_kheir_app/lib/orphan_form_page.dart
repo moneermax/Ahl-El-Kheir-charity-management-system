@@ -20,7 +20,7 @@ class _OrphanFormPageState extends State<OrphanFormPage>{
   @override void initState(){super.initState();refresh();}
   @override void dispose(){for(final c in controllers.values){c.dispose();}super.dispose();}
   Future<void> refresh()async{
-    setState(()=>{loading=true,error=null});
+    setState(() { loading = true; error = null; });
     try{
       final data=await widget.loadForm(widget.childId);
       if(!mounted)return;
@@ -69,7 +69,7 @@ class _OrphanFormPageState extends State<OrphanFormPage>{
       'guardian_name':controllers['guardian_name']!.text.trim(),'guardian_relationship':controllers['guardian_relationship']!.text.trim(),
       'father_death_cause':controllers['father_death_cause']!.text.trim(),'mother_marital_status':marital,
     };
-    setState(()=>{saving=true,error=null});
+    setState(() { saving = true; error = null; });
     try{
       await widget.saveForm(widget.childId,values);
       if(!mounted)return;
