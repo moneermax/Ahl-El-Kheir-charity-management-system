@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show SocketException;
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
@@ -68,6 +70,67 @@ String? normalizeApiBaseUrl(String value) {
   return normalized;
 }
 
+class ApiProbeResult {
+  const ApiProbeResult(this.success, this.message);
+  final bool success;
+  final String message;
+}
+
+Future<ApiProbeResult> probeApiEndpoint(String baseUrl, {required bool english}) async {
+  final normalized = normalizeApiBaseUrl(baseUrl);
+  if (normalized == null) {
+    return ApiProbeResult(false, english ? 'Invalid API base URL. It must end in /api/v1.' : 'رابط API غير صالح. يجب أن ينتهي بـ /api/v1.');
+  }
+  Uri? uri;
+  try {
+    uri = Uri.parse('$normalized/auth/me.php');
+    final response = await http.get(uri, headers: const {'Accept': 'application/json'}).timeout(const Duration(seconds: 8));
+    dynamic payload;
+    try {
+      payload = jsonDecode(utf8.decode(response.bodyBytes));
+    } on FormatException {
+      return ApiProbeResult(false, english
+          ? 'The server responded, but not with API JSON (HTTP ' + response.statusCode.toString() + '). Check the /api/v1 path and Apache/PHP errors.'
+          : 'الخادم ردّ، لكن الاستجابة ليست JSON خاصاً بالـ API (HTTP ' + response.statusCode.toString() + '). تحقق من المسار /api/v1 وأخطاء Apache/PHP.');
+    }
+    if (payload is Map && payload['error'] is Map && payload['error']['code']?.toString() == 'unauthenticated' && response.statusCode == 401) {
+      return ApiProbeResult(true, english
+          ? 'Connection successful: the API answered correctly. Sign in normally.'
+          : 'الاتصال ناجح: استجاب API بصورة صحيحة. يمكنك تسجيل الدخول.');
+    }
+    if (payload is Map && payload['ok'] == true) {
+      return ApiProbeResult(true, english ? 'The API endpoint is reachable.' : 'عنوان API قابل للوصول.');
+    }
+    if (response.statusCode == 404) {
+      return ApiProbeResult(false, english
+          ? 'Apache was reached, but /auth/me.php returned 404. Check the base path and API deployment.'
+          : 'تم الوصول إلى Apache، لكن /auth/me.php أعاد 404. تحقق من مسار API ووجود ملفاته.');
+    }
+    if (response.statusCode >= 500) {
+      return ApiProbeResult(false, english
+          ? 'The API server was reached but returned HTTP ' + response.statusCode.toString() + '. Check PHP and database errors.'
+          : 'تم الوصول إلى خادم API لكنه أعاد HTTP ' + response.statusCode.toString() + '. تحقق من أخطاء PHP وقاعدة البيانات.');
+    }
+    return ApiProbeResult(false, english
+        ? 'The server answered HTTP ' + response.statusCode.toString() + ', but this was not the expected unauthenticated API response.'
+        : 'استجاب الخادم بالرمز HTTP ' + response.statusCode.toString() + '، لكن الاستجابة ليست رد API المتوقع قبل تسجيل الدخول.');
+  } on SocketException {
+    final host = uri?.host ?? 'server';
+    final port = uri?.port ?? 80;
+    return ApiProbeResult(false, english
+        ? 'No TCP connection to ' + host + ':' + port.toString() + '. Check the PC LAN IP, Apache port, same Wi-Fi, and Windows Firewall.'
+        : 'تعذر الاتصال بالشبكة إلى ' + host + ':' + port.toString() + '. تحقق من IP الكمبيوتر ومنفذ Apache واتصال الهاتف بنفس Wi-Fi وجدار حماية Windows.');
+  } on TimeoutException {
+    return ApiProbeResult(false, english
+        ? 'The API did not answer within 8 seconds. Check Apache, the PC address, port, and firewall.'
+        : 'لم يستجب API خلال 8 ثوانٍ. تحقق من Apache وعنوان الكمبيوتر والمنفذ وجدار الحماية.');
+  } catch (e) {
+    return ApiProbeResult(false, english
+        ? 'Connection check failed (' + e.runtimeType.toString() + '). Check the API URL and server logs.'
+        : 'فشل فحص الاتصال (' + e.runtimeType.toString() + '). تحقق من رابط API وسجلات الخادم.');
+  }
+}
+
 class ApiFailure implements Exception {
   const ApiFailure(this.message, {this.statusCode});
   final String message;
@@ -101,11 +164,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final headers = <String, String>{'Accept': 'application/json'};
     if (body != null) headers['Content-Type'] = 'application/json';
     if (token != null) headers['Authorization'] = 'Bearer $token';
+    Uri? requestUri;
     try {
-      final uri = Uri.parse('${apiBaseUrl.replaceFirst(RegExp(r'/+$'), '')}/$path');
+      requestUri = Uri.parse('${apiBaseUrl.replaceFirst(RegExp(r'/+$'), '')}/$path');
       final response = method == 'GET'
-          ? await http.get(uri, headers: headers).timeout(const Duration(seconds: 20))
-          : await http.post(uri, headers: headers,
+          ? await http.get(requestUri, headers: headers).timeout(const Duration(seconds: 20))
+          : await http.post(requestUri, headers: headers,
               body: body == null ? null : jsonEncode(body))
               .timeout(const Duration(seconds: 20));
       final json = jsonDecode(utf8.decode(response.bodyBytes));
@@ -114,13 +178,43 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         final e = json['error'];
         throw ApiFailure(e is Map ? (e['message']?.toString() ?? 'Request failed') : 'Request failed', statusCode: response.statusCode);
       }
-      if (json['data'] is! Map<String, dynamic>) throw Exception('Invalid API response');
+      if (json['data'] is! Map<String, dynamic>) throw const FormatException('Invalid API data response');
       return json['data'] as Map<String, dynamic>;
     } on ApiFailure {
       rethrow;
-    } catch (_) {
-      throw ApiFailure(english ? 'Could not reach the API server.' : 'تعذر الاتصال بخادم API.');
+    } on SocketException {
+      final host = requestUri?.host ?? 'server';
+      final port = requestUri?.port ?? 80;
+      throw ApiFailure(english
+          ? 'Cannot connect to ' + host + ':' + port.toString() + '. Check the PC LAN IP, Apache port, same Wi-Fi, and Windows Firewall.'
+          : 'تعذر الاتصال بـ ' + host + ':' + port.toString() + '. تحقق من IP الكمبيوتر ومنفذ Apache واتصال الهاتف بنفس Wi-Fi وجدار حماية Windows.');
+    } on TimeoutException {
+      throw ApiFailure(english
+          ? 'The API request timed out. Check that Apache is running and the phone can reach the PC.'
+          : 'انتهت مهلة طلب API. تحقق من تشغيل Apache وإمكانية وصول الهاتف إلى الكمبيوتر.');
+    } on FormatException {
+      throw ApiFailure(english
+          ? 'The server responded, but its response was not valid API JSON. Check the /api/v1 URL and PHP/Apache errors.'
+          : 'استجاب الخادم، لكن الرد ليس JSON صالحاً من API. تحقق من رابط /api/v1 وأخطاء PHP/Apache.');
+    } on http.ClientException {
+      throw ApiFailure(english
+          ? 'The HTTP request failed before a valid API response was received. Check network access and server logs.'
+          : 'فشل طلب HTTP قبل استلام رد API صالح. تحقق من الشبكة وسجلات الخادم.');
+    } catch (e) {
+      throw ApiFailure(english
+          ? 'Unexpected API response error (' + e.runtimeType.toString() + '). Check the API URL and server logs.'
+          : 'خطأ غير متوقع في استجابة API (' + e.runtimeType.toString() + '). تحقق من رابط API وسجلات الخادم.');
     }
+  }
+
+  Future<void> testApiConnection() async {
+    final result = await probeApiEndpoint(apiBaseUrl, english: english);
+    final context = navigatorKey.currentContext;
+    if (context == null || !context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(result.message),
+      duration: Duration(seconds: result.success ? 4 : 8),
+    ));
   }
 
   @override
@@ -1677,9 +1771,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(english ? 'Legal age alerts' : 'تنبيه بلوغ السن القانوني',
-                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF115E59))),
+                          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w800, color: Color(0xFF5B21B6))),
                         Text(english ? '${ageAlertItems.length} children need review' : '${ageAlertItems.length} طفل يحتاج إلى المراجعة',
-                          style: const TextStyle(fontSize: 12, color: Color(0xFF61717D))),
+                          style: const TextStyle(fontSize: 12, color: Color(0xFF756B84))),
                       ],
                     )),
                   ]),
@@ -1711,9 +1805,9 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                               CircleAvatar(backgroundColor: accent.withValues(alpha: 0.12), child: Icon(Icons.person_outline_rounded, color: accent)),
                               const SizedBox(width: 12),
                               Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                Text(item['child_name']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF115E59))),
+                                Text(item['child_name']?.toString() ?? '', style: const TextStyle(fontWeight: FontWeight.w800, color: Color(0xFF5B21B6))),
                                 const SizedBox(height: 3),
-                                Text('${item['mother_name'] ?? ''} • ${item['family_code'] ?? ''}', style: const TextStyle(fontSize: 12, color: Color(0xFF61717D))),
+                                Text('${item['mother_name'] ?? ''} • ${item['family_code'] ?? ''}', style: const TextStyle(fontSize: 12, color: Color(0xFF756B84))),
                                 const SizedBox(height: 6),
                                 Text('${english ? 'Birth date' : 'تاريخ الميلاد'}: ${item['birth_date'] ?? '—'}', style: const TextStyle(fontSize: 12)),
                                 const SizedBox(height: 5),
@@ -2049,16 +2143,17 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     debugShowCheckedModeBanner: false,
     theme: ThemeData(useMaterial3: true,
       colorScheme: ColorScheme.fromSeed(
-        seedColor: const Color(0xFF0F766E),
-        primary: const Color(0xFF115E59),
-        secondary: const Color(0xFFE07A5F),
+        seedColor: const Color(0xFF7C3AED),
+        primary: const Color(0xFF5B21B6),
+        secondary: const Color(0xFFF59E0B),
+        tertiary: const Color(0xFFDB2777),
         surface: Colors.white,
         error: const Color(0xFFB42318),
       ),
-      scaffoldBackgroundColor: const Color(0xFFF3F7FA),
+      scaffoldBackgroundColor: const Color(0xFFF8F5FF),
       visualDensity: VisualDensity.standard,
       dividerTheme: const DividerThemeData(
-        color: Color(0xFFE1E8EF),
+        color: Color(0xFFE8E0F4),
         thickness: 1,
         space: 1,
       ),
@@ -2069,23 +2164,23 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: Color(0xFFE1E8EF)),
+          side: const BorderSide(color: Color(0xFFE8E0F4)),
         ),
       ),
       listTileTheme: ListTileThemeData(
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 8),
         minVerticalPadding: 14,
         horizontalTitleGap: 14,
-        iconColor: const Color(0xFF0F766E),
-        textColor: const Color(0xFF172B3A),
+        iconColor: const Color(0xFF7C3AED),
+        textColor: const Color(0xFF251B35),
         titleTextStyle: const TextStyle(
-          color: Color(0xFF172B3A),
+          color: Color(0xFF251B35),
           fontFamily: 'Cairo',
           fontSize: 14,
           fontWeight: FontWeight.w800,
         ),
         subtitleTextStyle: const TextStyle(
-          color: Color(0xFF61717D),
+          color: Color(0xFF756B84),
           fontFamily: 'Cairo',
           fontSize: 12,
           height: 1.45,
@@ -2094,15 +2189,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ),
       iconButtonTheme: IconButtonThemeData(
         style: IconButton.styleFrom(
-          foregroundColor: const Color(0xFF115E59),
-          backgroundColor: const Color(0xFFDDF4F0),
+          foregroundColor: const Color(0xFF5B21B6),
+          backgroundColor: const Color(0xFFEDE9FE),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
           minimumSize: const Size(44, 44),
         ),
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: Colors.white,
-        foregroundColor: Color(0xFF172B3A),
+        foregroundColor: Color(0xFF251B35),
         elevation: 0,
         scrolledUnderElevation: 0,
         toolbarHeight: 56,
@@ -2111,10 +2206,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         filled: true, fillColor: const Color(0xFFF8FAFC),
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFCBD5E1), width: 1.2)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFA8C7C5), width: 1.5)),
-        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF0F766E), width: 2)),
+        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFFC9B9E8), width: 1.5)),
+        focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: const BorderSide(color: Color(0xFF7C3AED), width: 2)),
       ),
-      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF115E59), foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
+      filledButtonTheme: FilledButtonThemeData(style: FilledButton.styleFrom(backgroundColor: const Color(0xFF5B21B6), foregroundColor: Colors.white, minimumSize: const Size.fromHeight(52), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12))))),
     navigatorKey: navigatorKey,
   home: Directionality(
       textDirection: english ? TextDirection.ltr : TextDirection.rtl,
@@ -2127,6 +2222,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               submit: login,
               apiBaseUrl: apiBaseUrl,
               onConfigureApi: configureApiBaseUrl,
+              onTestApi: testApiConnection,
               onForgotPassword: () => openNativeTool('modules/users/password_recovery_request.php'),
             )
           : Scaffold(
@@ -2204,8 +2300,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                                       children: [
                                         ListTile(
                                           leading: const CircleAvatar(
-                                            backgroundColor: Color(0xFFE7F0E8),
-                                            child: Icon(Icons.person_rounded, color: Color(0xFF115E59)),
+                                            backgroundColor: Color(0xFFE8E0F4),
+                                            child: Icon(Icons.person_rounded, color: Color(0xFF5B21B6)),
                                           ),
                                           title: Text(user?['full_name']?.toString() ?? '',
                                             style: const TextStyle(fontWeight: FontWeight.w800)),
@@ -2333,14 +2429,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   _ => english ? 'Your workspace' : 'مساحة عملك',
                 };
                 final heroColors = switch (roleCode) {
-                  'admin' || 'sudo' || 'super_admin' => const [Color(0xFF123B46), Color(0xFFE07A5F)],
-                  'general_manager' || 'gm' => const [Color(0xFF115E59), Color(0xFF20A39E)],
-                  'vice_general_manager' || 'vgm' => const [Color(0xFF115E59), Color(0xFFE07A5F)],
+                  'admin' || 'sudo' || 'super_admin' => const [Color(0xFF123B46), Color(0xFFF59E0B)],
+                  'general_manager' || 'gm' => const [Color(0xFF5B21B6), Color(0xFF20A39E)],
+                  'vice_general_manager' || 'vgm' => const [Color(0xFF5B21B6), Color(0xFFF59E0B)],
                   'financial_manager' || 'fm' || 'finance' || 'accountant' || 'accountant_staff' => const [Color(0xFF123B46), Color(0xFF20A39E)],
-                  'supervisor' || 'nanny' => const [Color(0xFF0F766E), Color(0xFF8FAE91)],
-                  'hr_manager' || 'hr_staff' => const [Color(0xFF115E59), Color(0xFFE07A5F)],
-                  'projects_manager' || 'project_supervisor' => const [Color(0xFF0F766E), Color(0xFFB58A3A)],
-                  _ => const [Color(0xFF123B46), Color(0xFF115E59)],
+                  'supervisor' || 'nanny' => const [Color(0xFF7C3AED), Color(0xFF8FAE91)],
+                  'hr_manager' || 'hr_staff' => const [Color(0xFF5B21B6), Color(0xFFF59E0B)],
+                  'projects_manager' || 'project_supervisor' => const [Color(0xFF7C3AED), Color(0xFFB58A3A)],
+                  _ => const [Color(0xFF123B46), Color(0xFF5B21B6)],
                 };
                 return ListView(
                 padding: const EdgeInsets.all(20),
@@ -2356,7 +2452,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                       borderRadius: BorderRadius.circular(24),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFF115E59).withValues(alpha: 0.14),
+                          color: const Color(0xFF5B21B6).withValues(alpha: 0.14),
                           blurRadius: 20,
                           offset: const Offset(0, 8),
                         ),
@@ -2498,7 +2594,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     ))),
                   if (['general_manager', 'gm', 'vice_general_manager', 'vgm'].contains(roleCode))
                     SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
-                      leading: const CircleAvatar(backgroundColor: Color(0xFFE8F2E9), child: Icon(Icons.assignment_ind_rounded, color: Color(0xFF0F766E))),
+                      leading: const CircleAvatar(backgroundColor: Color(0xFFE8F2E9), child: Icon(Icons.assignment_ind_rounded, color: Color(0xFF7C3AED))),
                       title: Text(english ? 'Sponsor assignment' : 'إسناد الكفلاء'),
                       subtitle: Text(english ? 'Assign unassigned sponsors to active supervisors' : 'إسناد الكفلاء غير المسندين إلى المشرفين النشطين'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
@@ -2608,7 +2704,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                           child: ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: Color(0xFFE8F2E9),
-                              child: Icon(Icons.event_available_rounded, color: Color(0xFF0F766E)),
+                              child: Icon(Icons.event_available_rounded, color: Color(0xFF7C3AED)),
                             ),
                             title: Text(english ? 'My leave requests' : 'طلبات إجازاتي'),
                             subtitle: Text(english
@@ -2678,7 +2774,7 @@ class _HomeSectionTitle extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: const Color(0xFF115E59),
+                    color: const Color(0xFF5B21B6),
                     fontWeight: FontWeight.w800,
                   ),
             ),
@@ -2687,7 +2783,7 @@ class _HomeSectionTitle extends StatelessWidget {
               Text(
                 subtitle,
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: const Color(0xFF61717D),
+                      color: const Color(0xFF756B84),
                     ),
               ),
             ],
@@ -2858,7 +2954,7 @@ class _NotificationPageState extends State<NotificationPage> {
                                           : Icons.notifications_active_rounded,
                                       color: isRead
                                           ? Colors.grey
-                                          : const Color(0xFF0F766E),
+                                          : const Color(0xFF7C3AED),
                                     ),
                                     title: Text(
                                       item['title']?.toString() ?? '',
@@ -2947,10 +3043,10 @@ class OrganizationLogo extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFE7F0E8)),
+          border: Border.all(color: const Color(0xFFE8E0F4)),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF115E59).withValues(alpha: 0.08),
+              color: const Color(0xFF5B21B6).withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, 5),
             ),
@@ -2964,7 +3060,7 @@ class OrganizationLogo extends StatelessWidget {
             errorBuilder: (_, __, ___) => const Icon(
               Icons.volunteer_activism_rounded,
               size: 46,
-              color: Color(0xFF0F766E),
+              color: Color(0xFF7C3AED),
             ),
           ),
         ),
@@ -2972,12 +3068,13 @@ class OrganizationLogo extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.english, required this.toggle, required this.submit, required this.apiBaseUrl, required this.onConfigureApi, required this.onForgotPassword});
+  const LoginPage({super.key, required this.english, required this.toggle, required this.submit, required this.apiBaseUrl, required this.onConfigureApi, required this.onTestApi, required this.onForgotPassword});
   final bool english;
   final VoidCallback toggle;
   final Future<void> Function(String, String) submit;
   final String apiBaseUrl;
   final Future<void> Function() onConfigureApi;
+  final Future<void> Function() onTestApi;
   final Future<void> Function() onForgotPassword;
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -3003,9 +3100,9 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     final en = widget.english;
-    const navy950 = Color(0xFF081527);
-    const navy900 = Color(0xFF115E59);
-    const navy600 = Color(0xFF0F766E);
+    const navy950 = Color(0xFF25103F);
+    const navy900 = Color(0xFF5B21B6);
+    const navy600 = Color(0xFF7C3AED);
     return Scaffold(
       body: Container(
         width: double.infinity,
@@ -3045,6 +3142,20 @@ class _LoginPageState extends State<LoginPage> {
                           ),
                           icon: const Icon(Icons.dns_outlined, size: 18),
                           label: Text(en ? 'API server' : 'الخادم'),
+                        ),
+                        TextButton.icon(
+                          onPressed: widget.onTestApi,
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.white,
+                            backgroundColor: Colors.white.withValues(alpha: 0.10),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(24),
+                              side: BorderSide(color: Colors.white.withValues(alpha: 0.24)),
+                            ),
+                          ),
+                          icon: const Icon(Icons.wifi_tethering_rounded, size: 18),
+                          label: Text(en ? 'Test connection' : 'اختبار الاتصال'),
                         ),
                         TextButton.icon(
                           onPressed: widget.toggle,
@@ -3150,14 +3261,14 @@ class _LoginPageState extends State<LoginPage> {
                               Text(
                                 en ? 'Secure access to Ahl El Kheir' : 'دخول آمن إلى نظام أهل الخير',
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF61717D), fontSize: 12),
+                                style: const TextStyle(color: Color(0xFF756B84), fontSize: 12),
                               ),
                               const SizedBox(height: 7),
                               SelectableText(
                                 widget.apiBaseUrl,
                                 textDirection: TextDirection.ltr,
                                 textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF61717D), fontSize: 10),
+                                style: const TextStyle(color: Color(0xFF756B84), fontSize: 10),
                               ),
                             ],
                           ),
@@ -3204,7 +3315,7 @@ class NotificationDetailPage extends StatelessWidget {
               gradient: const LinearGradient(
                 begin: AlignmentDirectional.topStart,
                 end: AlignmentDirectional.bottomEnd,
-                colors: [Color(0xFF115E59), Color(0xFF0F766E)],
+                colors: [Color(0xFF5B21B6), Color(0xFF7C3AED)],
               ),
               borderRadius: BorderRadius.circular(22),
             ),
@@ -3212,11 +3323,11 @@ class NotificationDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: 18),
           Text(title, style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            color: const Color(0xFF115E59), fontWeight: FontWeight.w800,
+            color: const Color(0xFF5B21B6), fontWeight: FontWeight.w800,
           )),
           if (createdAt.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(createdAt, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF61717D))),
+            Text(createdAt, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: const Color(0xFF756B84))),
           ],
           const SizedBox(height: 18),
           Card(
