@@ -25,6 +25,18 @@ void main() {
     expect(result.message, contains('/api/v1'));
   });
 
+  test('normalizes complete API URLs and preserves unrelated configured hosts', () {
+    expect(
+      normalizeApiBaseUrl(' http://192.168.18.9:8081/AhlElKheir/api/v1/ '),
+      'http://192.168.18.9:8081/AhlElKheir/api/v1',
+    );
+    expect(normalizeApiBaseUrl('http://192.168.18.9:8081/AhlElKheir'), isNull);
+    expect(
+      migrateKnownLegacyApiBaseUrl('https://api.example.test/AhlElKheir/api/v1'),
+      'https://api.example.test/AhlElKheir/api/v1',
+    );
+  });
+
   testWidgets('login screen exposes an in-app API connectivity check', (tester) async {
     var testPressed = false;
     await tester.pumpWidget(MaterialApp(
