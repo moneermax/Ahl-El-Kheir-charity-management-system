@@ -19,6 +19,8 @@ void main() {
     expect(find.text('Incentive policy'), findsOneWidget);
     expect(find.text('GM reconciliation'), findsOneWidget);
     expect(find.text('Monthly disbursements'), findsOneWidget);
+    expect(find.text('Payroll period history'), findsOneWidget);
+    expect(find.text('Review payroll payment periods and employee reports in-app'), findsOneWidget);
     expect(find.text('IN APP'), findsWidgets);
     expect(find.text('WEB'), findsNothing);
   });
@@ -90,7 +92,6 @@ void main() {
     expect(find.text('Read-only checks for payroll and accounting consistency'), findsOneWidget);
     expect(find.text('Password recovery requests'), findsOneWidget);
     expect(find.text('Contract builder'), findsOneWidget);
-    expect(find.text('Review payroll payment periods and employee reports in-app'), findsOneWidget);
     expect(find.text('My profile'), findsNothing);
   });
 
