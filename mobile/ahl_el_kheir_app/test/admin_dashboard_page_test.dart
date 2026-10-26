@@ -130,7 +130,7 @@ void main() {
     final scrollable = find.descendant(of: find.byKey(const Key('admin-dashboard-list')), matching: find.byType(Scrollable)).first;
     await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-finance-dashboard')), 180, scrollable: scrollable);
     expect(find.byKey(const Key('admin-tool-finance-dashboard')), findsOneWidget);
-    await tester.tap(find.byKey(const Key('admin-tool-finance-dashboard')));
+    await tester.tap(find.text('Finance dashboard'));
     expect(openedTool, 'finance_dashboard');
     expect(tester.takeException(), isNull);
   });

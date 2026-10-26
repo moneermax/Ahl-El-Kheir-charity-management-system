@@ -26,8 +26,11 @@ void main() {
     expect(find.text('3,309.50'), findsOneWidget);
     expect(find.text('Monthly flow'), findsOneWidget);
     expect(find.text('8,000.00'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Monthly disbursements'), 220, scrollable: find.byType(Scrollable).first);
     expect(find.text('Monthly disbursements'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Operational counts'), 220, scrollable: find.byType(Scrollable).first);
     expect(find.text('Operational counts'), findsOneWidget);
+    await tester.scrollUntilVisible(find.textContaining('do not perform accounting actions'), 220, scrollable: find.byType(Scrollable).first);
     expect(find.textContaining('do not perform accounting actions'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
