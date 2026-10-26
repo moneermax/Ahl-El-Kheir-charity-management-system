@@ -367,3 +367,17 @@ Corrective changes now on `main`:
 - `a24cbdd88a0b4a112bbb4fc631337e1c44f08942` and `df18877c5a99c4c12ad5dc2dc59cade622e1f64d`: update API diagnostic regression tests and expected build label.
 
 The source still defaults to `http://192.168.18.9:8081/AhlElKheir/api/v1` and migrates only the exact previously saved `192.168.18.9:881/AhlElKheir/api/v1` URL. The build/provenance workflow and login revision indicator are committed; CI analysis, tests, APK publication, and actual phone connectivity for this new head must be checked before sending another APK for acceptance. Do not ask the user to retest the stale artifact. No external-browser handoff is permitted. The app intentionally uses a distinct violet/amber/pink visual identity rather than copying the web palette.
+
+
+## 2026-10-26 — Native account password settings and forced-change flow
+
+The mobile app now includes a native Account Settings screen for changing a signed-in user's password, plus an in-app forced-password-change dialog when login returns the existing `password_change_required` response. The app retries login with the new password after the server confirms the forced change; it does not direct the user to the website.
+
+Backend additions on `main`:
+- `api/v1/auth/change_password.php`: bearer-authenticated self-service password change; checks the current password, enforces the existing six-character minimum and matching confirmation, updates `password_hash` and clears the required flag, and preserves the existing approved-recovery completion and audit behavior. It performs no DDL.
+- `api/v1/auth/complete_forced_password_change.php`: pre-login change path restricted to active accounts that are actually flagged for a forced change; requires username and current password, validates the new password, clears the required flag, and records the existing audit/recovery side effects without issuing a session or token. It performs no DDL.
+- `api/v1/auth/login.php` now describes the forced change as an in-app step rather than a website requirement.
+
+Native UI: `mobile/ahl_el_kheir_app/lib/account_settings_page.dart`; account-menu routing and login retry are in `main.dart`. Widget tests cover normal password-change submission and local mismatch validation. The disposable API integration harness now covers invalid current password, mismatched confirmation, successful hash update, old-password rejection, new-password login, forced-change completion and flag clearing, and cleanup of test audit/recovery/session state. The API workflow explicitly lints both new endpoints and the login endpoint. CI results for the newest source must be checked before claiming these new paths verified; no local XAMPP/device result is claimed.
+
+Remaining account parity gaps are still open: personal profile editing/photo management and password-recovery request are not yet native. Do not label the account area fully complete. No external browser handoff is allowed. The overall app uses a distinct violet/amber/pink palette and should not be changed to copy the original web theme.
