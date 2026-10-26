@@ -49,7 +49,7 @@ Do not infer parity from role-specific color or a shared module list. Server-sid
 Source commits on `main`:
 - `8f659a0cec3ae9d565dd8bba98297da2f94b7639`: expose native leave requests and salary statements from the mobile workspace.
 - `842e4382bcf922f9c67b82fcc414abdd7e72fba8` and `9e3044d842c1893bf685ef2bb87ae253a7d2c150`: add a role-specific quick-tools section derived from each existing web dashboard. Website-only links are labelled WEB and remain subject to website server-side authorization; this is navigation coverage, not native workflow parity.
-- `fbc30ebf5c1df671e6fcca6b07c39963abe3661e` and `a2eb57da68fde5a1cb206732ed4781df609c0382`: align the mobile API default and Android workflow default with the documented phone LAN endpoint `http://192.168.18.9:881/AhlElKheir/api/v1`. The previous 8081 default did not match the documented phone-facing Apache port and is superseded.
+- Historical correction: the later direct reachability evidence confirmed Apache listens on `8081` and has no listener on `881`; the old conclusion in commits `fbc30eb`/`a2eb57d` was incorrect. Current app/workflow defaults and the stale-URL migration are corrected by `da04d0fea8e73f505fa521546e653ca4e263e0c0` to use verified port `8081`.
 
 The workspace now exposes the existing native personal leave-request page and finalized salary-statement page, and adds role-scoped quick links matching the real GM, VGM, FM, Accountant, Supervisor, Nanny, Administration/Staff, HR, and Projects dashboard routes. The API enforces leave-queue permissions and returns salary statements only for paid payrolls posted to accounting. No account without a linked employee profile is given another employee's records.
 
