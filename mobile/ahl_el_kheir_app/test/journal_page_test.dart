@@ -31,6 +31,11 @@ void main() {
             ],
           };
         },
+        roleCode: 'general_manager',
+        currentUserId: 1,
+        loadAccounts: () async => {'accounts': <Map<String, dynamic>>[]},
+        submitManualEntry: (_) async => <String, dynamic>{},
+        submitVoid: (_, __) async => <String, dynamic>{},
         loadEntry: (id) async => {
           'entry': {
             'id': id,
