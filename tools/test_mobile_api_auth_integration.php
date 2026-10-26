@@ -156,6 +156,9 @@ $testBatchTransferTransactionId = 0;
 $testBatchTransferJournalId = 0;
 $testAccountId = 0;
 $testJournalEntryId = 0;
+$testManualJournalEntryId = 0;
+$testJournalReversalEntryId = 0;
+$testJournalVoidActorSnapshot = null;
 $testAttendancePolicyId = 0;
 $testPayrollPolicyId = 0;
 $testIncentiveEventId = 0;
@@ -2106,6 +2109,72 @@ try {
         'journal detail returns its lines and validates balanced totals');
     $r = mobileApiRequest('/api/v1/accounting/journal.php?view=99999999', 'GET', null, $token);
     mobileApiExpect($r['status'] === 404 && ($r['json']['error']['code'] ?? '') === 'journal_entry_not_found', 'journal detail reports a missing entry');
+
+    $r = mobileApiRequest('/api/v1/accounting/journal.php', 'POST', ['action' => 'list_accounts'], $token);
+    $activeJournalAccounts = $r['json']['data']['accounts'] ?? [];
+    mobileApiExpect($r['status'] === 200 && is_array($activeJournalAccounts) && count($activeJournalAccounts) >= 2, 'authorized finance role can load active accounts for manual journal entry');
+    $journalAccountIds = array_values(array_map(static fn($account) => (int)($account['id'] ?? 0), $activeJournalAccounts));
+    $journalAccountIds = array_slice(array_values(array_filter($journalAccountIds, static fn($id) => $id > 0)), 0, 2);
+    $journalCountBeforeInvalid = (int)$pdo->query('SELECT COUNT(*) FROM journal_entries')->fetchColumn();
+    $r = mobileApiRequest('/api/v1/accounting/journal.php', 'POST', [
+        'action' => 'create_manual_entry',
+        'entry_date' => date('Y-m-d'),
+        'description' => 'Invalid mobile journal fixture',
+        'lines' => [
+            ['account_id' => $journalAccountIds[0], 'debit' => '100.00', 'credit' => '', 'description' => 'Debit'],
+            ['account_id' => $journalAccountIds[1], 'debit' => '', 'credit' => '99.00', 'description' => 'Credit'],
+        ],
+    ], $token);
+    $journalCountAfterInvalid = (int)$pdo->query('SELECT COUNT(*) FROM journal_entries')->fetchColumn();
+    mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'unbalanced_entry' && $journalCountBeforeInvalid === $journalCountAfterInvalid, 'manual journal rejects unbalanced totals without creating a row');
+
+    $r = mobileApiRequest('/api/v1/accounting/journal.php', 'POST', [
+        'action' => 'create_manual_entry',
+        'entry_date' => date('Y-m-d'),
+        'description' => 'Mobile API manual journal creation fixture',
+        'lines' => [
+            ['account_id' => $journalAccountIds[0], 'debit' => '125.00', 'credit' => '', 'description' => 'Mobile debit'],
+            ['account_id' => $journalAccountIds[1], 'debit' => '', 'credit' => '125.00', 'description' => 'Mobile credit'],
+        ],
+    ], $token);
+    $testManualJournalEntryId = (int)($r['json']['data']['entry']['id'] ?? 0);
+    mobileApiExpect($r['status'] === 201 && $testManualJournalEntryId > 0 && ($r['json']['data']['entry']['is_balanced'] ?? false) === true, 'manual journal creates a balanced posted entry atomically');
+
+    $actorStmt = $pdo->prepare('SELECT id, role_id, is_active, password_change_required FROM users WHERE id <> ? ORDER BY id LIMIT 1');
+    $actorStmt->execute([$userId]);
+    $actor = $actorStmt->fetch(PDO::FETCH_ASSOC);
+    mobileApiExpect(is_array($actor), 'journal void integration requires a distinct reviewer account');
+    $testJournalVoidActorSnapshot = [
+        'id' => (int)$actor['id'],
+        'role_id' => (int)$actor['role_id'],
+        'is_active' => (int)$actor['is_active'],
+        'password_change_required' => (int)$actor['password_change_required'],
+    ];
+    $pdo->prepare('UPDATE users SET role_id=?, is_active=1, password_change_required=0 WHERE id=?')->execute([$roles['admin'], (int)$actor['id']]);
+    $voidActorToken = bin2hex(random_bytes(32));
+    $voidActorHash = hash('sha256', $voidActorToken);
+    $pdo->prepare('INSERT INTO mobile_api_sessions (user_id, token_hash, expires_at, ip_address, user_agent, created_at, last_used_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 3600 SECOND), ?, ?, NOW(), NOW())')
+        ->execute([(int)$actor['id'], $voidActorHash, '127.0.0.1', 'Mobile journal void integration']);
+    $testTokenHashes[] = $voidActorHash;
+    $r = mobileApiRequest('/api/v1/accounting/journal.php', 'POST', [
+        'action' => 'void_manual_entry',
+        'entry_id' => $testManualJournalEntryId,
+        'reason' => 'Integration test reversal',
+    ], $voidActorToken);
+    $testJournalReversalEntryId = (int)($r['json']['data']['result']['reversal_entry_id'] ?? 0);
+    mobileApiExpect($r['status'] === 200 && $testJournalReversalEntryId > 0 && ($r['json']['data']['result']['reversal_entry_code'] ?? '') === 'JE-VOID-MANUAL-' . $testManualJournalEntryId, 'different authorized reviewer voids a manual entry with a reversal');
+    $voidedAt = $pdo->query('SELECT voided_at FROM journal_entries WHERE id=' . $testManualJournalEntryId)->fetchColumn();
+    $reversalTotals = $pdo->query('SELECT COALESCE(SUM(debit),0) debit_total, COALESCE(SUM(credit),0) credit_total FROM journal_lines WHERE entry_id=' . $testJournalReversalEntryId)->fetch(PDO::FETCH_ASSOC);
+    mobileApiExpect((string)$voidedAt !== '' && round((float)$reversalTotals['debit_total'], 2) === 125.0 && round((float)$reversalTotals['credit_total'], 2) === 125.0, 'manual journal void metadata and reversal lines are balanced');
+    $r = mobileApiRequest('/api/v1/accounting/journal.php', 'POST', [
+        'action' => 'void_manual_entry', 'entry_id' => $testManualJournalEntryId, 'reason' => 'Duplicate void attempt',
+    ], $voidActorToken);
+    mobileApiExpect($r['status'] === 409 && ($r['json']['error']['code'] ?? '') === 'journal_void_conflict', 'manual journal cannot be voided twice');
+    $pdo->prepare('UPDATE users SET role_id=?, is_active=?, password_change_required=? WHERE id=?')->execute([
+        $testJournalVoidActorSnapshot['role_id'], $testJournalVoidActorSnapshot['is_active'],
+        $testJournalVoidActorSnapshot['password_change_required'], $testJournalVoidActorSnapshot['id'],
+    ]);
+    $testJournalVoidActorSnapshot = null;
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
 
     $recoveryFixture = dbFetchOne(
@@ -2147,6 +2216,20 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if (is_array($testJournalVoidActorSnapshot)) {
+        $pdo->prepare('UPDATE users SET role_id=?, is_active=?, password_change_required=? WHERE id=?')->execute([
+            $testJournalVoidActorSnapshot['role_id'], $testJournalVoidActorSnapshot['is_active'],
+            $testJournalVoidActorSnapshot['password_change_required'], $testJournalVoidActorSnapshot['id'],
+        ]);
+    }
+    if ($testJournalReversalEntryId > 0) {
+        $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([$testJournalReversalEntryId]);
+        $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([$testJournalReversalEntryId]);
+    }
+    if ($testManualJournalEntryId > 0) {
+        $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([$testManualJournalEntryId]);
+        $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([$testManualJournalEntryId]);
+    }
     if ($testJournalEntryId > 0) {
         $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([$testJournalEntryId]);
         $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([$testJournalEntryId]);
