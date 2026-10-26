@@ -259,6 +259,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
             navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => SponsorshipDetailPage(
               sponsorshipId: id, english: english, loadDetail: loadSponsorshipDetail,
             )));
+          } else if (type == 'payments') {
+            openAdminDisbursements(initialQuery: id.toString());
           }
         },
       ),
@@ -270,6 +272,16 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       case 'families': return loadFamilies(query, '', page);
       case 'sponsors': return loadSponsors(query, '', '', page);
       case 'sponsorships': return loadSponsorships(query, 'all', '', page);
+      case 'payments':
+        return loadAdminDisbursements(month: '', status: 'all', query: query, page: page).then((response) {
+          final pagination = response['pagination'];
+          return <String, dynamic>{'ok': true, 'data': {
+            'items': response['items'] is List ? response['items'] : <dynamic>[],
+            'total': pagination is Map ? pagination['total'] ?? 0 : 0,
+            'page': pagination is Map ? pagination['page'] ?? page : page,
+            'pages': pagination is Map ? pagination['pages'] ?? 1 : 1,
+          }};
+        });
       default: throw const ApiFailure('This search category is not available natively yet.');
     }
   }
@@ -984,10 +996,11 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
   }
 
-  void openAdminDisbursements() {
+  void openAdminDisbursements({String initialQuery = ''}) {
     navigatorKey.currentState?.push(MaterialPageRoute<void>(
       builder: (_) => AdminDisbursementsPage(
         english: english,
+        initialQuery: initialQuery,
         roleCode: user?['role_code']?.toString() ?? '',
         loadPage: loadAdminDisbursements,
         loadDetail: loadAdminDisbursementDetail,
