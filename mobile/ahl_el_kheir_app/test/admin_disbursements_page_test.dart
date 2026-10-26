@@ -74,7 +74,7 @@ void main() {
       180,
       scrollable: scrollable,
     );
-    expect(find.text('Nanny One'), findsOneWidget);
+    expect(find.byKey(const Key('disbursement-batch-4')), findsOneWidget);
     await tester.tap(find.byKey(const Key('disbursement-batch-4')));
     await tester.pumpAndSettle();
 
