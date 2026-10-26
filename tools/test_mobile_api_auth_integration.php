@@ -502,10 +502,10 @@ try {
     mobileApiExpect(
         $payrollIntegrity['status'] === 200
         && ($payrollIntegrity['json']['ok'] ?? false) === true
-        && count($payrollIntegrity['json']['data']['checks'] ?? []) === 7
-        && (int)($payrollIntegrity['json']['data']['total_checks'] ?? 0) === 7
+        && count($payrollIntegrity['json']['data']['checks'] ?? []) === 8
+        && (int)($payrollIntegrity['json']['data']['total_checks'] ?? 0) === 8
         && ($payrollIntegrity['json']['data']['read_only'] ?? false) === true,
-        'administrator can run all seven read-only payroll integrity checks against the full schema (HTTP ' . $payrollIntegrity['status'] . '; response ' . json_encode($payrollIntegrity['json']) . ')'
+        'administrator can run all eight read-only payroll integrity checks, including reversal audit, against the full schema (HTTP ' . $payrollIntegrity['status'] . '; response ' . json_encode($payrollIntegrity['json']) . ')'
     );
 
     $databaseUsers = mobileApiRequest('/api/v1/admin/database.php?table=users', 'GET', null, $adminToken, 20);
