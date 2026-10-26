@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 import 'package:flutter/material.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 class FinaReviewPage extends StatefulWidget {
   const FinaReviewPage({
@@ -77,29 +78,26 @@ class _FinaReviewPageState extends State<FinaReviewPage> {
     try {
       final result = await widget.loadReceipt(collectionId);
       if (!mounted) return;
-      final mime = (result['mime'] ?? '').toString();
+      final mime = (result['mime'] ?? '').toString().toLowerCase();
       final value = result['bytes'];
       if (value is! Uint8List) throw StateError('Invalid receipt response');
+      if (!mime.startsWith('image/') && mime != 'application/pdf') {
+        throw StateError(t('نوع ملف الإيصال غير مدعوم.', 'Unsupported receipt file type.'));
+      }
       await showDialog<void>(
         context: context,
         builder: (dialogContext) => AlertDialog(
           title: Text(t('إيصال التحصيل', 'Collection receipt')),
           content: SizedBox(
             width: 520,
+            height: mime.startsWith('image/') ? 500 : 620,
             child: mime.startsWith('image/')
                 ? InteractiveViewer(
                     child: Image.memory(value, fit: BoxFit.contain),
                   )
-                : Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      const Icon(Icons.picture_as_pdf_outlined, size: 56),
-                      const SizedBox(height: 12),
-                      Text(t(
-                        'تم استرجاع ملف PDF بأمان، لكن معاينة PDF داخل التطبيق لم تُنفذ بعد.',
-                        'The PDF was retrieved securely, but in-app PDF preview is not implemented yet.',
-                      )),
-                    ],
+                : PdfViewer.data(
+                    value,
+                    sourceName: 'fina-receipt-$collectionId.pdf',
                   ),
           ),
           actions: [
