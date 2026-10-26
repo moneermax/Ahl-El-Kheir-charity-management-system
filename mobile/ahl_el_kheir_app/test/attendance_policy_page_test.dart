@@ -17,6 +17,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('No active policy. Automatic attendance remains unavailable until a policy is issued.'),findsOneWidget);
     await tester.enterText(find.byType(TextFormField).at(0),'Mobile test policy');
+    await tester.dragUntilVisible(find.byType(TextFormField).at(1), find.byType(ListView).first, const Offset(0, -350));
+    await tester.pumpAndSettle();
     await tester.tap(find.byType(TextFormField).at(1));
     await tester.pumpAndSettle();
     await tester.tap(find.text('OK'));
