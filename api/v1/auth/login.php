@@ -27,7 +27,7 @@ if (!$user || !password_verify($password, (string)$user['password_hash']) || (in
 }
 
 if ((int)$user['password_change_required'] === 1) {
-    ak_api_json(403, ['ok' => false, 'error' => ['code' => 'password_change_required', 'message' => 'Sign in to the existing website and change your password before using the mobile app.']]);
+    ak_api_json(403, ['ok' => false, 'error' => ['code' => 'password_change_required', 'message' => 'Change your password in the mobile app before signing in.']]);
 }
 
 /*
