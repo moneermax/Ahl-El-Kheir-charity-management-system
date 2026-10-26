@@ -11,6 +11,7 @@ class PayrollManagementPage extends StatefulWidget {
     required this.submitAction,
     required this.pickProof,
     required this.uploadProof,
+    required this.loadProof,
   });
   final bool english;
   final Future<Map<String, dynamic>> Function(int month, int year) loadPage;
