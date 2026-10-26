@@ -482,6 +482,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     ));
   }
 
+  Future<Map<String, dynamic>> loadFinaSponsors(String query) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    final encoded = Uri(queryParameters: {'q': query}).query;
+    return call('GET', 'fina/sponsors.php?$encoded', token: token);
+  }
+
   Future<Map<String, dynamic>> submitFinaCollection(Map<String, dynamic> payload) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
@@ -511,6 +520,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       builder: (_) => FinaCollectionPage(
         english: english,
         submitCollection: submitFinaCollection,
+        loadSponsors: loadFinaSponsors,
       ),
     ));
   }
