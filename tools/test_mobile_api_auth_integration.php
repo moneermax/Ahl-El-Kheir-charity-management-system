@@ -1551,6 +1551,7 @@ try {
         $pdo->prepare("DELETE FROM notifications WHERE created_at>=? AND (link LIKE ? OR link LIKE ?)")
             ->execute([$testStart, '%payroll_statement.php?id=' . $testPayrollId, '%gm_payroll_period_report.php?month=' . $testPayrollMonth . '&year=' . $testPayrollYear]);
         $pdo->prepare('DELETE FROM hr_payroll_payment_proofs WHERE payroll_id=?')->execute([$testPayrollId]);
+        $pdo->prepare("UPDATE payroll SET accounting_entry_id=NULL,accounting_status='ready',status='approved' WHERE id=?")->execute([$testPayrollId]);
         $journalIds = $pdo->prepare("SELECT id FROM journal_entries WHERE reference_type='payroll' AND reference_id=?");
         $journalIds->execute([$testPayrollId]);
         foreach ($journalIds->fetchAll(PDO::FETCH_COLUMN) as $journalId) {
