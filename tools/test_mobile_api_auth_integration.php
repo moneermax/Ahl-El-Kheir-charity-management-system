@@ -88,8 +88,8 @@ function mobileApiMultipartRequest(string $path, array $fields, string $fileFiel
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor','general_manager','accountant','accountant_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
-if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'], $roles['general_manager'])) {
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_manager','hr_staff','project_supervisor','financial_manager','supervisor','general_manager','accountant','accountant_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+if (!isset($roles['admin'], $roles['nanny'], $roles['hr_manager'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'], $roles['general_manager'])) {
     throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff, project_supervisor and financial_manager roles.');
 }
 $user = $pdo->query('SELECT id, username, password_hash, is_active, password_change_required, role_id, last_login_at FROM users ORDER BY id LIMIT 1')->fetch();
