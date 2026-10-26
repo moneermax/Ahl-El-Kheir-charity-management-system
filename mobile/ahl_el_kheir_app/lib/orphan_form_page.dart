@@ -112,7 +112,7 @@ class _OrphanFormPageState extends State<OrphanFormPage>{
             Text(t('الكفالات المرتبطة','Linked sponsorships'),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800)),
             if(sponsorships.isEmpty)Text(t('لا توجد كفالات مرتبطة.','No linked sponsorships.')),
             for(final s in sponsorships)ListTile(contentPadding:EdgeInsets.zero,title:Text((s['sponsor_name']?.toString()??'')+' ('+(s['sponsor_code']?.toString()??'')+')'),
-              subtitle:Text((s['status']?.toString()??'')+' · '+(s['start_date']?.toString()??'')),trailing:Text((s['monthly_amount']?.toString()??'0')+' SDG')),
+              subtitle:Text((s['status']?.toString()??'')+' · '+(s['start_date']?.toString()??'')),trailing:s.containsKey('monthly_amount')?Text((s['monthly_amount']?.toString()??'0')+' SDG'):null),
           ]))),
           if(error!=null)Text(error!,style:const TextStyle(color:Colors.red)),
           if(canEdit)FilledButton.icon(onPressed:saving?null:save,icon:saving?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):const Icon(Icons.save_rounded),
