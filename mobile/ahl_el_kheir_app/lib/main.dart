@@ -57,6 +57,7 @@ import 'orphan_forms_index_page.dart';
 import 'package:file_picker/file_picker.dart';
 
 const defaultMobileApiBaseUrl = 'http://192.168.18.9:8081/AhlElKheir/api/v1';
+const mobileBuildRevision = String.fromEnvironment('MOBILE_BUILD_REVISION', defaultValue: 'development-source');
 
 void main() => runApp(const AhlElKheirApp());
 String? normalizeApiBaseUrl(String value) {
@@ -2355,6 +2356,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               toggle: () => setState(() => english = !english),
               submit: login,
               apiBaseUrl: apiBaseUrl,
+              buildRevision: mobileBuildRevision,
               onConfigureApi: configureApiBaseUrl,
               onTestApi: testApiConnection,
               onForgotPassword: () => openNativeTool('modules/users/password_recovery_request.php'),
@@ -3202,11 +3204,12 @@ class OrganizationLogo extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.english, required this.toggle, required this.submit, required this.apiBaseUrl, required this.onConfigureApi, required this.onTestApi, required this.onForgotPassword});
+  const LoginPage({super.key, required this.english, required this.toggle, required this.submit, required this.apiBaseUrl, required this.buildRevision, required this.onConfigureApi, required this.onTestApi, required this.onForgotPassword});
   final bool english;
   final VoidCallback toggle;
   final Future<void> Function(String, String) submit;
   final String apiBaseUrl;
+  final String buildRevision;
   final Future<void> Function() onConfigureApi;
   final Future<void> Function() onTestApi;
   final Future<void> Function() onForgotPassword;
@@ -3403,6 +3406,12 @@ class _LoginPageState extends State<LoginPage> {
                                 textDirection: TextDirection.ltr,
                                 textAlign: TextAlign.center,
                                 style: const TextStyle(color: Color(0xFF756B84), fontSize: 10),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Build: ${widget.buildRevision.length > 12 ? widget.buildRevision.substring(0, 12) : widget.buildRevision}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Color(0xFF756B84), fontSize: 10, letterSpacing: 0.2),
                               ),
                             ],
                           ),
