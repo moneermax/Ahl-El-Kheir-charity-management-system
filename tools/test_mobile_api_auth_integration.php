@@ -337,6 +337,7 @@ try {
         && ($voucherData['can_void'] ?? false) === true,
         'Financial Manager voucher register response: ' . json_encode([
             'status' => $r['status'],
+            'raw_prefix' => substr((string)($r['raw'] ?? ''), 0, 600),
             'error' => $r['json']['error'] ?? null,
             'voucher_rows_is_array' => is_array($voucherRows),
             'cash_account_count' => is_array($cashAccounts) ? count($cashAccounts) : null,
