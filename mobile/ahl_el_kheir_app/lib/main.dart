@@ -593,6 +593,26 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('POST', 'hr/attendance_policy.php', token: token, body: body);
   }
 
+  Future<Map<String, dynamic>> loadPayrollProof(int payrollId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final uri = Uri.parse(apiBaseUrl.replaceFirst(RegExp(r'/+$'), '') + '/hr/payroll_proof.php?payroll_id=' + payrollId.toString());
+    final response = await http.get(uri, headers: {'Accept': 'application/pdf,image/*', 'Authorization': 'Bearer ' + token}).timeout(const Duration(seconds: 30));
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      Map<String, dynamic> decoded = {};
+      try {
+        final value = jsonDecode(utf8.decode(response.bodyBytes));
+        if (value is Map) decoded = Map<String, dynamic>.from(value);
+      } catch (_) {}
+      final failure = decoded['error'];
+      final message = failure is Map ? (failure['message'] ?? (english ? 'Payroll proof could not be opened.' : 'تعذر فتح إثبات الراتب.')).toString() : (english ? 'Payroll proof could not be opened.' : 'تعذر فتح إثبات الراتب.');
+      throw ApiFailure(message, statusCode: response.statusCode);
+    }
+    final mime = (response.headers['content-type'] ?? '').split(';').first.toLowerCase();
+    final extension = mime == 'application/pdf' ? 'pdf' : (mime == 'image/jpeg' ? 'jpg' : 'png');
+    return {'bytes': response.bodyBytes, 'mime': mime, 'filename': 'payroll-proof-' + payrollId.toString() + '.' + extension};
+  }
+
   Future<Map<String, dynamic>> loadPayrollManagement(int month, int year) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -650,6 +670,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       submitAction: submitPayrollManagementAction,
       pickProof: pickPayrollProof,
       uploadProof: uploadPayrollProof,
+      loadProof: loadPayrollProof,
     )));
   }
 
