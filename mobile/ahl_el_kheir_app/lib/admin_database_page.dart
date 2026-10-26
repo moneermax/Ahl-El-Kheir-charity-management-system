@@ -72,8 +72,8 @@ class _AdminDatabasePageState extends State<AdminDatabasePage> {
                 style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800)),
               const SizedBox(height: 6),
               Text(t(
-                'يعرض الجداول وحقولها وآخر 50 سجلاً. لا توجد عمليات تعديل أو حذف أو تغيير للمخطط.',
-                'Shows tables, columns and the latest 50 rows. No data changes or schema operations are available.',
+                'يعرض الجداول وحقولها وعينة تصل إلى 50 سجلاً. لا توجد عمليات تعديل أو حذف أو تغيير للمخطط.',
+                'Shows tables, columns, and a sample of up to 50 rows. No data changes or schema operations are available.',
               )),
               const SizedBox(height: 12),
               Text(t('الجداول المتاحة: ', 'Available tables: ') + tables.length.toString(),
@@ -119,7 +119,7 @@ class _AdminDatabasePageState extends State<AdminDatabasePage> {
               )).toList(),
             )),
             const SizedBox(height: 12),
-            _DatabaseSection(title: t('آخر السجلات', 'Recent rows') + ' (' + rows.length.toString() + '/50)', child: rows.isEmpty
+            _DatabaseSection(title: t('عينة من السجلات', 'Sample rows') + ' (' + rows.length.toString() + '/50)', child: rows.isEmpty
               ? Text(t('لا توجد سجلات في هذا الجدول.', 'This table has no rows.'))
               : Column(children: [
                 for (var index = 0; index < rows.length; index++) ...[

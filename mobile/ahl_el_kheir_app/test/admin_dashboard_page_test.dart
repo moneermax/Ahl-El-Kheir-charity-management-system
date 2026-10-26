@@ -141,7 +141,7 @@ void main() {
     expect(find.byKey(const Key('admin-tool-disbursements')), findsOneWidget);
     expect(find.text('Monthly disbursements are not available in the app yet'), findsNothing);
     expect(find.text('Database tools are not available in the app yet'), findsNothing);
-    expect(find.text('Read-only table, column and recent-row browser'), findsOneWidget);
+    expect(find.text('Read-only table, column and sample-row browser'), findsOneWidget);
     await tester.tap(find.text('Monthly disbursements'));
     expect(openedTool, 'disbursements');
     expect(tester.takeException(), isNull);

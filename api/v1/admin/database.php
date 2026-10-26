@@ -51,7 +51,7 @@ try {
                 'extra' => (string)$column['Extra'],
             ];
         }
-        foreach (dbFetchAll("SELECT * FROM " . $quoted . " ORDER BY 1 DESC LIMIT 50") as $rawRow) {
+        foreach (dbFetchAll("SELECT * FROM " . $quoted . " LIMIT 50") as $rawRow) {
             $row = [];
             foreach ($rawRow as $key => $value) {
                 if (is_string($value)) {
