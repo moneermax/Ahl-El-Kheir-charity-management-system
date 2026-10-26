@@ -99,6 +99,8 @@ void main() {
     await tester.ensureVisible(find.text('Save and post entry'));
     await tester.tap(find.text('Save and post entry'));
     await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).first, const Offset(0, 1000));
+    await tester.pumpAndSettle();
 
     expect(submitted, isFalse);
     expect(find.text('Total debit must equal total credit.'), findsOneWidget);
