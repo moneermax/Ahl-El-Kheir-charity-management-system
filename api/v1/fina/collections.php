@@ -140,7 +140,7 @@ try {
     } catch (Throwable $notificationError) {
         error_log('Mobile Fina collection notification failed for #'.$collectionId.': '.$notificationError->getMessage());
     }
-    ak_api_json(201, ['ok'=>true,'data'=>['id'=>$collectionId,'status'=>'pending','receipt_supported'=>false]]);
+    ak_api_json(201, ['ok'=>true,'data'=>['id'=>$collectionId,'status'=>'pending','receipt_supported'=>true,'receipt_attached'=>$receiptPath !== null]]);
 } catch (Throwable $e) {
     if ($receiptFullPath !== null && is_file($receiptFullPath)) {
         @unlink($receiptFullPath);
