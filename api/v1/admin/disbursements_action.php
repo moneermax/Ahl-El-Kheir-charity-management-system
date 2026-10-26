@@ -207,7 +207,7 @@ if ($action === 'transfer_with_receipt') {
         dbExecute(
             "INSERT INTO transactions
              (transaction_type,reference_number,description,amount,currency_code,payment_method,transaction_date,status,created_by,created_at,payment_period,purpose_note,admin_fee_percent,admin_fee_amount,net_amount)
-             VALUES ('disbursement',CONCAT('DISB-OUT-',?),?,?,?,?, 'SDG','bank_transfer',CURDATE(),'posted',?,?, 'صرف دفعة كفالات',0,0,?)",
+             VALUES ('disbursement',CONCAT('DISB-OUT-',?),?,?, 'SDG','bank_transfer',CURDATE(),'posted',?,NOW(),?,'صرف دفعة كفالات',0,0,?)",
             [(int)$batchId,'صرف دفعة #' . (int)$batchId . ' شهر ' . (string)$batch['month'],(float)$batch['total_amount'],(int)$user['id'],(string)$batch['month'],(float)$batch['total_amount']]
         );
         $transactionId = (int)$pdo->lastInsertId();
