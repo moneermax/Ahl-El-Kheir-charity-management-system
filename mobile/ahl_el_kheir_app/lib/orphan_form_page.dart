@@ -51,7 +51,7 @@ class _OrphanFormPageState extends State<OrphanFormPage>{
       decoration:InputDecoration(labelText:label,border:const OutlineInputBorder()),
     ));
   }
-  Widget dropdown(String valueKey,String current,String label,List<String> items,ValueChanged<String> changed){
+  Widget dropdown(String current,String label,List<String> items,ValueChanged<String> changed){
     final values=items.contains(current)?items:(items.isEmpty?<String>[]:[items.first]);
     return Padding(padding:const EdgeInsets.only(bottom:12),child:DropdownButtonFormField<String>(
       initialValue:values.isEmpty?null:values.firstWhere((v)=>v==current,orElse:()=>values.first),
@@ -75,7 +75,7 @@ class _OrphanFormPageState extends State<OrphanFormPage>{
       if(!mounted)return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(t('تم حفظ الاستمارة.','Orphan form saved.'))));
       await refresh();
-    }catch(e){if(mounted)setState(()=>error=e.toString());}
+    }catch(e){if(mounted)ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(e.toString())));}
     finally{if(mounted)setState(()=>saving=false);}
   }
   @override Widget build(BuildContext context){
@@ -99,14 +99,14 @@ class _OrphanFormPageState extends State<OrphanFormPage>{
             Text(t('البيانات الصحية والاجتماعية','Health and social details'),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800)),
             const SizedBox(height:12),
             textField('nationality',t('الجنسية','Nationality'),maxLength:50),
-            dropdown('health_status',health,t('الحالة الصحية','Health status'),choices('health',['سليم']), (v)=>setState(()=>health=v)),
+            dropdown(health,t('الحالة الصحية','Health status'),choices('health',['سليم']), (v)=>setState(()=>health=v)),
             if(health=='أخرى')textField('health_status_other',t('تفاصيل الحالة الصحية','Health details')),
-            dropdown('psychological_state',psych,t('الحالة النفسية','Psychological status'),choices('psych',['سليم']),(v)=>setState(()=>psych=v)),
+            dropdown(psych,t('الحالة النفسية','Psychological status'),choices('psych',['سليم']),(v)=>setState(()=>psych=v)),
             if(psych=='أخرى')textField('psychological_state_other',t('تفاصيل الحالة النفسية','Psychological details')),
             textField('guardian_name',t('اسم الوصي','Guardian name')),
             textField('guardian_relationship',t('صلة الوصي','Guardian relationship'),maxLength:60),
             textField('father_death_cause',t('سبب وفاة الأب','Father death cause')),
-            dropdown('mother_marital_status',marital,t('الحالة الاجتماعية للأم','Mother marital status'),choices('marital',['أرملة']),(v)=>setState(()=>marital=v)),
+            dropdown(marital,t('الحالة الاجتماعية للأم','Mother marital status'),choices('marital',['أرملة']),(v)=>setState(()=>marital=v)),
           ]))),
           Card(child:Padding(padding:const EdgeInsets.all(16),child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
             Text(t('الكفالات المرتبطة','Linked sponsorships'),style:Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight:FontWeight.w800)),
