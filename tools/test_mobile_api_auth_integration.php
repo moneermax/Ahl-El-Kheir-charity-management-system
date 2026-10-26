@@ -2008,7 +2008,20 @@ try {
     mobileApiExpect($r['status'] === 401, 'deactivated accounts lose access to existing tokens');
     $pdo->prepare('UPDATE users SET is_active=1, password_change_required=1, role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
     $r = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
-    mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'password_change_required', 'password-change-required accounts cannot sign in');
+    mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'password_change_required', 'password-change-required accounts cannot sign in until changed');
+
+    $forcedPassword = 'MobileApi-Forced-Password-2026!';
+    $r = mobileApiRequest('/api/v1/auth/complete_forced_password_change.php', 'POST', [
+        'username' => $username,
+        'current_password' => $knownPassword,
+        'new_password' => $forcedPassword,
+        'confirm_password' => $forcedPassword,
+    ]);
+    mobileApiExpect($r['status'] === 200 && ($r['json']['data']['password_changed'] ?? false) === true, 'forced password can be changed without a website handoff');
+    $forcedHash = (string)$pdo->query('SELECT password_hash FROM users WHERE id=' . $userId)->fetchColumn();
+    $forcedRequired = (int)$pdo->query('SELECT password_change_required FROM users WHERE id=' . $userId)->fetchColumn();
+    mobileApiExpect(password_verify($forcedPassword, $forcedHash) && $forcedRequired === 0, 'forced password change stores the new hash and clears the required flag');
+    $pdo->prepare('UPDATE users SET password_hash=? WHERE id=?')->execute([password_hash($knownPassword, PASSWORD_DEFAULT), $userId]);
 
     $expiredToken = bin2hex(random_bytes(32));
     $revokedToken = bin2hex(random_bytes(32));
