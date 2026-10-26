@@ -53,6 +53,40 @@ function mobileApiRequest(string $path, string $method = 'GET', ?array $body = n
     return ['status' => $status, 'json' => is_array($json) ? $json : [], 'raw' => (string)$raw, 'headers' => $responseHeaders];
 }
 
+function mobileApiMultipartRequest(string $path, array $fields, string $fileField, string $fileName, string $fileBytes, string $mime, ?string $token = null, int $timeoutSeconds = 10): array {
+    $boundary = '----MobileApiIntegration' . bin2hex(random_bytes(12));
+    $content = '';
+    foreach ($fields as $name => $value) {
+        $content .= '--' . $boundary . "\r\n";
+        $content .= 'Content-Disposition: form-data; name="' . $name . '"' . "\r\n\r\n";
+        $content .= (string)$value . "\r\n";
+    }
+    $content .= '--' . $boundary . "\r\n";
+    $content .= 'Content-Disposition: form-data; name="' . $fileField . '"; filename="' . basename($fileName) . '"' . "\r\n";
+    $content .= 'Content-Type: ' . $mime . "\r\n\r\n" . $fileBytes . "\r\n";
+    $content .= '--' . $boundary . "--\r\n";
+    $headers = [
+        'Accept: application/json',
+        'Content-Type: multipart/form-data; boundary=' . $boundary,
+    ];
+    if ($token !== null) $headers[] = 'Authorization: Bearer ' . $token;
+    $context = stream_context_create(['http' => [
+        'method' => 'POST',
+        'header' => implode("\r\n", $headers),
+        'content' => $content,
+        'ignore_errors' => true,
+        'timeout' => max(1, $timeoutSeconds),
+    ]]);
+    $raw = file_get_contents('http://127.0.0.1:18080' . $path, false, $context);
+    $responseHeaders = $http_response_header ?? [];
+    $status = 0;
+    foreach ($responseHeaders as $header) {
+        if (preg_match('/^HTTP\/\S+\s+(\d{3})/', $header, $m)) $status = (int)$m[1];
+    }
+    $json = is_string($raw) ? json_decode($raw, true) : null;
+    return ['status' => $status, 'json' => is_array($json) ? $json : [], 'raw' => (string)$raw, 'headers' => $responseHeaders];
+}
+
 $roles = [];
 foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
 if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'])) {
@@ -86,6 +120,8 @@ $testSponsorId = 0;
 $testFinaSourceId = 0;
 $testFinaCollectionId = 0;
 $testBackupName = '';
+$testDisbursementId = 0;
+$testDisbursementItemId = 0;
 $testAccountId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
@@ -473,6 +509,63 @@ try {
     $testNannyFamilyId = (int)$pdo->lastInsertId();
     $insertFamily->execute(['Mobile API foreign nanny family fixture', $foreignFamilyCode, $userId, $notificationRecipientId]);
     $testForeignNannyFamilyId = (int)$pdo->lastInsertId();
+
+    $pdo->prepare(
+        "INSERT INTO monthly_disbursements
+         (month,nanny_id,group_id,total_amount,status,expense_account_code,created_by,submitted_by,submitted_at)
+         VALUES (?, ?, NULL, 500.00, 'transferred', '5110', ?, ?, NOW())"
+    )->execute([date('Y-m'), $userId, $userId, $userId]);
+    $testDisbursementId = (int)$pdo->lastInsertId();
+    $pdo->prepare(
+        "INSERT INTO disbursement_items
+         (disbursement_id,family_id,amount,status,is_orphan_verified,is_mother_contact_verified,is_bank_verified)
+         VALUES (?, ?, 500.00, 'pending', 1, 1, 1)"
+    )->execute([$testDisbursementId, $testNannyFamilyId]);
+    $testDisbursementItemId = (int)$pdo->lastInsertId();
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+    $receiptNannyLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($receiptNannyLogin['status'] === 200 && isset($receiptNannyLogin['json']['data']['access_token']), 'nanny session is available for receipt-confirmation integration');
+    $receiptNannyToken = (string)$receiptNannyLogin['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $receiptNannyToken);
+    $pngBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC', true);
+    if (!is_string($pngBytes) || $pngBytes === '') throw new RuntimeException('Could not prepare the in-memory PNG receipt fixture.');
+    $confirmReceipt = mobileApiMultipartRequest(
+        '/api/v1/admin/disbursements_action.php',
+        ['action' => 'confirm_item', 'item_id' => (string)$testDisbursementItemId],
+        'receipt_file',
+        'receipt.png',
+        $pngBytes,
+        'image/png',
+        $receiptNannyToken
+    );
+    $confirmedItem = $pdo->prepare('SELECT status, receipt_file_path FROM disbursement_items WHERE id=?');
+    $confirmedItem->execute([$testDisbursementItemId]);
+    $confirmedRow = $confirmedItem->fetch(PDO::FETCH_ASSOC);
+    $receiptStoredPath = (string)($confirmedRow['receipt_file_path'] ?? '');
+    mobileApiExpect(
+        $confirmReceipt['status'] === 200
+        && ($confirmReceipt['json']['data']['status'] ?? '') === 'paid'
+        && (string)($confirmedRow['status'] ?? '') === 'paid'
+        && str_starts_with($receiptStoredPath, 'storage/receipts/family/')
+        && is_file(dirname(__DIR__) . '/' . $receiptStoredPath),
+        'nanny receipt upload confirms the assigned pending family item and persists its receipt'
+    );
+    $duplicateConfirm = mobileApiMultipartRequest(
+        '/api/v1/admin/disbursements_action.php',
+        ['action' => 'confirm_item', 'item_id' => (string)$testDisbursementItemId],
+        'receipt_file',
+        'receipt.png',
+        $pngBytes,
+        'image/png',
+        $receiptNannyToken
+    );
+    mobileApiExpect(
+        $duplicateConfirm['status'] === 409
+        && (string)($pdo->query('SELECT status FROM disbursement_items WHERE id=' . $testDisbursementItemId)->fetchColumn()) === 'paid',
+        'repeated nanny receipt confirmation is rejected without changing the paid item'
+    );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
     $r = mobileApiRequest('/api/v1/notifications/index.php', 'GET', null, $token);
     $listedNotificationIds = array_map(
@@ -919,6 +1012,23 @@ try {
     }
     if ($testSponsorRequestId > 0) {
         $pdo->prepare('DELETE FROM sponsor_requests WHERE id=?')->execute([$testSponsorRequestId]);
+    }
+    if ($testDisbursementItemId > 0) {
+        $receiptLookup = $pdo->prepare('SELECT receipt_file_path FROM disbursement_items WHERE id=?');
+        $receiptLookup->execute([$testDisbursementItemId]);
+        $storedReceipt = (string)($receiptLookup->fetchColumn() ?: '');
+        if (str_starts_with($storedReceipt, 'storage/receipts/family/')) {
+            $receiptFile = dirname(__DIR__) . '/' . $storedReceipt;
+            if (is_file($receiptFile)) @unlink($receiptFile);
+        }
+        if ($testDisbursementId > 0) {
+            $pdo->prepare("DELETE FROM audit_log WHERE action='DISBURSEMENT_CONFIRM_ITEM' AND entity_type='monthly_disbursements' AND entity_id=? AND created_at>=?")
+                ->execute([$testDisbursementId, $testStart]);
+        }
+        $pdo->prepare('DELETE FROM disbursement_items WHERE id=?')->execute([$testDisbursementItemId]);
+    }
+    if ($testDisbursementId > 0) {
+        $pdo->prepare('DELETE FROM monthly_disbursements WHERE id=?')->execute([$testDisbursementId]);
     }
     if ($testNannyFamilyId > 0) {
         $pdo->prepare('DELETE FROM families WHERE id=?')->execute([$testNannyFamilyId]);
