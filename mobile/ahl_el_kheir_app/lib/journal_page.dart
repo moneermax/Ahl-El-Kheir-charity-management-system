@@ -9,7 +9,7 @@ class JournalPage extends StatefulWidget {
   });
 
   final bool english;
-  final Future<Map<String, dynamic>> Function({String from, String to}) loadEntries;
+  final Future<Map<String, dynamic>> Function({required String from, required String to}) loadEntries;
   final Future<Map<String, dynamic>> Function(int id) loadEntry;
 
   @override
