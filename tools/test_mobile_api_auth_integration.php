@@ -104,6 +104,12 @@ $server = null;
 $serverPipes = [];
 $failure = null;
 $testProjectId = 0;
+$testArchiveSourceId = 0;
+$testArchiveDocumentId = 0;
+$testArchiveVersionId = 0;
+$testArchiveBlobId = 0;
+$testArchiveAbsolutePath = '';
+$testArchiveDirectory = '';
 $testPaymentId = 0;
 $testMilestoneId = 0;
 $testDraftMilestoneId = 0;
@@ -227,6 +233,58 @@ try {
     $adminToken = (string)$adminLogin['json']['data']['access_token'];
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
+    // Register one real file through the existing archive adapter so both search and
+    // bearer-protected binary delivery are exercised with a real archive row.
+    $testArchiveRelativePath = 'storage/documents/projects/' . $testProjectId . '/mobile-api-archive-fixture.pdf';
+    $testArchiveAbsolutePath = dirname(__DIR__) . '/' . $testArchiveRelativePath;
+    $testArchiveDirectory = dirname($testArchiveAbsolutePath);
+    if (!is_dir($testArchiveDirectory) && !mkdir($testArchiveDirectory, 0775, true) && !is_dir($testArchiveDirectory)) {
+        throw new RuntimeException('Could not create the temporary archive fixture directory.');
+    }
+    $testArchiveBytes = "%PDF-1.4\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF\n";
+    if (file_put_contents($testArchiveAbsolutePath, $testArchiveBytes) !== strlen($testArchiveBytes)) {
+        throw new RuntimeException('Could not write the temporary archive fixture file.');
+    }
+    $pdo->prepare('INSERT INTO project_documents (project_id, document_type, title, file_path, original_name, mime_type, file_size, uploaded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)')
+        ->execute([$testProjectId, 'other', 'Mobile API archive fixture unique', $testArchiveRelativePath, 'mobile-api-archive-fixture.pdf', 'application/pdf', strlen($testArchiveBytes), $userId]);
+    $testArchiveSourceId = (int)$pdo->lastInsertId();
+    require_once dirname(__DIR__) . '/modules/projects/lib_project_document_archive.php';
+    $archiveDb = db();
+    $archiveDb->beginTransaction();
+    try {
+        akp_archive_register_project_file('project_documents', $testArchiveSourceId, $testProjectId, $testArchiveRelativePath, 'mobile-api-archive-fixture.pdf', 'application/pdf', strlen($testArchiveBytes), 'Mobile API archive fixture unique');
+        $archiveDb->commit();
+    } catch (Throwable $archiveError) {
+        if ($archiveDb->inTransaction()) $archiveDb->rollBack();
+        throw $archiveError;
+    }
+    $archiveLocator = $pdo->prepare('SELECT document_id, current_version_id FROM document_archive_source_links WHERE source_table=? AND source_record_id=? AND source_path_column=? LIMIT 1');
+    $archiveLocator->execute(['project_documents', $testArchiveSourceId, 'file_path']);
+    $archiveLink = $archiveLocator->fetch(PDO::FETCH_ASSOC) ?: [];
+    $testArchiveDocumentId = (int)($archiveLink['document_id'] ?? 0);
+    $testArchiveVersionId = (int)($archiveLink['current_version_id'] ?? 0);
+    $archiveBlobQuery = $pdo->prepare('SELECT blob_id FROM document_archive_versions WHERE id=? AND document_id=?');
+    $archiveBlobQuery->execute([$testArchiveVersionId, $testArchiveDocumentId]);
+    $testArchiveBlobId = (int)$archiveBlobQuery->fetchColumn();
+    mobileApiExpect($testArchiveSourceId > 0 && $testArchiveDocumentId > 0 && $testArchiveVersionId > 0 && $testArchiveBlobId > 0, 'archive fixture is registered through the existing versioning helper');
+
+    $archiveFixtureSearch = mobileApiRequest('/api/v1/search/documents.php?q=' . rawurlencode('Mobile API archive fixture unique'), 'GET', null, $adminToken, 20);
+    $archiveFixtureItems = $archiveFixtureSearch['json']['data']['items'] ?? [];
+    mobileApiExpect(
+        $archiveFixtureSearch['status'] === 200
+        && count($archiveFixtureItems) === 1
+        && (int)($archiveFixtureItems[0]['version_id'] ?? 0) === $testArchiveVersionId
+        && !array_key_exists('storage_key', $archiveFixtureItems[0] ?? []),
+        'administrator search returns the archived project document without exposing its storage key'
+    );
+    $archiveFile = mobileApiRequest('/api/v1/search/document_file.php?version_id=' . $testArchiveVersionId, 'GET', null, $adminToken, 20);
+    $archiveFileHeaders = implode("\n", $archiveFile['headers']);
+    mobileApiExpect(
+        $archiveFile['status'] === 200
+        && str_starts_with($archiveFile['raw'], '%PDF-1.4')
+        && stripos($archiveFileHeaders, 'Content-Type: application/pdf') !== false,
+        'authorized archive version streams private PDF bytes inside the native API'
+    );
     $archiveSearch = mobileApiRequest('/api/v1/search/documents.php?q=__mobile_api_no_match__', 'GET', null, $adminToken, 20);
     mobileApiExpect(
         $archiveSearch['status'] === 200
@@ -1891,6 +1949,16 @@ try {
         $pdo->prepare('DELETE FROM sponsor_payments WHERE id=?')->execute([$testPaymentId]);
     }
     if ($testProjectId > 0) {
+        if ($testArchiveDocumentId > 0) {
+            $pdo->prepare('DELETE FROM document_archive_events WHERE document_id=?')->execute([$testArchiveDocumentId]);
+            $pdo->prepare('DELETE FROM document_archive_source_links WHERE document_id=?')->execute([$testArchiveDocumentId]);
+            $pdo->prepare('DELETE FROM document_archive_versions WHERE document_id=?')->execute([$testArchiveDocumentId]);
+            $pdo->prepare('DELETE FROM document_archive_documents WHERE id=?')->execute([$testArchiveDocumentId]);
+        }
+        if ($testArchiveBlobId > 0) $pdo->prepare('DELETE FROM document_archive_blobs WHERE id=?')->execute([$testArchiveBlobId]);
+        if ($testArchiveSourceId > 0) $pdo->prepare('DELETE FROM project_documents WHERE id=? AND project_id=?')->execute([$testArchiveSourceId, $testProjectId]);
+        if ($testArchiveAbsolutePath !== '' && is_file($testArchiveAbsolutePath)) @unlink($testArchiveAbsolutePath);
+        if ($testArchiveDirectory !== '' && is_dir($testArchiveDirectory)) @rmdir($testArchiveDirectory);
         $pdo->prepare('DELETE FROM project_progress_updates WHERE project_id=?')->execute([$testProjectId]);
         $pdo->prepare('DELETE FROM project_milestones WHERE project_id=?')->execute([$testProjectId]);
         if ($testForeignProjectId > 0) $pdo->prepare('DELETE FROM project_milestones WHERE project_id=?')->execute([$testForeignProjectId]);
