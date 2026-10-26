@@ -2962,5 +2962,13 @@ The salary verification workflow run [#3495](https://github.com/moneermax/Ahl-El
 
 - Audited the shared native-tool route list against `mobile/ahl_el_kheir_app/lib/main.dart`. The role tools exposed `modules/accounting/disbursements.php` as a native tool, but `openNativeTool()` had no corresponding route, so selecting it showed the generic “not available natively yet” message instead of opening the already-implemented native disbursement page.
 - Fixed in commit `4444397352d8cb95316e43eb76e5f10e355fb207`: the route now calls `openAdminDisbursements()` and applies the same explicit allowed-role list as the existing `disbursements` route key (`admin`, `financial_manager`, `general_manager`, `accountant_staff`, `nanny`). The API remains authoritative for scoped data and operation capabilities.
-- Android workflow `40372872420` was queued for this exact source commit when last checked. Do not claim the change passes Flutter analysis/tests/build until that workflow completes successfully.
+- Android workflow `40372872420` later completed successfully for this exact source commit; details are recorded in the verification entry below.
 - CI noise fix: commit `e34aa69b477d76783df90b6d52f87808351520ed` limits PHP verification to relevant source paths; the workflow itself passed in run `40372688782`. Documentation-only commits no longer match its trigger paths.
+
+
+## 2026-10-26 — Native disbursements build verification completed
+
+- Android workflow `40372872420` completed successfully for source commit `4444397352d8cb95316e43eb76e5f10e355fb207`: Dart analysis PASS, Flutter tests PASS, debug APK build PASS, artifact upload PASS.
+- Artifact: `ahl-el-kheir-flutter-android-debug-apk`, ID `12673971537`, size `102,393,732` bytes, expires `2026-11-25T18:00:37Z`. [Workflow run](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40372872420).
+- Build log confirms the APK was compiled with `API_BASE_URL=http://192.168.18.9:8081/AhlElKheir/api/v1` and `MOBILE_BUILD_REVISION=4444397352d8cb95316e43eb76e5f10e355fb207`. The artifact also contains `mobile-build-info.txt` with build provenance.
+- This verifies CI build/test only. It does not prove that `192.168.18.9:8081` is reachable from the user's phone, that Apache/API/database are healthy, or that on-device sign-in succeeds. Do not describe those as tested.
