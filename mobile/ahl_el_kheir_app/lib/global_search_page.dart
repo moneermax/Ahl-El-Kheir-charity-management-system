@@ -34,6 +34,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     if (['admin','vice_general_manager','general_manager','supervisor','nanny'].contains(r)) result.add('families');
     if (['admin','vice_general_manager','general_manager','supervisor'].contains(r)) result.add('sponsors');
     if (['admin','vice_general_manager','general_manager','supervisor','accountant'].contains(r)) result.add('sponsorships');
+    if (['admin','financial_manager','general_manager','accountant_staff','nanny'].contains(r)) result.add('payments');
     return result;
   }
 
@@ -44,6 +45,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     'families' => t('الأسر والأيتام','Families & children'),
     'sponsors' => t('الكفلاء','Sponsors'),
     'sponsorships' => t('الكفالات','Sponsorships'),
+    'payments' => t('التحويلات الشهرية','Monthly disbursements'),
     _ => type,
   };
 
@@ -76,12 +78,14 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
   String titleFor(Map<String,dynamic> x) => switch(selectedType) {
     'families' => (x['mother_name']?.toString() ?? '') + ' · ' + (x['family_code']?.toString() ?? ''),
     'sponsors' => (x['full_name']?.toString() ?? '') + ' · ' + (x['sponsor_code']?.toString() ?? ''),
+    'payments' => '${x['month']?.toString() ?? ''} · ${t('دفعة #','Batch #')}${x['id']?.toString() ?? ''}',
     _ => x['sponsorship_code']?.toString() ?? '',
   };
 
   String subtitleFor(Map<String,dynamic> x) => switch(selectedType) {
     'families' => (x['mother_phone']?.toString() ?? '') + ' · ' + t('عدد الأطفال: ','Children: ') + (x['children_count']?.toString() ?? '0') + ' · ' + statusLabel(x['status']?.toString() ?? ''),
     'sponsors' => (x['phone']?.toString() ?? '') + ' · ' + t('الكفالات النشطة: ','Active sponsorships: ') + (x['active_sponsorship_count']?.toString() ?? '0') + ' · ' + statusLabel(x['status']?.toString() ?? ''),
+    'payments' => (x['group_name']?.toString() ?? '') + ' · ' + (x['nanny_name']?.toString() ?? '') + ' · ' + (x['total_amount']?.toString() ?? '0') + ' · ' + statusLabel(x['status']?.toString() ?? ''),
     _ => (x['sponsor_name']?.toString() ?? '') + ' · ' + (x['child_name']?.toString() ?? '') + ' · ' + (x['family_code']?.toString() ?? '') + ' · ' + (double.tryParse(x['monthly_amount']?.toString() ?? '0') ?? 0).toStringAsFixed(2) + ' SDG · ' + statusLabel(x['status']?.toString() ?? ''),
   };
 
@@ -116,7 +120,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
             : RefreshIndicator(onRefresh:()=>search(targetPage:page),child:ListView.separated(physics:const AlwaysScrollableScrollPhysics(),padding:const EdgeInsets.fromLTRB(16,4,16,16),itemCount:items.length,separatorBuilder:(_,__)=>const SizedBox(height:8),itemBuilder:(context,index){
               final item=items[index];
               return Card(child:ListTile(
-                leading:CircleAvatar(child:Icon(switch(selectedType){'families'=>Icons.family_restroom_rounded,'sponsors'=>Icons.volunteer_activism_rounded,_=>Icons.handshake_rounded})),
+                leading:CircleAvatar(child:Icon(switch(selectedType){'families'=>Icons.family_restroom_rounded,'sponsors'=>Icons.volunteer_activism_rounded,'payments'=>Icons.account_balance_wallet_rounded,_=>Icons.handshake_rounded})),
                 title:Text(titleFor(item),maxLines:2,overflow:TextOverflow.ellipsis),
                 subtitle:Text(subtitleFor(item),maxLines:3,overflow:TextOverflow.ellipsis),
                 trailing:const Icon(Icons.chevron_right_rounded),
@@ -129,7 +133,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
             Text(t('صفحة ','Page ')+page.toString()+t(' من ',' of ')+pages.toString()),
             OutlinedButton(onPressed:page<pages?()=>search(targetPage:page+1):null,child:Text(t('التالي','Next'))),
           ]))),
-          Padding(padding:const EdgeInsets.fromLTRB(16,0,16,14),child:Text(t('البحث في الدفعات الشهرية ومستندات المشاريع المؤرشفة ما زال قيد التنفيذ داخل التطبيق.','Search for monthly disbursements and archived project documents is still being implemented natively.'),textAlign:TextAlign.center,style:Theme.of(context).textTheme.bodySmall)),
+          Padding(padding:const EdgeInsets.fromLTRB(16,0,16,14),child:Text(t('البحث في مستندات المشاريع المؤرشفة ما زال قيد التنفيذ داخل التطبيق.','Search for archived project documents is still being implemented natively.'),textAlign:TextAlign.center,style:Theme.of(context).textTheme.bodySmall)),
         ]),
     );
   }
