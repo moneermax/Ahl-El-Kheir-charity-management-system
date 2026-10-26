@@ -15,9 +15,6 @@ import 'admin_dashboard_page.dart';
 import 'admin_finance_overview_page.dart';
 import 'admin_accounts_page.dart';
 import 'admin_disbursements_page.dart';
-import 'admin_database_page.dart';
-import 'admin_backup_page.dart';
-import 'package:file_picker/file_picker.dart';
 import 'role_dashboard_page.dart';
 import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
@@ -39,6 +36,9 @@ import 'orphaned_families_report_page.dart';
 import 'fina_collection_page.dart';
 import 'fina_review_page.dart';
 import 'fina_dashboard_page.dart';
+import 'admin_database_page.dart';
+import 'admin_backup_page.dart';
+import 'package:file_picker/file_picker.dart';
 
 void main() => runApp(const AhlElKheirApp());
 String? normalizeApiBaseUrl(String value) {
@@ -502,7 +502,40 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     try {
-      final uri = Uri.parse(apiBaseUrl.replaceFirst(RegExp(r'/+
+      final uri = Uri.parse(apiBaseUrl.replaceFirst(RegExp(r'/+$'), '') + '/admin/backups.php?download=' + Uri.encodeQueryComponent(filename));
+      final response = await http.get(uri, headers: {'Accept': 'application/sql', 'Authorization': 'Bearer ' + token}).timeout(const Duration(seconds: 60));
+      if (response.statusCode < 200 || response.statusCode >= 300) {
+        String message = english ? 'Backup download failed.' : 'تعذر تنزيل النسخة الاحتياطية.';
+        try {
+          final decoded = jsonDecode(utf8.decode(response.bodyBytes));
+          if (decoded is Map && decoded['error'] is Map) message = (decoded['error']['message'] ?? message).toString();
+        } catch (_) {}
+        throw ApiFailure(message, statusCode: response.statusCode);
+      }
+      final savedPath = await FilePicker.platform.saveFile(
+        dialogTitle: english ? 'Save database backup' : 'حفظ النسخة الاحتياطية',
+        fileName: filename,
+        bytes: response.bodyBytes,
+      );
+      return savedPath != null && savedPath.isNotEmpty;
+    } on ApiFailure {
+      rethrow;
+    } catch (_) {
+      throw ApiFailure(english ? 'Could not save the backup file.' : 'تعذر حفظ ملف النسخة الاحتياطية.');
+    }
+  }
+
+  void openAdminBackupPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => AdminBackupPage(
+      english: english,
+      loadBackups: loadAdminBackups,
+      createBackup: createAdminBackup,
+      deleteBackup: deleteAdminBackup,
+      downloadBackup: downloadAdminBackup,
+    )));
+  }
+
+  Future<Map<String, dynamic>> loadAdminDisbursements({
     required String month,
     required String status,
     required String query,
@@ -542,13 +575,11 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
   }
 
   void openFinaDashboard() {
-    navigatorKey.currentState?.push(MaterialPageRoute<void>(
-      builder: (_) => FinaDashboardPage(
-        english: english,
-        loadDashboard: loadFinaDashboard,
-        onOpenReview: () => openNativeTool('modules/accounting/fina_payment_review.php'),
-      ),
-    ));
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => FinaDashboardPage(
+      english: english,
+      loadDashboard: loadFinaDashboard,
+      onOpenReview: () => openNativeTool('modules/accounting/fina_payment_review.php'),
+    )));
   }
 
   Future<Map<String, dynamic>> loadFinaSponsors(String query) async {
@@ -967,24 +998,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openNativeTool('modules/reports/index.php');
         return;
       case 'backup':
-        openNativeTool('modules/system/backup.php');
-        return;
-      case 'backup':
         if (user?['role_code']?.toString() != 'admin') {
-          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-            SnackBar(content: Text(english ? 'Database backup is restricted to the administrator role.' : 'النسخ الاحتياطي متاح لدور المسؤول فقط.')),
-          );
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(SnackBar(content: Text(english ? 'Database backup is restricted to the administrator role.' : 'النسخ الاحتياطي متاح لدور المسؤول فقط.')));
           return;
         }
         openAdminBackupPage();
         return;
       case 'database':
         if (user?['role_code']?.toString() != 'admin') {
-          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-            SnackBar(content: Text(english
-                ? 'Database browser is restricted to the administrator role.'
-                : 'متصفح قاعدة البيانات متاح لدور المسؤول فقط.')),
-          );
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(SnackBar(content: Text(english ? 'Database browser is restricted to the administrator role.' : 'متصفح قاعدة البيانات متاح لدور المسؤول فقط.')));
           return;
         }
         openAdminDatabase();
