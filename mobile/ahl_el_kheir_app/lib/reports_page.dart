@@ -95,7 +95,7 @@ class _ReportsPageState extends State<ReportsPage> {
                   const SizedBox(height: 8),
                   ...reports.map((report) {
                     final key = report['key']?.toString() ?? '';
-                    final native = report['native'] == true;
+                    final native = report['native'] == true || ['financial', 'sponsorship', 'operational', 'hr'].contains(key);
                     return Card(
                       margin: const EdgeInsets.only(bottom: 8),
                       child: ListTile(

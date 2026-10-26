@@ -363,6 +363,10 @@ try {
     ], $adminToken, 20);
     mobileApiExpect($duplicateVoid['status'] === 409, 'a voided batch cannot be voided a second time');
 
+    $financialReport = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-10-01&to=2026-10-31', 'GET', null, $adminToken, 20);
+    mobileApiExpect($financialReport['status'] === 200 && is_array($financialReport['json']['data']['rows'] ?? null), 'administrator can load native financial report rows');
+    $invalidReportRange = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-11-01&to=2026-10-01', 'GET', null, $adminToken);
+    mobileApiExpect($invalidReportRange['status'] === 422, 'native report rejects reversed date ranges');
     $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
     mobileApiExpect(
         $databaseIndex['status'] === 200
@@ -466,6 +470,8 @@ try {
 
     $nannyFinaDashboard = mobileApiRequest('/api/v1/fina/dashboard.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinaDashboard['status'] === 403, 'nanny cannot access the Fina dashboard');
+    $nannyFinancialReport = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-10-01&to=2026-10-31', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyFinancialReport['status'] === 403, 'nanny cannot access financial reports');
     $nannyDatabase = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyDatabase['status'] === 403, 'nanny cannot access the administrator database browser');
     $nannyBackupList = mobileApiRequest('/api/v1/admin/backups.php', 'GET', null, $nannyFinaToken);

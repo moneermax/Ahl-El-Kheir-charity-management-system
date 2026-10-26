@@ -32,6 +32,7 @@ import 'admin_departments_page.dart';
 import 'admin_recovery_page.dart';
 import 'admin_settings_page.dart';
 import 'reports_page.dart';
+import 'native_report_detail_page.dart';
 import 'orphaned_families_report_page.dart';
 import 'fina_collection_page.dart';
 import 'fina_review_page.dart';
@@ -968,6 +969,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'reports/overview.php', token: token);
   }
 
+  Future<Map<String, dynamic>> loadNativeReportDetail(String report, String type, String from, String to) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final query = Uri(queryParameters: {'report': report, 'type': type, 'from': from, 'to': to}).query;
+    return call('GET', 'reports/detail.php?' + query, token: token);
+  }
+
+  void openNativeReportDetail(String report) {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => NativeReportDetailPage(reportKey: report, english: english, loadReport: loadNativeReportDetail),
+    ));
+  }
+
   Future<Map<String, dynamic>> loadOrphanedFamiliesReport(String city, String status) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -982,7 +996,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         english: english,
         loadOverview: loadReportsOverview,
         openReport: (key) {
-          if (key == 'orphaned') openOrphanedFamiliesReport();
+          if (key == 'orphaned') {
+            openOrphanedFamiliesReport();
+          } else if (['financial', 'sponsorship', 'operational', 'hr'].contains(key)) {
+            openNativeReportDetail(key);
+          } else {
+            ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+              SnackBar(content: Text(english ? 'This report is not available natively yet.' : 'هذا التقرير غير متاح داخل التطبيق حتى الآن.')),
+            );
+          }
         },
       ),
     ));
