@@ -83,7 +83,7 @@ void main() {
     expect(find.text('Batch details #4'), findsOneWidget);
     expect(find.text('Family Mother'), findsOneWidget);
     expect(find.text('FAM-007 · Children: 2 · Paid'), findsOneWidget);
-    expect(find.textContaining('Read-only — batches cannot be changed'), findsOneWidget);
+    expect(find.textContaining('Read-only — batch actions are not yet available'), findsOneWidget);
   });
 
   testWidgets('nanny can choose and submit a required receipt for a pending family item', (tester) async {
