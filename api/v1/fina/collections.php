@@ -7,8 +7,8 @@ require_once dirname(__DIR__, 3) . '/modules/accounting/lib_transaction_review.p
 
 ak_api_require_method('POST');
 $user = ak_api_authenticated_user();
-$role = (string)($user['role_code'] ?? '');
-if (!in_array($role, ['admin', 'financial_manager'], true)) {
+$role = (string)($user['raw_role_code'] ?? '');
+if (!in_array($role, ['admin', 'financial_manager', 'fm'], true)) {
     ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Fina collection registration is restricted to Finance Manager and Administrator.']]);
 }
 

@@ -148,6 +148,24 @@ try {
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
 
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+    $nannyFinaLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($nannyFinaLogin['status'] === 200 && isset($nannyFinaLogin['json']['data']['access_token']), 'nanny login succeeds for Fina role-denial integration');
+    $nannyFinaToken = (string)$nannyFinaLogin['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $nannyFinaToken);
+    $nannyCreateFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
+        'source_type' => 'person', 'source_name' => 'Nanny denied fixture',
+        'amount' => '10.00', 'method' => 'cash', 'date' => date('Y-m-d'),
+    ], $nannyFinaToken);
+    mobileApiExpect($nannyCreateFina['status'] === 403, 'nanny cannot create Fina collections');
+    $nannyFinaSponsors = mobileApiRequest('/api/v1/fina/sponsors.php?q=Test', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyFinaSponsors['status'] === 403, 'nanny cannot use Fina sponsor lookup');
+    $nannyFinaReview = mobileApiRequest('/api/v1/fina/review.php', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyFinaReview['status'] === 403, 'nanny cannot view Fina review/history');
+    $nannyFinaReceipt = mobileApiRequest('/api/v1/fina/receipt.php?id=1', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyFinaReceipt['status'] === 403, 'nanny cannot access Fina receipt delivery');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+
     $unauthenticatedFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
         'source_type' => 'person', 'source_name' => 'Unauthenticated fixture',
         'amount' => '10.00', 'method' => 'cash', 'date' => date('Y-m-d'),

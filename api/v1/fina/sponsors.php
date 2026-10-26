@@ -5,7 +5,7 @@ require_once dirname(__DIR__) . '/_bootstrap.php';
 
 ak_api_require_method('GET');
 $user = ak_api_authenticated_user();
-if (!in_array((string)($user['role_code'] ?? ''), ['admin', 'financial_manager'], true)) {
+if (!in_array((string)($user['raw_role_code'] ?? ''), ['admin', 'financial_manager', 'fm'], true)) {
     ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Fina sponsor lookup is restricted to Finance Manager and Administrator.']]);
 }
 

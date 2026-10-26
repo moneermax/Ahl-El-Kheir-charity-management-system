@@ -6,8 +6,8 @@ require_once dirname(__DIR__, 3) . '/modules/accounting/fina_lib.php';
 
 ak_api_require_method('GET');
 $user = ak_api_authenticated_user();
-$role = (string)($user['role_code'] ?? '');
-$allowed = ['admin','vice_general_manager','general_manager','supervisor','accountant','accountant_staff','financial_manager'];
+$role = (string)($user['raw_role_code'] ?? '');
+$allowed = ['admin','vice_general_manager','general_manager','supervisor','financial_manager','fm'];
 if (!in_array($role, $allowed, true)) {
     ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Fina receipt access is not permitted.']]);
 }

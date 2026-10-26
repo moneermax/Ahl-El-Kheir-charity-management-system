@@ -12,9 +12,9 @@ if (!in_array($method, ['GET', 'POST'], true)) {
 }
 
 $user = ak_api_authenticated_user();
-$role = (string)($user['role_code'] ?? '');
-$canReview = ak_transaction_review_is_fm($role);
-$canView = in_array($role, ['financial_manager', 'supervisor', 'admin', 'vice_general_manager'], true);
+$role = (string)($user['raw_role_code'] ?? '');
+$canReview = in_array($role, ['financial_manager', 'fm', 'admin'], true);
+$canView = in_array($role, ['financial_manager', 'fm', 'supervisor', 'admin', 'vice_general_manager'], true);
 if ($method === 'GET' && !$canView) {
     ak_api_json(403, ['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Fina review access is not permitted.']]);
 }
