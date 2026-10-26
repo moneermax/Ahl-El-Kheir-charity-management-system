@@ -132,6 +132,16 @@ void main() {
     expect(find.byKey(const Key('admin-tool-finance-dashboard')), findsOneWidget);
     await tester.tap(find.text('Finance dashboard'));
     expect(openedTool, 'finance_dashboard');
+
+    await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-accounts')), 180, scrollable: scrollable);
+    expect(find.byKey(const Key('admin-tool-accounts')), findsOneWidget);
+    expect(find.text('Chart of accounts is not available in the app yet'), findsNothing);
+
+    await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-disbursements')), 180, scrollable: scrollable);
+    expect(find.byKey(const Key('admin-tool-disbursements')), findsOneWidget);
+    expect(find.text('Monthly disbursements are not available in the app yet'), findsNothing);
+    await tester.tap(find.text('Monthly disbursements'));
+    expect(openedTool, 'disbursements');
     expect(tester.takeException(), isNull);
   });
 
