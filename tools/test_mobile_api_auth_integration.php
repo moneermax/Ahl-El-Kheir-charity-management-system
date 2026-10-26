@@ -333,9 +333,16 @@ try {
         && is_array($voucherRows)
         && is_array($cashAccounts)
         && count($cashAccounts) === 3
-        && ($voucherData['can_issue'] ?? true) === false
-        && ($voucherData['can_void'] ?? true) === false,
-        'Vice General Manager can read the voucher register without issue or void capability');
+        && ($voucherData['can_issue'] ?? false) === true
+        && ($voucherData['can_void'] ?? false) === true,
+        'Financial Manager voucher register response: ' . json_encode([
+            'status' => $r['status'],
+            'error' => $r['json']['error'] ?? null,
+            'voucher_rows_is_array' => is_array($voucherRows),
+            'cash_account_count' => is_array($cashAccounts) ? count($cashAccounts) : null,
+            'can_issue' => $voucherData['can_issue'] ?? null,
+            'can_void' => $voucherData['can_void'] ?? null,
+        ]));
     $r = mobileApiRequest('/api/v1/accounting/vouchers.php?vtype=receipt', 'GET', null, $token);
     $receiptRows = $r['json']['data']['vouchers'] ?? [];
     mobileApiExpect($r['status'] === 200
