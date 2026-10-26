@@ -112,6 +112,7 @@ jobs:
           php -l api/v1/hr/payroll_policy.php
           php -l api/v1/hr/payroll_management.php
           php -l api/v1/hr/payroll_proof.php
+          php -l api/v1/auth/change_password.php
           php -l modules/hr/lib_payroll_management.php
           php -l modules/hr/lib_payroll_accounting.php
           php -l modules/hr/payroll.php
