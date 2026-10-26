@@ -14,7 +14,7 @@ class _AdminFinanceOverviewPageState extends State<AdminFinanceOverviewPage> {
   num n(Map<String,dynamic> m,String key)=>num.tryParse(m[key]?.toString()??'')??0;
   String money(num v)=>v.toStringAsFixed(2).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'),(m)=>',');
   Future<void> refresh() async {
-    setState(()=>{loading=true,error=null});
+    setState(() { loading = true; error = null; });
     try {final v=await widget.loadOverview();if(mounted)setState(()=>data=v);}
     catch(e){if(mounted)setState(()=>error=e.toString());}
     finally{if(mounted)setState(()=>loading=false);}

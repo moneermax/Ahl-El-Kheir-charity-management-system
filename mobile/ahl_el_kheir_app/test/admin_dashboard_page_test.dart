@@ -100,6 +100,11 @@ void main() {
     await scrollTo('PROTECTION & MAINTENANCE');
     expect(find.byKey(const Key('admin-tool-audit')), findsNothing,
         reason: 'Audit tile must not be advertised to Sudo.');
+    // Move back into the finance/protection area so this assertion checks the
+    // rendered list region, not merely off-screen lazy-list children.
+    await tester.drag(scrollable, const Offset(0, 500));
+    await tester.pumpAndSettle();
+    expect(find.text('FINANCE'), findsNothing);
     for (final key in [
       'admin-tool-finance-dashboard', 'admin-tool-accounts', 'admin-tool-transactions',
       'admin-tool-disbursements', 'admin-tool-fina', 'admin-tool-backup', 'admin-tool-database',
