@@ -177,8 +177,9 @@ try {
     mobileApiExpect(
         $downloadedBackup['status'] === 200
         && strlen($downloadedBackup['raw']) > 500
-        && str_contains($downloadedBackup['raw'], 'CREATE TABLE'),
-        'administrator can download the generated SQL backup through the authenticated API'
+        && str_contains($downloadedBackup['raw'], 'CREATE TABLE')
+        && preg_match('/^-- (?:MariaDB|MySQL) dump/m', ltrim($downloadedBackup['raw'])) === 1,
+        'administrator can download a clean SQL dump through the authenticated API'
     );
     $deletedBackup = mobileApiRequest('/api/v1/admin/backups.php', 'POST', ['action' => 'delete', 'filename' => $testBackupName], $adminToken, 20);
     mobileApiExpect(

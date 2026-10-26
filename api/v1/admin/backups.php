@@ -96,18 +96,22 @@ $dbCfg = [
 $mysqldump = is_file('D:/xampp/mysql/bin/mysqldump.exe') ? 'D:/xampp/mysql/bin/mysqldump.exe' : 'mysqldump';
 $filename = 'backup_' . date('Ymd_His') . '_' . bin2hex(random_bytes(3)) . '.sql';
 $path = $backupsDir . '/' . $filename;
+$errorPath = $path . '.err';
 $command = escapeshellarg($mysqldump)
     . ' --host=' . escapeshellarg((string)$dbCfg['host'])
     . ' --user=' . escapeshellarg((string)$dbCfg['user'])
     . ((string)$dbCfg['pass'] !== '' ? ' --password=' . escapeshellarg((string)$dbCfg['pass']) : '')
     . ' --default-character-set=utf8mb4 --single-transaction --routines --triggers '
     . escapeshellarg((string)$dbCfg['name'])
-    . ' > ' . escapeshellarg($path) . ' 2>&1';
+    . ' > ' . escapeshellarg($path) . ' 2> ' . escapeshellarg($errorPath);
 $out = [];
 $ret = 1;
 exec($command, $out, $ret);
+$errorOutput = is_file($errorPath) ? trim((string)file_get_contents($errorPath)) : '';
+@unlink($errorPath);
 if ($ret !== 0 || !is_file($path) || (int)filesize($path) <= 500) {
     @unlink($path);
+    if ($errorOutput !== '') error_log('Mobile database backup command error: ' . substr($errorOutput, 0, 1000));
     error_log('Mobile database backup command failed; exit code ' . $ret);
     ak_api_json(500, ['ok' => false, 'error' => ['code' => 'backup_create_failed', 'message' => 'The database backup could not be created. Check mysqldump availability and database permissions.']]);
 }
