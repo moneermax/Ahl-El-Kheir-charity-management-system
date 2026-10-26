@@ -58,7 +58,7 @@ class _NativeReportDetailPageState extends State<NativeReportDetailPage> {
     'active_employees':t('الموظفون النشطون','Active employees'),
     'present':t('حاضر','Present'),'absent':t('غائب','Absent'),'late':t('متأخر','Late'),
     'half_day':t('نصف يوم','Half day'),'on_leave':t('إجازة','On leave'),'employee_code':t('رمز الموظف','Employee code'),
-    'leave_type':t('نوع الإجازة','Leave type'),'leave_count':t('عدد الإجازات','Leaves'),
+    'leave_type':t('نوع الإجازة','Leave type'),'leave_count':t('عدد الإجازات','Leaves'),'total_days':t('إجمالي الأيام','Total days'),
     'pending':t('معلق','Pending'),'approved':t('معتمد','Approved'),'rejected':t('مرفوض','Rejected'),
     'year':t('السنة','Year'),'total_basic':t('الراتب الأساسي','Basic salary'),'total_allowances':t('البدلات','Allowances'),
     'total_deductions':t('الاستقطاعات','Deductions'),'total_overtime':t('الإضافي','Overtime'),'total_net':t('صافي الرواتب','Net payroll'),
