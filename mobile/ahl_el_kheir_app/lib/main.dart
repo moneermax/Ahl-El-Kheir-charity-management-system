@@ -2517,7 +2517,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               buildRevision: mobileBuildRevision,
               onConfigureApi: configureApiBaseUrl,
               onTestApi: testApiConnection,
-              onForgotPassword: openPasswordRecoveryPage,
+              onForgotPassword: () async => openPasswordRecoveryPage(),
             )
           : Scaffold(
               appBar: PreferredSize(

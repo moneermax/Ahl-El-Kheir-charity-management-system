@@ -23,6 +23,7 @@ void main() {
             toggle: () {},
             submit: (_, __) async {},
             apiBaseUrl: 'http://192.168.1.10:8081/AhlElKheir/api/v1',
+            buildRevision: 'test-revision-123456',
             onConfigureApi: () async {},
             onTestApi: () async {},
             onForgotPassword: () async {},
