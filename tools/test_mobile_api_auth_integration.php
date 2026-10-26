@@ -239,6 +239,12 @@ try {
            SELECT 1 FROM hr_salary_advance_requests r
            WHERE r.employee_id=e.id AND r.status='disbursed' AND COALESCE(r.outstanding_balance,0)>0
          )
+         AND NOT EXISTS (
+           SELECT 1 FROM hr_incentive_awards ia
+           JOIN hr_incentive_events ie ON ie.id=ia.event_id
+           WHERE ia.employee_id=e.id AND ia.payroll_id IS NULL
+             AND ia.status IN ('earned','held_currency') AND ie.status='verified'
+         )
          ORDER BY e.id LIMIT 1"
     )->fetchColumn();
     $testPayrollAccountId = (int)$pdo->query("SELECT id FROM accounts WHERE code='1200' AND is_active=1 ORDER BY id LIMIT 1")->fetchColumn();
