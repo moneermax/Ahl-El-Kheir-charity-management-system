@@ -103,6 +103,7 @@ jobs:
       - name: PHP syntax check for payroll API and shared helpers
         run: |
           php -l api/v1/admin/disbursements.php
+          php -l api/v1/accounting/journal.php
           php -l api/v1/search/sponsors.php
           php -l api/v1/search/documents.php
           php -l api/v1/search/document_file.php
