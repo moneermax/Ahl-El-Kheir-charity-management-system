@@ -1748,9 +1748,12 @@ try {
     $revokedHash = hash('sha256', $revokedToken);
     $testTokenHashes[] = $expiredHash;
     $testTokenHashes[] = $revokedHash;
-    $insert = $pdo->prepare('INSERT INTO mobile_api_sessions (user_id, token_hash, expires_at, revoked_at, created_at, last_used_at) VALUES (?, ?, ?, NULL, NOW(), NOW())');
-    $insert->execute([$userId, $expiredHash, date('Y-m-d H:i:s', time() - 60)]);
-    $insert->execute([$userId, $revokedHash, date('Y-m-d H:i:s', time() + 3600)]);
+    // Use the database clock for expires_at so PHP/DB timezone differences cannot turn
+    // the expired fixture into a future-dated session.
+    $insertExpired = $pdo->prepare('INSERT INTO mobile_api_sessions (user_id, token_hash, expires_at, revoked_at, created_at, last_used_at) VALUES (?, ?, DATE_SUB(NOW(), INTERVAL 60 SECOND), NULL, NOW(), NOW())');
+    $insertFuture = $pdo->prepare('INSERT INTO mobile_api_sessions (user_id, token_hash, expires_at, revoked_at, created_at, last_used_at) VALUES (?, ?, DATE_ADD(NOW(), INTERVAL 3600 SECOND), NULL, NOW(), NOW())');
+    $insertExpired->execute([$userId, $expiredHash]);
+    $insertFuture->execute([$userId, $revokedHash]);
     $pdo->prepare('UPDATE mobile_api_sessions SET revoked_at=NOW() WHERE token_hash=?')->execute([$revokedHash]);
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $expiredToken);
     mobileApiExpect($r['status'] === 401, 'expired sessions are rejected (HTTP ' . $r['status'] . ', code=' . ($r['json']['error']['code'] ?? 'none') . ')');
