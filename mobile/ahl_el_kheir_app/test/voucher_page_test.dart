@@ -58,7 +58,7 @@ void main() {
     expect(find.text('Test sponsor'), findsOneWidget);
     expect(find.text('1250.50'), findsOneWidget);
     expect(find.text('8200.25'), findsOneWidget);
-    expect(find.text('New voucher'), findsOneWidget);
+    expect(find.text('إصدار سند جديد'), findsOneWidget);
     expect(requestedTypes, ['']);
   });
 
@@ -136,7 +136,7 @@ void main() {
       loadVouchers:(_)async{loads++;final v=Map<String,dynamic>.from(sample['data']['vouchers'][0] as Map);v['entry_id']=90;if(loads>1)v['status']='voided';
         return {'ok':true,'data':{'vouchers':[v],'cash_accounts':sample['data']['cash_accounts'],'other_accounts':sample['data']['other_accounts'],'can_issue':false,'can_void':true,'limit':300}};}
     )));
-    await tester.pumpAndSettle(); await tester.tap(find.text('Void voucher')); await tester.pumpAndSettle();
+    await tester.pumpAndSettle(); await tester.ensureVisible(find.text('Void voucher')); await tester.tap(find.text('Void voucher')); await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('voucher-void-reason')),'Duplicate receipt');
     await tester.tap(find.text('Void voucher').last); await tester.pumpAndSettle();
     expect(voided,hasLength(1)); expect(voided.single[0],9); expect(voided.single[1],'Duplicate receipt'); expect(loads,2);
