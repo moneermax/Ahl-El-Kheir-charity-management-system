@@ -558,6 +558,23 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'admin/disbursements.php?${Uri(queryParameters: {'id': id.toString(), 'items_page': page.toString()}).query}', token: token);
   }
 
+  Future<Map<String, dynamic>> loadEligibleDisbursementGroups(String month) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final query = Uri(queryParameters: {'month': month, 'status': 'all', 'page': '1'}).query;
+    return call('GET', 'admin/disbursements.php?$query', token: token);
+  }
+
+  Future<Map<String, dynamic>> createDisbursementBatches(String month, List<int> groupIds) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'admin/disbursements_action.php', token: token, body: {
+      'action': 'create_batch',
+      'month': month,
+      'group_ids': groupIds,
+    });
+  }
+
   Future<PlatformFile?> pickNannyDisbursementReceipt() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
@@ -602,6 +619,50 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
   }
 
+  Future<PlatformFile?> pickDisbursementTransferReceipt() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.single;
+    if (file.bytes == null || file.size <= 0 || file.size > 10 * 1024 * 1024) {
+      throw ApiFailure(english
+          ? 'Choose a PDF, JPG or PNG transfer receipt no larger than 10 MB.'
+          : 'اختر إيصال تحويل PDF أو JPG أو PNG لا يتجاوز 10 ميجابايت.');
+    }
+    return file;
+  }
+
+  Future<Map<String, dynamic>> submitDisbursementTransfer(int batchId, PlatformFile receipt) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    if (receipt.bytes == null) throw const ApiFailure('Receipt bytes are unavailable.');
+    final uri = Uri.parse(apiBaseUrl.replaceFirst(RegExp(r'/+$'), '') + '/admin/disbursements_action.php');
+    final request = http.MultipartRequest('POST', uri)
+      ..headers['Authorization'] = 'Bearer ' + token
+      ..fields['action'] = 'transfer_with_receipt'
+      ..fields['batch_id'] = batchId.toString()
+      ..files.add(http.MultipartFile.fromBytes('transfer_receipt', receipt.bytes!, filename: receipt.name));
+    final streamed = await request.send().timeout(const Duration(seconds: 45));
+    final response = await http.Response.fromStream(streamed);
+    Map<String, dynamic> decoded = {};
+    try {
+      final value = jsonDecode(utf8.decode(response.bodyBytes));
+      if (value is Map) decoded = Map<String, dynamic>.from(value);
+    } catch (_) {}
+    if (response.statusCode < 200 || response.statusCode >= 300 || decoded['ok'] != true) {
+      final error = decoded['error'];
+      final message = error is Map
+          ? (error['message'] ?? (english ? 'Transfer failed.' : 'تعذر تنفيذ التحويل.')).toString()
+          : (english ? 'Transfer failed.' : 'تعذر تنفيذ التحويل.');
+      throw ApiFailure(message, statusCode: response.statusCode);
+    }
+    final data = decoded['data'];
+    return data is Map ? Map<String, dynamic>.from(data) : <String, dynamic>{};
+  }
+
   void openAdminDisbursements() {
     navigatorKey.currentState?.push(MaterialPageRoute<void>(
       builder: (_) => AdminDisbursementsPage(
@@ -611,6 +672,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         loadDetail: loadAdminDisbursementDetail,
         pickReceipt: pickNannyDisbursementReceipt,
         submitItemConfirmation: submitNannyDisbursementConfirmation,
+        loadEligibleGroups: loadEligibleDisbursementGroups,
+        createBatches: createDisbursementBatches,
+        pickTransferReceipt: pickDisbursementTransferReceipt,
+        submitTransfer: submitDisbursementTransfer,
       ),
     ));
   }
