@@ -36,3 +36,9 @@ Updated: 2026-10-26
 6. Update the canonical session index, master status, master audit and continuation prompt after runtime/build checks.
 
 Do not create a test collection in the user's production/local database without explicit authorization. Do not claim this slice is runtime verified based only on CI.
+
+## Mobile entrypoint source repair — 2026-10-26
+
+- GitHub Actions run `40285101156` failed during Dart analysis before tests/build. The log identified a malformed duplicate trailing block in `mobile/ahl_el_kheir_app/lib/main.dart`: source after the complete `NotificationDetailPage` ended at line 2612 was appended again, beginning with a clipped fragment of the multipart Fina request and duplicating the app widget/page classes. This produced out-of-scope references and duplicate declarations.
+- Commit `defdafbd103e7f091b3761501c4dad2b88318b39` removes only that malformed trailing block, preserving the first complete app entrypoint and its Fina/API methods. The post-repair workflow is running: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40285490915
+- Do not treat the repair as verified until the current workflow finishes analyzer, tests, APK build, and artifact publication. If analysis reports further errors, inspect the new exact log before another edit.
