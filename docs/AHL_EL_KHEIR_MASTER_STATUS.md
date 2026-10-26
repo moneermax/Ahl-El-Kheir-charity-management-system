@@ -5066,3 +5066,8 @@ Flutter analysis and all 85 widget tests passed at source 841916ae88481a28ca33bb
 
 
 Correction — mobile Android build gate, 2026-10-26: workflow 40288510863 showed the previous app compile SDK override did not affect the file_picker subproject. Commit d408c1b4d756a8a151f6e7fff120061c595efdac upgrades file_picker to ^10.3.6; app compile SDK remains set to API 36. Finance Manager now has native Fina collection registration and review/history tools; UI access matches the API's exact admin/financial_manager role allowlist. Latest verification run: [40289421824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289421824), still pending. No APK artifact verified yet.
+
+
+## 2026-10-26 — Native Fina API integration PASS
+
+[Workflow 40289622000](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289622000) passed the live PHP API integration against disposable MariaDB using the checked-in Fina standalone schema migration. It verifies unauthenticated denial, zero-amount validation, pending creation, no journal at registration, review queue visibility, and self-approval denial preserving pending status/no journal. This does not prove multipart upload, notification-failure isolation, local XAMPP behavior, or physical-device PDF preview. Current Android build verification is [run 40289711691](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289711691), still in progress at this checkpoint.
