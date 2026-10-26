@@ -100,6 +100,14 @@ $username = (string)$user['username'];
 $knownPassword = 'MobileApi-CI-Only-2026!';
 $testStart = date('Y-m-d H:i:s');
 $testTokenHashes = [];
+$testPasswordChangeRecoveryIds = [];
+try {
+    $recoveryStmt = $pdo->prepare("SELECT id FROM password_recovery_requests WHERE user_id = ? AND status = 'approved'");
+    $recoveryStmt->execute([$userId]);
+    $testPasswordChangeRecoveryIds = array_map('intval', $recoveryStmt->fetchAll(PDO::FETCH_COLUMN));
+} catch (Throwable $recoverySnapshotError) {
+    $testPasswordChangeRecoveryIds = [];
+}
 $server = null;
 $serverPipes = [];
 $failure = null;
@@ -2020,6 +2028,39 @@ try {
     $r = mobileApiRequest('/api/v1/auth/me.php', 'GET', null, $revokedToken);
     mobileApiExpect($r['status'] === 401, 'revoked sessions are rejected');
 
+    $r = mobileApiRequest('/api/v1/auth/change_password.php', 'POST', [
+        'current_password' => 'wrong-current-password',
+        'new_password' => 'MobileApi-New-Password-2026!',
+        'confirm_password' => 'MobileApi-New-Password-2026!',
+    ], $token);
+    mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'current_password_invalid', 'password change rejects an incorrect current password');
+
+    $r = mobileApiRequest('/api/v1/auth/change_password.php', 'POST', [
+        'current_password' => $knownPassword,
+        'new_password' => 'MobileApi-New-Password-2026!',
+        'confirm_password' => 'different-password',
+    ], $token);
+    mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'password_confirmation_mismatch', 'password change rejects mismatched confirmation');
+
+    $newPassword = 'MobileApi-New-Password-2026!';
+    $r = mobileApiRequest('/api/v1/auth/change_password.php', 'POST', [
+        'current_password' => $knownPassword,
+        'new_password' => $newPassword,
+        'confirm_password' => $newPassword,
+    ], $token);
+    mobileApiExpect($r['status'] === 200 && ($r['json']['data']['password_changed'] ?? false) === true, 'authenticated password change succeeds');
+    $changedHash = (string)$pdo->query('SELECT password_hash FROM users WHERE id=' . $userId)->fetchColumn();
+    mobileApiExpect(password_verify($newPassword, $changedHash), 'password change stores a verifiable new password hash');
+
+    $r = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($r['status'] === 401, 'old password no longer authenticates after change');
+    $r = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $newPassword]);
+    mobileApiExpect($r['status'] === 200 && is_string($r['json']['data']['access_token'] ?? null), 'new password authenticates successfully');
+    $changedPasswordToken = (string)$r['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $changedPasswordToken);
+    $r = mobileApiRequest('/api/v1/auth/logout.php', 'POST', [], $changedPasswordToken);
+    mobileApiExpect($r['status'] === 200 && ($r['json']['data']['signed_out'] ?? false) === true, 'new-password test session is revoked');
+
     $pdo->prepare('UPDATE users SET password_change_required=0 WHERE id=?')->execute([$userId]);
     $r = mobileApiRequest('/api/v1/auth/logout.php', 'POST', [], $token);
     mobileApiExpect($r['status'] === 200 && ($r['json']['data']['signed_out'] ?? false) === true, 'logout revokes the bearer session');
@@ -2249,6 +2290,15 @@ try {
     }
     $pdo->prepare('DELETE FROM audit_log WHERE user_id=? AND action=? AND entity_type=? AND entity_id=? AND created_at>=?')
         ->execute([$userId, 'LOGIN', 'users', $userId, $testStart]);
+    $pdo->prepare("DELETE FROM audit_log WHERE user_id=? AND action='CHANGE_PASSWORD' AND entity_type='users' AND entity_id=? AND created_at>=?")
+        ->execute([$userId, $userId, $testStart]);
+    foreach ($testPasswordChangeRecoveryIds as $recoveryId) {
+        try {
+            $pdo->prepare("UPDATE password_recovery_requests SET status='approved' WHERE id=? AND user_id=?")
+                ->execute([$recoveryId, $userId]);
+        } catch (Throwable $recoveryRestoreError) {
+        }
+    }
     $pdo->prepare('UPDATE users SET password_hash=?, is_active=?, password_change_required=?, role_id=?, last_login_at=? WHERE id=?')
         ->execute([$user['password_hash'], $user['is_active'], $user['password_change_required'], $user['role_id'], $user['last_login_at'], $userId]);
 }
