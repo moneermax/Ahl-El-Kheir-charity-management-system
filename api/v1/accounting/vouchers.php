@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/_bootstrap.php';
-require_once dirname(__DIR__, 2) . '/modules/accounting/lib_vouchers.php';
+require_once dirname(__DIR__, 3) . '/modules/accounting/lib_vouchers.php';
 
 $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 if ($method !== 'GET') {
