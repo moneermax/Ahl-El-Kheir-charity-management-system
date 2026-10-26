@@ -155,6 +155,7 @@ $testBatchVerificationMonth = '2099-12';
 $testBatchTransferTransactionId = 0;
 $testBatchTransferJournalId = 0;
 $testAccountId = 0;
+$testJournalEntryId = 0;
 $testAttendancePolicyId = 0;
 $testPayrollPolicyId = 0;
 $testIncentiveEventId = 0;
@@ -2077,6 +2078,36 @@ try {
     $r = mobileApiRequest('/api/v1/auth/logout.php', 'POST', [], $changedPasswordToken);
     mobileApiExpect($r['status'] === 200 && ($r['json']['data']['signed_out'] ?? false) === true, 'new-password test session is revoked');
 
+    $r = mobileApiRequest('/api/v1/accounting/journal.php', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'forbidden', 'journal API denies roles outside the web journal allowlist');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $r = mobileApiRequest('/api/v1/accounting/journal.php?from=2026-99-99', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'invalid_date', 'journal API rejects invalid date filters');
+    $r = mobileApiRequest('/api/v1/accounting/journal.php?from=2026-10-27&to=2026-10-26', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'invalid_date_range', 'journal API rejects reversed date ranges');
+
+    $journalCode = 'JE-MOBILE-READ-' . bin2hex(random_bytes(5));
+    $pdo->prepare("INSERT INTO journal_entries (entry_code, entry_date, description, reference_type, reference_id, status, created_by) VALUES (?, CURDATE(), ?, 'mobile_journal_api_test', NULL, 'posted', ?)")
+        ->execute([$journalCode, 'Mobile journal read-only API fixture', $userId]);
+    $testJournalEntryId = (int)$pdo->lastInsertId();
+    $pdo->prepare('INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, ?, ?)')
+        ->execute([$testJournalEntryId, $testAccountId, 125.00, 0.00, 'Mobile journal test debit']);
+    $pdo->prepare('INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, ?, ?, ?)')
+        ->execute([$testJournalEntryId, $testAccountId, 0.00, 125.00, 'Mobile journal test credit']);
+
+    $r = mobileApiRequest('/api/v1/accounting/journal.php', 'GET', null, $token);
+    $listedJournalIds = array_map(static fn($entry) => (int)($entry['id'] ?? 0), $r['json']['data']['entries'] ?? []);
+    mobileApiExpect($r['status'] === 200 && in_array($testJournalEntryId, $listedJournalIds, true), 'authorized finance role can list journal entries without changing ledger state');
+    $r = mobileApiRequest('/api/v1/accounting/journal.php?view=' . $testJournalEntryId, 'GET', null, $token);
+    mobileApiExpect($r['status'] === 200
+        && (int)($r['json']['data']['entry']['id'] ?? 0) === $testJournalEntryId
+        && count($r['json']['data']['lines'] ?? []) === 2
+        && ($r['json']['data']['entry']['is_balanced'] ?? false) === true,
+        'journal detail returns its lines and validates balanced totals');
+    $r = mobileApiRequest('/api/v1/accounting/journal.php?view=99999999', 'GET', null, $token);
+    mobileApiExpect($r['status'] === 404 && ($r['json']['error']['code'] ?? '') === 'journal_entry_not_found', 'journal detail reports a missing entry');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+
     $recoveryFixture = dbFetchOne(
         "SELECT u.id, u.username FROM users u
          WHERE u.is_active = 1
@@ -2116,6 +2147,10 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testJournalEntryId > 0) {
+        $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([$testJournalEntryId]);
+        $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([$testJournalEntryId]);
+    }
     if ($testRecoveryRequestId > 0) {
         $pdo->prepare('DELETE FROM password_recovery_requests WHERE id=?')->execute([$testRecoveryRequestId]);
     }
