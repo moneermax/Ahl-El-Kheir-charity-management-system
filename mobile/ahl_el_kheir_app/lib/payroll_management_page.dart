@@ -1,5 +1,7 @@
+import 'dart:typed_data';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 class PayrollManagementPage extends StatefulWidget {
   const PayrollManagementPage({
@@ -15,6 +17,7 @@ class PayrollManagementPage extends StatefulWidget {
   final Future<Map<String, dynamic>> Function(Map<String, dynamic> body) submitAction;
   final Future<PlatformFile?> Function() pickProof;
   final Future<Map<String, dynamic>> Function(int payrollId, int month, int year, PlatformFile proof, bool legacyEvidence) uploadProof;
+  final Future<Map<String, dynamic>> Function(int payrollId) loadProof;
   @override
   State<PayrollManagementPage> createState() => _PayrollManagementPageState();
 }
@@ -145,6 +148,33 @@ class _PayrollManagementPageState extends State<PayrollManagementPage> {
     finally { if (mounted) setState(() => saving = false); }
   }
 
+  Future<void> viewProof(int id) async {
+    try {
+      final result = await widget.loadProof(id);
+      final mime = (result['mime'] ?? '').toString().toLowerCase();
+      final value = result['bytes'];
+      if (value is! Uint8List) throw StateError(t('تعذر قراءة ملف الإثبات.', 'Could not read payroll proof.'));
+      if (!mime.startsWith('image/') && mime != 'application/pdf') throw StateError(t('نوع ملف الإثبات غير مدعوم.', 'Unsupported payroll proof type.'));
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(t('إثبات تحويل الراتب', 'Payroll transfer proof')),
+          content: SizedBox(
+            width: 520,
+            height: mime.startsWith('image/') ? 500 : 620,
+            child: mime.startsWith('image/')
+                ? InteractiveViewer(child: Image.memory(value, fit: BoxFit.contain))
+                : PdfViewer.data(value, sourceName: (result['filename'] ?? 'payroll-proof.pdf').toString()),
+          ),
+          actions: [TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(t('إغلاق', 'Close')))],
+        ),
+      );
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    }
+  }
+
   String money(dynamic value) {
     final n = num.tryParse(value?.toString() ?? '') ?? 0;
     return n.toStringAsFixed(2).replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (m) => ',');
@@ -266,6 +296,7 @@ class _PayrollManagementPageState extends State<PayrollManagementPage> {
       if (hasProof) ...[
         Text(proofLabel(proofState), style: const TextStyle(fontWeight: FontWeight.w700)),
         if ((row['payment_proof_filename']?.toString() ?? '').isNotEmpty) Text(row['payment_proof_filename'].toString(), maxLines: 2, overflow: TextOverflow.ellipsis),
+        OutlinedButton.icon(key: Key('payroll-view-proof-' + id.toString()), onPressed: saving ? null : () => viewProof(id), icon: const Icon(Icons.visibility_outlined), label: Text(t('عرض الإثبات', 'View proof'))),
         if ((row['payment_proof_uploaded_at']?.toString() ?? '').isNotEmpty) Text(t('تاريخ الرفع: ', 'Uploaded: ') + row['payment_proof_uploaded_at'].toString()),
       ],
       if (canNewProof || canLegacyProof) ...[
