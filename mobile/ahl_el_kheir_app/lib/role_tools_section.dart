@@ -101,6 +101,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/sponsors/new_requests.php',
     'modules/sponsors/contacted_requests.php',
     'modules/accounting/disbursements.php',
+    'modules/accounting/journal.php',
     'modules/reports/financial.php',
     'modules/reports/sponsorship.php',
     'modules/reports/operational.php',
