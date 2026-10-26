@@ -1618,7 +1618,7 @@ try {
         $pdo->prepare('DELETE FROM payroll WHERE id=?')->execute([$testLegacyPayrollId]);
     }
     if ($testPayrollId > 0) {
-        $payrollProofLookup = $pdo.prepare('SELECT storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
+        $payrollProofLookup = $pdo->prepare('SELECT storage_key FROM hr_payroll_payment_proofs WHERE payroll_id=?');
         $payrollProofLookup->execute([$testPayrollId]);
         $storedPayrollProofKey = (string)($payrollProofLookup->fetchColumn() ?: $testPayrollProofStorageKey);
         if ($storedPayrollProofKey !== '' && preg_match('/^[a-f0-9]{64}\\.(pdf|jpg|png)$/', $storedPayrollProofKey)) {
