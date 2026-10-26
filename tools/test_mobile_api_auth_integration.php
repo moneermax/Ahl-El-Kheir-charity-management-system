@@ -148,6 +148,27 @@ try {
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
 
+    $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $databaseIndex['status'] === 200
+        && ($databaseIndex['json']['ok'] ?? false) === true
+        && is_array($databaseIndex['json']['data']['tables'] ?? null)
+        && count($databaseIndex['json']['data']['tables']) > 0,
+        'administrator can list real database tables and row counts'
+    );
+    $databaseUsers = mobileApiRequest('/api/v1/admin/database.php?table=users', 'GET', null, $adminToken, 20);
+    $databaseColumnNames = array_map(
+        static fn(array $column): string => (string)($column['name'] ?? ''),
+        $databaseUsers['json']['data']['columns'] ?? []
+    );
+    mobileApiExpect(
+        $databaseUsers['status'] === 200
+        && ($databaseUsers['json']['data']['selected_table'] ?? '') === 'users'
+        && in_array('username', $databaseColumnNames, true)
+        && is_array($databaseUsers['json']['data']['rows'] ?? null),
+        'administrator can inspect actual table columns and recent rows'
+    );
+
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
     $nannyFinaLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($nannyFinaLogin['status'] === 200 && isset($nannyFinaLogin['json']['data']['access_token']), 'nanny login succeeds for Fina role-denial integration');
