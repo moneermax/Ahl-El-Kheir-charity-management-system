@@ -51,3 +51,11 @@ The feature is not complete until the native screen and endpoints are implemente
 - Updated `modules/hr/payroll.php` to require the shared library in commit `2e5c834377e8abe9de23f538b831966f67ef54df`. This is a behavior-preserving extraction so the native API can call the same period eligibility and draft-refresh logic instead of duplicating it.
 - Verification at this step is source-level only; PHP lint and regression/API integration must still pass before continuing to the next implementation step.
 
+## Implementation step 2 — Explicit API actor support in accounting helper
+
+- Updated `hrPayrollPostAccounting()` and `hrPayrollChangeStatus()` in commit `a29c0660004da062b85b1c7558e58ad2115aee9d` to accept an optional authenticated actor ID.
+- Existing browser calls retain their Session-based fallback and default accounting initialization behavior.
+- API callers can pass the bearer-authenticated user ID so new journal entries and proof-confirmation metadata record the actual actor even when no browser `Session` class is loaded.
+- The API can explicitly disable accounting initialization for its call path; it must rely on already-migrated accounting tables and does not execute `ak_ensure_tables()`/seeding at request time.
+- Source-only at this checkpoint; lint and the disposable full-schema integration test must verify this change.
+
