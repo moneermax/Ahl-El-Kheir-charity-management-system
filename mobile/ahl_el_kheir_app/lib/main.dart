@@ -19,6 +19,9 @@ import 'admin_disbursements_page.dart';
 import 'role_dashboard_page.dart';
 import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
+import 'sponsor_detail_page.dart';
+import 'sponsorship_detail_page.dart';
+import 'global_search_page.dart';
 import 'orphan_form_page.dart';
 import 'fm_review_queue_page.dart';
 import 'transactions_page.dart';
@@ -232,6 +235,42 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     if (mounted) setState(() => user = data['user'] as Map<String, dynamic>);
     if (['admin', 'sudo', 'super_admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'nanny'].contains(data['user']['role_code']?.toString())) {
       await openAgeAlerts(onlyIfItems: true);
+    }
+  }
+
+  void openGlobalSearch() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => GlobalSearchPage(
+        roleCode: user?['role_code']?.toString() ?? '',
+        english: english,
+        loadSearch: loadGlobalSearch,
+        onOpenResult: (type, item) {
+          final id = int.tryParse(item['id']?.toString() ?? '');
+          if (id == null || id < 1) return;
+          if (type == 'families') {
+            navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => FamilyDetailPage(
+              familyId: id, english: english, loadDetail: loadFamilyDetail, openOrphanForm: openOrphanFormPage,
+            )));
+          } else if (type == 'sponsors') {
+            navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => SponsorDetailPage(
+              sponsorId: id, english: english, loadDetail: loadSponsorDetail,
+            )));
+          } else if (type == 'sponsorships') {
+            navigatorKey.currentState?.push(MaterialPageRoute<void>(builder: (_) => SponsorshipDetailPage(
+              sponsorshipId: id, english: english, loadDetail: loadSponsorshipDetail,
+            )));
+          }
+        },
+      ),
+    ));
+  }
+
+  Future<Map<String, dynamic>> loadGlobalSearch(String type, String query, int page) {
+    switch (type) {
+      case 'families': return loadFamilies(query, '', page);
+      case 'sponsors': return loadSponsors(query, '', '', page);
+      case 'sponsorships': return loadSponsorships(query, 'all', '', page);
+      default: throw const ApiFailure('This search category is not available natively yet.');
     }
   }
 
@@ -2114,8 +2153,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                               icon: const Icon(Icons.hourglass_bottom_rounded, color: Color(0xFFB54708)),
                             ),
                           IconButton(
-                            tooltip: english ? 'Global search (WEB)' : 'البحث الشامل (ويب)',
-                            onPressed: () => openNativeTool('modules/search/index.php'),
+                            tooltip: english ? 'Global search' : 'البحث الشامل',
+                            onPressed: openGlobalSearch,
                             icon: const Icon(Icons.search_rounded),
                           ),
                           IconButton(

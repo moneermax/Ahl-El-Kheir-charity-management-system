@@ -2868,3 +2868,8 @@ The native payroll management API, Flutter screen, role navigation, and private 
 The Flutter app now uses a distinct native visual palette rather than attempting to copy the original web system: deep teal (`#115E59`), bright teal (`#20A39E`), coral (`#E07A5F`), slate text, and a cool light background. Applied the palette to the app-wide Material theme, login/notification surfaces, administrator dashboard, role dashboard, role-tool list, and shared native screens that used the old palette literals. Arabic RTL, English LTR, Cairo typography, organization branding, API behavior, and authorization rules are unchanged. Automated Flutter analysis/widget/build verification is pending for these latest palette commits; do not treat visual device acceptance as proven.
 
 Next native parity priority: implement the existing role-aware global search inside Flutter, reusing `config/search_permissions.php` and the web search's record-level visibility rules. The search icon must not open a browser; unsupported domains remain explicitly unavailable until implemented.
+
+
+## 2026-10-26 — Native search center (initial supported scopes)
+
+The home-screen search icon now opens an in-app native search center for families, sponsors, and sponsorships. Results use the existing authenticated API endpoints and their existing role/record-level guards; the UI exposes only categories currently accepted by those endpoints and never falls back to a browser. Search results can open the existing native family, sponsor, and sponsorship detail screens. Monthly disbursement and archived project-document search remain explicitly identified as unfinished native scopes; this is an incremental parity milestone, not completion of the original global search.
