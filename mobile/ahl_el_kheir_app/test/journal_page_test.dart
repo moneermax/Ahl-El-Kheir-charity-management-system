@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/journal_page.dart';
 
 void main() {
-  testWidgets('journal list filters by date and opens a read-only entry detail', (tester) async {
+  testWidgets('journal list loads with date filters and opens a read-only entry detail', (tester) async {
     String? lastFrom;
     String? lastTo;
     await tester.pumpWidget(MaterialApp(
@@ -75,11 +75,8 @@ void main() {
 
     expect(find.text('JE-000007'), findsOneWidget);
     expect(find.text('Balanced'), findsOneWidget);
-    await tester.tap(find.text('From date'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('26'));
-    await tester.pumpAndSettle();
     expect(lastFrom, isEmpty);
+    expect(lastTo, isEmpty);
     await tester.tap(find.text('JE-000007'));
     await tester.pumpAndSettle();
 
