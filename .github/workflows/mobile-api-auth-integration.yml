@@ -19,6 +19,13 @@ on:
       - 'tools/test_mobile_api_auth_integration.php'
       - 'tools/test_mobile_admin_users_action_service.php'
       - 'modules/hr/lib_employee_provisioning.php'
+      - 'modules/hr/lib_payroll_management.php'
+      - 'modules/hr/lib_payroll_accounting.php'
+      - 'modules/hr/lib_payroll_transfer.php'
+      - 'modules/hr/lib_salary_advance_payroll.php'
+      - 'modules/hr/lib_gm_payroll_period.php'
+      - 'modules/hr/lib_payroll_policy.php'
+      - 'modules/hr/lib_employee_incentives.php'
       - '.github/workflows/mobile-api-auth-integration.yml'
   pull_request:
     paths:
@@ -89,6 +96,14 @@ jobs:
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-24_mobile_api_sessions.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-24_mobile_api_sessions.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-25_mobile_web_handoffs.sql
+
+      - name: PHP syntax check for payroll API and shared helpers
+        run: |
+          php -l api/v1/hr/payroll_management.php
+          php -l modules/hr/lib_payroll_management.php
+          php -l modules/hr/lib_payroll_accounting.php
+          php -l modules/hr/payroll.php
+          php -l tools/test_mobile_api_auth_integration.php
 
       - name: Verify native user actions and rollback against disposable MariaDB
         run: php tools/test_mobile_admin_users_action_service.php
