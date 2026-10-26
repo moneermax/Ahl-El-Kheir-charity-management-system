@@ -391,7 +391,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
   Future<Map<String, dynamic>> loadGlobalSearch(String type, String query, int page) {
     switch (type) {
       case 'families': return loadFamilies(query, '', page);
-      case 'sponsors': return loadSponsors(query, '', '', page);
+      case 'sponsors':
+        final rawRole = user?['role_code']?.toString() ?? '';
+        if (['financial_manager', 'fm', 'finance', 'accountant'].contains(rawRole)) {
+          return loadGlobalSponsorSearch(query, page);
+        }
+        return loadSponsors(query, '', '', page);
       case 'sponsorships': return loadSponsorships(query, 'all', '', page);
       case 'documents': return loadArchivedDocuments(query, page);
       case 'payments':
@@ -406,6 +411,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         });
       default: throw const ApiFailure('This search category is not available natively yet.');
     }
+  }
+
+  Future<Map<String, dynamic>> loadGlobalSponsorSearch(String query, int page) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    final encodedQuery = Uri.encodeQueryComponent(query);
+    return call(
+      'GET',
+      'search/sponsors.php?q=' + encodedQuery + '&page=' + page.toString(),
+      token: token,
+    );
   }
 
   Future<Map<String, dynamic>> loadArchivedDocuments(String query, int page) async {

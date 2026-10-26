@@ -64,6 +64,32 @@ void main() {
     expect(openedType,'payments'); expect(openedItem?['id'],42);
   });
 
+  testWidgets('finance manager can search sponsors through its authorized native detail scope', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: GlobalSearchPage(
+      roleCode: 'financial_manager',
+      english: true,
+      loadSearch: (_, __, ___) async => throw StateError('search should not run before user submits'),
+      loadDocument: (_) async => <String, dynamic>{},
+      onOpenResult: (_, __) {},
+    )));
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    expect(find.text('Sponsors'), findsWidgets);
+  });
+
+  testWidgets('accountant can search sponsors through its authorized native detail scope', (tester) async {
+    await tester.pumpWidget(MaterialApp(home: GlobalSearchPage(
+      roleCode: 'accountant',
+      english: true,
+      loadSearch: (_, __, ___) async => throw StateError('search should not run before user submits'),
+      loadDocument: (_) async => <String, dynamic>{},
+      onOpenResult: (_, __) {},
+    )));
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+    await tester.pumpAndSettle();
+    expect(find.text('Sponsors'), findsWidgets);
+  });
+
   testWidgets('administrator aliases see categories backed by authorized native APIs',(tester)async{
     await tester.pumpWidget(MaterialApp(home:GlobalSearchPage(roleCode:'sudo',english:true,loadSearch:(_,__,___)async=>{'data':{'items':[],'total':0,'page':1,'pages':1}},loadDocument: (_) async => <String, dynamic>{},
       onOpenResult:(_,__){})));

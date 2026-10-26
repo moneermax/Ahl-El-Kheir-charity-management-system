@@ -205,6 +205,8 @@ try {
     mobileApiExpect($r['status'] === 401 && ($r['json']['error']['code'] ?? '') === 'unauthenticated', 'missing bearer token is rejected');
     $r = mobileApiRequest('/api/v1/search/documents.php');
     mobileApiExpect($r['status'] === 401, 'archived document search rejects unauthenticated requests');
+    $r = mobileApiRequest('/api/v1/search/sponsors.php?q=receipt');
+    mobileApiExpect($r['status'] === 401, 'native sponsor search rejects unauthenticated requests');
     $r = mobileApiRequest('/api/v1/search/document_file.php?version_id=1');
     mobileApiExpect($r['status'] === 401, 'archived document delivery rejects unauthenticated requests');
     $r = mobileApiRequest('/api/v1/auth/login.php', 'GET');
@@ -248,6 +250,32 @@ try {
         && ($vgmCapabilities['can_confirm_items'] ?? true) === false,
         'vice general manager can read monthly disbursements but receives no mutation capabilities'
     );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $fmLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($fmLogin['status'] === 200 && isset($fmLogin['json']['data']['access_token']), 'financial manager login succeeds for native sponsor search');
+    $fmToken = (string)$fmLogin['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $fmToken);
+    $fmSponsorSearch = mobileApiRequest('/api/v1/search/sponsors.php?q=__mobile_api_no_match__', 'GET', null, $fmToken, 20);
+    mobileApiExpect(
+        $fmSponsorSearch['status'] === 200
+        && is_array($fmSponsorSearch['json']['data']['items'] ?? null)
+        && (int)($fmSponsorSearch['json']['data']['total'] ?? -1) === 0,
+        'financial manager can search sponsors with standard pagination without widening the sponsor directory API'
+    );
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['accountant'], $userId]);
+    $accountantLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($accountantLogin['status'] === 200 && isset($accountantLogin['json']['data']['access_token']), 'accountant login succeeds for native sponsor search');
+    $accountantToken = (string)$accountantLogin['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $accountantToken);
+    $accountantSponsorSearch = mobileApiRequest('/api/v1/search/sponsors.php?q=__mobile_api_no_match__', 'GET', null, $accountantToken, 20);
+    mobileApiExpect(
+        $accountantSponsorSearch['status'] === 200
+        && is_array($accountantSponsorSearch['json']['data']['items'] ?? null)
+        && (int)($accountantSponsorSearch['json']['data']['total'] ?? -1) === 0,
+        'accountant can search sponsors with standard pagination without widening the sponsor directory API'
+    );
+
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $adminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($adminLogin['status'] === 200 && isset($adminLogin['json']['data']['access_token']), 'administrator login succeeds for finance overview integration');
