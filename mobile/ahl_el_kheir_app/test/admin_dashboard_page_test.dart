@@ -70,37 +70,36 @@ void main() {
       of: find.byKey(const Key('admin-dashboard-list')),
       matching: find.byType(Scrollable),
     ).first;
-    Future<void> expectUnavailableTool(String label) async {
-      final target = find.text(label);
-      try {
-        await tester.scrollUntilVisible(target, 180, scrollable: scrollable);
-      } on TestFailure {
-        // Expected when a role-guarded tool is not part of this dashboard.
-      }
-      expect(target, findsNothing, reason: '$label must not be advertised to Sudo.');
+    Future<void> scrollTo(String label) async {
+      await tester.scrollUntilVisible(
+        find.text(label),
+        180,
+        scrollable: scrollable,
+      );
     }
 
-    await tester.scrollUntilVisible(
-      find.text('User accounts'),
-      180,
-      scrollable: scrollable,
-    );
+    void expectUnavailableTool(String label) {
+      expect(find.text(label), findsNothing,
+          reason: '$label must not be advertised to Sudo.');
+    }
+
+    await scrollTo('User accounts');
     expect(find.text('User accounts'), findsOneWidget);
-    for (final label in [
-      'Departments',
-      'System settings',
-      'Password recovery requests',
-      'Reports',
-      'Audit log',
-    ]) {
-      await expectUnavailableTool(label);
-    }
 
-    await tester.scrollUntilVisible(
-      find.text('User accounts'),
-      180,
-      scrollable: scrollable,
-    );
+    // Check each role-specific group only after its section is built in the
+    // lazy list; trying to scroll to a deliberately absent tile throws.
+    await scrollTo('SYSTEM ADMINISTRATION');
+    expectUnavailableTool('Departments');
+    expectUnavailableTool('System settings');
+    expectUnavailableTool('Password recovery requests');
+
+    await scrollTo('CORE RECORDS');
+    expectUnavailableTool('Reports');
+
+    await scrollTo('PROTECTION & MAINTENANCE');
+    expectUnavailableTool('Audit log');
+
+    await scrollTo('User accounts');
     await tester.tap(find.text('User accounts'));
     expect(openedTool, 'users');
     expect(tester.takeException(), isNull);
