@@ -514,7 +514,7 @@ try {
     $gmToken = (string)$gmLogin['json']['data']['access_token'];
     $testTokenHashes[] = hash('sha256', $gmToken);
     $gmHistory = mobileApiRequest('/api/v1/hr/gm_payroll_period_history.php', 'GET', null, $gmToken, 30);
-    mobileApiExpect($gmHistory['status'] === 200 && is_array($gmHistory['json']['data']['periods'] ?? null) && ($gmHistory['json']['data']['read_only'] ?? false) === true, 'general manager can load read-only payroll period history');
+    mobileApiExpect($gmHistory['status'] === 200 && is_array($gmHistory['json']['data']['periods'] ?? null) && ($gmHistory['json']['data']['read_only'] ?? false) === true, 'general manager can load read-only payroll period history (HTTP ' . $gmHistory['status'] . '; response ' . json_encode($gmHistory['json']) . ')');
     $gmReport = mobileApiRequest('/api/v1/hr/gm_payroll_period_report.php?month=10&year=2026', 'GET', null, $gmToken, 30);
     mobileApiExpect($gmReport['status'] === 200 && ($gmReport['json']['data']['period'] ?? '') === '2026-10' && is_array($gmReport['json']['data']['employees'] ?? null) && ($gmReport['json']['data']['read_only'] ?? false) === true, 'general manager can load the read-only payroll period report');
     $gmInvalidPeriod = mobileApiRequest('/api/v1/hr/gm_payroll_period_report.php?month=13&year=2026', 'GET', null, $gmToken);
