@@ -68,18 +68,21 @@ class _NativeReportDetailPageState extends State<NativeReportDetailPage> {
   void initState(){super.initState();type=types[widget.reportKey]!.first;final now=DateTime.now();from=DateTime(now.year,now.month,1);to=DateTime(now.year,now.month,now.day);refresh();}
   String dateValue(DateTime d)=>d.year.toString().padLeft(4,'0')+'-'+d.month.toString().padLeft(2,'0')+'-'+d.day.toString().padLeft(2,'0');
   Future<void> refresh() async {
-    setState(()=>{loading=true,error=null});
+    setState(() { loading = true; error = null; });
     try {
       final data=await widget.loadReport(widget.reportKey,type,dateValue(from),dateValue(to));
       if(!mounted)return;
-      setState(()=>{summary=data['summary'] is Map?Map<String,dynamic>.from(data['summary'] as Map):<String,dynamic>{},
-        rows=data['rows'] is List?(data['rows'] as List).whereType<Map>().map((e)=>Map<String,dynamic>.from(e)).toList():<Map<String,dynamic>>[]});
+      setState(() {
+        summary = data['summary'] is Map ? Map<String, dynamic>.from(data['summary'] as Map) : <String, dynamic>{};
+        rows = data['rows'] is List ? (data['rows'] as List).whereType<Map>().map((e) => Map<String, dynamic>.from(e)).toList() : <Map<String, dynamic>>[];
+      });
     } catch(e){if(mounted)setState(()=>error=e.toString());}
     finally{if(mounted)setState(()=>loading=false);}
   }
   Future<void> pickDate(bool start) async {
     final picked=await showDatePicker(context:context,initialDate:start?from:to,firstDate:DateTime(2000),lastDate:DateTime(2100));
-    if(picked==null||!mounted)return;setState(()=>{if(start)from=picked;else to=picked});
+    if (picked == null || !mounted) return;
+    setState(() { if (start) { from = picked; } else { to = picked; } });
   }
   @override
   Widget build(BuildContext context){
