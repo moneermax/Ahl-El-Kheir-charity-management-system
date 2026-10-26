@@ -2,7 +2,11 @@
 declare(strict_types=1);
 require_once dirname(__DIR__) . '/_bootstrap.php';
 require_once dirname(__DIR__, 3) . '/config/family_scope.php';
-ak_api_require_method('GET');
+$method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
+if (!in_array($method, ['GET','POST'], true)) {
+    header('Allow: GET, POST');
+    ak_api_json(405, ['ok'=>false,'error'=>['code'=>'method_not_allowed','message'=>'Use GET or POST.']]);
+}
 $user = ak_api_authenticated_user();
 $role = (string)($user['raw_role_code'] ?? '');
 $allowedRoles = ['admin','vice_general_manager','general_manager','supervisor','nanny','accountant','accountant_staff','administration','social_media'];
@@ -38,7 +42,7 @@ if ($method === 'POST') {
             ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_field','message'=>'One or more form fields are invalid.']]);
         }
     }
-    $read = static fn(string $key, string $fallback = ''): string => trim((string)($values[$key] ?? $fallback));
+    $read = fn(string $key, string $fallback = ''): string => trim((string)($values[$key] ?? $fallback));
     $nationality = $read('nationality', (string)($child['nationality'] ?? 'سودانية'));
     $health = $read('health_status', (string)($child['health_status'] ?? 'سليم'));
     $psych = $read('psychological_state', (string)($child['psychological_state'] ?? 'سليم'));
