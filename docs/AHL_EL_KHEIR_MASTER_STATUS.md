@@ -5076,3 +5076,8 @@ Correction — mobile Android build gate, 2026-10-26: workflow 40288510863 showe
 ## Mobile application checkpoint — 2026-10-26
 
 Native Fina dashboard, collection registration, review/history, exact persisted-role authorization, administrator read-only database browser, and administrator backup create/list/download/delete are implemented. Disposable MariaDB integration [40291447241](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40291447241) passed these APIs, including a real clean SQL dump and role-denial checks. `main.dart` has been reconstructed from the last known good source after a malformed duplicate tail; latest Dart/widget/APK gate: [40291896014](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40291896014), still pending. Mobile app parity is not complete: native disbursement actions, other finance/HR/payroll, beneficiary/orphan forms, and remaining reports are still open. Local XAMPP/API/database and physical-device acceptance remain separate.
+
+
+## 2026-10-26 — Mobile report detail implementation (verification pending)
+
+Native report detail source now covers financial, sponsorship, operational, and HR report families through the existing role-based report registry, with validated date filters and native result tables. Flutter analysis and widget tests passed at `9ab66cd9ff69ceb1553cb69f2d91e066cc4cd34c`; APK publication and expanded disposable-schema API integration remain pending. Local XAMPP/database and physical-device acceptance have not been performed. Mobile role parity is not complete while other role-specific workflows remain placeholders.
