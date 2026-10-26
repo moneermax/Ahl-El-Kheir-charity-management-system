@@ -58,7 +58,7 @@ class _AdminAccountsPageState extends State<AdminAccountsPage>{
         const SizedBox(height:8),
         TextField(key:const Key('account-name-en-input'),controller:nameEn,decoration:InputDecoration(labelText:t('اسم الحساب بالإنجليزية','English account name'))),
         const SizedBox(height:8),
-        DropdownButtonFormField<String>(value:type,decoration:InputDecoration(labelText:t('نوع الحساب','Account type')),items:['asset','liability','equity','revenue','expense'].map((v)=>DropdownMenuItem(value:v,child:Text(typeLabel(v)))).toList(),onChanged:saving?null:(v){if(v!=null)setState(()=>type=v);}),
+        DropdownButtonFormField<String>(initialValue:type,decoration:InputDecoration(labelText:t('نوع الحساب','Account type')),items:['asset','liability','equity','revenue','expense'].map((v)=>DropdownMenuItem(value:v,child:Text(typeLabel(v)))).toList(),onChanged:saving?null:(v){if(v!=null)setState(()=>type=v);}),
         const SizedBox(height:12),
         FilledButton.icon(onPressed:saving?null:create,icon:const Icon(Icons.add_rounded),label:Text(t('إضافة الحساب','Create account'))),
       ]))),
