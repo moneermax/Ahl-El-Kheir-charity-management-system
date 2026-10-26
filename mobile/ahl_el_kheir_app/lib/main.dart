@@ -2481,14 +2481,14 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   _ => english ? 'Your workspace' : 'مساحة عملك',
                 };
                 final heroColors = switch (roleCode) {
-                  'admin' || 'sudo' || 'super_admin' => const [Color(0xFF123B46), Color(0xFFF59E0B)],
-                  'general_manager' || 'gm' => const [Color(0xFF5B21B6), Color(0xFF20A39E)],
+                  'admin' || 'sudo' || 'super_admin' => const [Color(0xFF25103F), Color(0xFFF59E0B)],
+                  'general_manager' || 'gm' => const [Color(0xFF5B21B6), Color(0xFFDB2777)],
                   'vice_general_manager' || 'vgm' => const [Color(0xFF5B21B6), Color(0xFFF59E0B)],
-                  'financial_manager' || 'fm' || 'finance' || 'accountant' || 'accountant_staff' => const [Color(0xFF123B46), Color(0xFF20A39E)],
-                  'supervisor' || 'nanny' => const [Color(0xFF7C3AED), Color(0xFF8FAE91)],
+                  'financial_manager' || 'fm' || 'finance' || 'accountant' || 'accountant_staff' => const [Color(0xFF25103F), Color(0xFFDB2777)],
+                  'supervisor' || 'nanny' => const [Color(0xFF7C3AED), Color(0xFFF59E0B)],
                   'hr_manager' || 'hr_staff' => const [Color(0xFF5B21B6), Color(0xFFF59E0B)],
-                  'projects_manager' || 'project_supervisor' => const [Color(0xFF7C3AED), Color(0xFFB58A3A)],
-                  _ => const [Color(0xFF123B46), Color(0xFF5B21B6)],
+                  'projects_manager' || 'project_supervisor' => const [Color(0xFF7C3AED), Color(0xFFF59E0B)],
+                  _ => const [Color(0xFF25103F), Color(0xFF5B21B6)],
                 };
                 return ListView(
                 padding: const EdgeInsets.all(20),
@@ -2646,7 +2646,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     ))),
                   if (['general_manager', 'gm', 'vice_general_manager', 'vgm'].contains(roleCode))
                     SizedBox(width: moduleCardWidth, child: Card(child: ListTile(
-                      leading: const CircleAvatar(backgroundColor: Color(0xFFE8F2E9), child: Icon(Icons.assignment_ind_rounded, color: Color(0xFF7C3AED))),
+                      leading: const CircleAvatar(backgroundColor: Color(0xFFEDE9FE), child: Icon(Icons.assignment_ind_rounded, color: Color(0xFF7C3AED))),
                       title: Text(english ? 'Sponsor assignment' : 'إسناد الكفلاء'),
                       subtitle: Text(english ? 'Assign unassigned sponsors to active supervisors' : 'إسناد الكفلاء غير المسندين إلى المشرفين النشطين'),
                       trailing: const Icon(Icons.arrow_forward_ios_rounded, size: 16),
@@ -2755,7 +2755,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         child: Card(
                           child: ListTile(
                             leading: const CircleAvatar(
-                              backgroundColor: Color(0xFFE8F2E9),
+                              backgroundColor: Color(0xFFEDE9FE),
                               child: Icon(Icons.event_available_rounded, color: Color(0xFF7C3AED)),
                             ),
                             title: Text(english ? 'My leave requests' : 'طلبات إجازاتي'),
@@ -2781,8 +2781,8 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                         child: Card(
                           child: ListTile(
                             leading: const CircleAvatar(
-                              backgroundColor: Color(0xFFE8F8F1),
-                              child: Icon(Icons.receipt_long_rounded, color: Color(0xFF16845B)),
+                              backgroundColor: Color(0xFFEDE9FE),
+                              child: Icon(Icons.receipt_long_rounded, color: Color(0xFF5B21B6)),
                             ),
                             title: Text(english ? 'My salary statements' : 'كشوف رواتبي'),
                             subtitle: Text(english
