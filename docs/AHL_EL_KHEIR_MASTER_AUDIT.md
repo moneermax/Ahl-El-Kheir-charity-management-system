@@ -5373,3 +5373,8 @@ Run [40289622000](https://github.com/moneermax/Ahl-El-Kheir-charity-management-s
 ## 2026-10-26 — Mobile Fina and administrator tool audit
 
 Run [40291447241](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40291447241) passed the disposable-schema PHP integration for Fina create/review, exact role denials, database table/schema browsing, and actual SQL backup creation, authenticated binary download, clean dump content, deletion and denial for nanny role. Fina API permissions now use persisted `raw_role_code` to avoid normalized aliases broadening web guards. Database browser is read-only and adds no schema changes. The Flutter entrypoint duplicate-tail incident is documented in `docs/MOBILE_FINA_COLLECTION_CONTINUATION.md`; latest source is reconstructed and must pass [Android workflow 40291896014](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40291896014). No physical-device acceptance is claimed.
+
+
+## 2026-10-26 — Native report API implementation
+
+`api/v1/reports/detail.php` and `NativeReportDetailPage` implement report-detail views for financial, sponsorship, operational, and HR report families. Access is checked against the existing report registry after explicit role-alias normalization; dates and report types are validated; date inputs are bound as parameters. Static Dart analysis and widget tests passed at `9ab66cd9ff69ceb1553cb69f2d91e066cc4cd34c`. The Android build and expanded disposable MariaDB API integration were pending at this checkpoint. No claim is made for local XAMPP/database or physical-device behavior.
