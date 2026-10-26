@@ -282,6 +282,22 @@ try {
         'uploading a payroll proof stores prepared evidence only and does not pay or post accounting'
     );
 
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['supervisor'], $userId]);
+    $unauthorizedPayrollProof = mobileApiRequest('/api/v1/hr/payroll_proof.php?payroll_id=' . $testPayrollId, 'GET', null, $token);
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+    mobileApiExpect($unauthorizedPayrollProof['status'] === 403, 'non-payroll staff cannot view a prepared payroll proof');
+    $viewPayrollProof = mobileApiRequest('/api/v1/hr/payroll_proof.php?payroll_id=' . $testPayrollId, 'GET', null, $adminToken);
+    $proofContentType = '';
+    foreach ($viewPayrollProof['headers'] as $proofHeader) {
+        if (stripos($proofHeader, 'Content-Type:') === 0) $proofContentType = strtolower(trim(substr($proofHeader, strlen('Content-Type:'))));
+    }
+    mobileApiExpect(
+        $viewPayrollProof['status'] === 200
+        && str_starts_with($viewPayrollProof['raw'], '%PDF-1.4')
+        && str_starts_with($proofContentType, 'application/pdf'),
+        'authorized native proof endpoint streams private PDF bytes without exposing a storage path'
+    );
+
     $wrongPeriodConfirm = mobileApiRequest('/api/v1/hr/payroll_management.php', 'POST', [
         'action'=>'confirm_transfer','payroll_id'=>$testPayrollId,'month'=>$testPayrollMonth === 12 ? 11 : $testPayrollMonth + 1,'year'=>$testPayrollYear,
     ], $adminToken);
