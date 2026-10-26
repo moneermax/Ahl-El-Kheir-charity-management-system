@@ -88,7 +88,7 @@ function mobileApiMultipartRequest(string $path, array $fields, string $fileFiel
 }
 
 $roles = [];
-foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor','general_manager')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
+foreach ($pdo->query("SELECT id, code FROM roles WHERE code IN ('admin','nanny','hr_staff','project_supervisor','financial_manager','supervisor','general_manager','accountant','accountant_staff')") as $role) $roles[(string)$role['code']] = (int)$role['id'];
 if (!isset($roles['admin'], $roles['nanny'], $roles['hr_staff'], $roles['project_supervisor'], $roles['financial_manager'], $roles['supervisor'], $roles['general_manager'])) {
     throw new RuntimeException('Checked-in schema must contain admin, nanny, hr_staff, project_supervisor and financial_manager roles.');
 }
@@ -411,23 +411,26 @@ try {
         && is_array($orphanFormRead['json']['data']['options']['health'] ?? null),
         'administrator can open native orphan form with schema-backed fields and dropdown options'
     );
-    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['accountant_staff'], $userId]);
-    $staffLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
-    mobileApiExpect($staffLogin['status'] === 200 && isset($staffLogin['json']['data']['access_token']), 'accountant staff login succeeds for orphan forms read-only scope integration');
-    $staffToken = (string)$staffLogin['json']['data']['access_token'];
-    $testTokenHashes[] = hash('sha256', $staffToken);
-    $staffOrphanList = mobileApiRequest('/api/v1/families/orphan_forms.php', 'GET', null, $staffToken);
-    mobileApiExpect($staffOrphanList['status'] === 200 && ($staffOrphanList['json']['data']['read_only'] ?? false) === true, 'accountant staff can browse orphan forms as read-only like the existing web page');
-    $staffOrphanRead = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'GET', null, $staffToken);
-    mobileApiExpect($staffOrphanRead['status'] === 200 && ($staffOrphanRead['json']['data']['can_edit'] ?? true) === false, 'accountant staff can view but cannot edit orphan form details');
-    $staffSponsorships = $staffOrphanRead['json']['data']['sponsorships'] ?? [];
-    mobileApiExpect(
-        is_array($staffSponsorships)
-        && !array_filter($staffSponsorships, static fn(array $item): bool => array_key_exists('monthly_amount', $item)),
-        'accountant staff orphan form response does not expose sponsorship amounts hidden by the web index'
-    );
-    $staffOrphanSave = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'POST', ['values' => ['health_status' => (string)($testOrphanFormChildSnapshot['health_status'] ?? 'سليم')]], $staffToken);
-    mobileApiExpect($staffOrphanSave['status'] === 403, 'accountant staff cannot edit orphan form fields');
+    $readOnlyOrphanRole = $roles['accountant_staff'] ?? $roles['accountant'] ?? null;
+    if ($readOnlyOrphanRole !== null) {
+        $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$readOnlyOrphanRole, $userId]);
+        $readOnlyOrphanLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+        mobileApiExpect($readOnlyOrphanLogin['status'] === 200 && isset($readOnlyOrphanLogin['json']['data']['access_token']), 'read-only accounting role login succeeds for orphan form integration');
+        $readOnlyOrphanToken = (string)$readOnlyOrphanLogin['json']['data']['access_token'];
+        $testTokenHashes[] = hash('sha256', $readOnlyOrphanToken);
+        $readOnlyOrphanList = mobileApiRequest('/api/v1/families/orphan_forms.php', 'GET', null, $readOnlyOrphanToken);
+        mobileApiExpect($readOnlyOrphanList['status'] === 200 && ($readOnlyOrphanList['json']['data']['read_only'] ?? false) === true, 'read-only accounting role can browse orphan forms');
+        $readOnlyOrphanRead = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'GET', null, $readOnlyOrphanToken);
+        mobileApiExpect($readOnlyOrphanRead['status'] === 200 && ($readOnlyOrphanRead['json']['data']['can_edit'] ?? true) === false, 'read-only accounting role can view but cannot edit orphan form details');
+        $readOnlySponsorships = $readOnlyOrphanRead['json']['data']['sponsorships'] ?? [];
+        mobileApiExpect(
+            is_array($readOnlySponsorships)
+            && !array_filter($readOnlySponsorships, static fn(array $item): bool => array_key_exists('monthly_amount', $item)),
+            'read-only accounting role does not receive sponsorship amounts hidden by the web role guard'
+        );
+        $readOnlyOrphanSave = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'POST', ['values' => ['health_status' => (string)($testOrphanFormChildSnapshot['health_status'] ?? 'سليم')]], $readOnlyOrphanToken);
+        mobileApiExpect($readOnlyOrphanSave['status'] === 403, 'read-only accounting role cannot edit orphan form fields');
+    }
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
     $invalidOrphanForm = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'POST', ['values' => ['health_status' => 'not-a-valid-health-option']], $adminToken);
