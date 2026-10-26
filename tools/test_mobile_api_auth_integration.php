@@ -143,7 +143,7 @@ try {
     // Exercise the native finance overview against the imported full schema,
     // using the existing disposable account and restoring its role afterward.
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['supervisor'], $userId]);
-    $accountantDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $token);
+    $supervisorDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $token);
     mobileApiExpect($accountantDisbursements['status'] === 403, 'supervisor role is denied monthly disbursements because the existing web page does not permit it');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $adminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
@@ -151,6 +151,11 @@ try {
     $adminToken = (string)$adminLogin['json']['data']['access_token'];
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
+
+    $adminNannyActionDenied = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
+        'action' => 'confirm_item', 'item_id' => 1,
+    ], $adminToken);
+    mobileApiExpect($adminNannyActionDenied['status'] === 403, 'administrator cannot use nanny-only family receipt confirmation action');
 
     $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
     mobileApiExpect(
