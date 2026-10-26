@@ -1447,6 +1447,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                   return AdminDashboardPage(
                     english: english,
                     fullName: user?['full_name']?.toString() ?? '',
+                    roleCode: roleCode,
                     loadOverview: loadAdminOverview,
                     onOpenTool: openAdminTool,
                     onOpenAgeAlerts: () => openAgeAlerts(),
