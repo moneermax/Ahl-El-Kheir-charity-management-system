@@ -18,6 +18,7 @@ import 'admin_disbursements_page.dart';
 import 'role_dashboard_page.dart';
 import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
+import 'orphan_form_page.dart';
 import 'fm_review_queue_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
@@ -1022,11 +1023,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               english: english,
               loadDetail: loadFamilyDetail,
               openOrphanForm: (childId) async {
-                ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-                  SnackBar(content: Text(english
-                      ? 'Orphan form is not implemented natively yet.'
-                      : 'نموذج اليتيم غير منفذ داخل التطبيق بعد.')),
-                );
+                openOrphanFormPage(childId);
               },
             ),
           ));
@@ -1723,6 +1720,24 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('GET', 'sponsorships/detail.php?id=$id', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadOrphanForm(int childId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'families/orphan_form.php?child_id=' + childId.toString(), token: token);
+  }
+
+  Future<Map<String, dynamic>> saveOrphanForm(int childId, Map<String, dynamic> values) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'families/orphan_form.php?child_id=' + childId.toString(), token: token, body: {'values': values});
+  }
+
+  void openOrphanFormPage(int childId) {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => OrphanFormPage(childId: childId, english: english, loadForm: loadOrphanForm, saveForm: saveOrphanForm),
+    ));
   }
 
   Future<Map<String, dynamic>> loadFamilyDetail(int id) async {

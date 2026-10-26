@@ -386,6 +386,16 @@ try {
         && (string)$storedLogo->fetchColumn() === $testLogoPath,
         'administrator can upload a validated logo and update the organization logo setting'
     );
+    $orphanFormChildId = (int)$pdo->query('SELECT id FROM family_children ORDER BY id LIMIT 1')->fetchColumn();
+    $orphanFormRead = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $orphanFormChildId > 0 && $orphanFormRead['status'] === 200
+        && (int)($orphanFormRead['json']['data']['child']['id'] ?? 0) === $orphanFormChildId
+        && is_array($orphanFormRead['json']['data']['options']['health'] ?? null),
+        'administrator can open native orphan form with schema-backed fields and dropdown options'
+    );
+    $invalidOrphanForm = mobileApiRequest('/api/v1/families/orphan_form.php?child_id=' . $orphanFormChildId, 'POST', ['values' => ['health_status' => 'not-a-valid-health-option']], $adminToken);
+    mobileApiExpect($invalidOrphanForm['status'] === 422, 'native orphan form rejects unsupported health options');
     $financialReport = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-10-01&to=2026-10-31', 'GET', null, $adminToken, 20);
     mobileApiExpect($financialReport['status'] === 200 && is_array($financialReport['json']['data']['rows'] ?? null), 'administrator can load native financial report rows');
     foreach ([
