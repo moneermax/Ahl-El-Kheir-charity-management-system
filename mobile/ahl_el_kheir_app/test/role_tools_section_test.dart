@@ -18,8 +18,25 @@ void main() {
     expect(find.text('Report center'), findsOneWidget);
     expect(find.text('Incentive policy'), findsOneWidget);
     expect(find.text('GM reconciliation'), findsOneWidget);
+    expect(find.text('Monthly disbursements'), findsOneWidget);
     expect(find.text('IN APP'), findsWidgets);
     expect(find.text('WEB'), findsNothing);
+  });
+
+
+  testWidgets('legacy finance aliases do not see disbursements denied by the web guard', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'fm',
+          english: true,
+          onOpen: (_) {},
+        ),
+      ),
+    ));
+
+    expect(find.text('Fina Al-Khair dashboard'), findsOneWidget);
+    expect(find.text('Monthly disbursements'), findsNothing);
   });
 
   testWidgets('nanny tools expose returned-fund follow-up but not HR controls', (tester) async {
@@ -125,6 +142,7 @@ void main() {
     ));
 
     expect(find.text('Review Fina collections'), findsOneWidget);
+    expect(find.text('Monthly disbursements'), findsOneWidget);
     expect(find.text('Record Fina collection'), findsNothing);
   });
 
