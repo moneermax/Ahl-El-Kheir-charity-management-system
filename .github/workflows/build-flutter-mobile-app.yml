@@ -81,7 +81,7 @@ jobs:
 
       - name: Record build provenance
         run: |
-          printf "source_commit=%s\\napi_base_url=%s\\n" "$GITHUB_SHA" "$API_BASE_URL" > mobile-build-info.txt
+          printf "source_commit=%s\napi_base_url=%s\n" "$GITHUB_SHA" "$API_BASE_URL" > mobile-build-info.txt
 
       - name: Publish Android APK
         uses: actions/upload-artifact@v4
