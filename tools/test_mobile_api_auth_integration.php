@@ -122,6 +122,7 @@ $testFinaCollectionId = 0;
 $testBackupName = '';
 $testDisbursementId = 0;
 $testDisbursementItemId = 0;
+$testDisbursementReturnItemId = 0;
 $testBatchCreatedId = 0;
 $testBatchGroupId = 0;
 $testBatchNannyId = 0;
@@ -641,6 +642,13 @@ try {
          VALUES (?, ?, 500.00, 'pending', 1, 1, 1)"
     )->execute([$testDisbursementId, $testNannyFamilyId]);
     $testDisbursementItemId = (int)$pdo->lastInsertId();
+    $pdo->prepare(
+        "INSERT INTO disbursement_items
+         (disbursement_id,family_id,amount,status,is_orphan_verified,is_mother_contact_verified,is_bank_verified)
+         VALUES (?, ?, 250.00, 'pending', 1, 1, 1)"
+    )->execute([$testDisbursementId, $testForeignNannyFamilyId]);
+    $testDisbursementReturnItemId = (int)$pdo->lastInsertId();
+    $pdo->prepare('UPDATE monthly_disbursements SET total_amount=750.00 WHERE id=?')->execute([$testDisbursementId]);
 
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
     $receiptNannyLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
@@ -683,6 +691,43 @@ try {
         $duplicateConfirm['status'] === 409
         && (string)($pdo->query('SELECT status FROM disbursement_items WHERE id=' . $testDisbursementItemId)->fetchColumn()) === 'paid',
         'repeated nanny receipt confirmation is rejected without changing the paid item'
+    );
+    $closeWithReturn = mobileApiMultipartRequest(
+        '/api/v1/admin/disbursements_action.php',
+        [
+            'action' => 'close_with_return',
+            'batch_id' => (string)$testDisbursementId,
+            'return_reason_type' => 'سبب آخر',
+            'return_reason_details' => 'Disposable integration return',
+        ],
+        'return_receipt',
+        'return.png',
+        $pngBytes,
+        'image/png',
+        $receiptNannyToken
+    );
+    $returnedBatchLookup = $pdo->prepare('SELECT status,returned_amount,return_receipt_file_path,reversal_journal_id FROM monthly_disbursements WHERE id=?');
+    $returnedBatchLookup->execute([$testDisbursementId]);
+    $returnedBatchRow = $returnedBatchLookup->fetch(PDO::FETCH_ASSOC);
+    $returnedItemLookup = $pdo->prepare('SELECT status,return_reason FROM disbursement_items WHERE id=?');
+    $returnedItemLookup->execute([$testDisbursementReturnItemId]);
+    $returnedItemRow = $returnedItemLookup->fetch(PDO::FETCH_ASSOC);
+    $returnJournalId = (int)($returnedBatchRow['reversal_journal_id'] ?? 0);
+    $returnJournalTotals = $pdo->query(
+        'SELECT COALESCE(SUM(debit),0) debit_total, COALESCE(SUM(credit),0) credit_total FROM journal_lines WHERE entry_id=' . $returnJournalId
+    )->fetch(PDO::FETCH_ASSOC);
+    $returnReceiptPath = (string)($returnedBatchRow['return_receipt_file_path'] ?? '');
+    mobileApiExpect(
+        $closeWithReturn['status'] === 200
+        && ($closeWithReturn['json']['data']['status'] ?? '') === 'returned'
+        && (string)($returnedBatchRow['status'] ?? '') === 'returned'
+        && abs((float)($returnedBatchRow['returned_amount'] ?? 0) - 250.0) < 0.005
+        && (string)($returnedItemRow['status'] ?? '') === 'returned'
+        && $returnJournalId > 0
+        && abs((float)($returnJournalTotals['debit_total'] ?? 0) - (float)($returnJournalTotals['credit_total'] ?? 0)) < 0.005
+        && str_starts_with($returnReceiptPath, 'storage/receipts/returns/')
+        && is_file(dirname(__DIR__) . '/' . $returnReceiptPath),
+        'nanny closes a partially paid batch with a required return receipt and a balanced cash/expense reversal'
     );
 
     $r = mobileApiRequest('/api/v1/notifications/index.php', 'GET', null, $token);
@@ -1175,10 +1220,25 @@ try {
             if (is_file($receiptFile)) @unlink($receiptFile);
         }
         if ($testDisbursementId > 0) {
-            $pdo->prepare("DELETE FROM audit_log WHERE action='DISBURSEMENT_CONFIRM_ITEM' AND entity_type='monthly_disbursements' AND entity_id=? AND created_at>=?")
+            $batchReturnLookup = $pdo->prepare('SELECT return_receipt_file_path FROM monthly_disbursements WHERE id=?');
+            $batchReturnLookup->execute([$testDisbursementId]);
+            $returnStoredPath = (string)($batchReturnLookup->fetchColumn() ?: '');
+            if (str_starts_with($returnStoredPath, 'storage/receipts/returns/')) {
+                $returnStoredFile = dirname(__DIR__) . '/' . $returnStoredPath;
+                if (is_file($returnStoredFile)) @unlink($returnStoredFile);
+            }
+            $pdo->prepare("DELETE FROM audit_log WHERE action IN ('DISBURSEMENT_CONFIRM_ITEM','DISBURSEMENT_CLOSE_WITH_RETURN') AND entity_type='monthly_disbursements' AND entity_id=? AND created_at>=?")
                 ->execute([$testDisbursementId, $testStart]);
+            $returnJournalLookup = $pdo->prepare("SELECT id FROM journal_entries WHERE reference_type='disbursement_return' AND reference_id=?");
+            $returnJournalLookup->execute([$testDisbursementId]);
+            foreach ($returnJournalLookup->fetchAll(PDO::FETCH_COLUMN) as $returnJournalId) {
+                $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([(int)$returnJournalId]);
+                $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([(int)$returnJournalId]);
+            }
+            $pdo->prepare("DELETE FROM notifications WHERE title='تم إرجاع دفعة كفالة إلى الصندوق' AND created_at>=?")
+                ->execute([$testStart]);
         }
-        $pdo->prepare('DELETE FROM disbursement_items WHERE id=?')->execute([$testDisbursementItemId]);
+        $pdo->prepare('DELETE FROM disbursement_items WHERE disbursement_id=?')->execute([$testDisbursementId]);
     }
     if ($testDisbursementId > 0) {
         $pdo->prepare('DELETE FROM monthly_disbursements WHERE id=?')->execute([$testDisbursementId]);
