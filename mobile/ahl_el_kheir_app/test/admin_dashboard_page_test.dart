@@ -107,7 +107,7 @@ void main() {
     expect(find.text('FINANCE'), findsNothing);
     for (final key in [
       'admin-tool-finance-dashboard', 'admin-tool-accounts', 'admin-tool-transactions',
-      'admin-tool-disbursements', 'admin-tool-fina', 'admin-tool-backup', 'admin-tool-database',
+      'admin-tool-disbursements', 'admin-tool-fina-dashboard', 'admin-tool-fina', 'admin-tool-backup', 'admin-tool-database',
     ]) {
       expect(find.byKey(Key(key)), findsNothing, reason: 'Sudo must not see exact-admin-only tools: $key');
     }
@@ -145,6 +145,10 @@ void main() {
     await tester.tap(find.text('Monthly disbursements'));
     expect(openedTool, 'disbursements');
     expect(tester.takeException(), isNull);
+    await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-fina-dashboard')), 180, scrollable: scrollable);
+    expect(find.text('Fina Al-Khair collection is not available in the app yet'), findsNothing);
+    await tester.tap(find.text('Fina Al-Khair dashboard'));
+    expect(openedTool, 'fina_dashboard');
   });
 
 }

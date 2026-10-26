@@ -36,6 +36,7 @@ import 'reports_page.dart';
 import 'orphaned_families_report_page.dart';
 import 'fina_collection_page.dart';
 import 'fina_review_page.dart';
+import 'fina_dashboard_page.dart';
 
 void main() => runApp(const AhlElKheirApp());
 String? normalizeApiBaseUrl(String value) {
@@ -225,6 +226,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
 
   Future<void> openNativeTool(String relativePath, {Map<String, String>? queryParameters}) async {
     // Native-only policy: never launch a website, browser, or external application.
+    if (relativePath == 'modules/accounting/fina_dashboard.php') {
+      openFinaDashboard();
+      return;
+    }
     if (relativePath == 'modules/transactions/fina_payment_create.php') {
       openFinaCollectionPage();
       return;
@@ -502,6 +507,22 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         english: english,
         loadPage: loadAdminDisbursements,
         loadDetail: loadAdminDisbursementDetail,
+      ),
+    ));
+  }
+
+  Future<Map<String, dynamic>> loadFinaDashboard() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'fina/dashboard.php', token: token);
+  }
+
+  void openFinaDashboard() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => FinaDashboardPage(
+        english: english,
+        loadDashboard: loadFinaDashboard,
+        onOpenReview: () => openNativeTool('modules/accounting/fina_payment_review.php'),
       ),
     ));
   }
@@ -882,6 +903,10 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
           return;
         }
         openAdminDisbursements();
+        return;
+      case 'fina_dashboard':
+      case 'modules/accounting/fina_dashboard.php':
+        openFinaDashboard();
         return;
       case 'fina_collection':
       case 'modules/transactions/fina_payment_create.php':

@@ -126,6 +126,7 @@ class RoleToolsSection extends StatelessWidget {
             t('مراجعة المعاملات المالية', 'Financial transaction review', 'مراجعة المعاملات الواردة', 'Review incoming financial transactions', 'modules/accounting/fm_transaction_review.php', Icons.fact_check_outlined),
             t('تقارير مالية', 'Financial reports', 'التقارير المالية', 'Financial reporting', 'modules/reports/financial.php', Icons.bar_chart_rounded),
             t('بوابة الرواتب والحوافز', 'Payroll and incentives portal', 'الرواتب والحوافز والعمليات المرتبطة', 'Payroll, incentives and related operations', 'modules/hr/salary_portal.php', Icons.badge_outlined),
+            if (role != 'finance') t('لوحة فينا الخير', 'Fina Al-Khair dashboard', 'مؤشرات التحصيلات المستقلة', 'Standalone collection indicators', 'modules/accounting/fina_dashboard.php', Icons.dashboard_rounded),
             if (role != 'finance') t('تسجيل تحصيل فينا', 'Record Fina collection', 'تسجيل تحصيل جديد وإرساله للمراجعة', 'Register a collection and submit it for review', 'modules/transactions/fina_payment_create.php', Icons.add_card_rounded),
             if (role != 'finance') t('مراجعة تحصيلات فينا', 'Review Fina collections', 'مراجعة التحصيلات المعلقة وسجل القرارات', 'Review pending collections and decision history', 'modules/accounting/fina_payment_review.php', Icons.fact_check_outlined),
           ]),

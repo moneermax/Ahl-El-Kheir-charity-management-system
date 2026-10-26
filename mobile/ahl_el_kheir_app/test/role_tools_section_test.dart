@@ -141,6 +141,7 @@ void main() {
       ),
     ));
 
+    expect(find.text('Fina Al-Khair dashboard'), findsOneWidget);
     expect(find.text('Record Fina collection'), findsOneWidget);
     expect(find.text('Review Fina collections'), findsOneWidget);
   });

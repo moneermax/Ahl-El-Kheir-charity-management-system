@@ -156,6 +156,14 @@ try {
         && count($databaseIndex['json']['data']['tables']) > 0,
         'administrator can list real database tables and row counts'
     );
+    $finaDashboard = mobileApiRequest('/api/v1/fina/dashboard.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $finaDashboard['status'] === 200
+        && is_array($finaDashboard['json']['data'] ?? null)
+        && array_key_exists('pending_count', $finaDashboard['json']['data'])
+        && array_key_exists('approved_amount', $finaDashboard['json']['data']),
+        'administrator can load the native Fina dashboard summary'
+    );
     $databaseUsers = mobileApiRequest('/api/v1/admin/database.php?table=users', 'GET', null, $adminToken, 20);
     $databaseColumnNames = array_map(
         static fn(array $column): string => (string)($column['name'] ?? ''),
@@ -185,6 +193,8 @@ try {
     mobileApiExpect($nannyFinaReview['status'] === 403, 'nanny cannot view Fina review/history');
     $nannyFinaReceipt = mobileApiRequest('/api/v1/fina/receipt.php?id=1', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinaReceipt['status'] === 403, 'nanny cannot access Fina receipt delivery');
+    $nannyFinaDashboard = mobileApiRequest('/api/v1/fina/dashboard.php', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyFinaDashboard['status'] === 403, 'nanny cannot access the Fina dashboard');
     $nannyDatabase = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyDatabase['status'] === 403, 'nanny cannot access the administrator database browser');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
