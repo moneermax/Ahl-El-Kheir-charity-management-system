@@ -1,7 +1,7 @@
 # Native HR Payroll — Continuation Checkpoint
 
 **Date:** 2026-10-26  
-**Status:** Source/schema audit complete; implementation not yet started.  
+**Status:** Implemented; PHP/API integration, Flutter analysis/widget tests, Android debug APK build and artifact publication passed. Local XAMPP/API/database and physical-device acceptance remain pending.  
 **Branch:** `main`  
 **Scope:** Native payroll period management in the existing Flutter app, backed by the existing procedural PHP payroll/accounting helpers.
 
@@ -18,7 +18,7 @@
 
 ## Source findings confirmed on 2026-10-26
 
-- Existing native HR/payroll APIs currently cover attendance, attendance policy, payroll integrity diagnostics, GM period history/report, and employee salary statements. There is no native payroll-management API yet.
+- Native HR/payroll APIs cover attendance, attendance policy, payroll integrity diagnostics, GM period history/report, employee salary statements, payroll management, and authenticated private proof streaming.
 - `modules/hr/payroll.php` is the authority for payroll management actions. It permits exact roles `hr_manager`, `hr_staff`, `financial_manager`, and `admin`.
 - Payroll period generation uses the active payroll policy effective at period end, effective salary history, hire date, and employment state category `working`; existing rows are refreshed only while draft. Existing attendance, salary-advance, and scheduled-incentive refresh helpers must remain in the calculation path.
 - Draft component edits are restricted to draft rows and recalculate attendance, salary-advance, and incentive components.
@@ -27,29 +27,30 @@
 - Explicit transfer confirmation requires a prepared, readable private proof and saved active account; it performs the paid transition, accounting posting, salary-advance application, and proof confirmation inside the existing transaction. Employee and GM notifications happen after commit.
 - Legacy evidence upload applies only to rows already paid, posted, and journal-linked; it must not alter historical payment/accounting data.
 - Existing helper `hrPayrollChangeStatus()` relies on `Session::getUserId()` when a browser session class is loaded. The API uses bearer auth and does not load the browser session; actor IDs must be explicitly passed through any new API accounting/proof-confirmation path rather than silently lost.
-- The checked-in transfer migration creates `hr_payroll_period_settings` and `hr_payroll_payment_proofs`; the current mobile API integration workflow does not yet apply that migration. It must be included before exercising payroll transfer API paths in disposable MariaDB.
+- The checked-in transfer migration creates `hr_payroll_period_settings` and `hr_payroll_payment_proofs`; the mobile API integration workflow now applies this existing migration to its disposable MariaDB before exercising transfer paths.
 - The checked-in schema file was not readable through the GitHub content tool in the source-audit request (empty response), so no new schema assumptions or migration changes are justified. Existing migration DDL is the current schema evidence for the transfer tables.
 
-## Implementation plan
+## Implementation plan — completed automated scope
 
-1. Add a role-protected native payroll API that returns the selected period, payroll rows, current active payroll policy, period default payment account, active account choices, and proof state. Validate period and never mutate during GET.
-2. Wire action requests to the existing payroll helpers for generation, draft amount update, approval, period/account assignment, proof upload, legacy evidence upload, and explicit transfer confirmation. Use server-validated role checks and period/row ownership checks. Avoid duplicating financial calculations where a shared existing helper can be used.
-3. Pass the authenticated API actor ID explicitly into accounting/proof confirmation helpers, preserving browser-session behavior for existing web calls.
-4. Add native Flutter payroll page and role-aware navigation. Keep actions visually separate by status; confirmation requires a saved proof and an explicit user confirmation step. Proof upload must use authenticated multipart requests and the existing file-type/size validation.
-5. Extend disposable MariaDB integration tests and the workflow to apply the existing transfer migration. Test role denial, period validation, read-only GET, proof upload state, no payment on upload, confirmation transaction, duplicate confirmation rejection, accounting balance, and historical evidence immutability. Avoid touching actual user data.
-6. Run PHP lint, Dart analysis, full widget suite, API integration, Android build and artifact publication. Document only checks that actually pass.
-7. Update the session index, master status, audit, continuation prompt and this module checkpoint. Local XAMPP/API/database and physical-device acceptance remain separate user-side gates and must not be claimed as verified here.
+- [x] Added the role-protected native payroll management API and period-scoped read-only data.
+- [x] Wired generation, draft amount update, approval, period/account assignment, proof upload, legacy evidence, and explicit transfer confirmation to existing payroll helpers.
+- [x] Passed the authenticated API actor ID into accounting and proof-confirmation helpers while preserving browser-session defaults.
+- [x] Added the Flutter payroll management page, HR/Finance/Admin navigation, and private PDF/image proof preview.
+- [x] Applied the existing transfer migration in disposable MariaDB CI and tested role denial, period validation, draft recalculation, approval-only behavior, proof upload without payment, private proof access, transactional confirmation, duplicate protection, balanced journal posting, and legacy evidence immutability.
+- [x] PHP lint/API integration passed in [run 40319313245](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40319313245); Flutter analysis, all 105 widget tests, APK build and publication passed in [run 40318833316](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40318833316).
+- [x] Updated the session index, master status, master audit, continuation prompt, mobile parity document, and this checkpoint.
+- [ ] Verify against the user's local XAMPP/API/database and physical Android device; do not claim these as passed without direct evidence.
 
 ## Acceptance boundary
 
-The feature is not complete until the native screen and endpoints are implemented and automated checks pass. Even then, do not claim local runtime/device acceptance without evidence from the intended local installation.
+Automated implementation acceptance has passed. Local runtime and physical-device acceptance remain open until verified against the intended XAMPP/API/database and Android device.
 
 ## Implementation step 1 — Shared management helpers extracted
 
 - Added `modules/hr/lib_payroll_management.php` in commit `474ce24b9b9c4442739db640705bd6ce9cecd756`.
 - Moved the existing `payrollEligibleEmployees()`, `payrollStateAtDate()`, and `payrollRefreshDraftBaseSalary()` functions without changing their function bodies, query predicates, or refresh ordering.
 - Updated `modules/hr/payroll.php` to require the shared library in commit `2e5c834377e8abe9de23f538b831966f67ef54df`. This is a behavior-preserving extraction so the native API can call the same period eligibility and draft-refresh logic instead of duplicating it.
-- Verification at this step is source-level only; PHP lint and regression/API integration must still pass before continuing to the next implementation step.
+- Subsequent verification: PHP lint passed in [run 40318633490](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40318633490), with expanded API integration in [run 40319313245](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40319313245).
 
 ## Implementation step 2 — Explicit API actor support in accounting helper
 
@@ -57,7 +58,7 @@ The feature is not complete until the native screen and endpoints are implemente
 - Existing browser calls retain their Session-based fallback and default accounting initialization behavior.
 - API callers can pass the bearer-authenticated user ID so new journal entries and proof-confirmation metadata record the actual actor even when no browser `Session` class is loaded.
 - The API can explicitly disable accounting initialization for its call path; it must rely on already-migrated accounting tables and does not execute `ak_ensure_tables()`/seeding at request time.
-- Source-only at this checkpoint; lint and the disposable full-schema integration test must verify this change.
+- Verified by PHP lint and disposable MariaDB integration in [run 40319313245](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40319313245), including actor attribution and balanced accounting.
 
 ## Implementation step 3 — Initial native payroll management API
 
@@ -66,7 +67,7 @@ The feature is not complete until the native screen and endpoints are implemente
 - It checks exact raw roles matching the existing web payroll page. Mutating actions use the existing payroll/transfer/accounting helpers. It deliberately uses `hrPayrollApproveSelected()` instead of `hrPayrollApproveAll()` for mobile approval so the API path does not invoke request-time accounting table initialization.
 - Transfer confirmation passes the authenticated actor ID to the shared status helper and disables runtime accounting initialization; the checked-in accounting schema must already exist. Proof upload remains `prepared` and does not mark the payroll paid.
 - Updated `.github/workflows/mobile-api-auth-integration.yml` in commit `2940a305d9cde2410b7ab0f701f86b7fd410abc0` to apply the existing 2026-10-20 payroll transfer migration to the disposable test database.
-- This is an implementation checkpoint, not a verified feature yet. API lint/integration, mobile UI, widget tests, and APK build remain pending.
+- This API checkpoint is verified by the passing disposable integration and PHP lint runs listed above. Native UI and APK verification passed in [run 40318833316](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40318833316).
 
 ## Implementation step 4 — Native Flutter payroll screen and routing
 
