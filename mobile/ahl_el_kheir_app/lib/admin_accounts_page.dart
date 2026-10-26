@@ -68,12 +68,9 @@ class _AdminAccountsPageState extends State<AdminAccountsPage>{
       if(!loading&&items.isEmpty)Padding(padding:const EdgeInsets.all(20),child:Text(t('لا توجد حسابات','No accounts found'))),
       for(final a in items)Card(key:ValueKey('account-card-${a['id']}'),child:ListTile(
         title:Text('${a['code']??''} — ${a['name_ar']??''}',style:const TextStyle(fontWeight:FontWeight.w800)),
-        subtitle:Text('${a['name_en']??''}\n${typeLabel(a['account_type']?.toString()??'')} · ${money(num.tryParse(a['balance']?.toString()??'0')??0)}'),
+        subtitle:Text('${a['name_en']??''}\n${typeLabel(a['account_type']?.toString()??'')} · ${money(num.tryParse(a['balance']?.toString()??'0')??0)}\n${(int.tryParse(a['is_active']?.toString()??'0')??0)==1?t('نشط','Active'):t('موقوف','Inactive')}'),
         isThreeLine:true,
-        trailing:Column(mainAxisSize:MainAxisSize.min,children:[
-          Text((int.tryParse(a['is_active']?.toString()??'0')??0)==1?t('نشط','Active'):t('موقوف','Inactive'),style:const TextStyle(fontSize:10,fontWeight:FontWeight.w800)),
-          IconButton(key:Key('account-toggle-${a['id']}'),tooltip:t('تغيير الحالة','Toggle status'),onPressed:saving?null:()=>toggle(a),icon:const Icon(Icons.toggle_on_rounded)),
-        ]),
+        trailing:IconButton(key:Key('account-toggle-${a['id']}'),tooltip:t('تغيير الحالة','Toggle status'),onPressed:saving?null:()=>toggle(a),icon:const Icon(Icons.toggle_on_rounded)),
       )),
     ])),
   );
