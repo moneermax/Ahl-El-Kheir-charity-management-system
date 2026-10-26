@@ -2,8 +2,8 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/_bootstrap.php';
-require_once dirname(__DIR__, 2) . '/modules/accounting/fina_lib.php';
-require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
+require_once dirname(__DIR__, 3) . '/modules/accounting/fina_lib.php';
+require_once dirname(__DIR__, 3) . '/modules/accounting/lib_transaction_review.php';
 
 ak_api_require_method('POST');
 $user = ak_api_authenticated_user();
