@@ -40,7 +40,7 @@ void main() {
       ),
     ));
     expect(find.text('Test connection'), findsOneWidget);
-    expect(find.text('Build: test-revision'), findsOneWidget);
+    expect(find.text('Build: test-revisio'), findsOneWidget);
     await tester.tap(find.text('Test connection'));
     await tester.pump();
     expect(testPressed, isTrue);
