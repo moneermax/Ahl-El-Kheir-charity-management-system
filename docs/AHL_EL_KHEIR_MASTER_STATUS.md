@@ -5092,3 +5092,7 @@ A concrete API connectivity regression was corrected: the mobile app and build w
 
 Still open: full native role parity, native payroll operations and remaining role-specific finance/HR workflows, local XAMPP/API/database verification, and physical-device acceptance. No external-browser handoff is permitted. Do not describe the app as complete or production-ready until those gates pass.
 
+## 2026-10-26 — Native HR payroll work: source audit complete
+
+The next active mobile task is documented in `docs/MOBILE_HR_PAYROLL_CONTINUATION.md` (audit checkpoint commit `7ef743068c1c4b14063801ec5972bad3d4235484`). Existing mobile payroll coverage is read-only reports/statements/integrity; the management workflow is not yet native. The existing PHP page remains authoritative for role boundaries, generation, draft recalculation, approval, transfer-proof preparation, explicit confirmation, and accounting. Native work must call the existing helpers and must preserve the rule that upload is not payment and confirmation/accounting are transactional. No payroll code/data was changed during source audit. Automated disposable-DB coverage must apply the existing 2026-10-20 transfer migration; local XAMPP and device acceptance remain unverified.
+
