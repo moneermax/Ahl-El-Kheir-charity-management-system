@@ -75,3 +75,8 @@ Do not create a test collection in the user's production/local database without 
 
 
 The file_picker 10.3.x package metadata requires Dart 3.4 or later. Commit `f44e98858f65a7a450c7f603dd618fbc40cb28b1` raises the app's declared Dart lower bound from 3.3 to 3.4 to match that dependency. Verify the build run for this final dependency/SDK declaration before distribution.
+
+
+## Native Fina API integration — PASS — 2026-10-26
+
+Disposable MariaDB/full-schema integration workflow [40289622000](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289622000) passed after applying the checked-in Fina standalone schema migration. Evidence from the live PHP API test: unauthenticated creation rejected; zero amount rejected before write; administrator collection creation returns pending; no accounting journal is posted at creation; new collection appears in pending review; creator self-approval is rejected and leaves status pending with no journal. Cleanup is part of the harness. This verifies the JSON create/review boundary against disposable MariaDB, not multipart receipt upload, notification-failure isolation, local XAMPP data, or on-device PDF rendering. Android build remains separately pending at [run 40289711691](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289711691).
