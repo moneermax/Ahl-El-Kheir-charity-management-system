@@ -2828,3 +2828,8 @@ Fina native registration/review source now passes Dart analysis and all 85 Flutt
 
 
 Correction — 2026-10-26 mobile Android build gate: run 40288510863 proved setting only the generated app compile SDK was insufficient; the failing Gradle module was file_picker itself, still compiled against API 34. Commit d408c1b4d756a8a151f6e7fff120061c595efdac upgrades file_picker to ^10.3.6, whose 10.3.x Android build uses Flutter's compileSdkVersion; API 36 remains explicit for the generated app. The Finance Manager native Fina registration/review routing and exact role gate are also committed and covered by a widget regression test. Follow latest run [40289421824](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289421824); no APK is verified until its artifact is published.
+
+
+## 2026-10-26 — Native Fina API integration PASS
+
+Workflow [40289622000](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289622000) passed live PHP API integration against disposable MariaDB after importing the checked-in Fina standalone schema migration. Verified authentication, invalid amount rejection, pending creation, no journal on creation, pending queue visibility, and creator self-approval rejection with unchanged pending status/no journal. The harness cleans its Fina fixtures. Multipart receipt upload and notification-failure isolation remain unverified by this harness; local XAMPP and physical-device/PDF preview remain outstanding. Current APK build gate is [40289711691](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40289711691).
