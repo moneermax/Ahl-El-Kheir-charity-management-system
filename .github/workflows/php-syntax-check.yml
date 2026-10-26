@@ -71,6 +71,9 @@ jobs:
             api/v1/suspensions/case_service.php
             api/v1/admin/overview.php
             api/v1/admin/finance_overview.php
+            api/v1/admin/accounts.php
+            api/v1/admin/accounts_action.php
+            api/v1/admin/accounts_service.php
             api/v1/admin/settings.php
             api/v1/reports/orphaned_families.php
             api/v1/reports/overview.php

@@ -13,6 +13,7 @@ import 'supervisors_page.dart';
 import 'families_page.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_finance_overview_page.dart';
+import 'admin_accounts_page.dart';
 import 'role_dashboard_page.dart';
 import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
@@ -446,6 +447,28 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     ));
   }
 
+  Future<Map<String, dynamic>> loadAdminAccounts() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'admin/accounts.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitAdminAccountAction(Map<String, dynamic> payload) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'admin/accounts_action.php', token: token, body: payload);
+  }
+
+  void openAdminAccounts() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AdminAccountsPage(
+        english: english,
+        loadAccounts: loadAdminAccounts,
+        submitAction: submitAdminAccountAction,
+      ),
+    ));
+  }
+
   Future<Map<String, dynamic>> loadAdminDepartments() async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
@@ -655,7 +678,13 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openAdminFinanceOverview();
         return;
       case 'accounts':
-        openNativeTool('modules/accounting/accounts.php');
+        if (user?['role_code']?.toString() != 'admin') {
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            SnackBar(content: Text(english ? 'Chart of accounts is restricted to the administrator role.' : 'دليل الحسابات متاح لدور المسؤول فقط.')),
+          );
+          return;
+        }
+        openAdminAccounts();
         return;
       case 'disbursements':
         openNativeTool('modules/accounting/disbursements.php');

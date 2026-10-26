@@ -83,6 +83,7 @@ $testLeaveId = 0;
 $testLeaveEmployeeId = 0;
 $testLeaveAttendanceDate = '';
 $testSponsorId = 0;
+$testAccountId = 0;
 $testProjectCode = 'MOBILE-API-CI-' . bin2hex(random_bytes(6));
 
 try {
@@ -156,6 +157,49 @@ try {
         && isset($financeData['disbursements']['pending_approval'], $financeData['disbursements']['received'], $financeData['disbursements']['pending_amount'])
         && isset($financeData['quick_stats']['active_sponsorships'], $financeData['quick_stats']['active_families'], $financeData['quick_stats']['active_nannies']),
         'administrator finance overview executes full-schema queries and returns its documented metric groups'
+    );
+
+    $accountList = mobileApiRequest('/api/v1/admin/accounts.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect(
+        $accountList['status'] === 200
+        && is_array($accountList['json']['data']['items'] ?? null)
+        && count($accountList['json']['data']['items']) > 0
+        && isset($accountList['json']['data']['items'][0]['balance'], $accountList['json']['data']['items'][0]['account_type']),
+        'native chart of accounts lists existing accounts with posted-ledger balances'
+    );
+    $accountCode = (string)random_int(100000, 999999);
+    $createAccount = mobileApiRequest('/api/v1/admin/accounts_action.php', 'POST', [
+        'action' => 'create',
+        'code' => $accountCode,
+        'name_ar' => 'حساب اختبار API المحمول',
+        'name_en' => 'Mobile API chart test',
+        'account_type' => 'expense',
+    ], $adminToken, 20);
+    $testAccountId = (int)($createAccount['json']['data']['id'] ?? 0);
+    mobileApiExpect(
+        $createAccount['status'] === 201 && $testAccountId > 0
+        && (string)($createAccount['json']['data']['code'] ?? '') === $accountCode,
+        'administrator can create a chart account with validated fields'
+    );
+    $toggleAccount = mobileApiRequest('/api/v1/admin/accounts_action.php', 'POST', [
+        'action' => 'toggle_status',
+        'id' => $testAccountId,
+    ], $adminToken, 20);
+    mobileApiExpect(
+        $toggleAccount['status'] === 200
+        && ($toggleAccount['json']['data']['is_active'] ?? null) === 0,
+        'administrator can toggle chart-account status without changing ledger entries'
+    );
+    $listedAccount = mobileApiRequest('/api/v1/admin/accounts.php', 'GET', null, $adminToken, 20);
+    $accountItem = null;
+    foreach (($listedAccount['json']['data']['items'] ?? []) as $candidate) {
+        if ((int)($candidate['id'] ?? 0) === $testAccountId) { $accountItem = $candidate; break; }
+    }
+    mobileApiExpect(
+        $listedAccount['status'] === 200 && is_array($accountItem)
+        && (int)($accountItem['is_active'] ?? 1) === 0
+        && (float)($accountItem['balance'] ?? -1) === 0.0,
+        'chart account list reflects status change and zero balance'
     );
 
     $sudoRoleId = (int)$pdo->query("SELECT id FROM roles WHERE code='sudo' LIMIT 1")->fetchColumn();
@@ -676,6 +720,9 @@ try {
     }
     if ($testSponsorId > 0) {
         $pdo->prepare('DELETE FROM sponsors WHERE id=?')->execute([$testSponsorId]);
+    }
+    if ($testAccountId > 0) {
+        $pdo->prepare('DELETE FROM accounts WHERE id=?')->execute([$testAccountId]);
     }
     if (isset($testTokenHashes) && $testTokenHashes) {
         $marks = implode(',', array_fill(0, count($testTokenHashes), '?'));
