@@ -52,7 +52,7 @@ void main() {
     expect(find.text('Test sponsor'), findsOneWidget);
     expect(find.text('1250.50'), findsOneWidget);
     expect(find.text('8200.25'), findsOneWidget);
-    expect(find.textContaining('القراءة فقط'), findsOneWidget);
+    expect(find.textContaining('للقراءة فقط'), findsOneWidget);
     expect(requestedTypes, ['']);
   });
 
