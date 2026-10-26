@@ -24,10 +24,29 @@ void main() {
     expect(openedType,'families'); expect(openedItem?['id'],17);
   });
 
-  testWidgets('finance manager sees no categories denied by existing native APIs',(tester)async{
+  testWidgets('finance manager sees only the monthly disbursement search backed by its existing API',(tester)async{
     await tester.pumpWidget(MaterialApp(home:GlobalSearchPage(roleCode:'financial_manager',english:true,loadSearch:(_,__,___)async=>throw StateError('unexpected'),onOpenResult:(_,__){})));
-    expect(find.text('No native search categories are available for this role yet.'),findsOneWidget);
-    expect(find.text('The website and external pages will not be opened.'),findsOneWidget);
+    expect(find.text('Monthly disbursements'),findsOneWidget);
+    expect(find.text('The website and external pages will not be opened.'),findsNothing);
+  });
+
+  testWidgets('monthly disbursement search opens the matching native register query',(tester)async{
+    String? openedType;
+    Map<String,dynamic>? openedItem;
+    await tester.pumpWidget(MaterialApp(home:GlobalSearchPage(
+      roleCode:'financial_manager',english:true,
+      loadSearch:(type,query,page) async {
+        expect(type,'payments'); expect(query,'42'); expect(page,1);
+        return {'ok':true,'data':{'items':[{'id':42,'month':'2026-10','status':'transferred','total_amount':'190000.00','nanny_name':'Nanny One','group_name':'Group A'}],'total':1,'page':1,'pages':1}};
+      },
+      onOpenResult:(type,item){openedType=type;openedItem=item;},
+    )));
+    await tester.enterText(find.byType(TextField),'42');
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+    expect(find.text('2026-10 · Batch #42'),findsOneWidget);
+    await tester.tap(find.text('2026-10 · Batch #42'));
+    expect(openedType,'payments'); expect(openedItem?['id'],42);
   });
 
   testWidgets('administrator aliases see categories backed by authorized native APIs',(tester)async{
