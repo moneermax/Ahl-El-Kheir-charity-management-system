@@ -535,7 +535,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         return;
       }
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
-        builder: (_) => VoucherPage(english: english, loadVouchers: loadVouchers),
+        builder: (_) => VoucherPage(english: english, loadVouchers: loadVouchers, issueVoucher: issueVoucher, voidVoucher: voidVoucher),
       ));
       return;
     }
@@ -867,6 +867,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('POST', 'auth/change_password.php', token: token, body: body);
+  }
+
+  Future<Map<String, dynamic>> issueVoucher(Map<String, dynamic> input) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'accounting/vouchers.php', token: token, body: input);
+  }
+
+  Future<Map<String, dynamic>> voidVoucher(int id, String reason) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'accounting/vouchers.php', token: token, body: {'action':'void_voucher','voucher_id':id,'reason':reason});
   }
 
   Future<Map<String, dynamic>> loadVouchers(String type) async {
