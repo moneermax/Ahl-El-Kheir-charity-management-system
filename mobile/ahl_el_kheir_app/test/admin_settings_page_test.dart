@@ -52,7 +52,7 @@ void main() {
     expect(tester.takeException(), isNull);
 
     await tester.enterText(find.byType(TextFormField).first, 'Ahl El Kheir Foundation');
-    await tester.scrollUntilVisible(find.text('Save settings'), find.byType(ListView).first, const Offset(0, -300));
+    await tester.dragUntilVisible(find.text('Save settings'), find.byType(ListView).first, const Offset(0, -300));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Save settings'));
     await tester.pumpAndSettle();
