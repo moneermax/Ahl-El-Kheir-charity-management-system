@@ -1,3 +1,4 @@
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 
 class FinaCollectionPage extends StatefulWidget {
@@ -18,15 +19,42 @@ class _FinaCollectionPageState extends State<FinaCollectionPage> {
   String method = 'cash';
   bool saving = false;
   String? error;
+  String? receiptPath;
+  String? receiptName;
   String t(String ar, String en) => widget.english ? en : ar;
   @override
   void dispose() { name.dispose(); sponsorId.dispose(); amount.dispose(); date.dispose(); purpose.dispose(); super.dispose(); }
+
+  Future<void> pickReceipt() async {
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: const ['jpg', 'jpeg', 'png', 'pdf'],
+        allowMultiple: false,
+        withData: false,
+      );
+      if (!mounted || result == null || result.files.isEmpty) return;
+      final file = result.files.single;
+      if (file.path == null || file.path!.isEmpty) {
+        setState(() => error = t('تعذر الوصول إلى الملف المحدد.','Could not access the selected file.'));
+        return;
+      }
+      if (file.size <= 0 || file.size > 10 * 1024 * 1024) {
+        setState(() => error = t('يجب ألا يتجاوز الإيصال 10 ميجابايت.','Receipt must be no larger than 10 MB.'));
+        return;
+      }
+      setState(() { receiptPath = file.path; receiptName = file.name; error = null; });
+    } catch (_) {
+      if (mounted) setState(() => error = t('تعذر اختيار ملف الإيصال.','Could not select the receipt file.'));
+    }
+  }
 
   Future<void> submit() async {
     FocusScope.of(context).unfocus();
     setState(() { saving = true; error = null; });
     try {
       final payload = <String, dynamic>{'source_type':sourceType,'source_name':name.text.trim(),'amount':amount.text.trim(),'method':method,'date':date.text.trim(),'purpose_note':purpose.text.trim()};
+      if (receiptPath != null) payload['_receipt_path'] = receiptPath;
       if (sourceType == 'sponsor') {
         final id = int.tryParse(sponsorId.text.trim());
         if (id == null || id < 1) throw Exception(t('أدخل رقم كفيل صحيحاً.','Enter a valid sponsor ID.'));
@@ -36,6 +64,7 @@ class _FinaCollectionPageState extends State<FinaCollectionPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content:Text(t('تم تسجيل التحصيل وإرساله للمراجعة.','Collection submitted for review.'))));
       name.clear(); sponsorId.clear(); amount.clear(); purpose.clear();
+      setState(() { receiptPath = null; receiptName = null; });
     } catch(e) { if(mounted) setState(()=>error=e.toString()); }
     finally { if(mounted) setState(()=>saving=false); }
   }
@@ -75,7 +104,25 @@ class _FinaCollectionPageState extends State<FinaCollectionPage> {
         const SizedBox(height:10),field(date,'التاريخ (YYYY-MM-DD)','Date (YYYY-MM-DD)'),
         const SizedBox(height:10),field(purpose,'الغرض / الملاحظات','Purpose / notes'),
         const SizedBox(height:10),
-        Text(t('رفع الإيصال غير متاح في هذه النسخة؛ احتفظ بالإثبات عبر المسار المعتمد.','Receipt upload is not available in this version; retain evidence through the approved process.'),style:TextStyle(color:Theme.of(context).colorScheme.error)),
+        OutlinedButton.icon(
+          onPressed: saving ? null : pickReceipt,
+          icon: const Icon(Icons.attach_file),
+          label: Text(t('إرفاق إيصال (اختياري)','Attach receipt (optional)')),
+        ),
+        if (receiptName != null) Padding(
+          padding: const EdgeInsets.only(top: 6),
+          child: Row(children: [
+            const Icon(Icons.description_outlined, size: 18),
+            const SizedBox(width: 6),
+            Expanded(child: Text(receiptName!, maxLines: 2, overflow: TextOverflow.ellipsis)),
+            IconButton(
+              tooltip: t('إزالة الإيصال','Remove receipt'),
+              onPressed: saving ? null : () => setState(() { receiptPath = null; receiptName = null; }),
+              icon: const Icon(Icons.close),
+            ),
+          ]),
+        ),
+        Text(t('الصيغ المقبولة JPG أو PNG أو PDF، بحد أقصى 10 ميجابايت.','Accepted formats: JPG, PNG, or PDF, up to 10 MB.'),style:Theme.of(context).textTheme.bodySmall),
         if(error!=null) Text(error!,style:TextStyle(color:Theme.of(context).colorScheme.error)),
         const SizedBox(height:12),
         FilledButton(onPressed:saving?null:submit,child:Text(t('إرسال للمراجعة المالية','Submit for finance review'))),
