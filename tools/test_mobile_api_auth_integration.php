@@ -323,10 +323,10 @@ try {
     $reopenedItem = $reopenedItemRow->fetch(PDO::FETCH_ASSOC);
     mobileApiExpect(
         $reopenItem['status'] === 200
-        && (string)($reopenedItem['json']['data']['status'] ?? '') === 'pending'
-        && (string)($reopenedItem['status'] === 200 ? ($reopenedItem['status'] ?? '') : '') !== 'paid'
-        && (string)($reopenedItem['status'] ?? '') !== 'paid',
-        'reopening a paid family item returns it to pending state'
+        && (string)($reopenItem['json']['data']['status'] ?? '') === 'pending'
+        && (string)($reopenedItem['status'] ?? '') === 'pending'
+        && ($reopenedItem['confirmed_at'] ?? null) === null,
+        'reopening a paid family item returns it to pending state and clears its confirmation timestamp'
     );
     $pdo->prepare("UPDATE monthly_disbursements SET group_id=NULL,status='returned' WHERE id=?")->execute([$testBatchCreatedId]);
     $reopenBatch = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
