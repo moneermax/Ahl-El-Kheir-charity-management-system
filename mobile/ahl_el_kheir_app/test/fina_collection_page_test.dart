@@ -19,12 +19,16 @@ void main() {
 
     await tester.enterText(find.byWidgetPredicate((widget) => widget is TextField && widget.decoration?.labelText == 'اسم مصدر الأموال *'), 'متبرع تجريبي');
     await tester.enterText(find.byWidgetPredicate((widget) => widget is TextField && widget.decoration?.labelText == 'المبلغ *'), '125.50');
+
     final submitButton = find.widgetWithText(FilledButton, 'إرسال للمراجعة المالية');
-    await tester.scrollUntilVisible(
+    await tester.dragUntilVisible(
       submitButton,
-      400,
-      scrollable: find.byType(Scrollable).first,
+      find.byType(ListView),
+      const Offset(0, -400),
     );
+    await tester.pumpAndSettle();
+    expect(tester.getCenter(submitButton).dy, lessThan(600));
+
     await tester.tap(submitButton);
     await tester.pumpAndSettle();
 
