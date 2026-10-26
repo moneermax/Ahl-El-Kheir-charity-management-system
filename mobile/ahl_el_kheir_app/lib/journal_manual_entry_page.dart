@@ -166,7 +166,7 @@ class _JournalManualEntryPageState extends State<JournalManualEntryPage> {
               ],
             ),
             DropdownButtonFormField<int>(
-              value: line.accountId,
+              initialValue: line.accountId,
               isExpanded: true,
               decoration: InputDecoration(labelText: t('الحساب', 'Account')),
               items: accounts.map((account) => DropdownMenuItem<int>(
