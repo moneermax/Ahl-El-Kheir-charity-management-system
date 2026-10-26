@@ -58,3 +58,10 @@ Do not create a test collection in the user's production/local database without 
 - Root-cause fix committed in workflow configuration: 37b8a2756c7c2699a85ff277e98c4b1a97724804 updates .github/workflows/build-flutter-mobile-app.yml to explicitly set the generated app's compile SDK to 36 and fails clearly if the expected Flutter Gradle declaration cannot be found.
 - Follow-up build run: [40288510863](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40288510863). Pending verification: wait for analyzer, all tests, APK build and artifact publication. No APK from the failed run is valid for handoff.
 - No local XAMPP API/database test or physical-device receipt/PDF preview test is implied by CI. Do not ask the user to install until the current run publishes an APK and documentation identifies the exact source revision/artifact.
+
+
+## Finance Manager native Fina routing alignment — 2026-10-26
+
+- Role audit found the Finance Manager's former Fina dashboard card pointed to a web-only route with no native screen, while the native collection API explicitly allows only persisted roles admin and financial_manager. The app-side collection gate had also allowed sudo/super_admin and legacy aliases that the endpoint rejects.
+- Commit 9d4c6993e157f910f65b1dd534ce2143201c9cbc replaces the dead Fina dashboard card with native collection registration and review/history entries for the Finance Manager. Commit fb6a5249de1cc409132185433784454fd427f235 aligns the UI gate with the API's exact roles. Commit ef4e759053aaed07007414c73b2e93691e8bd0ce adds a widget regression test proving the Finance Manager sees both native tools; the existing supervisor test still asserts no collection-creation option.
+- Latest complete mobile source CI: [run 40288897970](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40288897970). It must pass analysis, all widget tests, APK build, and artifact publication. Older runs triggered by the intermediate commits are not handoff candidates.
