@@ -167,7 +167,23 @@ class _AttendancePolicyPageState extends State<AttendancePolicyPage> {
           SwitchListTile(contentPadding:EdgeInsets.zero,title:Text(t('تثبيت الغياب تلقائياً','Automatic absence finalization')),value:autoAbsence,onChanged:saving?null:(v)=>setState(()=>autoAbsence=v)),
           TextFormField(controller:notes,maxLines:3,decoration:InputDecoration(labelText:t('ملاحظات','Notes'))),
           const SizedBox(height:12),
-          Wrap(spacing:8,runSpacing:8,children:[FilledButton(onPressed:saving?null:_save,child:saving?const SizedBox(width:18,height:18,child:CircularProgressIndicator(strokeWidth:2)):Text(t('حفظ الإصدار','Save version')),if(editingId!=null)OutlinedButton(onPressed:saving?null:_resetForm,child:Text(t('إلغاء التعديل','Cancel edit')))]),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: [
+              FilledButton(
+                onPressed: saving ? null : _save,
+                child: saving
+                    ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2))
+                    : Text(t('حفظ الإصدار', 'Save version')),
+              ),
+              if (editingId != null)
+                OutlinedButton(
+                  onPressed: saving ? null : _resetForm,
+                  child: Text(t('إلغاء التعديل', 'Cancel edit')),
+                ),
+            ],
+          ),
         ])))),
         const SizedBox(height:6),Text(t('سجل إصدارات السياسة','Policy version history'),style:const TextStyle(fontSize:17,fontWeight:FontWeight.w800)),
         for(final p in policies)Card(child:Padding(padding:const EdgeInsets.all(12),child:Column(crossAxisAlignment:CrossAxisAlignment.stretch,children:[
