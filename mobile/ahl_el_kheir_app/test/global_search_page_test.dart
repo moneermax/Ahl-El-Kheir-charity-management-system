@@ -66,7 +66,11 @@ void main() {
       loadDocument: (_) async => <String, dynamic>{},
       onOpenResult:(type,item){openedType=type;openedItem=item;},
     )));
-    await tester.enterText(find.byType(TextField),'42');
+    await tester.tap(find.byType(DropdownButtonFormField<String>));
+     await tester.pumpAndSettle();
+     await tester.tap(find.text('Monthly disbursements').last);
+     await tester.pumpAndSettle();
+     await tester.enterText(find.byType(TextField),'42');
     await tester.tap(find.text('Search'));
     await tester.pumpAndSettle();
     expect(find.text('2026-10 · Batch #42'),findsOneWidget);
