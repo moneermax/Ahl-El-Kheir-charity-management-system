@@ -66,7 +66,10 @@ void main() {
     ));
     await tester.pumpAndSettle();
 
-    final scrollable = find.byType(Scrollable).first;
+    final scrollable = find.descendant(
+      of: find.byKey(const Key('admin-dashboard-list')),
+      matching: find.byType(Scrollable),
+    ).first;
     Future<void> expectUnavailableTool(String label) async {
       final target = find.text(label);
       try {
