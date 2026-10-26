@@ -871,12 +871,35 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     return call('GET', 'accounting/journal.php?view=$id', token: token);
   }
 
+  Future<Map<String, dynamic>> loadJournalAccounts() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'accounting/journal.php', token: token, body: {'action': 'list_accounts'});
+  }
+
+  Future<Map<String, dynamic>> submitManualJournalEntry(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'accounting/journal.php', token: token, body: body);
+  }
+
+  Future<Map<String, dynamic>> submitJournalVoid(int id, String reason) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'accounting/journal.php', token: token, body: {'action': 'void_manual_entry', 'entry_id': id, 'reason': reason});
+  }
+
   void openJournalPage() {
     navigatorKey.currentState?.push(MaterialPageRoute<void>(
       builder: (_) => JournalPage(
         english: english,
+        roleCode: user?['role_code']?.toString() ?? '',
+        currentUserId: int.tryParse(user?['id']?.toString() ?? '') ?? 0,
         loadEntries: loadJournalEntries,
         loadEntry: loadJournalEntry,
+        loadAccounts: loadJournalAccounts,
+        submitManualEntry: submitManualJournalEntry,
+        submitVoid: submitJournalVoid,
       ),
     ));
   }
