@@ -13,6 +13,9 @@ $actionRoles = [
     'create_batch' => ['admin', 'financial_manager', 'general_manager', 'accountant_staff'],
     'transfer_with_receipt' => ['admin', 'financial_manager', 'general_manager'],
     'close_with_return' => ['nanny'],
+    'reopen_batch' => ['admin', 'financial_manager', 'general_manager', 'accountant_staff'],
+    'reopen_item' => ['admin', 'financial_manager', 'general_manager', 'accountant_staff'],
+    'void_batch' => ['admin', 'financial_manager'],
 ];
 if (!isset($actionRoles[$action])) {
     ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_action','message'=>'Unsupported disbursement action.']]);
@@ -448,6 +451,206 @@ if ($action === 'close_with_return') {
         error_log('Mobile disbursement return notification failed: '.$notificationError->getMessage());
     }
     ak_api_json(200, ['ok'=>true,'data'=>['batch_id'=>(int)$batchId,'status'=>'returned','returned_amount'=>$returnAmount,'journal_id'=>$journalId,'return_receipt_file_path'=>$receiptPath]]);
+}
+
+if ($action === 'reopen_batch') {
+    $batchId = filter_var($input['batch_id'] ?? null, FILTER_VALIDATE_INT);
+    $reason = trim((string)($input['reason'] ?? ''));
+    if (!$batchId || $batchId < 1) ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_batch_id','message'=>'A valid batch ID is required.']]);
+    if ($reason === '') ak_api_json(422, ['ok'=>false,'error'=>['code'=>'reason_required','message'=>'A reason is required to reopen the batch.']]);
+    $pdo = db();
+    try {
+        $pdo->beginTransaction();
+        $batch = dbFetchOne('SELECT * FROM monthly_disbursements WHERE id=? FOR UPDATE', [(int)$batchId]);
+        if (!$batch) {
+            $pdo->rollBack();
+            ak_api_json(404, ['ok'=>false,'error'=>['code'=>'batch_not_found','message'=>'The disbursement batch was not found.']]);
+        }
+        if ($role === 'accountant_staff'
+            && !dbFetchOne('SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id=? AND nanny_id=? LIMIT 1', [(int)$user['id'],(int)$batch['nanny_id']])) {
+            $pdo->rollBack();
+            ak_api_json(403, ['ok'=>false,'error'=>['code'=>'outside_assignment','message'=>'This batch is outside your assigned nannies.']]);
+        }
+        if (!in_array((string)$batch['status'], ['received','returned'], true)) {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'batch_not_reopenable','message'=>'Only a received or returned batch can be reopened.']]);
+        }
+        dbExecute("UPDATE monthly_disbursements SET status='transferred' WHERE id=?", [(int)$batchId]);
+        if (!empty($batch['group_id'])) {
+            dbExecute("UPDATE orphan_groups SET verification_status='transferred',closed_at=NULL,closed_by=NULL WHERE id=?", [(int)$batch['group_id']]);
+        }
+        try {
+            dbExecute(
+                "INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent,created_at)
+                 VALUES (?,'DISBURSEMENT_REOPEN_BATCH','monthly_disbursements',?,?,?,?,?,NOW())",
+                [(int)$user['id'],(int)$batchId,json_encode(['status'=>$batch['status']],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),json_encode(['status'=>'transferred','reason'=>$reason],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),(string)($_SERVER['REMOTE_ADDR']??''),(string)($_SERVER['HTTP_USER_AGENT']??'')]
+            );
+        } catch (Throwable $auditError) { error_log('Mobile batch reopen audit failed: '.$auditError->getMessage()); }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('Mobile batch reopen failed: '.$e->getMessage());
+        ak_api_json(500, ['ok'=>false,'error'=>['code'=>'reopen_failed','message'=>'The batch could not be reopened.']]);
+    }
+    try {
+        ak_transaction_review_notify_event((int)$batch['nanny_id'],'تم إعادة فتح دفعة الكفالة','تمت إعادة فتح الدفعة ويمكنك الآن تعديل سجلات الأسر ومتابعة التأكيد.',APP_URL.'modules/accounting/disbursements.php?view='.(int)$batchId,(int)$batchId,'disbursement_reopened');
+    } catch (Throwable $notificationError) { error_log('Mobile batch reopen notification failed: '.$notificationError->getMessage()); }
+    ak_api_json(200, ['ok'=>true,'data'=>['batch_id'=>(int)$batchId,'status'=>'transferred']]);
+}
+
+if ($action === 'reopen_item') {
+    $itemId = filter_var($input['item_id'] ?? null, FILTER_VALIDATE_INT);
+    $reason = trim((string)($input['reason'] ?? ''));
+    if (!$itemId || $itemId < 1) ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_item_id','message'=>'A valid family item ID is required.']]);
+    if ($reason === '') ak_api_json(422, ['ok'=>false,'error'=>['code'=>'reason_required','message'=>'A reason is required to reopen the family item.']]);
+    $pdo = db();
+    try {
+        $pdo->beginTransaction();
+        $item = dbFetchOne(
+            "SELECT i.*,d.nanny_id,d.status AS batch_status,d.group_id,d.month,d.id AS batch_id
+             FROM disbursement_items i JOIN monthly_disbursements d ON d.id=i.disbursement_id
+             WHERE i.id=? FOR UPDATE",
+            [(int)$itemId]
+        );
+        if (!$item) {
+            $pdo->rollBack();
+            ak_api_json(404, ['ok'=>false,'error'=>['code'=>'item_not_found','message'=>'The family item was not found.']]);
+        }
+        if ($role === 'accountant_staff'
+            && !dbFetchOne('SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id=? AND nanny_id=? LIMIT 1', [(int)$user['id'],(int)$item['nanny_id']])) {
+            $pdo->rollBack();
+            ak_api_json(403, ['ok'=>false,'error'=>['code'=>'outside_assignment','message'=>'This family item is outside your assigned nannies.']]);
+        }
+        if (!in_array((string)$item['status'], ['paid','returned'], true)) {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'item_not_reopenable','message'=>'Only a paid or returned family item can be reopened.']]);
+        }
+        $updated = dbExecute(
+            "UPDATE disbursement_items
+             SET status='pending',confirmed_at=NULL,receipt_file_path=NULL,return_reason=NULL,
+                 return_requested_at=NULL,return_requested_by_user_id=NULL,returned_at=NULL,
+                 returned_by_user_id=NULL,reversal_journal_id=NULL
+             WHERE id=? AND status IN ('paid','returned')",
+            [(int)$itemId]
+        );
+        if ($updated !== 1) throw new RuntimeException('The family item changed before it could be reopened.');
+        if (in_array((string)$item['batch_status'], ['received','returned'], true)) {
+            dbExecute("UPDATE monthly_disbursements SET status='transferred' WHERE id=?", [(int)$item['batch_id']]);
+            if (!empty($item['group_id'])) {
+                dbExecute("UPDATE orphan_groups SET verification_status='transferred',closed_at=NULL,closed_by=NULL WHERE id=?", [(int)$item['group_id']]);
+            }
+        }
+        try {
+            dbExecute(
+                "INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent,created_at)
+                 VALUES (?,'DISBURSEMENT_REOPEN_ITEM','monthly_disbursements',?,?,?,?,?,NOW())",
+                [(int)$user['id'],(int)$item['batch_id'],json_encode(['item_id'=>(int)$itemId,'family_id'=>(int)$item['family_id'],'status'=>$item['status']],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),json_encode(['item_id'=>(int)$itemId,'status'=>'pending','reason'=>$reason],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),(string)($_SERVER['REMOTE_ADDR']??''),(string)($_SERVER['HTTP_USER_AGENT']??'')]
+            );
+        } catch (Throwable $auditError) { error_log('Mobile item reopen audit failed: '.$auditError->getMessage()); }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('Mobile family item reopen failed: '.$e->getMessage());
+        ak_api_json(500, ['ok'=>false,'error'=>['code'=>'reopen_failed','message'=>'The family item could not be reopened.']]);
+    }
+    try {
+        ak_transaction_review_notify_event((int)$item['nanny_id'],'تم إعادة فتح سجل أسرة في دفعة الكفالة','تمت إعادة فتح سجل الأسرة ويمكنك الآن تأكيده وإرفاق الإيصال من جديد.',APP_URL.'modules/accounting/disbursements.php?view='.(int)$item['batch_id'],(int)$itemId,'disbursement_item_reopened');
+    } catch (Throwable $notificationError) { error_log('Mobile item reopen notification failed: '.$notificationError->getMessage()); }
+    ak_api_json(200, ['ok'=>true,'data'=>['item_id'=>(int)$itemId,'batch_id'=>(int)$item['batch_id'],'status'=>'pending']]);
+}
+
+if ($action === 'void_batch') {
+    $batchId = filter_var($input['batch_id'] ?? null, FILTER_VALIDATE_INT);
+    $reason = trim((string)($input['reason'] ?? ''));
+    if (!$batchId || $batchId < 1) ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_batch_id','message'=>'A valid batch ID is required.']]);
+    if ($reason === '') ak_api_json(422, ['ok'=>false,'error'=>['code'=>'reason_required','message'=>'A reason is required to void the batch.']]);
+    $pdo = db();
+    try {
+        $pdo->beginTransaction();
+        $batch = dbFetchOne(
+            "SELECT id,month,nanny_id,group_id,total_amount,status,transaction_id,reversal_journal_id
+             FROM monthly_disbursements WHERE id=? FOR UPDATE",
+            [(int)$batchId]
+        );
+        if (!$batch) {
+            $pdo->rollBack();
+            ak_api_json(404, ['ok'=>false,'error'=>['code'=>'batch_not_found','message'=>'The disbursement batch was not found.']]);
+        }
+        if (!in_array((string)$batch['status'], ['pending_approval','transferred'], true)) {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'batch_not_voidable','message'=>'Only pending-approval or transferred batches can be voided.']]);
+        }
+        if (!empty($batch['reversal_journal_id'])) {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'already_reversed','message'=>'This batch already has a reversal journal.']]);
+        }
+        $original = dbFetchOne(
+            "SELECT id,entry_code,entry_date,description,reference_type,reference_id
+             FROM journal_entries WHERE reference_type='disbursement' AND reference_id=? AND status='posted'
+             ORDER BY id ASC LIMIT 1 FOR UPDATE",
+            [(int)$batchId]
+        );
+        $journalId = null;
+        if ($original) {
+            $originalLines = dbFetchAll('SELECT account_id,debit,credit,description FROM journal_lines WHERE entry_id=? ORDER BY id ASC', [(int)$original['id']]);
+            if (count($originalLines) < 2) throw new RuntimeException('The original journal does not contain enough lines to reverse safely.');
+            $debitTotal = 0.0; $creditTotal = 0.0;
+            foreach ($originalLines as $line) {
+                $debitTotal += (float)$line['debit']; $creditTotal += (float)$line['credit'];
+                if ((float)$line['debit'] < 0 || (float)$line['credit'] < 0) throw new RuntimeException('The original journal contains a negative amount.');
+            }
+            if (abs($debitTotal-$creditTotal)>0.005 || $debitTotal<=0) throw new RuntimeException('The original journal is unbalanced and cannot be reversed safely.');
+            $entryCode = 'JE-REV-DISB-' . str_pad((string)$batchId,6,'0',STR_PAD_LEFT) . '-' . date('YmdHis');
+            dbExecute(
+                "INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by,created_at)
+                 VALUES (?,CURDATE(),?,'disbursement_void',?,'posted',?,NOW())",
+                [$entryCode,'عكس إبطال دفعة #' . (int)$batchId . ' - ' . $reason,(int)$batchId,(int)$user['id']]
+            );
+            $journalId = (int)dbLastInsertId();
+            foreach ($originalLines as $line) {
+                dbExecute(
+                    'INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)',
+                    [$journalId,(int)$line['account_id'],(float)$line['credit'],(float)$line['debit'],'عكس: '.(string)($line['description']??'')]
+                );
+            }
+            $totals = dbFetchOne('SELECT COALESCE(SUM(debit),0) debit_total,COALESCE(SUM(credit),0) credit_total FROM journal_lines WHERE entry_id=?', [$journalId]);
+            if (!$totals || abs((float)$totals['debit_total']-(float)$totals['credit_total'])>0.005) throw new RuntimeException('The reversal journal is unbalanced.');
+            dbExecute(
+                "UPDATE journal_entries SET voided_at=NOW(),voided_by=?,void_reason=? WHERE id=? AND status='posted' AND voided_at IS NULL",
+                [(int)$user['id'],$reason,(int)$original['id']]
+            );
+        }
+        if (!empty($batch['transaction_id'])) {
+            dbExecute("UPDATE transactions SET status='voided',voided_at=NOW(),voided_by=?,void_reason=? WHERE id=? AND status='posted'", [(int)$user['id'],$reason,(int)$batch['transaction_id']]);
+        } else {
+            dbExecute("UPDATE transactions SET status='voided',voided_at=NOW(),voided_by=?,void_reason=? WHERE reference_number=? AND status='posted'", [(int)$user['id'],$reason,'DISB-OUT-'.(int)$batchId]);
+        }
+        dbExecute(
+            "UPDATE monthly_disbursements SET status='voided',voided_by_user_id=?,voided_at=NOW(),void_reason=?,reversal_journal_id=?
+             WHERE id=? AND status IN ('pending_approval','transferred')",
+            [(int)$user['id'],$reason,$journalId,(int)$batchId]
+        );
+        $updated = dbFetchOne('SELECT status,reversal_journal_id FROM monthly_disbursements WHERE id=?', [(int)$batchId]);
+        if (!$updated || (string)$updated['status']!=='voided' || ($journalId!==null && (int)$updated['reversal_journal_id']!==$journalId)) {
+            throw new RuntimeException('The batch could not be verified after voiding.');
+        }
+        dbExecute(
+            "INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent,created_at)
+             VALUES (?,'DISBURSEMENT_VOID','monthly_disbursements',?,?,?,?,?,NOW())",
+            [(int)$user['id'],(int)$batchId,json_encode(['status'=>$batch['status'],'transaction_id'=>$batch['transaction_id']??null,'original_journal_id'=>$original['id']??null],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),json_encode(['status'=>'voided','reason'=>$reason,'original_journal_id'=>$original['id']??null,'reversal_journal_id'=>$journalId,'transaction_id'=>$batch['transaction_id']??null],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),(string)($_SERVER['REMOTE_ADDR']??'cli'),(string)($_SERVER['HTTP_USER_AGENT']??'cli')]
+        );
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('Mobile disbursement void failed: '.$e->getMessage());
+        ak_api_json(500, ['ok'=>false,'error'=>['code'=>'void_failed','message'=>'The disbursement batch could not be voided.']]);
+    }
+    if ((string)$batch['status'] === 'transferred') {
+        try {
+            ak_transaction_review_notify_event((int)$batch['nanny_id'],'تم إبطال دفعة الكفالة','تم إبطال هذه الدفعة من قبل الإدارة ولم تعد متاحة للتنفيذ.',APP_URL.'modules/accounting/disbursements.php?view='.(int)$batchId,(int)$batchId,'disbursement_voided');
+        } catch (Throwable $notificationError) { error_log('Mobile disbursement void notification failed: '.$notificationError->getMessage()); }
+    }
+    ak_api_json(200, ['ok'=>true,'data'=>['batch_id'=>(int)$batchId,'status'=>'voided','reversal_journal_id'=>$journalId]]);
 }
 
 if ($action !== 'confirm_item') {
