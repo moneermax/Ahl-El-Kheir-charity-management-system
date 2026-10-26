@@ -224,6 +224,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
 
   Future<void> openNativeTool(String relativePath, {Map<String, String>? queryParameters}) async {
     // Native-only policy: never launch a website, browser, or external application.
+    if (relativePath == 'modules/transactions/fina_payment_create.php') {
+      openFinaCollectionPage();
+      return;
+    }
+    if (relativePath == 'modules/accounting/fina_payment_review.php' ||
+        relativePath == 'modules/accounting/fina_payment_history.php') {
+      openFinaReviewPage();
+      return;
+    }
     if (relativePath == 'modules/families/suspensions.php') {
       openSuspensionCases();
       return;
