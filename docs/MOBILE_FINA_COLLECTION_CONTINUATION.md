@@ -49,3 +49,12 @@ Do not create a test collection in the user's production/local database without 
 - Workflow run `40285937691` (`124f0dc6d55e504035225e70785e6c16cd8d609f`) passed Dart analysis and 84 widget tests, but one test failed: `fina_collection_page_test.dart` attempted to tap the submit button at y=1360 in a 600px-high test viewport. The `submitted` payload remained null because the tap was outside the render view. This was a test harness visibility failure, not evidence of a production form defect.
 - Commit `1c940e0b74ba50612566be0148e3be8830f8021c` updates the test to call `tester.ensureVisible(submitButton)` before tapping. New CI run `40286768725`: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40286768725
 - Current status at documentation update: the new run is queued/in progress. Do not ask for a phone install until the widget tests and APK build complete successfully.
+
+
+## Fina form test and Android compile SDK blocker — 2026-10-26
+
+- Workflow [40287521591](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40287521591), source 841916ae88481a28ca33bb0ef3d6a0f591ad1566: Dart analysis passed and all 85 Flutter tests passed. The dragUntilVisible change resolves the prior test viewport failure.
+- The same workflow failed at Android APK compilation, not Dart/test execution. Exact Gradle cause: :file_picker:checkDebugAarMetadata reported flutter_plugin_android_lifecycle requires compile SDK 36 or later, while the generated Android app was compiling against API 34. APK publication was skipped.
+- Root-cause fix committed in workflow configuration: 37b8a2756c7c2699a85ff277e98c4b1a97724804 updates .github/workflows/build-flutter-mobile-app.yml to explicitly set the generated app's compile SDK to 36 and fails clearly if the expected Flutter Gradle declaration cannot be found.
+- Follow-up build run: [40288510863](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40288510863). Pending verification: wait for analyzer, all tests, APK build and artifact publication. No APK from the failed run is valid for handoff.
+- No local XAMPP API/database test or physical-device receipt/PDF preview test is implied by CI. Do not ask the user to install until the current run publishes an APK and documentation identifies the exact source revision/artifact.
