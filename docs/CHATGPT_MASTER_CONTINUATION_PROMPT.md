@@ -1905,7 +1905,7 @@ Cloud run 40060794073 passed Dart analysis but failed the test because it launch
 
 
 ## 2026-10-24 — Mobile physical phone and theme follow-up
-Continue from `docs/MOBILE_APP_CONTINUATION.md`. User confirmed laptop LAN IP `192.168.18.9` and Apache port `881`; Flutter default targets `http://192.168.18.9:881/AhlElKheir/api/v1`. Login UI uses the existing website navy palette and `assets/img/logo.jpg`. Do not claim login works until CI passes, phone reaches the endpoint, `2026-10-24_mobile_api_sessions.sql` is confirmed applied to the intended `ahl_el_kheir` DB, and local API runtime/security checks pass. Do not expose XAMPP publicly.
+Continue from `docs/MOBILE_APP_CONTINUATION.md`. Historical port-881 notes were incorrect: direct local and phone-browser checks confirmed Apache listens on port `8081` and port `881` has no listener. Current default is `http://192.168.18.9:8081/AhlElKheir/api/v1`; commit `da04d0fea8e73f505fa521546e653ca4e263e0c0` fixes both defaults and stale saved-URL migration. Current native theme is violet/amber with lavender surfaces, intentionally distinct from the website. The mobile-session migration was confirmed applied by the user; local API runtime/security and current physical-device acceptance remain unverified. Do not expose XAMPP publicly.
 
 
 ## 2026-10-24 — Flutter UI analyzer follow-up
@@ -2401,7 +2401,7 @@ A dedicated native admin/system-developer dashboard has been committed to `main`
 Source commits on `main`:
 - `8f659a0cec3ae9d565dd8bba98297da2f94b7639`: expose native leave requests and salary statements from the mobile workspace.
 - `842e4382bcf922f9c67b82fcc414abdd7e72fba8` and `9e3044d842c1893bf685ef2bb87ae253a7d2c150`: add a role-specific quick-tools section derived from each existing web dashboard. Website-only links are labelled WEB and remain subject to website server-side authorization; this is navigation coverage, not native workflow parity.
-- `fbc30ebf5c1df671e6fcca6b07c39963abe3661e` and `a2eb57da68fde5a1cb206732ed4781df609c0382`: align the mobile API default and Android workflow default with the documented phone LAN endpoint `http://192.168.18.9:881/AhlElKheir/api/v1`. The previous 8081 default did not match the documented phone-facing Apache port and is superseded.
+- Historical correction: commits `fbc30eb`/`a2eb57d` changed the endpoint to port 881 based on incorrect notes. Actual local/phone-browser evidence confirms port 8081 and no listener on 881; commit `da04d0fea8e73f505fa521546e653ca4e263e0c0` is the current correction.
 
 The workspace now exposes the existing native personal leave-request page and finalized salary-statement page, and adds role-scoped quick links matching the real GM, VGM, FM, Accountant, Supervisor, Nanny, Administration/Staff, HR, and Projects dashboard routes. The API enforces leave-queue permissions and returns salary statements only for paid payrolls posted to accounting. No account without a linked employee profile is given another employee's records.
 
@@ -2789,7 +2789,7 @@ Continue from `main`: native detail screens and `GET api/v1/reports/detail.php` 
 
 - Continue only on `main` from the current repository state. The native app includes Fina registration/review/history and in-app PDF/image receipt preview, admin database/backup tools, report detail screens, role-scoped monthly disbursement actions, orphan forms, sponsor assignment, employment states, and attendance-policy management.
 - Attendance-policy API integration passed in [run 40310902190](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40310902190). The latest Flutter analysis, all widget tests, Android debug APK build and artifact publication passed in [run 40314527960](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40314527960), app source `4952889a754138467d8af61077090e879096f028`. Artifact `ahl-el-kheir-flutter-android-debug-apk` (102,203,303 bytes) expires 2026-11-25.
-- Corrected the mobile API default and build-workflow fallback to the documented phone-facing port 881. The app still allows in-app API URL configuration if the LAN IP changes. No external browser handoff.
+- Historical correction: the previous note incorrectly described port 881 as the phone-facing port. Current app and workflow defaults use verified port 8081, and startup migration maps only the exact stale local 881 URL to 8081. The app still allows in-app API URL configuration if the LAN IP changes. No external browser handoff.
 - The salary-advance verification workflow's full-schema job continues to fail at its known guard `Refusing to run outside mobile_api_auth_test with MOBILE_API_AUTH_TEST=1`; PHP lint, MariaDB 10.4, HR migration and rescheduling jobs pass. Do not reopen closed salary-advance behavior to suppress this unrelated harness failure.
 - **Still not complete:** full native role parity, other role-specific finance/HR workflows, local XAMPP/API/database acceptance, and physical-device acceptance. Native HR payroll management is implemented and automated CI gates pass as documented below. Continue with the next concrete parity gap; do not reopen payroll without regression evidence.
 
