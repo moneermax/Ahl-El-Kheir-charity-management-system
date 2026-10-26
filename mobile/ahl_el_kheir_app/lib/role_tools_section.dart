@@ -60,9 +60,11 @@ class RoleToolsSection extends StatelessWidget {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        _isNativeTool(tool.path)
-                            ? (english ? 'IN APP' : 'داخل التطبيق')
-                            : (english ? 'NOT READY' : 'غير جاهز'),
+                        tool.path == 'modules/families/suspensions.php'
+                            ? (english ? 'APP' : 'تطبيق')
+                            : _isNativeTool(tool.path)
+                                ? (english ? 'IN APP' : 'داخل التطبيق')
+                                : (english ? 'NOT READY' : 'غير جاهز'),
                         style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w800),
                       ),
                     ],
