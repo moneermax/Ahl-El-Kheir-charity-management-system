@@ -1,3 +1,4 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 
 class FinaReviewPage extends StatefulWidget {
@@ -6,11 +7,13 @@ class FinaReviewPage extends StatefulWidget {
     required this.english,
     required this.loadReview,
     required this.submitAction,
+    required this.loadReceipt,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function() loadReview;
   final Future<Map<String, dynamic>> Function(Map<String, dynamic>) submitAction;
+  final Future<Map<String, dynamic>> Function(int) loadReceipt;
 
   @override
   State<FinaReviewPage> createState() => _FinaReviewPageState();
@@ -68,6 +71,47 @@ class _FinaReviewPageState extends State<FinaReviewPage> {
             ? t('شخص خارجي', 'External person')
             : t('أخرى', 'Other');
     return type + ' — ' + name;
+  }
+
+  Future<void> _viewReceipt(int collectionId) async {
+    try {
+      final result = await widget.loadReceipt(collectionId);
+      if (!mounted) return;
+      final mime = (result['mime'] ?? '').toString();
+      final value = result['bytes'];
+      if (value is! Uint8List) throw StateError('Invalid receipt response');
+      await showDialog<void>(
+        context: context,
+        builder: (dialogContext) => AlertDialog(
+          title: Text(t('إيصال التحصيل', 'Collection receipt')),
+          content: SizedBox(
+            width: 520,
+            child: mime.startsWith('image/')
+                ? InteractiveViewer(
+                    child: Image.memory(value, fit: BoxFit.contain),
+                  )
+                : Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(Icons.picture_as_pdf_outlined, size: 56),
+                      const SizedBox(height: 12),
+                      Text(t(
+                        'تم استرجاع ملف PDF بأمان، لكن معاينة PDF داخل التطبيق لم تُنفذ بعد.',
+                        'The PDF was retrieved securely, but in-app PDF preview is not implemented yet.',
+                      )),
+                    ],
+                  ),
+          ),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(t('إغلاق', 'Close'))),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    }
   }
 
   Future<void> _act(Map<String, dynamic> row, String action) async {
@@ -174,9 +218,16 @@ class _FinaReviewPageState extends State<FinaReviewPage> {
                 child: Text(t('المنشئ: ', 'Created by: ') + row['creator_name'].toString())),
             Padding(
               padding: const EdgeInsets.only(top: 5),
-              child: Text(receipt
-                  ? t('يوجد إيصال مرفق (عرضه من التطبيق غير متاح حالياً).', 'Receipt attached (in-app viewing is not available yet).')
-                  : t('لا يوجد إيصال مرفق.', 'No receipt attached.')),
+              child: receipt
+                  ? Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: OutlinedButton.icon(
+                        onPressed: acting ? null : () => _viewReceipt(id),
+                        icon: const Icon(Icons.attach_file),
+                        label: Text(t('عرض الإيصال', 'View receipt')),
+                      ),
+                    )
+                  : Text(t('لا يوجد إيصال مرفق.', 'No receipt attached.')),
             ),
             if (isHistory) ...[
               const Divider(height: 18),
