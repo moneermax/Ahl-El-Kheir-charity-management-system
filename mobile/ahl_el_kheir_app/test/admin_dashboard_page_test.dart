@@ -89,15 +89,20 @@ void main() {
     // Check each role-specific group only after its section is built in the
     // lazy list; trying to scroll to a deliberately absent tile throws.
     await scrollTo('SYSTEM ADMINISTRATION');
-    expectUnavailableTool('Departments');
-    expectUnavailableTool('System settings');
-    expectUnavailableTool('Password recovery requests');
+    expect(find.byKey(const Key('admin-tool-departments')), findsNothing,
+        reason: 'Departments must not be advertised to Sudo.');
+    expect(find.byKey(const Key('admin-tool-settings')), findsNothing,
+        reason: 'System settings tile must not be advertised to Sudo.');
+    expect(find.byKey(const Key('admin-tool-recovery')), findsNothing,
+        reason: 'Password recovery must not be advertised to Sudo.');
 
     await scrollTo('CORE RECORDS');
-    expectUnavailableTool('Reports');
+    expect(find.byKey(const Key('admin-tool-reports')), findsNothing,
+        reason: 'Reports tile must not be advertised to Sudo.');
 
     await scrollTo('PROTECTION & MAINTENANCE');
-    expectUnavailableTool('Audit log');
+    expect(find.byKey(const Key('admin-tool-audit')), findsNothing,
+        reason: 'Audit tile must not be advertised to Sudo.');
 
     await scrollTo('User accounts');
     await tester.tap(find.text('User accounts'));
