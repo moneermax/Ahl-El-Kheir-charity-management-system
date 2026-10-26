@@ -12,6 +12,7 @@ $actionRoles = [
     'confirm_item' => ['nanny'],
     'create_batch' => ['admin', 'financial_manager', 'general_manager', 'accountant_staff'],
     'transfer_with_receipt' => ['admin', 'financial_manager', 'general_manager'],
+    'close_with_return' => ['nanny'],
 ];
 if (!isset($actionRoles[$action])) {
     ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_action','message'=>'Unsupported disbursement action.']]);
@@ -261,6 +262,192 @@ if ($action === 'transfer_with_receipt') {
         error_log('Mobile disbursement transfer notification failed: '.$notificationError->getMessage());
     }
     ak_api_json(200, ['ok'=>true,'data'=>['batch_id'=>(int)$batchId,'status'=>'transferred','transaction_id'=>$transactionId,'journal_id'=>$journalId,'receipt_file_path'=>$receiptPath]]);
+}
+
+if ($action === 'close_with_return') {
+    $batchId = filter_var($input['batch_id'] ?? null, FILTER_VALIDATE_INT);
+    if (!$batchId || $batchId < 1) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_batch_id','message'=>'A valid disbursement batch ID is required.']]);
+    }
+    $reasonType = trim((string)($input['return_reason_type'] ?? ''));
+    $reasonDetails = trim((string)($input['return_reason_details'] ?? ''));
+    $reasonMap = [
+        'انقطاع الاتصال مع الأم' => 'انقطاع الاتصال مع الأم',
+        'تعذر الوصول للأسرة' => 'تعذر الوصول للأسرة',
+        'رفض استلام المبلغ' => 'رفض استلام المبلغ',
+        'تغيير بيانات الحساب البنكي' => 'تغيير بيانات الحساب البنكي',
+        'انتقال الأسرة' => 'انتقال الأسرة',
+        'وفاة المستفيد' => 'وفاة المستفيد',
+        'إيقاف الكفالة' => 'إيقاف الكفالة',
+        'سبب آخر' => 'سبب آخر',
+    ];
+    if (!isset($reasonMap[$reasonType])) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'return_reason_required','message'=>'Choose a clear reason for returning the outstanding amount.']]);
+    }
+    if ($reasonType === 'سبب آخر' && $reasonDetails === '') {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'return_reason_details_required','message'=>'Details are required when the reason is “Other”.']]);
+    }
+    $reason = $reasonMap[$reasonType];
+    if ($reasonDetails !== '') $reason .= ' — ' . $reasonDetails;
+
+    $file = $_FILES['return_receipt'] ?? null;
+    if (!is_array($file) || (int)($file['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'receipt_required','message'=>'A return receipt is required to close a partially paid batch.']]);
+    }
+    if ((int)($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || empty($file['tmp_name']) || !is_uploaded_file((string)$file['tmp_name'])) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'receipt_upload_failed','message'=>'The return receipt upload could not be processed.']]);
+    }
+    if ((int)($file['size'] ?? 0) <= 0 || (int)$file['size'] > 10 * 1024 * 1024) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_receipt_size','message'=>'Return receipt must be no larger than 10 MB.']]);
+    }
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file((string)$file['tmp_name']);
+    $returnMimes = ['application/pdf'=>'pdf','image/jpeg'=>'jpg','image/png'=>'png','image/gif'=>'gif'];
+    if (!is_string($mime) || !isset($returnMimes[$mime])) {
+        ak_api_json(422, ['ok'=>false,'error'=>['code'=>'invalid_receipt_type','message'=>'Return receipt must be PDF, JPG, PNG, or GIF.']]);
+    }
+    $receiptDir = dirname(__DIR__, 3) . '/storage/receipts/returns';
+    if (!is_dir($receiptDir) && !mkdir($receiptDir, 0775, true) && !is_dir($receiptDir)) {
+        ak_api_json(500, ['ok'=>false,'error'=>['code'=>'receipt_storage_unavailable','message'=>'Return receipt storage is unavailable.']]);
+    }
+
+    $fullPath = null;
+    $receiptPath = null;
+    $pdo = db();
+    try {
+        $pdo->beginTransaction();
+        $batch = dbFetchOne(
+            'SELECT id,month,nanny_id,group_id,total_amount,status,expense_account_code FROM monthly_disbursements WHERE id=? FOR UPDATE',
+            [(int)$batchId]
+        );
+        if (!$batch || (int)$batch['nanny_id'] !== (int)$user['id']) {
+            $pdo->rollBack();
+            ak_api_json(404, ['ok'=>false,'error'=>['code'=>'batch_not_found','message'=>'The disbursement batch was not found.']]);
+        }
+        if ((string)$batch['status'] !== 'transferred') {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'batch_not_returnable','message'=>'Only a transferred batch can be closed with a return.']]);
+        }
+        $pendingItems = dbFetchAll(
+            "SELECT id,family_id,amount FROM disbursement_items WHERE disbursement_id=? AND status='pending' FOR UPDATE",
+            [(int)$batchId]
+        );
+        if (!$pendingItems) {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'no_pending_items','message'=>'There are no outstanding family amounts to return.']]);
+        }
+        $returnAmount = 0.0;
+        foreach ($pendingItems as $pendingItem) $returnAmount += (float)$pendingItem['amount'];
+        if ($returnAmount <= 0) {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'invalid_return_amount','message'=>'The outstanding amount to return must be greater than zero.']]);
+        }
+
+        $originalExpense = dbFetchOne(
+            "SELECT jl.account_id,a.code
+             FROM journal_entries je
+             INNER JOIN journal_lines jl ON jl.entry_id=je.id
+             INNER JOIN accounts a ON a.id=jl.account_id
+             WHERE je.reference_type='disbursement' AND je.reference_id=? AND je.status='posted' AND jl.debit>0
+             ORDER BY jl.id ASC LIMIT 1",
+            [(int)$batchId]
+        );
+        if ($originalExpense) {
+            $expenseAccountId = (int)$originalExpense['account_id'];
+            $expenseAccountCode = (string)$originalExpense['code'];
+        } else {
+            $fallbackCode = trim((string)($batch['expense_account_code'] ?? '5100'));
+            $expenseAccount = dbFetchOne('SELECT id,code FROM accounts WHERE code=? LIMIT 1', [$fallbackCode]);
+            if (!$expenseAccount) {
+                $pdo->rollBack();
+                ak_api_json(409, ['ok'=>false,'error'=>['code'=>'expense_account_missing','message'=>'The expense account for this batch could not be identified.']]);
+            }
+            $expenseAccountId = (int)$expenseAccount['id'];
+            $expenseAccountCode = (string)$expenseAccount['code'];
+        }
+        $cashAccount = dbFetchOne("SELECT id,code FROM accounts WHERE code='1100' LIMIT 1");
+        if (!$cashAccount) {
+            $pdo->rollBack();
+            ak_api_json(409, ['ok'=>false,'error'=>['code'=>'cash_account_missing','message'=>'Cash account 1100 is missing.']]);
+        }
+        $filename = 'return_receipt_' . (int)$batchId . '_' . date('YmdHis') . '_' . bin2hex(random_bytes(4)) . '.' . $returnMimes[$mime];
+        $fullPath = $receiptDir . '/' . $filename;
+        $receiptPath = 'storage/receipts/returns/' . $filename;
+        if (!move_uploaded_file((string)$file['tmp_name'], $fullPath)) {
+            $pdo->rollBack();
+            ak_api_json(500, ['ok'=>false,'error'=>['code'=>'receipt_save_failed','message'=>'The return receipt could not be saved.']]);
+        }
+
+        $entryCode = 'JE-RET-DISB-' . (int)$batchId . '-' . date('YmdHis') . '-' . bin2hex(random_bytes(3));
+        $description = 'قيد إرجاع المبلغ غير المصروف للدفعة #' . (int)$batchId . ' - شهر ' . (string)$batch['month'];
+        dbExecute(
+            "INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by,created_at)
+             VALUES (?,CURDATE(),?,'disbursement_return',?,'posted',?,NOW())",
+            [$entryCode,$description,(int)$batchId,(int)$user['id']]
+        );
+        $journalId = (int)$pdo->lastInsertId();
+        dbExecute(
+            'INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,0,?)',
+            [$journalId,(int)$cashAccount['id'],$returnAmount,'إرجاع المبلغ غير المصروف إلى الصندوق - دفعة #' . (int)$batchId]
+        );
+        dbExecute(
+            'INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,0,?,?)',
+            [$journalId,$expenseAccountId,$returnAmount,'عكس المصروف غير المصروف - حساب ' . $expenseAccountCode]
+        );
+        foreach ($pendingItems as $pendingItem) {
+            dbExecute(
+                "UPDATE disbursement_items
+                 SET status='returned',return_reason=?,returned_at=NOW(),returned_by_user_id=?,reversal_journal_id=?
+                 WHERE id=? AND disbursement_id=? AND status='pending'",
+                [$reason,(int)$user['id'],$journalId,(int)$pendingItem['id'],(int)$batchId]
+            );
+        }
+        $updated = dbExecute(
+            "UPDATE monthly_disbursements
+             SET status='returned',return_note=?,returned_amount=?,return_receipt_file_path=?,
+                 returned_by_user_id=?,returned_at=NOW(),return_receipt_by_user_id=?,return_receipt_at=NOW(),reversal_journal_id=?
+             WHERE id=? AND nanny_id=? AND status='transferred'",
+            [$reason,$returnAmount,$receiptPath,(int)$user['id'],(int)$user['id'],$journalId,(int)$batchId,(int)$user['id']]
+        );
+        $updatedBatch = dbFetchOne('SELECT status,returned_amount FROM monthly_disbursements WHERE id=?', [(int)$batchId]);
+        if ($updated !== 1 || !$updatedBatch || (string)$updatedBatch['status'] !== 'returned'
+            || abs((float)$updatedBatch['returned_amount'] - $returnAmount) > 0.005) {
+            throw new RuntimeException('The returned batch could not be verified after the update.');
+        }
+        if (!empty($batch['group_id'])) {
+            dbExecute(
+                "UPDATE orphan_groups SET verification_status='closed',closed_at=NOW(),closed_by=? WHERE id=?",
+                [(int)$user['id'],(int)$batch['group_id']]
+            );
+        }
+        try {
+            dbExecute(
+                "INSERT INTO audit_log (user_id,action,entity_type,entity_id,new_values,ip_address,user_agent,created_at)
+                 VALUES (?,'DISBURSEMENT_CLOSE_WITH_RETURN','monthly_disbursements',?,?,?,?,NOW())",
+                [(int)$user['id'],(int)$batchId,json_encode(['month'=>$batch['month'],'group_id'=>$batch['group_id'],'returned_amount'=>$returnAmount,'pending_items_returned'=>count($pendingItems),'return_reason'=>$reason,'return_receipt'=>$receiptPath,'reversal_journal_id'=>$journalId],JSON_UNESCAPED_UNICODE|JSON_UNESCAPED_SLASHES),(string)($_SERVER['REMOTE_ADDR']??''),(string)($_SERVER['HTTP_USER_AGENT']??'')]
+            );
+        } catch (Throwable $auditError) {
+            error_log('Mobile disbursement return audit failed: '.$auditError->getMessage());
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        if ($fullPath !== null && is_file($fullPath)) @unlink($fullPath);
+        error_log('Mobile disbursement return failed: '.$e->getMessage());
+        ak_api_json(500, ['ok'=>false,'error'=>['code'=>'return_failed','message'=>'The outstanding amount could not be returned.']]);
+    }
+    try {
+        ak_transaction_review_notify_fm_event(
+            (int)$batchId,
+            'disbursement_returned',
+            'تم إرجاع دفعة كفالة إلى الصندوق',
+            'أقفلت الحاضنة الدفعة جزئياً وأُعيد المبلغ غير المصروف إلى الصندوق. يرجى مراجعة الإجراء.',
+            APP_URL . 'modules/accounting/disbursements.php?view=' . (int)$batchId,
+            (int)$user['id']
+        );
+    } catch (Throwable $notificationError) {
+        error_log('Mobile disbursement return notification failed: '.$notificationError->getMessage());
+    }
+    ak_api_json(200, ['ok'=>true,'data'=>['batch_id'=>(int)$batchId,'status'=>'returned','returned_amount'=>$returnAmount,'journal_id'=>$journalId,'return_receipt_file_path'=>$receiptPath]]);
 }
 
 if ($action !== 'confirm_item') {
