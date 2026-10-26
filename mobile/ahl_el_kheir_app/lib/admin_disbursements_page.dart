@@ -7,6 +7,7 @@ class AdminDisbursementsPage extends StatefulWidget {
     required this.english,
     required this.loadPage,
     required this.loadDetail,
+    this.initialQuery = '',
     this.roleCode = 'admin',
     this.pickReceipt,
     this.submitItemConfirmation,
@@ -19,6 +20,7 @@ class AdminDisbursementsPage extends StatefulWidget {
   });
 
   final bool english;
+  final String initialQuery;
   final String roleCode;
   final Future<PlatformFile?> Function()? pickReceipt;
   final Future<Map<String, dynamic>> Function(int itemId, PlatformFile receipt)? submitItemConfirmation;
@@ -63,6 +65,7 @@ class _AdminDisbursementsPageState extends State<AdminDisbursementsPage> {
   @override
   void initState() {
     super.initState();
+    queryController.text = widget.initialQuery;
     refresh();
   }
 
