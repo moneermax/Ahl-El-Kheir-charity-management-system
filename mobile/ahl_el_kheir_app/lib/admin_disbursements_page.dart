@@ -36,7 +36,7 @@ class _AdminDisbursementsPageState extends State<AdminDisbursementsPage> {
   String money(dynamic value) {
     final amount = num.tryParse(value?.toString() ?? '') ?? 0;
     return amount.toStringAsFixed(2).replaceAllMapped(
-      RegExp(r'\\B(?=(\\d{3})+(?!\\d))'),
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
       (match) => ',',
     );
   }
@@ -138,7 +138,7 @@ class _AdminDisbursementsPageState extends State<AdminDisbursementsPage> {
                     const SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       key: const Key('disbursements-status-filter'),
-                      value: status,
+                      initialValue: status,
                       decoration: InputDecoration(
                         labelText: t('الحالة', 'Status'),
                         border: const OutlineInputBorder(),
@@ -296,7 +296,7 @@ class _AdminDisbursementDetailPageState extends State<AdminDisbursementDetailPag
   String money(dynamic value) {
     final amount = num.tryParse(value?.toString() ?? '') ?? 0;
     return amount.toStringAsFixed(2).replaceAllMapped(
-      RegExp(r'\\B(?=(\\d{3})+(?!\\d))'),
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
       (match) => ',',
     );
   }
