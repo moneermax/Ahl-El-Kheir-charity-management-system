@@ -19,7 +19,7 @@ if (!function_exists('akp_is_projects_manager')) {
     function akp_is_projects_manager(): bool { return akp_role() === 'projects_manager'; }
 }
 if (!function_exists('akp_is_primary_supervisor')) {
-    function akp_is_primary_supervisor(int $projectId): bool { return (bool)dbFetchOne('SELECT id FROM project_supervisor_assignments WHERE project_id = ? AND supervisor_user_id = ? AND ended_at IS NULL LIMIT 1', [$projectId, akp_user_id()]); }
+    function akp_is_primary_supervisor(int $projectId, ?int $userId = null): bool { $actorId = $userId ?? akp_user_id(); return (bool)dbFetchOne('SELECT id FROM project_supervisor_assignments WHERE project_id = ? AND supervisor_user_id = ? AND ended_at IS NULL LIMIT 1', [$projectId, $actorId]); }
 }
 if (!function_exists('akp_is_dg')) {
     function akp_is_dg(): bool { return in_array(akp_role(), ['admin', 'general_manager'], true); }
@@ -96,9 +96,10 @@ if (!function_exists('akp_project_final_fm_confirmed')) {
 }
 
 if (!function_exists('akp_can_view_project')) {
-    function akp_can_view_project(int $projectId): bool
+    function akp_can_view_project(int $projectId, ?string $roleOverride = null, ?int $userIdOverride = null): bool
     {
-        $role = akp_role();
+        $role = $roleOverride ?? akp_role();
+        $userId = $userIdOverride ?? akp_user_id();
         if (in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'accountant', 'financial_manager'], true)) return true;
 
         /*
@@ -140,7 +141,7 @@ if (!function_exists('akp_can_view_project')) {
             }
 
             return $pmProject
-                && (int)$pmProject['created_by'] === akp_user_id()
+                && (int)$pmProject['created_by'] === $userId
                 && in_array((string)$pmProject['approval_status'], ['draft', 'submitted', 'rejected', 'fm_approved'], true);
         }
 
@@ -149,7 +150,7 @@ if (!function_exists('akp_can_view_project')) {
          * a supervisor assignment exists. The project becomes available to the
          * assigned supervisor only after final approval and explicit PM launch.
          */
-        if (akp_role() === 'project_supervisor') {
+        if ($role === 'project_supervisor') {
             $launchState = dbFetchOne(
                 "SELECT pa.approval_status, COALESCE(pl.lifecycle_status, op.status) AS lifecycle_status
                  FROM other_projects op
@@ -165,12 +166,12 @@ if (!function_exists('akp_can_view_project')) {
             ) {
                 return false;
             }
-            return akp_is_primary_supervisor($projectId) || akp_has_project_section($projectId, 'operations') || akp_has_project_section($projectId, 'documents');
+            return akp_is_primary_supervisor($projectId, $userId) || akp_has_project_section($projectId, 'operations', $userId) || akp_has_project_section($projectId, 'documents', $userId);
         }
 
-        $row = dbFetchOne("SELECT 1 AS allowed FROM project_team WHERE project_id = ? AND user_id = ? AND unassigned_at IS NULL LIMIT 1", [$projectId, akp_user_id()]);
+        $row = dbFetchOne("SELECT 1 AS allowed FROM project_team WHERE project_id = ? AND user_id = ? AND unassigned_at IS NULL LIMIT 1", [$projectId, $userId]);
         if ($row) return true;
-        return akp_is_primary_supervisor($projectId);
+        return akp_is_primary_supervisor($projectId, $userId);
     }
 }
 if (!function_exists('akp_can_edit_section')) {
@@ -213,10 +214,11 @@ if (!function_exists('akp_can_edit_section')) {
     }
 }
 if (!function_exists('akp_has_project_section')) {
-    function akp_has_project_section(int $projectId, string $section): bool
+    function akp_has_project_section(int $projectId, string $section, ?int $userId = null): bool
     {
         if ($projectId < 1) return false;
-        $row = dbFetchOne("SELECT 1 AS allowed FROM project_team WHERE project_id = ? AND user_id = ? AND section_code = ? AND unassigned_at IS NULL LIMIT 1", [$projectId, akp_user_id(), $section]);
+        $actorId = $userId ?? akp_user_id();
+        $row = dbFetchOne("SELECT 1 AS allowed FROM project_team WHERE project_id = ? AND user_id = ? AND section_code = ? AND unassigned_at IS NULL LIMIT 1", [$projectId, $actorId, $section]);
         return (bool)$row;
     }
 }
