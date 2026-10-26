@@ -333,9 +333,9 @@ try {
         && is_array($voucherRows)
         && is_array($cashAccounts)
         && count($cashAccounts) === 3
-        && ($voucherData['can_issue'] ?? false) === true
-        && ($voucherData['can_void'] ?? false) === true,
-        'authorized Financial Manager can load the native voucher register and current cash balances');
+        && ($voucherData['can_issue'] ?? true) === false
+        && ($voucherData['can_void'] ?? true) === false,
+        'Vice General Manager can read the voucher register without issue or void capability');
     $r = mobileApiRequest('/api/v1/accounting/vouchers.php?vtype=receipt', 'GET', null, $token);
     $receiptRows = $r['json']['data']['vouchers'] ?? [];
     mobileApiExpect($r['status'] === 200
@@ -2172,6 +2172,12 @@ try {
     $r = mobileApiRequest('/api/v1/accounting/vouchers.php', 'GET', null, $token);
     mobileApiExpect($r['status'] === 403 && ($r['json']['error']['code'] ?? '') === 'forbidden', 'voucher API denies roles outside the web voucher allowlist');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $r = mobileApiRequest('/api/v1/accounting/vouchers.php', 'GET', null, $token);
+    $fmVoucherData = $r['json']['data'] ?? [];
+    mobileApiExpect($r['status'] === 200
+        && ($fmVoucherData['can_issue'] ?? false) === true
+        && ($fmVoucherData['can_void'] ?? false) === true,
+        'Financial Manager voucher access includes issuance and void capabilities');
     $r = mobileApiRequest('/api/v1/accounting/journal.php?from=2026-99-99', 'GET', null, $token);
     mobileApiExpect($r['status'] === 422 && ($r['json']['error']['code'] ?? '') === 'invalid_date', 'journal API rejects invalid date filters');
     $r = mobileApiRequest('/api/v1/accounting/journal.php?from=2026-10-27&to=2026-10-26', 'GET', null, $token);
