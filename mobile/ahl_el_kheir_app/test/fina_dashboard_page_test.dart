@@ -25,6 +25,7 @@ void main() {
     expect(find.text('Returned collections'), findsOneWidget);
     expect(find.text('Liability account 2300'), findsOneWidget);
     expect(find.text('Account is configured and active.'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('Review collections'), 180, scrollable: find.byType(Scrollable).first);
     expect(find.text('Review collections'), findsOneWidget);
   });
 }

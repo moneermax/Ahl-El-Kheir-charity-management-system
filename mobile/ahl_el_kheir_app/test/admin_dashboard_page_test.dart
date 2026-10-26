@@ -140,13 +140,14 @@ void main() {
     await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-disbursements')), 180, scrollable: scrollable);
     expect(find.byKey(const Key('admin-tool-disbursements')), findsOneWidget);
     expect(find.text('Monthly disbursements are not available in the app yet'), findsNothing);
+    await tester.tap(find.text('Monthly disbursements'));
+    expect(openedTool, 'disbursements');
+    expect(tester.takeException(), isNull);
+    await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-database')), 180, scrollable: scrollable);
     expect(find.text('Database tools are not available in the app yet'), findsNothing);
     expect(find.text('Database backup is not available in the app yet'), findsNothing);
     expect(find.text('Create, save, download and manage database backup files'), findsOneWidget);
     expect(find.text('Read-only table, column and sample-row browser'), findsOneWidget);
-    await tester.tap(find.text('Monthly disbursements'));
-    expect(openedTool, 'disbursements');
-    expect(tester.takeException(), isNull);
     await tester.scrollUntilVisible(find.byKey(const Key('admin-tool-fina-dashboard')), 180, scrollable: scrollable);
     expect(find.text('Fina Al-Khair collection is not available in the app yet'), findsNothing);
     await tester.tap(find.text('Fina Al-Khair dashboard'));
