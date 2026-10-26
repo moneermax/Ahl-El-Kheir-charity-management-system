@@ -11,7 +11,7 @@ $year = filter_var($_GET['year'] ?? null, FILTER_VALIDATE_INT);
 if ($month === false || $year === false || $month === null || $year === null || $month < 1 || $month > 12 || $year < 2020 || $year > 2100) {
     ak_api_json(422, ['ok' => false, 'error' => ['code' => 'invalid_period', 'message' => 'Select a valid payroll month and year.']]);
 }
-require_once dirname(__DIR__, 2) . '/modules/hr/lib_gm_payroll_period.php';
+require_once dirname(__DIR__, 3) . '/modules/hr/lib_gm_payroll_period.php';
 try {
     $state = hrGmPayrollPeriodState(db(), (int)$month, (int)$year);
     $net = 0.0;
