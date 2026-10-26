@@ -10,6 +10,18 @@ if (!in_array($role, $allowedRoles, true)) {
     ak_api_json(403, ['ok' => false, 'error' => ['code' => 'forbidden', 'message' => 'This role cannot access monthly disbursements.']]);
 }
 $userId = (int)($user['id'] ?? 0);
+$canCreateBatches = in_array($role, ['admin', 'financial_manager', 'general_manager', 'accountant_staff'], true);
+$canTransfer = in_array($role, ['admin', 'financial_manager', 'general_manager'], true);
+$canVoid = in_array($role, ['admin', 'financial_manager'], true);
+$canReopen = $canCreateBatches;
+$canConfirmItems = $role === 'nanny';
+$capabilities = [
+    'can_create_batches' => $canCreateBatches,
+    'can_transfer' => $canTransfer,
+    'can_void' => $canVoid,
+    'can_reopen' => $canReopen,
+    'can_confirm_items' => $canConfirmItems,
+];
 $scopeSql = '';
 $scopeParams = [];
 if ($role === 'nanny') {
@@ -61,9 +73,36 @@ try {
     }
     $whereSql = $where ? ' WHERE ' . implode(' AND ', $where) : '';
 
+    $previewMonth = $month !== '' ? $month : date('Y-m');
+    $eligibleGroups = [];
+    if ($canCreateBatches) {
+        $eligibleGroups = dbFetchAll(
+            "SELECT og.id, og.group_name, og.description, u.full_name AS nanny_name,
+                    nga.nanny_id, COUNT(DISTINCT gc.child_id) AS orphan_count,
+                    COALESCE(SUM(sp.monthly_amount),0) AS expected_amount
+             FROM orphan_groups og
+             LEFT JOIN nanny_group_assignments nga ON nga.group_id=og.id AND nga.end_date IS NULL
+             LEFT JOIN users u ON u.id=nga.nanny_id
+             LEFT JOIN group_children gc ON gc.group_id=og.id AND gc.left_date IS NULL
+             LEFT JOIN family_children fc ON fc.id=gc.child_id
+             INNER JOIN nanny_family_verifications v ON v.family_id=fc.family_id AND v.month=?
+                AND v.is_orphan_verified=1 AND v.is_mother_contact_verified=1 AND v.is_bank_verified=1
+             LEFT JOIN sponsorships sp ON sp.child_id=gc.child_id AND sp.status='active'
+             WHERE og.verification_status IN ('submitted','approved','pending')
+               AND (?=0 OR EXISTS (
+                   SELECT 1 FROM accountant_nanny_assignments ana
+                   WHERE ana.accountant_id=? AND ana.nanny_id=nga.nanny_id
+               ))
+             GROUP BY og.id, og.group_name, og.description, u.full_name, nga.nanny_id
+             ORDER BY og.group_name",
+            [$previewMonth, $role === 'accountant_staff' ? $userId : 0, $role === 'accountant_staff' ? $userId : 0]
+        );
+    }
+
     if ($batchId > 0) {
         $batch = dbFetchOne(
             "SELECT d.id, d.month, d.status, d.total_amount, d.created_at, d.nanny_id,
+                    d.transaction_id, d.receipt_file_path, d.transfer_receipt_at, d.transfer_receipt_by_user_id,
                     n.full_name AS nanny_name, og.group_name, og.id AS group_id,
                     (SELECT COUNT(*) FROM disbursement_items i WHERE i.disbursement_id = d.id) AS items_total,
                     (SELECT COUNT(*) FROM disbursement_items i WHERE i.disbursement_id = d.id AND i.status = 'paid') AS items_paid,
@@ -86,7 +125,7 @@ try {
         $itemsPages = max(1, (int)ceil($itemsTotal / $itemsPerPage));
         $itemsPage = min(max(1, (int)($_GET['items_page'] ?? 1)), $itemsPages);
         $items = dbFetchAll(
-            "SELECT i.id, i.family_id, f.family_code, f.mother_name, i.amount, i.status, i.confirmed_at,
+            "SELECT i.id, i.family_id, f.family_code, f.mother_name, i.amount, i.status, i.confirmed_at, i.receipt_file_path, i.return_reason,
                     (SELECT COUNT(*) FROM family_children fc WHERE fc.family_id = f.id AND fc.is_active = 1) AS children_count
              FROM disbursement_items i
              JOIN families f ON f.id = i.family_id
@@ -97,6 +136,7 @@ try {
         );
         ak_api_json(200, ['ok' => true, 'data' => [
             'batch' => $batch,
+            'capabilities' => $capabilities,
             'items' => $items,
             'items_pagination' => [
                 'page' => $itemsPage,
@@ -138,6 +178,9 @@ try {
     );
     ak_api_json(200, ['ok' => true, 'data' => [
         'filters' => ['month' => $month, 'status' => $status, 'q' => $query],
+        'capabilities' => $capabilities,
+        'eligible_groups' => $eligibleGroups,
+        'eligible_month' => $previewMonth,
         'items' => $rows,
         'pagination' => ['page' => $page, 'per_page' => $perPage, 'total' => $total, 'pages' => $pages],
     ]]);
