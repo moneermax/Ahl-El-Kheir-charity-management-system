@@ -15,6 +15,7 @@ import 'admin_dashboard_page.dart';
 import 'admin_finance_overview_page.dart';
 import 'admin_accounts_page.dart';
 import 'admin_disbursements_page.dart';
+import 'admin_database_page.dart';
 import 'role_dashboard_page.dart';
 import 'sponsor_assignment_page.dart';
 import 'family_detail_page.dart';
@@ -456,6 +457,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
   void openAdminFinanceOverview() {
     navigatorKey.currentState?.push(MaterialPageRoute<void>(
       builder: (_) => AdminFinanceOverviewPage(english: english, loadOverview: loadAdminFinanceOverview),
+    ));
+  }
+
+  Future<Map<String, dynamic>> loadAdminDatabase(String? table) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final query = table == null || table.isEmpty ? '' : '?table=' + Uri.encodeQueryComponent(table);
+    return call('GET', 'admin/database.php' + query, token: token);
+  }
+
+  void openAdminDatabase() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AdminDatabasePage(english: english, loadPage: loadAdminDatabase),
     ));
   }
 
@@ -907,7 +921,15 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         openNativeTool('modules/system/backup.php');
         return;
       case 'database':
-        openNativeTool('modules/system/database.php');
+        if (user?['raw_role_code']?.toString() != 'admin') {
+          ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+            SnackBar(content: Text(english
+                ? 'Database browser is restricted to the administrator role.'
+                : 'متصفح قاعدة البيانات متاح لدور المسؤول فقط.')),
+          );
+          return;
+        }
+        openAdminDatabase();
         return;
       case 'audit':
         openNativeTool('modules/logs/audit.php');

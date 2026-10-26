@@ -164,6 +164,8 @@ try {
     mobileApiExpect($nannyFinaReview['status'] === 403, 'nanny cannot view Fina review/history');
     $nannyFinaReceipt = mobileApiRequest('/api/v1/fina/receipt.php?id=1', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinaReceipt['status'] === 403, 'nanny cannot access Fina receipt delivery');
+    $nannyDatabase = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyDatabase['status'] === 403, 'nanny cannot access the administrator database browser');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
     $unauthenticatedFina = mobileApiRequest('/api/v1/fina/collections.php', 'POST', [
