@@ -73,7 +73,7 @@ class _GlobalSearchPageState extends State<GlobalSearchPage> {
     try {
       final response = await widget.loadSearch(selectedType, queryController.text.trim(), targetPage);
       if (!mounted) return;
-      final raw = response['data'];
+      final raw = response['data'] is Map ? response['data'] : response;
       final data = raw is Map ? Map<String,dynamic>.from(raw) : <String,dynamic>{};
       final list = data['items'];
       setState(() {
