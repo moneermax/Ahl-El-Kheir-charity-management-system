@@ -224,6 +224,18 @@ try {
          (family_id,month,nanny_id,is_orphan_verified,is_mother_contact_verified,is_bank_verified,verified_by_user_id,verified_at)
          VALUES (?, ?, ?, 1, 1, 1, ?, NOW())"
     )->execute([$testBatchVerificationFamilyId,$testBatchVerificationMonth,$testBatchNannyId,$testBatchNannyId]);
+    $eligibleBatchGroups = mobileApiRequest('/api/v1/admin/disbursements.php?month=' . rawurlencode($testBatchVerificationMonth), 'GET', null, $adminToken, 20);
+    $eligibleGroupIds = array_map(
+        static fn(array $group): int => (int)($group['id'] ?? 0),
+        $eligibleBatchGroups['json']['data']['eligible_groups'] ?? []
+    );
+    mobileApiExpect(
+        $eligibleBatchGroups['status'] === 200
+        && ($eligibleBatchGroups['json']['data']['capabilities']['can_create_batches'] ?? false) === true
+        && ($eligibleBatchGroups['json']['data']['eligible_month'] ?? '') === $testBatchVerificationMonth
+        && in_array($testBatchGroupId, $eligibleGroupIds, true),
+        'eligible group preview exposes fully verified groups and role capabilities for the requested month'
+    );
     $createBatch = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
         'action' => 'create_batch',
         'month' => $testBatchVerificationMonth,
@@ -390,6 +402,7 @@ try {
     $nannyDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect(
         $nannyDisbursements['status'] === 200
+        && ($nannyDisbursements['json']['data']['capabilities']['can_confirm_items'] ?? false) === true
         && is_array($nannyDisbursements['json']['data']['items'] ?? null)
         && array_reduce(
             $nannyDisbursements['json']['data']['items'],
