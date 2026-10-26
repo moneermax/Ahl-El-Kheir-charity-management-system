@@ -214,7 +214,7 @@ function hrIncentiveRecognizeAward(PDO $pdo, int $awardId, int $actorUserId = 0)
  * transaction commits. The outbox row and notification insert are completed
  * atomically; a delivery failure leaves the row pending for a later retry.
  */
-function hrIncentiveDispatchPendingNotifications(PDO $pdo): void
+function hrIncentiveDispatchPendingNotifications(PDO $pdo, ?int $onlyOutboxId = null): void
 {
     if ($pdo->inTransaction()) {
         // Never emit a user-visible notification before the caller commits.
@@ -222,13 +222,17 @@ function hrIncentiveDispatchPendingNotifications(PDO $pdo): void
     }
 
     try {
-        $pending = $pdo->query(
-            "SELECT id
-             FROM hr_incentive_notification_outbox
-             WHERE status = 'pending'
-             ORDER BY id ASC
-             LIMIT 100"
-        )->fetchAll(PDO::FETCH_COLUMN);
+        if ($onlyOutboxId !== null && $onlyOutboxId <= 0) return;
+        $sql = "SELECT id FROM hr_incentive_notification_outbox WHERE status = 'pending'";
+        $params = [];
+        if ($onlyOutboxId !== null) {
+            $sql .= " AND id = ?";
+            $params[] = $onlyOutboxId;
+        }
+        $sql .= " ORDER BY id ASC LIMIT 100";
+        $pendingStmt = $pdo->prepare($sql);
+        $pendingStmt->execute($params);
+        $pending = $pendingStmt->fetchAll(PDO::FETCH_COLUMN);
     } catch (Throwable $e) {
         error_log('HR incentive notification outbox could not be read: ' . $e->getMessage());
         return;

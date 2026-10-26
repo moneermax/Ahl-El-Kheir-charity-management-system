@@ -49,6 +49,7 @@ import 'admin_backup_page.dart';
 import 'payroll_integrity_page.dart';
 import 'payroll_management_page.dart';
 import 'payroll_policy_page.dart';
+import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
 import 'employment_states_page.dart';
@@ -512,6 +513,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/hr/incentive_verification.php') {
+      if (user?['role_code']?.toString() != 'hr_manager') {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Incentive verification is restricted to HR Manager.' : 'التحقق من الحوافز متاح لمدير الموارد البشرية فقط.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => IncentiveVerificationPage(english: english, loadEvents: loadIncentiveVerification, submitAction: submitIncentiveVerificationAction),
+      ));
+      return;
+    }
     if (relativePath == 'modules/hr/payroll_policy.php') {
       if (!['hr_manager', 'hr_staff', 'admin'].contains(user?['role_code']?.toString())) {
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
@@ -792,6 +805,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
         builder: (_) => GmPayrollReportPage(english: english, month: month, year: year, loadReport: loadGmPayrollReport),
       )),
     )));
+  }
+
+  Future<Map<String, dynamic>> loadIncentiveVerification() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/incentive_verification.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitIncentiveVerificationAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'hr/incentive_verification.php', token: token, body: body);
   }
 
   Future<Map<String, dynamic>> loadPayrollPolicy() async {

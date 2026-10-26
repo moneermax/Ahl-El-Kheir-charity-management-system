@@ -105,6 +105,8 @@ jobs:
           php -l api/v1/search/documents.php
           php -l api/v1/search/document_file.php
           php -l modules/projects/project_lib.php
+          php -l api/v1/hr/incentive_verification.php
+          php -l modules/hr/lib_employee_incentives.php
           php -l api/v1/hr/payroll_policy.php
           php -l api/v1/hr/payroll_management.php
           php -l api/v1/hr/payroll_proof.php

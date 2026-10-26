@@ -80,6 +80,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/hr/payroll_integrity.php',
     'modules/hr/payroll.php',
     'modules/hr/payroll_policy.php',
+    'modules/hr/incentive_verification.php',
     'modules/hr/employment_states.php',
     'modules/hr/gm_payroll_period_history.php',
     'modules/families/orphan_forms_index.php',

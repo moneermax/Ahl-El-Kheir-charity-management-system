@@ -146,6 +146,10 @@ $testBatchTransferJournalId = 0;
 $testAccountId = 0;
 $testAttendancePolicyId = 0;
 $testPayrollPolicyId = 0;
+$testIncentiveEventId = 0;
+$testBlockedIncentiveEventId = 0;
+$testIncentiveAwardId = 0;
+$testIncentiveJournalId = 0;
 $testPayrollId = 0;
 $testPayrollProofStorageKey = '';
 $testPayrollMonth = 0;
@@ -964,6 +968,130 @@ try {
     mobileApiExpect($invalidPaidLeavePolicy['status'] === 422, 'payroll policy preserves the existing zero paid-leave deduction rule');
     $pdo->prepare('DELETE FROM hr_payroll_policy_versions WHERE id=?')->execute([$testPayrollPolicyId]);
     $testPayrollPolicyId = 0;
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_manager'], $userId]);
+    $incentiveUnauthenticated = mobileApiRequest('/api/v1/hr/incentive_verification.php', 'GET');
+    mobileApiExpect($incentiveUnauthenticated['status'] === 401, 'incentive verification requires bearer authentication');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+    $incentiveForbidden = mobileApiRequest('/api/v1/hr/incentive_verification.php', 'GET', null, $adminToken);
+    mobileApiExpect($incentiveForbidden['status'] === 403, 'nanny is denied incentive verification');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_manager'], $userId]);
+    $incentiveRead = mobileApiRequest('/api/v1/hr/incentive_verification.php', 'GET', null, $adminToken);
+    mobileApiExpect($incentiveRead['status'] === 200 && is_array($incentiveRead['json']['data']['events'] ?? null), 'HR Manager can read the incentive verification queue');
+
+    $incentiveCurrency = strtoupper(trim((string)APP_CURRENCY_CODE));
+    $incentivePolicy = dbFetchOne(
+        "SELECT pv.id AS policy_version_id, r.reward_amount, r.currency_code
+         FROM hr_incentive_policy_versions pv
+         JOIN hr_incentive_policy_rules r ON r.policy_version_id=pv.id
+         WHERE pv.status IN ('approved','active','retired')
+           AND r.incentive_type='new_sponsor' AND r.is_enabled=1 AND r.reward_amount>0
+           AND UPPER(TRIM(r.currency_code))=?
+         ORDER BY CASE pv.status WHEN 'active' THEN 0 WHEN 'approved' THEN 1 ELSE 2 END,pv.id DESC LIMIT 1",
+        [$incentiveCurrency]
+    );
+    $eligibleIncentiveEmployee = dbFetchOne(
+        "SELECT e.id AS employee_id,e.user_id
+         FROM employees e JOIN hr_employment_states es ON es.id=e.employment_state_id
+         JOIN users u ON u.id=e.user_id
+         WHERE es.category='working' AND es.is_active=1 AND u.is_active=1
+           AND e.user_id IS NOT NULL AND e.user_id>0 ORDER BY e.id LIMIT 1"
+    );
+    $incentiveAccounts = dbFetchAll("SELECT code,account_type,is_active FROM accounts WHERE code IN ('5500','2400')");
+    $incentiveAccountMap = [];
+    foreach ($incentiveAccounts as $account) $incentiveAccountMap[(string)$account['code']] = $account;
+    mobileApiExpect(
+        $incentivePolicy && $eligibleIncentiveEmployee
+        && isset($incentiveAccountMap['5500'],$incentiveAccountMap['2400'])
+        && (int)$incentiveAccountMap['5500']['is_active']===1
+        && (int)$incentiveAccountMap['2400']['is_active']===1
+        && $incentiveAccountMap['5500']['account_type']==='expense'
+        && $incentiveAccountMap['2400']['account_type']==='liability',
+        'disposable database contains the existing eligible policy, employee and recognition accounts'
+    );
+    $testIncentiveKey = 'mobile-api-incentive-' . bin2hex(random_bytes(12));
+    $testIncentiveSourceId = (int)(time() * 1000 + random_int(0,999));
+    $pdo->prepare(
+        "INSERT INTO hr_incentive_events
+         (idempotency_key,source_table,source_record_id,incentive_type,policy_version_id,occurred_at,
+          source_amount,source_currency_code,recipient_user_id,recipient_employee_id,status,created_by_user_id)
+         VALUES (?,'mobile_api_test',?,'new_sponsor',?,NOW(),1.00,?,?,?, 'pending_verification',?)"
+    )->execute([
+        $testIncentiveKey,$testIncentiveSourceId,(int)$incentivePolicy['policy_version_id'],$incentiveCurrency,
+        (int)$eligibleIncentiveEmployee['user_id'],(int)$eligibleIncentiveEmployee['employee_id'],$userId
+    ]);
+    $testIncentiveEventId=(int)$pdo->lastInsertId();
+    $incentiveQueueWithFixture=mobileApiRequest('/api/v1/hr/incentive_verification.php','GET',null,$adminToken);
+    $listedIncentive=null;
+    foreach(($incentiveQueueWithFixture['json']['data']['events']??[]) as $item) if((int)($item['id']??0)===$testIncentiveEventId)$listedIncentive=$item;
+    mobileApiExpect($listedIncentive!==null&&($listedIncentive['can_verify']??false)===true,'eligible new-sponsor event is actionable in native queue');
+
+    $verifiedIncentive=mobileApiRequest('/api/v1/hr/incentive_verification.php','POST',[
+        'action'=>'verify_event','event_id'=>$testIncentiveEventId,'verification_note'=>'Mobile API disposable verification fixture'
+    ],$adminToken);
+    $testIncentiveAwardId=(int)($verifiedIncentive['json']['data']['award_id']??0);
+    $testIncentiveJournalId=(int)($verifiedIncentive['json']['data']['recognition_journal_entry_id']??0);
+    mobileApiExpect($verifiedIncentive['status']===200&&$testIncentiveAwardId>0&&$testIncentiveJournalId>0,'HR Manager can verify an eligible event and issue its award');
+    $incentivePersisted=dbFetchOne(
+        "SELECT ev.status,ev.verification_note,ev.verified_by_user_id,a.status AS award_status,
+                a.recognition_journal_entry_id,o.status AS notification_status,o.notification_id
+         FROM hr_incentive_events ev JOIN hr_incentive_awards a ON a.event_id=ev.id
+         LEFT JOIN hr_incentive_notification_outbox o ON o.award_id=a.id
+         WHERE ev.id=? LIMIT 1",
+        [$testIncentiveEventId]
+    );
+    mobileApiExpect(
+        $incentivePersisted&&$incentivePersisted['status']==='verified'
+        &&$incentivePersisted['verification_note']==='Mobile API disposable verification fixture'
+        &&(int)$incentivePersisted['verified_by_user_id']===$userId
+        &&$incentivePersisted['award_status']==='earned'
+        &&(int)$incentivePersisted['recognition_journal_entry_id']===$testIncentiveJournalId
+        &&$incentivePersisted['notification_status']==='sent'
+        &&(int)$incentivePersisted['notification_id']>0,
+        'verification, award, recognition journal and earned notification commit together'
+    );
+    $incentiveJournal=dbFetchOne(
+        "SELECT je.status,je.reference_type,je.reference_id,
+                ROUND(COALESCE(SUM(jl.debit),0),2) AS debit_total,
+                ROUND(COALESCE(SUM(jl.credit),0),2) AS credit_total
+         FROM journal_entries je JOIN journal_lines jl ON jl.entry_id=je.id
+         WHERE je.id=? GROUP BY je.id",
+        [$testIncentiveJournalId]
+    );
+    mobileApiExpect($incentiveJournal&&$incentiveJournal['status']==='posted'
+        &&$incentiveJournal['reference_type']==='hr_incentive_award_recognition'
+        &&(int)$incentiveJournal['reference_id']===$testIncentiveAwardId
+        &&(float)$incentiveJournal['debit_total']===(float)$incentiveJournal['credit_total'],
+        'incentive recognition journal is posted and balanced'
+    );
+    $duplicateIncentive=mobileApiRequest('/api/v1/hr/incentive_verification.php','POST',[
+        'action'=>'verify_event','event_id'=>$testIncentiveEventId,'verification_note'=>'duplicate attempt'
+    ],$adminToken);
+    mobileApiExpect($duplicateIncentive['status']===409
+        &&(int)dbFetchOne('SELECT COUNT(*) AS n FROM hr_incentive_awards WHERE event_id=?',[$testIncentiveEventId])['n']===1,
+        'duplicate incentive verification is blocked without issuing a second award'
+    );
+
+    $testBlockedKey='mobile-api-blocked-incentive-' . bin2hex(random_bytes(12));
+    $pdo->prepare(
+        "INSERT INTO hr_incentive_events
+         (idempotency_key,source_table,source_record_id,incentive_type,policy_version_id,occurred_at,
+          source_amount,source_currency_code,recipient_user_id,recipient_employee_id,status,created_by_user_id)
+         VALUES (?,'mobile_api_test',?,'collection',?,NOW(),1.00,?,?,?, 'pending_verification',?)"
+    )->execute([
+        $testBlockedKey,$testIncentiveSourceId+1,(int)$incentivePolicy['policy_version_id'],$incentiveCurrency,
+        (int)$eligibleIncentiveEmployee['user_id'],(int)$eligibleIncentiveEmployee['employee_id'],$userId
+    ]);
+    $testBlockedIncentiveEventId=(int)$pdo->lastInsertId();
+    $blockedCollection=mobileApiRequest('/api/v1/hr/incentive_verification.php','POST',[
+        'action'=>'verify_event','event_id'=>$testBlockedIncentiveEventId
+    ],$adminToken);
+    mobileApiExpect($blockedCollection['status']===409
+        &&(string)dbFetchOne('SELECT status FROM hr_incentive_events WHERE id=?',[$testBlockedIncentiveEventId])['status']==='pending_verification'
+        &&(int)dbFetchOne('SELECT COUNT(*) AS n FROM hr_incentive_awards WHERE event_id=?',[$testBlockedIncentiveEventId])['n']===0,
+        'routine collection incentive remains pending and cannot be manually issued'
+    );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'],$userId]);
 
     $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
     mobileApiExpect(
@@ -1858,6 +1986,21 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testIncentiveAwardId > 0) {
+        $outbox = $pdo->prepare('SELECT notification_id FROM hr_incentive_notification_outbox WHERE award_id=?');
+        $outbox->execute([$testIncentiveAwardId]);
+        $notificationId = (int)($outbox->fetchColumn() ?: 0);
+        $pdo->prepare('DELETE FROM hr_incentive_notification_outbox WHERE award_id=?')->execute([$testIncentiveAwardId]);
+        if ($notificationId > 0) $pdo->prepare('DELETE FROM notifications WHERE id=?')->execute([$notificationId]);
+        $journalId = (int)($pdo->query('SELECT recognition_journal_entry_id FROM hr_incentive_awards WHERE id=' . $testIncentiveAwardId)->fetchColumn() ?: $testIncentiveJournalId);
+        if ($journalId > 0) {
+            $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([$journalId]);
+            $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([$journalId]);
+        }
+        $pdo->prepare('DELETE FROM hr_incentive_awards WHERE id=?')->execute([$testIncentiveAwardId]);
+    }
+    if ($testIncentiveEventId > 0) $pdo->prepare('DELETE FROM hr_incentive_events WHERE id=?')->execute([$testIncentiveEventId]);
+    if ($testBlockedIncentiveEventId > 0) $pdo->prepare('DELETE FROM hr_incentive_events WHERE id=?')->execute([$testBlockedIncentiveEventId]);
     if ($testPayrollPolicyId > 0) $pdo->prepare('DELETE FROM hr_payroll_policy_versions WHERE id=?')->execute([$testPayrollPolicyId]);
     if ($testDraftPayrollId > 0) $pdo->prepare('DELETE FROM payroll WHERE id=?')->execute([$testDraftPayrollId]);
     if ($testLegacyPayrollId > 0) {
