@@ -12,17 +12,22 @@ Updated: 2026-10-26
 - No journal is posted during creation. The existing Finance Manager approval workflow remains responsible for approval and journal posting.
 - No schema changes were made.
 
-## Explicit limitation
+## Current implementation on main
 
-Receipt upload is not implemented in this native screen/API. The UI warns users to retain supporting evidence through the approved existing process. Do not describe native Fina collection as full feature parity until evidence upload and native review/history workflows are implemented and verified.
+- `api/v1/fina/collections.php` accepts JSON for collections without an attachment and multipart form data when a receipt is attached.
+- Receipt uploads follow the existing web workflow's JPG/JPEG, PNG, or PDF allowlist and 10 MB maximum. The API checks the detected MIME type, writes under the existing `storage/receipts` directory, stores the relative `receipt_path`, and removes the newly written file if the database save fails.
+- `api/v1/fina/sponsors.php` provides authenticated active-sponsor lookup for the native form, using the existing web page's name-token matching rule and maximum 30 results.
+- The native form includes the external-source contact/detail fields, sponsor selection/autofill, and optional receipt attachment.
+- `mobile/ahl_el_kheir_app/test/fina_collection_page_test.dart` adds a widget test for external-source submission. The test has been added but has not been executed in this environment.
+- The collection remains `pending`; the API does not create a journal during registration. Finance review/history is still not implemented as a native workflow.
 
 ## Verification still required
 
-1. Run Flutter analyzer and all widget tests against current `main`.
-2. PHP lint `api/v1/fina/collections.php`.
-3. Add this endpoint to the configured PHP lint/integration coverage if the workflow maintains explicit file lists.
-4. Test the API against the checked-in schema: unauthenticated request, disallowed role, valid external-source collection, active/inactive/missing sponsor, invalid amount/date/method, rollback on insert failure, notification failure isolation, and confirm status stays pending with no journal entry.
-5. Verify on the real local XAMPP/API/database before using it for real collections.
-6. Update the canonical session index, master status, master audit and continuation prompt after these checks.
+1. Run Flutter dependency resolution, analyzer, and all widget tests against current `main`.
+2. PHP lint `api/v1/fina/collections.php` and `api/v1/fina/sponsors.php`.
+3. Test the API against the checked-in schema: unauthenticated request, disallowed role, valid external-source collection, active/inactive/missing sponsor, invalid amount/date/method, valid/invalid/oversized receipt, rollback on insert failure including receipt cleanup, notification failure isolation, and confirm status stays pending with no journal entry.
+4. Verify sponsor search and multipart receipt upload on the real local XAMPP/API/database before using this for real collections.
+5. Implement and verify native Finance Manager review/history without bypassing the existing approval and accounting transaction.
+6. Update the canonical session index, master status, master audit and continuation prompt after runtime/build checks.
 
 Do not create a test collection in the user's production/local database without explicit authorization. Do not claim this slice is runtime verified based only on CI.
