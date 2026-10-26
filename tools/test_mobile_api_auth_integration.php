@@ -365,6 +365,25 @@ try {
 
     $financialReport = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-10-01&to=2026-10-31', 'GET', null, $adminToken, 20);
     mobileApiExpect($financialReport['status'] === 200 && is_array($financialReport['json']['data']['rows'] ?? null), 'administrator can load native financial report rows');
+    foreach ([
+        ['sponsorship', 'coverage'],
+        ['operational', 'supervisor'],
+        ['hr', 'headcount'],
+    ] as [$reportKey, $reportType]) {
+        $reportResult = mobileApiRequest(
+            '/api/v1/reports/detail.php?report=' . $reportKey . '&type=' . $reportType . '&from=2026-10-01&to=2026-10-31',
+            'GET',
+            null,
+            $adminToken,
+            20
+        );
+        mobileApiExpect(
+            $reportResult['status'] === 200
+            && is_array($reportResult['json']['data']['rows'] ?? null)
+            && is_array($reportResult['json']['data']['summary'] ?? null),
+            'administrator can load native ' . $reportKey . ' report data'
+        );
+    }
     $invalidReportRange = mobileApiRequest('/api/v1/reports/detail.php?report=financial&type=income_expense&from=2026-11-01&to=2026-10-01', 'GET', null, $adminToken);
     mobileApiExpect($invalidReportRange['status'] === 422, 'native report rejects reversed date ranges');
     $databaseIndex = mobileApiRequest('/api/v1/admin/database.php', 'GET', null, $adminToken, 20);
