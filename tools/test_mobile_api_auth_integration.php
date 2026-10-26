@@ -136,6 +136,43 @@ try {
     $stored->execute([$tokenHash]);
     mobileApiExpect((string)$stored->fetchColumn() === $tokenHash && $tokenHash !== $token, 'only the SHA-256 token hash is stored');
 
+    // Exercise the native finance overview against the imported full schema,
+    // using the existing disposable account and restoring its role afterward.
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+    $adminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($adminLogin['status'] === 200 && isset($adminLogin['json']['data']['access_token']), 'administrator login succeeds for finance overview integration');
+    $adminToken = (string)$adminLogin['json']['data']['access_token'];
+    $adminHash = hash('sha256', $adminToken);
+    $testTokenHashes[] = $adminHash;
+    $finance = mobileApiRequest('/api/v1/admin/finance_overview.php', 'GET', null, $adminToken, 20);
+    $financeData = $finance['json']['data'] ?? [];
+    mobileApiExpect(
+        $finance['status'] === 200
+        && ($finance['json']['ok'] ?? false) === true
+        && isset($financeData['period']['start'], $financeData['period']['end'])
+        && isset($financeData['treasury']['cash'], $financeData['treasury']['bank'], $financeData['treasury']['wallet'], $financeData['treasury']['total'])
+        && isset($financeData['monthly_flow']['income_total'], $financeData['monthly_flow']['outgoing_total'])
+        && isset($financeData['admin_fees']['admin_fees_total'], $financeData['admin_fees']['admin_fees_month'])
+        && isset($financeData['disbursements']['pending_approval'], $financeData['disbursements']['received'], $financeData['disbursements']['pending_amount'])
+        && isset($financeData['quick_stats']['active_sponsorships'], $financeData['quick_stats']['active_families'], $financeData['quick_stats']['active_nannies']),
+        'administrator finance overview executes full-schema queries and returns its documented metric groups'
+    );
+
+    $sudoRoleId = (int)$pdo->query("SELECT id FROM roles WHERE code='sudo' LIMIT 1")->fetchColumn();
+    if ($sudoRoleId > 0) {
+        $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$sudoRoleId, $userId]);
+        $sudoLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+        mobileApiExpect($sudoLogin['status'] === 200 && isset($sudoLogin['json']['data']['access_token']), 'sudo login succeeds for exact-role denial test');
+        $sudoToken = (string)$sudoLogin['json']['data']['access_token'];
+        $testTokenHashes[] = hash('sha256', $sudoToken);
+        $deniedFinance = mobileApiRequest('/api/v1/admin/finance_overview.php', 'GET', null, $sudoToken, 20);
+        mobileApiExpect(
+            $deniedFinance['status'] === 403 && ($deniedFinance['json']['error']['code'] ?? '') === 'forbidden',
+            'finance overview rejects Sudo despite normalized administrator dashboard routing'
+        );
+    }
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+
     $handoffCountBefore = (int)$pdo->query('SELECT COUNT(*) FROM mobile_web_handoffs')->fetchColumn();
     $r = mobileApiRequest('/api/v1/auth/web_handoff.php', 'POST', ['path' => 'https://example.com'], $token);
     mobileApiExpect(
