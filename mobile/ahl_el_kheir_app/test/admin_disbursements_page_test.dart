@@ -225,6 +225,55 @@ void main() {
     expect(createdGroups, [5]);
   });
 
+  testWidgets('nanny can close a partially paid batch with a return receipt', (tester) async {
+    int? returnedBatchId;
+    String? returnedReason;
+    String? returnedFilename;
+    await tester.pumpWidget(MaterialApp(
+      home: AdminDisbursementDetailPage(
+        english: true,
+        batchId: 22,
+        roleCode: 'nanny',
+        loadDetail: (id, page) async => {
+          'batch': {
+            'id': id, 'month': '2026-10', 'status': 'transferred',
+            'total_amount': 750, 'items_total': 2, 'items_paid': 1,
+            'items_pending': 1, 'items_returned': 0, 'paid_amount': 500,
+            'pending_amount': 250, 'returned_amount': 0,
+          },
+          'items': [
+            {'id': 30, 'family_id': 7, 'family_code': 'FAM-007', 'mother_name': 'Pending Family',
+             'amount': 250, 'status': 'pending', 'children_count': 1},
+          ],
+          'items_pagination': {'page': page, 'pages': 1, 'total': 1, 'per_page': 100},
+        },
+        pickReturnReceipt: () async => PlatformFile(
+          name: 'return.png', size: 3, bytes: Uint8List.fromList([1, 2, 3]),
+        ),
+        submitReturn: (id, reasonType, reasonDetails, receipt) async {
+          returnedBatchId = id;
+          returnedReason = reasonType;
+          returnedFilename = receipt.name;
+          return {'batch_id': id, 'status': 'returned', 'returned_amount': 250};
+        },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    expect(find.text('Return outstanding amount'), findsOneWidget);
+    final submit = find.byKey(const Key('disbursement-submit-return'));
+    expect(tester.widget<FilledButton>(submit).onPressed, isNull);
+    await tester.tap(find.byKey(const Key('disbursement-pick-return-receipt')));
+    await tester.pumpAndSettle();
+    expect(find.text('return.png'), findsOneWidget);
+    expect(tester.widget<FilledButton>(submit).onPressed, isNotNull);
+    await tester.tap(submit);
+    await tester.pumpAndSettle();
+    expect(returnedBatchId, 22);
+    expect(returnedReason, 'انقطاع الاتصال مع الأم');
+    expect(returnedFilename, 'return.png');
+    expect(find.text('Batch closed; 250.00 returned to cash.'), findsOneWidget);
+  });
+
   testWidgets('shows a safe empty state when no batches match filters', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: AdminDisbursementsPage(
