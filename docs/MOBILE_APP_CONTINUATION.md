@@ -1226,3 +1226,11 @@ Flutter analysis, widget tests, Android debug APK build, and artifact publicatio
 - Artifact: `ahl-el-kheir-flutter-android-debug-apk`, ID `12673971537`, size `102,393,732` bytes, expires `2026-11-25T18:00:37Z`. [Workflow run](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40372872420).
 - Build log confirms the APK was compiled with `API_BASE_URL=http://192.168.18.9:8081/AhlElKheir/api/v1` and `MOBILE_BUILD_REVISION=4444397352d8cb95316e43eb76e5f10e355fb207`. The artifact also contains `mobile-build-info.txt` with build provenance.
 - This verifies CI build/test only. It does not prove that `192.168.18.9:8081` is reachable from the user's phone, that Apache/API/database are healthy, or that on-device sign-in succeeds. Do not describe those as tested.
+
+
+## 2026-10-26 — Native personal-profile tool routing
+
+- Confirmed `mobile/ahl_el_kheir_app/lib/profile_page.dart` and authenticated `api/v1/account/profile.php` / `api/v1/account/avatar.php` already implement personal profile editing and photo upload/removal. However, the staff role-tool tile used `modules/users/profile.php`, which was not marked native and had no matching `openNativeTool()` route; tapping it therefore fell through to the native-pending notice despite the existing page.
+- Fixed in source commits `3f5ea08337788168e9dee84f56c959137be2b7d7`, `22467e9a7be468824a4a303ea2dd76159345c9ce`, and `535c6d4899537f8ffe2aea2e5687ff1c5712fc22`: mark the profile tool IN APP, route it to `openMyProfilePage()`, and add a widget regression test for the label and callback.
+- Flutter analysis and widget tests completed successfully in workflow run `40375023649` for final source commit `535c6d4899537f8ffe2aea2e5687ff1c5712fc22`; the Android debug APK build was still in progress at the time of this update. A redundant earlier run `40375002234` was triggered by the intermediate per-file commit and also passed analysis/tests; do not distribute its APK because it predates the final regression test.
+- Do not claim the final APK build passed until run `40375023649` completes. No local XAMPP/API or physical-device acceptance is claimed.
