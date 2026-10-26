@@ -5102,3 +5102,10 @@ Native payroll period management is implemented in `api/v1/hr/payroll_management
 
 Verified API integration and PHP lint: [run 40318619066](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40318619066) and [run 40318633490](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40318633490). Expanded draft-edit/approval API coverage passed in [run 40319313245](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40319313245). Flutter analysis, all 105 widget tests, Android debug APK build and publication passed in [run 40318833316](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40318833316) for source `339440d1747abdf4388188bcb8809cead65c3df7`. Artifact `ahl-el-kheir-flutter-android-debug-apk` is 102,218,468 bytes (ID `12647679265`), expires 2026-11-25; uploaded ZIP SHA-256 `c30a9d0fe19579c72ebc25cfd75f027d37dc2553f82631b0d81b03e2bc9916f0`. This is not full native parity or production/device acceptance. Local XAMPP/API/database and physical-device gates remain unverified.
 
+
+
+## Mobile app update — 2026-10-26
+
+The user explicitly requires a mobile visual identity distinct from the original website. The Flutter Material theme and prominent shared dashboard/tool surfaces have been refreshed to a deep-teal/bright-teal/coral/slate palette with a cool light background; this is a deliberate mobile design, not a web-theme copy. Arabic RTL, English LTR, Cairo font, organization logo/identity, and backend permissions are preserved. Latest Flutter CI for the palette refresh must be checked before claiming automated success; local XAMPP/API and physical-device acceptance remain unverified.
+
+The full native app is still under development. Native-only navigation remains mandatory; website-only entries may show an in-app not-ready state but must never launch a browser as a substitute. Next priority: native role-aware global search with the existing web permission matrix and record-level visibility enforced server-side.
