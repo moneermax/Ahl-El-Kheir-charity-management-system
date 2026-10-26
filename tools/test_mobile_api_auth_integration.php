@@ -1229,6 +1229,7 @@ try {
             }
             $pdo->prepare("DELETE FROM audit_log WHERE action IN ('DISBURSEMENT_CONFIRM_ITEM','DISBURSEMENT_CLOSE_WITH_RETURN') AND entity_type='monthly_disbursements' AND entity_id=? AND created_at>=?")
                 ->execute([$testDisbursementId, $testStart]);
+            $pdo->prepare('DELETE FROM disbursement_items WHERE disbursement_id=?')->execute([$testDisbursementId]);
             $returnJournalLookup = $pdo->prepare("SELECT id FROM journal_entries WHERE reference_type='disbursement_return' AND reference_id=?");
             $returnJournalLookup->execute([$testDisbursementId]);
             foreach ($returnJournalLookup->fetchAll(PDO::FETCH_COLUMN) as $returnJournalId) {
@@ -1238,7 +1239,6 @@ try {
             $pdo->prepare("DELETE FROM notifications WHERE title='تم إرجاع دفعة كفالة إلى الصندوق' AND created_at>=?")
                 ->execute([$testStart]);
         }
-        $pdo->prepare('DELETE FROM disbursement_items WHERE disbursement_id=?')->execute([$testDisbursementId]);
     }
     if ($testDisbursementId > 0) {
         $pdo->prepare('DELETE FROM monthly_disbursements WHERE id=?')->execute([$testDisbursementId]);
