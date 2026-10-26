@@ -144,7 +144,7 @@ try {
     // using the existing disposable account and restoring its role afterward.
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['supervisor'], $userId]);
     $supervisorDisbursements = mobileApiRequest('/api/v1/admin/disbursements.php', 'GET', null, $token);
-    mobileApiExpect($accountantDisbursements['status'] === 403, 'supervisor role is denied monthly disbursements because the existing web page does not permit it');
+    mobileApiExpect($supervisorDisbursements['status'] === 403, 'supervisor role is denied monthly disbursements because the existing web page does not permit it');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     $adminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($adminLogin['status'] === 200 && isset($adminLogin['json']['data']['access_token']), 'administrator login succeeds for finance overview integration');
