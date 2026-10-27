@@ -509,6 +509,28 @@ void main() {
     expect(opened, contains('modules/accounting/fm_transaction_review.php'));
   });
 
+
+  testWidgets('salary portal is marked native for its existing web roles', (tester) async {
+    for (final role in ['financial_manager', 'admin', 'fm', 'hr_manager', 'hr_staff']) {
+      final opened = <String>[];
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RoleToolsSection(roleCode: role, english: true, onOpen: opened.add),
+          ),
+        ),
+      ));
+      expect(find.text('Payroll and incentives portal'), findsOneWidget, reason: role);
+      final card = find.ancestor(of: find.text('Payroll and incentives portal'), matching: find.byType(Card));
+      expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget, reason: role);
+      await tester.ensureVisible(find.text('Payroll and incentives portal'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Payroll and incentives portal'));
+      expect(opened, contains('modules/hr/salary_portal.php'), reason: role);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
 }
 
 void _ignorePath(String path) {}

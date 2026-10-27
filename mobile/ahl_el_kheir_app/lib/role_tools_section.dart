@@ -111,6 +111,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/administration/available_families.php',
     'modules/hr/incentive_policy.php',
     'modules/hr/salary_advance_waiver_fm.php',
+    'modules/hr/salary_portal.php',
     'modules/hr/salary_advance_waiver_gm.php',
     'modules/accounting/journal.php',
     'modules/accounting/vouchers.php',

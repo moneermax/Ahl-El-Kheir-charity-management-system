@@ -34,6 +34,7 @@ import 'sponsor_requests_page.dart';
 import 'nanny_group_verification_page.dart';
 import 'nanny_pre_verification_page.dart';
 import 'role_tools_section.dart';
+import 'salary_portal_page.dart';
 import 'suspension_cases_page.dart';
 import 'audit_log_page.dart';
 import 'admin_users_page.dart';
@@ -572,6 +573,24 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
       }
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
         builder: (_) => EmploymentStatesPage(english: english, loadPage: loadEmploymentStates),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/hr/salary_portal.php') {
+      const allowedRoles = ['financial_manager', 'admin', 'fm', 'hr_manager', 'hr_staff'];
+      final currentRole = user?['role_code']?.toString() ?? '';
+      if (!allowedRoles.contains(currentRole)) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Payroll portal is not available for this role.' : 'بوابة الرواتب غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => SalaryPortalPage(
+          english: english,
+          roleCode: currentRole,
+          onOpen: (path) => openNativeTool(path),
+        ),
       ));
       return;
     }
