@@ -195,6 +195,27 @@ void main() {
     expect(find.text('My profile'), findsNothing);
   });
 
+  testWidgets('Accountant Staff group disbursements alias is native', (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: SingleChildScrollView(
+        child: RoleToolsSection(
+          roleCode: 'accountant_staff',
+          english: true,
+          onOpen: opened.add,
+        ),
+      ),
+    ));
+
+    expect(find.text('Group disbursements'), findsOneWidget);
+    final card = find.ancestor(of: find.text('Group disbursements'), matching: find.byType(Card));
+    expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget);
+    await tester.ensureVisible(find.text('Group disbursements'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Group disbursements'));
+    expect(opened, contains('modules/accounting/group_disbursements.php'));
+  });
+
   testWidgets('accountant role does not see disbursement routes denied by the web guard', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: SingleChildScrollView(

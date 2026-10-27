@@ -489,7 +489,8 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
       openJournalPage();
       return;
     }
-    if (relativePath == 'modules/accounting/disbursements.php') {
+    if (relativePath == 'modules/accounting/disbursements.php' ||
+        relativePath == 'modules/accounting/group_disbursements.php') {
       const allowedRoles = [
         'admin', 'financial_manager', 'general_manager', 'accountant_staff', 'nanny',
       ];
