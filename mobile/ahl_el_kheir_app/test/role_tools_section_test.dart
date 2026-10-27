@@ -304,7 +304,7 @@ void main() {
 
     expect(find.text('Vouchers'), findsNothing);
     expect(find.text('Assigned nannies'), findsOneWidget);
-    expect(find.text('GM reconciliation'), findsOneWidget);
+    expect(find.text('GM reconciliation'), findsNothing);
     expect(find.text('Monthly disbursements'), findsNothing);
     expect(find.text('Group disbursements'), findsNothing);
   });
