@@ -2924,3 +2924,15 @@ APK workflow run #571 passed: source analysis, widget tests, debug APK build, pr
 - The profile role-tool routing fix is now fully CI-verified. Do not distribute the earlier intermediate artifact from workflow `40375002234`; it predates the profile-route regression test.
 - Continued role-tool audit found 17 distinct role-tool paths intentionally not marked native: GM reconciliation, sponsor win-back, incentive policy, GM salary-advance waiver, deputy-GM groups, opening balance, assigned nannies, chart of accounts, FM ordinary transaction review, salary portal, group disbursements, Fina payment report, nanny returned funds, available families, contract builder, payroll reversal, and project create/edit form. Source review confirmed that superficially similar existing screens are not automatically equivalent: for example, the native chart-of-accounts endpoint is admin-only while the web accounting account page is offered to finance roles; the existing native FM review queue corresponds to a different workflow than ordinary transaction review; and the general families/project pages do not implement the exact available-family assignment or project form flows. These remain NOT READY until exact API behavior, authorization, and workflows are implemented and tested. Do not mark them native based on name similarity.
 - The login screen already supports editing the API base URL and testing it; the probe distinguishes unreachable host/port, invalid API path, non-JSON response, and server errors. The latest APK still defaults to the LAN endpoint above. A successful cloud build does not prove that this IP is current/reachable from the user's phone or that local Apache/PHP/database are healthy. Local XAMPP/API and physical-device acceptance remain unverified.
+
+## 2026-10-27 — Native GM reconciliation
+
+Closed the first open native role-tool gap: GM reconciliation now has a read-only bearer API and native Flutter screen. The endpoint uses the existing report authorization boundary (admin, General Manager, Vice General Manager, Financial Manager), rejects non-GET methods, and does not perform DDL or financial mutations. The Accountant tool was removed from the native role list because the web report registry denies that role.
+
+Verification:
+- API workflow `40450633032`: PHP syntax passed; disposable-MariaDB integration passed for GM and FM reads, 405 on non-GET, and 403 for Accountant.
+- Flutter workflow `40450764757`: analysis passed, 140 tests passed, Android debug APK built and published.
+- App source revision: `82fd2570793e794b99fe9bf55f878596107b124c`; artifact ID `12710033148`; SHA-256 `87a816236f9648087c4bef0b3822947f7e2a98e53ccf4f4cb734df8ea936ff47`.
+- Local XAMPP/API and physical-device acceptance remain unverified.
+
+Next native role-tool gap to inspect against the existing web source is Sponsor win-back; do not assume that a similar screen is workflow-equivalent.

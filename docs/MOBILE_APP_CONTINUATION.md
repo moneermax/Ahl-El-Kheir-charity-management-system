@@ -1242,3 +1242,13 @@ Flutter analysis, widget tests, Android debug APK build, and artifact publicatio
 - The personal-profile role-tool tile is now labelled IN APP and routes to `openMyProfilePage()`; widget regression test and complete build passed.
 - Audit found 17 distinct role-tool paths that remain NOT READY natively: GM reconciliation, sponsor win-back, incentive policy, GM salary-advance waiver, deputy-GM groups, opening balance, assigned nannies, chart of accounts, ordinary FM transaction review, salary portal, group disbursements, Fina payment report, nanny returned funds, available families, contract builder, payroll reversal, and project create/edit form. Similar-looking native pages are not sufficient proof of parity: admin-only native chart-of-accounts access does not match the finance-role web page; native FM review queue is a different workflow from ordinary transaction review; and general family/project screens do not implement the exact assignment/form flows. Do not mark these paths native until exact authorization and behavior are implemented and tested.
 - The login screen supports changing the API base URL and testing it. The APK default remains the LAN address above; CI cannot prove that it is reachable from the phone. Local XAMPP/API/database and physical-device acceptance remain unverified.
+
+## 2026-10-27 — Native GM reconciliation completed
+
+- Added `api/v1/accounting/gm_reconciliation.php`: bearer-authenticated GET-only read endpoint returning posted-ledger monthly summaries, monthly disbursement totals, open batches, returns, and voided batches. It performs no schema DDL and no financial mutations.
+- Added `mobile/ahl_el_kheir_app/lib/gm_reconciliation_page.dart` and connected the native route.
+- Role-tool visibility now matches the existing report permission boundary: admin, General Manager, Vice General Manager, and Financial Manager; Accountant no longer sees the tool because the web report guard denies it.
+- API integration run `40450633032` passed PHP syntax and disposable-MariaDB tests for GM/FM access, non-GET rejection (405), and Accountant denial (403).
+- Flutter run `40450764757` passed analysis, 140 tests, Android debug APK build, build provenance, and artifact publication. Source revision `82fd2570793e794b99fe9bf55f878596107b124c`; artifact ID `12710033148`; SHA-256 `87a816236f9648087c4bef0b3822947f7e2a98e53ccf4f4cb734df8ea936ff47`.
+- No migration was added. Local XAMPP/API and physical-device acceptance remain pending.
+- Continue with the next audited role-tool gap only after inspecting its exact web authorization, source workflow, and schema dependencies.
