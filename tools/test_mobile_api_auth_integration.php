@@ -581,6 +581,66 @@ try {
     mobileApiExpect($salaryAdvanceDashboardNanny['status'] === 403, 'salary-advance dashboard denies roles outside the existing web guard');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
+    // Trial balance is a read-only report and must use the exact web guard.
+    $trialBalanceUnauth = mobileApiRequest('/api/v1/accounting/trial_balance.php');
+    mobileApiExpect($trialBalanceUnauth['status'] === 401, 'trial balance rejects unauthenticated requests');
+    $trialBalanceWrongMethod = mobileApiRequest('/api/v1/accounting/trial_balance.php', 'POST', [], $adminToken);
+    mobileApiExpect($trialBalanceWrongMethod['status'] === 405, 'trial balance rejects non-GET requests');
+    $trialBalanceAll = mobileApiRequest('/api/v1/accounting/trial_balance.php', 'GET', null, $adminToken, 20);
+    $trialBalanceData = $trialBalanceAll['json']['data'] ?? [];
+    $expectedTrialTotals = $pdo->query(
+        "SELECT COALESCE(SUM(jl.debit),0) total_debit,
+                COALESCE(SUM(jl.credit),0) total_credit,
+                COUNT(DISTINCT je.id) journal_count,
+                COUNT(jl.id) line_count
+         FROM journal_lines jl JOIN journal_entries je ON je.id=jl.entry_id
+         WHERE je.status='posted'"
+    )->fetch();
+    $expectedTrialAccounts = $pdo->query(
+        "SELECT a.id, a.code, a.name_ar, a.name_en, a.account_type,
+                COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit ELSE 0 END),0) debit_total,
+                COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit ELSE 0 END),0) credit_total
+         FROM accounts a
+         LEFT JOIN journal_lines jl ON jl.account_id=a.id
+         LEFT JOIN journal_entries je ON je.id=jl.entry_id AND je.status='posted'
+         GROUP BY a.id, a.code, a.name_ar, a.name_en, a.account_type
+         HAVING COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.debit ELSE 0 END),0) <> 0
+             OR COALESCE(SUM(CASE WHEN je.id IS NOT NULL THEN jl.credit ELSE 0 END),0) <> 0
+         ORDER BY a.code"
+    )->fetchAll();
+    $actualTrialAccounts = $trialBalanceData['accounts'] ?? [];
+    mobileApiExpect(
+        $trialBalanceAll['status'] === 200
+        && is_array($actualTrialAccounts)
+        && count($actualTrialAccounts) === count($expectedTrialAccounts)
+        && abs((float)($trialBalanceData['totals']['total_debit'] ?? -1) - (float)$expectedTrialTotals['total_debit']) < 0.005
+        && abs((float)($trialBalanceData['totals']['total_credit'] ?? -1) - (float)$expectedTrialTotals['total_credit']) < 0.005
+        && (int)($trialBalanceData['totals']['journal_count'] ?? -1) === (int)$expectedTrialTotals['journal_count']
+        && (int)($trialBalanceData['totals']['line_count'] ?? -1) === (int)$expectedTrialTotals['line_count'],
+        'administrator trial-balance accounts and independent totals match posted journal queries'
+    );
+    $trialBalanceFiltered = mobileApiRequest(
+        '/api/v1/accounting/trial_balance.php?from=2099-12-31&to=2000-01-01',
+        'GET',
+        null,
+        $adminToken,
+        20
+    );
+    $filteredData = $trialBalanceFiltered['json']['data'] ?? [];
+    mobileApiExpect(
+        $trialBalanceFiltered['status'] === 200
+        && ($filteredData['from'] ?? '') === '2000-01-01'
+        && ($filteredData['to'] ?? '') === '2099-12-31',
+        'trial-balance date filters normalize reversed ranges like the web page'
+    );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $trialBalanceFm = mobileApiRequest('/api/v1/accounting/trial_balance.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect($trialBalanceFm['status'] === 200, 'Financial Manager can read trial balance');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['general_manager'], $userId]);
+    $trialBalanceGm = mobileApiRequest('/api/v1/accounting/trial_balance.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect($trialBalanceGm['status'] === 403, 'trial balance denies General Manager under the existing web guard');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+
     $availableFamiliesUnauth = mobileApiRequest('/api/v1/administration/available_families.php');
     mobileApiExpect($availableFamiliesUnauth['status'] === 401, 'available families rejects unauthenticated requests');
     $availableFamiliesAdmin = mobileApiRequest('/api/v1/administration/available_families.php', 'GET', null, $adminToken, 20);
