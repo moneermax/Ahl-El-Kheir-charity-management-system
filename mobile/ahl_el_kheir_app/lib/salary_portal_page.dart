@@ -21,11 +21,11 @@ class SalaryPortalPage extends StatelessWidget {
       links.add(_SalaryPortalLink(
         title: t('إدارة سلف الرواتب', 'Salary advances'),
         description: t(
-          'إدارة سياسة السلف وطلبات الموظفين ومعالجة الصرف.',
-          'Manage salary advances, employee requests and disbursement processing.',
+          'عرض مؤشرات السلف وسجل الطلبات المعالجة داخل التطبيق.',
+          'View salary-advance status counts and processed-request history in the app.',
         ),
         path: 'modules/hr/salary_advance_dashboard.php',
-        ready: false,
+        ready: true,
         icon: Icons.handshake_outlined,
       ));
       links.add(_SalaryPortalLink(

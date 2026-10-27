@@ -14,10 +14,10 @@ void main() {
     expect(find.text('Salary advance waivers'), findsOneWidget);
     expect(find.text('Payroll management'), findsOneWidget);
     expect(find.text('Employee incentive policy'), findsOneWidget);
-    expect(find.text('NOT READY IN APP'), findsOneWidget);
+    expect(find.text('IN APP'), findsWidgets);
 
     await tester.tap(find.text('Salary advances'));
-    expect(opened, isEmpty);
+    expect(opened, ['modules/hr/salary_advance_dashboard.php']);
     await tester.tap(find.text('Payroll management'));
     expect(opened, ['modules/hr/payroll.php']);
     await tester.pumpWidget(const SizedBox.shrink());

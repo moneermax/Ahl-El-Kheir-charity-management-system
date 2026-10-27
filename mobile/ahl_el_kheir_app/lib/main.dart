@@ -67,6 +67,7 @@ import 'gm_reconciliation_page.dart';
 import 'sponsor_winback_page.dart';
 import 'incentive_policy_page.dart';
 import 'salary_advance_waiver_page.dart';
+import 'salary_advance_dashboard_page.dart';
 import 'employment_states_page.dart';
 import 'orphan_forms_index_page.dart';
 import 'package:file_picker/file_picker.dart';
@@ -573,6 +574,23 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
       }
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
         builder: (_) => EmploymentStatesPage(english: english, loadPage: loadEmploymentStates),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/hr/salary_advance_dashboard.php') {
+      const allowedRoles = ['financial_manager', 'admin', 'fm'];
+      final currentRole = user?['role_code']?.toString() ?? '';
+      if (!allowedRoles.contains(currentRole)) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Salary-advance dashboard is not available for this role.' : 'لوحة السلف غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => SalaryAdvanceDashboardPage(
+          english: english,
+          loadDashboard: loadSalaryAdvanceDashboard,
+        ),
       ));
       return;
     }
@@ -1205,6 +1223,12 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('POST', 'hr/incentive_policy.php', body: body, token: token);
+  }
+
+  Future<Map<String, dynamic>> loadSalaryAdvanceDashboard() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/salary_advance_dashboard.php', token: token);
   }
 
   Future<Map<String, dynamic>> loadSalaryAdvanceWaiver(String effectiveMonth) async {
