@@ -393,12 +393,27 @@ try {
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['general_manager'],$userId]);
     $deniedIssue=mobileApiRequest('/api/v1/accounting/vouchers.php','POST',$issuePayload,$token);
     mobileApiExpect($deniedIssue['status']===403&&($deniedIssue['json']['error']['code']??'')==='forbidden','General Manager cannot issue vouchers');
+
+    $gmReconciliation = mobileApiRequest('/api/v1/accounting/gm_reconciliation.php', 'GET', null, $token, 20);
+    mobileApiExpect(
+        $gmReconciliation['status'] === 200
+        && is_array($gmReconciliation['json']['data']['summary'] ?? null)
+        && is_array($gmReconciliation['json']['data']['monthly_ledger'] ?? null)
+        && is_array($gmReconciliation['json']['data']['open_batches'] ?? null)
+        && is_array($gmReconciliation['json']['data']['returns'] ?? null)
+        && is_array($gmReconciliation['json']['data']['voided_batches'] ?? null),
+        'General Manager can read reconciliation summaries and supporting records'
+    );
+    $gmReconciliationWrongMethod = mobileApiRequest('/api/v1/accounting/gm_reconciliation.php', 'POST', [], $token, 20);
+    mobileApiExpect($gmReconciliationWrongMethod['status'] === 405, 'GM reconciliation rejects non-GET requests');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'],$userId]);
 
     $fmLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
     mobileApiExpect($fmLogin['status'] === 200 && isset($fmLogin['json']['data']['access_token']), 'financial manager login succeeds for native sponsor search');
     $fmToken = (string)$fmLogin['json']['data']['access_token'];
     $testTokenHashes[] = hash('sha256', $fmToken);
+    $fmReconciliation = mobileApiRequest('/api/v1/accounting/gm_reconciliation.php', 'GET', null, $fmToken, 20);
+    mobileApiExpect($fmReconciliation['status'] === 200 && is_array($fmReconciliation['json']['data']['summary'] ?? null), 'Financial Manager can read GM reconciliation');
     $fmSponsorSearch = mobileApiRequest('/api/v1/search/sponsors.php?q=__mobile_api_no_match__', 'GET', null, $fmToken, 20);
     mobileApiExpect(
         $fmSponsorSearch['status'] === 200
@@ -412,6 +427,12 @@ try {
     mobileApiExpect($accountantLogin['status'] === 200 && isset($accountantLogin['json']['data']['access_token']), 'accountant login succeeds for native sponsor search');
     $accountantToken = (string)$accountantLogin['json']['data']['access_token'];
     $testTokenHashes[] = hash('sha256', $accountantToken);
+    $accountantReconciliation = mobileApiRequest('/api/v1/accounting/gm_reconciliation.php', 'GET', null, $accountantToken, 20);
+    mobileApiExpect(
+        $accountantReconciliation['status'] === 403
+        && ($accountantReconciliation['json']['error']['code'] ?? '') === 'forbidden',
+        'Accountant is denied GM reconciliation by the existing web report permission matrix'
+    );
     $accountantSponsorSearch = mobileApiRequest('/api/v1/search/sponsors.php?q=__mobile_api_no_match__', 'GET', null, $accountantToken, 20);
     mobileApiExpect(
         $accountantSponsorSearch['status'] === 200
