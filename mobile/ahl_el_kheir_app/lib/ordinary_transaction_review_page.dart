@@ -350,7 +350,7 @@ class _OrdinaryTransactionReviewPageState extends State<OrdinaryTransactionRevie
           ]),
         ),
       );
-
+}
 
 class OrdinaryTransactionReceiptViewerPage extends StatelessWidget {
   const OrdinaryTransactionReceiptViewerPage({
@@ -371,7 +371,7 @@ class OrdinaryTransactionReceiptViewerPage extends StatelessWidget {
     final title = english ? 'Transaction receipt' : 'إيصال المعاملة';
     if (mime == 'application/pdf') {
       return Scaffold(
-        appBar: AppBar(title: Text(title), subtitle: null),
+        appBar: AppBar(title: Text(title)),
         body: PdfViewer.data(bytes, sourceName: filename),
       );
     }
@@ -405,6 +405,4 @@ class OrdinaryTransactionReceiptViewerPage extends StatelessWidget {
       ),
     );
   }
-}
-
 }

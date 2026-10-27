@@ -2672,8 +2672,12 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
 
   Future<Map<String, dynamic>> loadOrdinaryTransactionReceipt(int transactionId, String kind) async {
     final token = await storage.read(key: tokenKey);
-    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
-    final base = apiBaseUrl.replaceFirst(RegExp(r'/+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) {
+      throw const ApiFailure('Authentication is required.', statusCode: 401);
+    }
+    final base = apiBaseUrl.replaceFirst(RegExp(r'/+
+  Future<Map<String, dynamic>> loadOrdinaryTransactionReview() async {
+    final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('GET', 'accounting/fm_transaction_review.php', token: token);
   }
@@ -4073,6 +4077,7 @@ class _RequiredPasswordChangeDialogState extends State<_RequiredPasswordChangeDi
       'filename': match?.group(1) ?? 'transaction-receipt-$transactionId',
     };
   }
+
 
   Future<Map<String, dynamic>> loadOrdinaryTransactionReview() async {
     final token = await storage.read(key: tokenKey);
