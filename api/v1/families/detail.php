@@ -5,7 +5,7 @@ require_once dirname(__DIR__, 3) . '/config/family_scope.php';
 ak_api_require_method('GET');
 $user=ak_api_authenticated_user();$userId=(int)$user['id'];$role=(string)$user['role_code'];$id=max(0,(int)($_GET['id']??0));
 if($id<1)ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_family_id','message'=>'A valid family ID is required.']]);
-if(!in_array($role,['admin','vice_general_manager','general_manager','supervisor','nanny'],true))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Family details are not allowed for this account.']]);
+if(!in_array($role,['admin','vice_general_manager','general_manager','administration','supervisor','nanny'],true))ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Family details are not allowed for this account.']]);
 $f=dbFetchOne("SELECT f.*,n.full_name AS nanny_name,s.full_name AS supervisor_name FROM families f LEFT JOIN users n ON n.id=f.nanny_id LEFT JOIN users s ON s.id=f.supervisor_id WHERE f.id=? LIMIT 1",[$id]);
 if(!$f)ak_api_json(404,['ok'=>false,'error'=>['code'=>'family_not_found','message'=>'Family not found.']]);
 if($role==='nanny'&&(int)($f['nanny_id']??0)!==$userId)ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'This family is outside your assignment.']]);

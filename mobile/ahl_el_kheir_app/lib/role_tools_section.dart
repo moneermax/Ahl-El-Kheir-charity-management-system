@@ -107,6 +107,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/accounting/disbursements.php',
     'modules/accounting/gm_reconciliation.php',
     'modules/administration/winback.php',
+    'modules/administration/available_families.php',
     'modules/hr/incentive_policy.php',
     'modules/hr/salary_advance_waiver_fm.php',
     'modules/hr/salary_advance_waiver_gm.php',

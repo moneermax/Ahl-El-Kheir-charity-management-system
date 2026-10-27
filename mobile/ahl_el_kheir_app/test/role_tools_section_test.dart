@@ -165,6 +165,16 @@ void main() {
     expect(find.text('Sponsor win-back'), findsNothing);
   });
 
+  testWidgets('available families is native for Administration role', (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
+      child: RoleToolsSection(roleCode: 'administration', english: true, onOpen: opened.add),
+    ))));
+    expect(find.text('Families available for sponsorship'), findsOneWidget);
+    await tester.tap(find.text('Families available for sponsorship'));
+    expect(opened, contains('modules/administration/available_families.php'));
+  });
+
   testWidgets('HR workspace exposes reporting and the audited HR tool list', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: SingleChildScrollView(

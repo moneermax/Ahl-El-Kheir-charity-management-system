@@ -47,6 +47,7 @@ import 'fina_review_page.dart';
 import 'fina_dashboard_page.dart';
 import 'fina_report_page.dart';
 import 'assigned_nannies_page.dart';
+import 'available_families_page.dart';
 import 'admin_database_page.dart';
 import 'admin_backup_page.dart';
 import 'payroll_integrity_page.dart';
@@ -527,6 +528,17 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
         builder: (_) => AssignedNanniesPage(english: english, loadPage: loadAssignedNannies),
       ));
+      return;
+    }
+    if (relativePath == 'modules/administration/available_families.php') {
+      const allowedRoles = ['admin', 'general_manager', 'vice_general_manager', 'administration'];
+      if (!allowedRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Available families are not available for this role.' : 'الأسر المتاحة للكفالة غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      openAvailableFamiliesPage();
       return;
     }
     if (relativePath == 'modules/families/suspensions.php') {
@@ -1917,6 +1929,25 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     ));
   }
 
+  void openAvailableFamiliesPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => AvailableFamiliesPage(
+        english: english,
+        loadFamilies: loadAvailableFamilies,
+        openFamily: (familyId) {
+          navigatorKey.currentState?.push(MaterialPageRoute<void>(
+            builder: (_) => FamilyDetailPage(
+              familyId: familyId,
+              english: english,
+              loadDetail: loadFamilyDetail,
+              openOrphanForm: (childId) async { await openOrphanFormPage(childId); },
+            ),
+          ));
+        },
+      ),
+    ));
+  }
+
   void openOrphanedFamiliesReport() {
     navigatorKey.currentState?.push(MaterialPageRoute<void>(
       builder: (_) => OrphanedFamiliesReportPage(
@@ -2680,6 +2711,12 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     await navigator.push<void>(MaterialPageRoute<void>(
       builder: (_) => OrphanFormPage(childId: childId, english: english, loadForm: loadOrphanForm, saveForm: saveOrphanForm),
     ));
+  }
+
+  Future<Map<String, dynamic>> loadAvailableFamilies() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'administration/available_families.php', token: token);
   }
 
   Future<Map<String, dynamic>> loadFamilyDetail(int id) async {

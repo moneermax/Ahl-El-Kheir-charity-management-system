@@ -538,6 +538,40 @@ try {
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
 
+    $availableFamiliesUnauth = mobileApiRequest('/api/v1/administration/available_families.php');
+    mobileApiExpect($availableFamiliesUnauth['status'] === 401, 'available families rejects unauthenticated requests');
+    $availableFamiliesAdmin = mobileApiRequest('/api/v1/administration/available_families.php', 'GET', null, $adminToken, 20);
+    $availableData = $availableFamiliesAdmin['json']['data'] ?? [];
+    $availableItems = $availableData['items'] ?? [];
+    $expectedAvailableIds = array_map('intval', $pdo->query(
+        "SELECT f.id FROM families f WHERE f.status IN ('active','pending')
+         AND NOT EXISTS (SELECT 1 FROM sponsorships sp JOIN family_children fc ON fc.id=sp.child_id
+                         WHERE fc.family_id=f.id AND sp.status='active')
+         ORDER BY f.children_count DESC, f.monthly_need_amount DESC"
+    )->fetchAll(PDO::FETCH_COLUMN));
+    $actualAvailableIds = array_map(static fn(array $row): int => (int)$row['id'], is_array($availableItems) ? $availableItems : []);
+    mobileApiExpect(
+        $availableFamiliesAdmin['status'] === 200
+        && (int)($availableData['total'] ?? -1) === count($expectedAvailableIds)
+        && $actualAvailableIds === $expectedAvailableIds,
+        'available-family API matches the exact existing web eligibility query and order'
+    );
+    $familyForAdminRole = (int)($pdo->query('SELECT id FROM families ORDER BY id LIMIT 1')->fetchColumn() ?: 0);
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['administration'], $userId]);
+    $administrationAvailable = mobileApiRequest('/api/v1/administration/available_families.php', 'GET', null, $adminToken, 20);
+    $administrationFamilyDetail = $familyForAdminRole > 0
+        ? mobileApiRequest('/api/v1/families/detail.php?id=' . $familyForAdminRole, 'GET', null, $adminToken, 20)
+        : ['status' => 404, 'json' => []];
+    mobileApiExpect(
+        $administrationAvailable['status'] === 200
+        && ($familyForAdminRole === 0 || $administrationFamilyDetail['status'] === 200),
+        'Administration role can read available families and open the in-app family detail page'
+    );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $availableFamiliesDenied = mobileApiRequest('/api/v1/administration/available_families.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect($availableFamiliesDenied['status'] === 403, 'financial manager is denied available families by the existing web role guard');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+
     $assignedUnauth = mobileApiRequest('/api/v1/accounting/assigned_nannies.php?vmonth=2099-12');
     mobileApiExpect($assignedUnauth['status'] === 401, 'assigned-nanny overview rejects unauthenticated requests');
     $assignedAdmin = mobileApiRequest('/api/v1/accounting/assigned_nannies.php?vmonth=2099-12', 'GET', null, $adminToken, 20);
