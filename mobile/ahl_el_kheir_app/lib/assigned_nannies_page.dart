@@ -27,18 +27,18 @@ class _AssignedNanniesPageState extends State<AssignedNanniesPage> {
   }
   Future<void> _load({int? nannyId,bool clear=false}) async {
     final id=clear ? null : (nannyId ?? selected);
-    setState(()=>{loading=true,error=null,selected=id});
+    setState(() { loading = true; error = null; selected = id; });
     try {
       final result=await widget.loadPage(month,nannyId:id);
-      if(mounted) setState(()=>{data=result,loading=false});
-    } catch(e) { if(mounted) setState(()=>{error=e.toString(),loading=false}); }
+      if (mounted) setState(() { data = result; loading = false; });
+    } catch(e) { if (mounted) setState(() { error = e.toString(); loading = false; }); }
   }
   Future<void> _chooseMonth() async {
     final p=month.split('-');
     final picked=await showDatePicker(context:context,initialDate:DateTime(int.parse(p[0]),int.parse(p[1]),1),
       firstDate:DateTime(2000),lastDate:DateTime(2100),helpText:t('اختر شهر التوثيق','Choose verification month'));
     if(picked==null || !mounted) return;
-    setState(()=>{month='${picked.year.toString().padLeft(4,'0')}-${picked.month.toString().padLeft(2,'0')}',selected=null});
+    setState(() { month = '${picked.year.toString().padLeft(4, '0')}-${picked.month.toString().padLeft(2, '0')}'; selected = null; });
     await _load(clear:true);
   }
   bool _flag(Map<String,dynamic> f,String k)=>(int.tryParse('${f[k]??0}')??0)==1;
