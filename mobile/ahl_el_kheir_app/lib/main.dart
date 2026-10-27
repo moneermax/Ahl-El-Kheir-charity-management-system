@@ -3054,6 +3054,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
                     english: english,
                     roleCode: roleCode,
                     loadOverview: loadRoleDashboard,
+                    onOpenTool: (path) => openNativeTool(path),
                   ),
                   const SizedBox(height: 24),
                   _HomeSectionTitle(

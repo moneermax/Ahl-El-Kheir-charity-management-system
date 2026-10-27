@@ -6,11 +6,13 @@ class RoleDashboardPage extends StatefulWidget {
     required this.english,
     required this.roleCode,
     required this.loadOverview,
+    required this.onOpenTool,
   });
 
   final bool english;
   final String roleCode;
   final Future<Map<String, dynamic>> Function() loadOverview;
+  final ValueChanged<String> onOpenTool;
 
   @override
   State<RoleDashboardPage> createState() => _RoleDashboardPageState();
@@ -72,6 +74,8 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
   @override
   Widget build(BuildContext context) {
     final en = widget.english;
+    final attentionItems = _attentionItems();
+    final isGeneralManager = const ['general_manager', 'gm'].contains(widget.roleCode);
     final scheme = Theme.of(context).colorScheme;
     const ink = Color(0xFF251B35);
     const muted = Color(0xFF756B84);
@@ -175,7 +179,115 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
             );
           },
         ),
+        if (isGeneralManager && !loading && error == null) ...[
+          const SizedBox(height: 22),
+          Row(
+            children: [
+              const Icon(Icons.notifications_active_outlined, color: Color(0xFFB45309)),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(en ? 'Needs your attention' : 'ما يحتاج انتباهك',
+                  style: const TextStyle(color: ink, fontSize: 16, fontWeight: FontWeight.w900)),
+              ),
+              Text(attentionItems.length.toString(),
+                style: const TextStyle(color: muted, fontSize: 12, fontWeight: FontWeight.w800)),
+            ],
+          ),
+          const SizedBox(height: 10),
+          if (attentionItems.isEmpty)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Row(
+                  children: [
+                    const Icon(Icons.check_circle_outline_rounded, color: Color(0xFF0F766E)),
+                    const SizedBox(width: 10),
+                    Expanded(child: Text(en
+                      ? 'No attention items are currently reported.'
+                      : 'لا توجد عناصر تتطلب المتابعة ضمن المؤشرات المتاحة حالياً.',
+                      style: const TextStyle(color: muted, fontWeight: FontWeight.w700))),
+                  ],
+                ),
+              ),
+            ),
+          for (final item in attentionItems)
+            Card(
+              margin: const EdgeInsets.only(bottom: 8),
+              child: ListTile(
+                leading: CircleAvatar(
+                  backgroundColor: const Color(0xFFFFF7ED),
+                  child: Icon(item.icon, color: const Color(0xFFB45309)),
+                ),
+                title: Text(en ? item.titleEn : item.titleAr,
+                  style: const TextStyle(fontWeight: FontWeight.w800)),
+                subtitle: Text(en ? item.subtitleEn : item.subtitleAr),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF3E8FF),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(_formatValue(item.count),
+                        style: const TextStyle(color: Color(0xFF5B21B6), fontWeight: FontWeight.w900)),
+                    ),
+                    const SizedBox(width: 8),
+                    const Icon(Icons.arrow_forward_ios_rounded, size: 14),
+                  ],
+                ),
+                onTap: () => widget.onOpenTool(item.path),
+              ),
+            ),
+        ],
       ],
     );
   }
+
+  List<_AttentionItem> _attentionItems() {
+    if (!const ['general_manager', 'gm'].contains(widget.roleCode)) return [];
+    final values = <String, dynamic>{
+      for (final metric in metrics)
+        if (metric['key'] != null) metric['key'].toString(): metric['value'],
+    };
+    final items = <_AttentionItem>[];
+    void addIfPositive(String key, String titleAr, String titleEn, String subtitleAr,
+        String subtitleEn, String path, IconData icon) {
+      final count = num.tryParse(values[key]?.toString() ?? '') ?? 0;
+      if (count <= 0) return;
+      items.add(_AttentionItem(titleAr, titleEn, subtitleAr, subtitleEn, path, icon, count));
+    }
+
+    // Use only counts returned by the authenticated role-dashboard API.
+    addIfPositive('uncovered_families', 'أسر بلا كفالة نشطة', 'Families without active sponsorship',
+      'مراجعة الأسر التي تحتاج إلى تغطية', 'Review families that need sponsorship coverage',
+      'modules/reports/orphaned_families.php', Icons.home_work_outlined);
+    addIfPositive('paused_sponsorships', 'كفالات متوقفة', 'Paused sponsorships',
+      'مراجعة حالة الكفالات المتوقفة', 'Review paused sponsorships',
+      'modules/reports/sponsorship.php', Icons.pause_circle_outline_rounded);
+    addIfPositive('open_winback', 'متابعات استعادة الكفلاء', 'Open sponsor win-back cases',
+      'متابعة الحالات المفتوحة', 'Follow up on open cases',
+      'modules/administration/winback.php', Icons.replay_rounded);
+    addIfPositive('unassigned_letters', 'حروف غير مسندة للمشرفين', 'Unassigned supervisor letters',
+      'مراجعة توزيع الحروف', 'Review supervisor letter assignments',
+      'modules/reports/operational.php', Icons.assignment_late_outlined);
+    addIfPositive('open_sponsor_requests', 'طلبات رعاية قيد المتابعة', 'Sponsor requests awaiting follow-up',
+      'مراجعة الطلبات المفتوحة', 'Review open sponsor requests',
+      'modules/sponsor_requests/index.php', Icons.mark_email_unread_outlined);
+    return items;
+  }
+}
+
+class _AttentionItem {
+  const _AttentionItem(this.titleAr, this.titleEn, this.subtitleAr, this.subtitleEn,
+      this.path, this.icon, this.count);
+
+  final String titleAr;
+  final String titleEn;
+  final String subtitleAr;
+  final String subtitleEn;
+  final String path;
+  final IconData icon;
+  final num count;
 }

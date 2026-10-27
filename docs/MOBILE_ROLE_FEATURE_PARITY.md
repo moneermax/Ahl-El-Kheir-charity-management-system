@@ -460,3 +460,10 @@ The first Flutter run for the new waiver page (#606) failed at Dart analysis wit
 ## 2026-10-27 — Waiver widget-test failure diagnosis
 
 Flutter run #607 completed with Dart analysis passing, but widget tests failed (148 passed, 2 failed), so APK build/provenance/publication were skipped. The exact failures are in `salary_advance_waiver_page_test.dart`: the GM test tapped the approval action while its card control was outside the test viewport, and the FM test looked for the execution action before scrolling the long preparation form/decision list into view. Source inspection shows the production page places decision cards after the introductory panel and, for FM, the preparation form; these are `ListView` children and later controls may not yet be built by the lazy viewport. The narrow correction is to use `scrollUntilVisible` for the actual GM approval and FM execution controls before tapping/asserting them. No production UI, API, or financial service logic is changed. Await the next sequential Flutter run before claiming test/build success; do not overlap runs or rerun closed financial waiver harnesses.
+
+
+## 2026-10-27 — Native GM attention queue (first slice)
+
+The GM mobile dashboard now presents actionable attention cards for positive counts already exposed by the role dashboard API: uncovered families, paused sponsorships, open sponsor win-back cases, unassigned supervisor letters, and open sponsor requests. Each card routes to an existing native screen/report through the native-only dispatcher. No web handoff, new API endpoint, schema change, or financial behavior was added. The app's distinct violet/amber/pink theme is preserved.
+
+Known remaining parity gap: the web GM dashboard includes pending families, but the current mobile API response does not include its existing `pending_families` query value in the returned metric list. This first slice intentionally does not infer that count. Add and verify the metric in a separate sequential change before claiming complete attention-queue parity. CI and device acceptance are pending.
