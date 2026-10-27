@@ -86,6 +86,33 @@ String? normalizeApiBaseUrl(String value) {
   return normalized;
 }
 
+String? notificationNativeTargetPath(String rawLink) {
+  final value = rawLink.trim();
+  if (value.isEmpty) return null;
+  final uri = Uri.tryParse(value);
+  if (uri == null ||
+      uri.userInfo.isNotEmpty ||
+      uri.hasFragment ||
+      (uri.hasScheme &&
+          (!['http', 'https'].contains(uri.scheme.toLowerCase()) ||
+              uri.host.isEmpty))) {
+    return null;
+  }
+
+  final path = uri.path;
+  final moduleMarker = path.lastIndexOf('/modules/');
+  final relativePath = moduleMarker >= 0
+      ? path.substring(moduleMarker + 1)
+      : path.startsWith('modules/')
+          ? path
+          : '';
+  if (relativePath.isEmpty || relativePath.split('/').contains('..')) {
+    return null;
+  }
+  if (relativePath == 'modules/notifications/index.php') return null;
+  return relativePath;
+}
+
 String migrateKnownLegacyApiBaseUrl(String value) {
   final uri = Uri.tryParse(value);
   if (uri != null
@@ -2387,6 +2414,12 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     }
   }
 
+  Future<void> openNotificationLinkedPage(String rawLink) async {
+    final path = notificationNativeTargetPath(rawLink);
+    if (path == null) return;
+    await openNativeTool(path);
+  }
+
   Future<Map<String, dynamic>> loadNotifications(int page) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
@@ -2794,6 +2827,7 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
                                   english: english,
                                   loadPage: loadNotifications,
                                   markRead: markNotificationRead,
+                                  openLinkedPage: openNotificationLinkedPage,
                                 ),
                               ),
                             ),
@@ -3319,11 +3353,13 @@ class NotificationPage extends StatefulWidget {
     required this.english,
     required this.loadPage,
     required this.markRead,
+    this.openLinkedPage,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function(int page) loadPage;
   final Future<void> Function(int notificationId) markRead;
+  final Future<void> Function(String link)? openLinkedPage;
 
   @override
   State<NotificationPage> createState() => _NotificationPageState();
@@ -3374,32 +3410,35 @@ class _NotificationPageState extends State<NotificationPage> {
   }
 
   Future<void> openNotification(Map<String, dynamic> item) async {
-    final marked = await markNotification(item);
-    if (!marked || !mounted) return;
+    final isRead = item['is_read'] == true || item['is_read'] == 1;
+    final id = int.tryParse(item['id']?.toString() ?? '') ?? 0;
+    final Future<String?>? markReadResult =
+        !isRead && id > 0 ? _tryMarkNotificationRead(id) : null;
+
     await Navigator.of(context).push(MaterialPageRoute<void>(
       builder: (_) => NotificationDetailPage(
         english: widget.english,
         item: item,
+        onOpenLink: widget.openLinkedPage,
       ),
     ));
+
+    if (!mounted || markReadResult == null) return;
+    final markReadError = await markReadResult;
+    await load();
+    if (markReadError != null && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(markReadError)),
+      );
+    }
   }
 
-  Future<bool> markNotification(Map<String, dynamic> item) async {
-    final isRead = item['is_read'] == true || item['is_read'] == 1;
-    if (isRead) return true;
-    final id = int.tryParse(item['id']?.toString() ?? '') ?? 0;
-    if (id < 1) return true;
+  Future<String?> _tryMarkNotificationRead(int notificationId) async {
     try {
-      await widget.markRead(id);
-      if (!mounted) return false;
-      await load();
-      return true;
+      await widget.markRead(notificationId);
+      return null;
     } catch (e) {
-      if (!mounted) return false;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(e.toString())),
-      );
-      return false;
+      return e.toString();
     }
   }
 
@@ -3777,10 +3816,12 @@ class NotificationDetailPage extends StatelessWidget {
     super.key,
     required this.english,
     required this.item,
+    this.onOpenLink,
   });
 
   final bool english;
   final Map<String, dynamic> item;
+  final Future<void> Function(String link)? onOpenLink;
 
   @override
   Widget build(BuildContext context) {
@@ -3822,17 +3863,24 @@ class NotificationDetailPage extends StatelessWidget {
           ),
           if (link.isNotEmpty) ...[
             const SizedBox(height: 18),
-            Card(
-              child: ListTile(
-                leading: const Icon(Icons.info_outline_rounded),
-                title: Text(english ? 'Related page' : 'الصفحة المرتبطة'),
-                subtitle: Text(
-                  english
-                      ? 'The notification details stay inside this app. Opening the linked website page is not available in-app yet.'
-                      : 'تفاصيل الإشعار معروضة داخل التطبيق. فتح صفحة الموقع المرتبطة غير متاح داخل التطبيق حالياً.',
+            if (onOpenLink != null && notificationNativeTargetPath(link) != null)
+              FilledButton.icon(
+                onPressed: () => onOpenLink!(link),
+                icon: const Icon(Icons.open_in_new_rounded),
+                label: Text(english ? 'Open related page' : 'فتح الصفحة المرتبطة'),
+              )
+            else
+              Card(
+                child: ListTile(
+                  leading: const Icon(Icons.info_outline_rounded),
+                  title: Text(english ? 'Related page' : 'الصفحة المرتبطة'),
+                  subtitle: Text(
+                    english
+                        ? 'No supported in-app destination is available for this notification.'
+                        : 'لا توجد وجهة مرتبطة مدعومة داخل التطبيق لهذا الإشعار.',
+                  ),
                 ),
               ),
-            ),
           ],
         ],
       ),

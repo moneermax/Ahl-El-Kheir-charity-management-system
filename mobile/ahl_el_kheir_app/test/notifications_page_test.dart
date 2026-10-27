@@ -78,10 +78,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(markReadCalls, 1);
+    expect(loadCalls, 1);
+    expect(find.text('Notification details'), findsOneWidget);
+    expect(find.text('Your request was reviewed.'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
     expect(loadCalls, 2);
   });
 
-  testWidgets('shows a mark-read failure without reloading the inbox',
+  testWidgets('opens notification details even when marking it read fails',
       (tester) async {
     var loadCalls = 0;
     await tester.pumpWidget(
@@ -115,8 +122,14 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(loadCalls, 1);
+    expect(find.text('Notification details'), findsOneWidget);
+    expect(find.text('Please review.'), findsOneWidget);
+
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
+    expect(loadCalls, 2);
     expect(find.textContaining('network failure'), findsOneWidget);
-    expect(find.text('Unread alert'), findsOneWidget);
   });
 
   testWidgets('does not send a mark-read request for an already-read item',
@@ -152,8 +165,25 @@ void main() {
     expect(markReadCalls, 0);
   });
 
-  testWidgets('opens notification details inside the app without a web-page action',
+  test('notification links resolve to an in-app module path only', () {
+    expect(
+      notificationNativeTargetPath(
+        'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_waiver_gm.php?decision_id=17',
+      ),
+      'modules/hr/salary_advance_waiver_gm.php',
+    );
+    expect(notificationNativeTargetPath('https://example.invalid/related'), isNull);
+    expect(
+      notificationNativeTargetPath('https://example.invalid/modules/notifications/index.php'),
+      isNull,
+    );
+    expect(notificationNativeTargetPath('javascript:alert(1)'), isNull);
+  });
+
+  testWidgets('opens notification details and exposes its supported in-app destination',
       (tester) async {
+    const relatedLink = 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_waiver_gm.php?decision_id=17';
+    String? openedLink;
     await tester.pumpWidget(
       MaterialApp(
         home: NotificationPage(
@@ -166,7 +196,7 @@ void main() {
                 'body': 'محتوى الإشعار داخل التطبيق',
                 'created_at': '2026-10-25 12:00:00',
                 'is_read': true,
-                'link': 'https://example.invalid/related',
+                'link': relatedLink,
               },
             ],
             'total': 1,
@@ -175,6 +205,9 @@ void main() {
             'pages': 1,
           },
           markRead: (_) async {},
+          openLinkedPage: (link) async {
+            openedLink = link;
+          },
         ),
       ),
     );
@@ -185,8 +218,12 @@ void main() {
 
     expect(find.text('تفاصيل الإشعار'), findsOneWidget);
     expect(find.text('محتوى الإشعار داخل التطبيق'), findsOneWidget);
-    expect(find.text('فتح الصفحة المرتبطة'), findsNothing);
-    expect(find.textContaining('فتح صفحة الموقع المرتبطة غير متاح داخل التطبيق'), findsOneWidget);
+    expect(find.text('فتح الصفحة المرتبطة'), findsOneWidget);
+
+    await tester.tap(find.text('فتح الصفحة المرتبطة'));
+    await tester.pumpAndSettle();
+
+    expect(openedLink, relatedLink);
   });
 
 
