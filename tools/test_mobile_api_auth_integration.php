@@ -135,6 +135,9 @@ $testLeaveId = 0;
 $testLeaveEmployeeId = 0;
 $testLeaveAttendanceDate = '';
 $testSponsorId = 0;
+$testWinbackCampaignId = 0;
+$testWinbackReactivatorUserId = 0;
+$testWinbackNotificationMaxId = -1;
 $testFinaSourceId = 0;
 $testFinaCollectionId = 0;
 $testBackupName = '';
@@ -394,6 +397,14 @@ try {
     $deniedIssue=mobileApiRequest('/api/v1/accounting/vouchers.php','POST',$issuePayload,$token);
     mobileApiExpect($deniedIssue['status']===403&&($deniedIssue['json']['error']['code']??'')==='forbidden','General Manager cannot issue vouchers');
 
+    $gmWinbackRead = mobileApiRequest('/api/v1/administration/winback.php', 'GET', null, $token, 20);
+    mobileApiExpect(
+        $gmWinbackRead['status'] === 200
+        && is_array($gmWinbackRead['json']['data']['queue'] ?? null)
+        && is_array($gmWinbackRead['json']['data']['cases'] ?? null),
+        'General Manager can read the sponsor win-back workspace'
+    );
+
     $gmReconciliation = mobileApiRequest('/api/v1/accounting/gm_reconciliation.php', 'GET', null, $token, 20);
     mobileApiExpect(
         $gmReconciliation['status'] === 200
@@ -427,6 +438,12 @@ try {
     mobileApiExpect($accountantLogin['status'] === 200 && isset($accountantLogin['json']['data']['access_token']), 'accountant login succeeds for native sponsor search');
     $accountantToken = (string)$accountantLogin['json']['data']['access_token'];
     $testTokenHashes[] = hash('sha256', $accountantToken);
+    $accountantWinbackRead = mobileApiRequest('/api/v1/administration/winback.php', 'GET', null, $accountantToken, 20);
+    mobileApiExpect(
+        $accountantWinbackRead['status'] === 403
+        && ($accountantWinbackRead['json']['error']['code'] ?? '') === 'forbidden',
+        'Accountant is denied sponsor win-back by the existing web role guard'
+    );
     $accountantReconciliation = mobileApiRequest('/api/v1/accounting/gm_reconciliation.php', 'GET', null, $accountantToken, 20);
     mobileApiExpect(
         $accountantReconciliation['status'] === 403
@@ -1997,6 +2014,103 @@ try {
         'supervisor sponsor listing excludes a sponsor outside the letter-and-gender matrix'
     );
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+    $pdo->prepare("UPDATE sponsors SET status='inactive' WHERE id=?")->execute([$testSponsorId]);
+
+    $winbackList = mobileApiRequest('/api/v1/administration/winback.php', 'GET', null, $token, 20);
+    mobileApiExpect(
+        $winbackList['status'] === 200
+        && is_array($winbackList['json']['data']['reactivators'] ?? null)
+        && is_array($winbackList['json']['data']['queue'] ?? null)
+        && is_array($winbackList['json']['data']['uncovered_families'] ?? null)
+        && is_array($winbackList['json']['data']['cases'] ?? null),
+        'Administrator can load win-back queue, reactivators, case register, and uncovered-family reference'
+    );
+    $winbackQueueIds = array_map(
+        static fn(array $item): int => (int)($item['id'] ?? 0),
+        $winbackList['json']['data']['queue'] ?? []
+    );
+    mobileApiExpect(in_array($testSponsorId, $winbackQueueIds, true), 'Eligible inactive sponsor appears in win-back queue');
+
+    $winbackOpen = mobileApiRequest('/api/v1/administration/winback.php', 'POST', [
+        'action' => 'open_case',
+        'sponsor_id' => $testSponsorId,
+    ], $token, 20);
+    $testWinbackCampaignId = (int)($winbackOpen['json']['data']['campaign_id'] ?? 0);
+    mobileApiExpect($winbackOpen['status'] === 201 && $testWinbackCampaignId > 0, 'Administrator can open an eligible sponsor win-back case');
+
+    $duplicateWinbackOpen = mobileApiRequest('/api/v1/administration/winback.php', 'POST', [
+        'action' => 'open_case',
+        'sponsor_id' => $testSponsorId,
+    ], $token, 20);
+    mobileApiExpect($duplicateWinbackOpen['status'] === 409, 'Duplicate open win-back case is rejected');
+
+    $winbackContact = mobileApiRequest('/api/v1/administration/winback.php', 'POST', [
+        'action' => 'add_contact',
+        'campaign_id' => $testWinbackCampaignId,
+        'method' => 'phone',
+        'outcome' => 'reached',
+        'notes' => 'Disposable CI contact record',
+    ], $token, 20);
+    $winbackContactState = $pdo->prepare('SELECT status FROM winback_campaigns WHERE id=?');
+    $winbackContactState->execute([$testWinbackCampaignId]);
+    mobileApiExpect(
+        $winbackContact['status'] === 200
+        && ($winbackContact['json']['data']['status'] ?? '') === 'contacted'
+        && (string)$winbackContactState->fetchColumn() === 'contacted',
+        'Win-back contact is recorded and the open case moves to contacted'
+    );
+
+    $winbackDetail = mobileApiRequest('/api/v1/administration/winback.php?view_id=' . $testWinbackCampaignId, 'GET', null, $token, 20);
+    mobileApiExpect(
+        $winbackDetail['status'] === 200
+        && (int)($winbackDetail['json']['data']['detail']['id'] ?? 0) === $testWinbackCampaignId
+        && count($winbackDetail['json']['data']['contacts'] ?? []) === 1,
+        'Win-back case detail returns its sponsor and contact history'
+    );
+
+    $winbackDecline = mobileApiRequest('/api/v1/administration/winback.php', 'POST', [
+        'action' => 'mark_declined',
+        'campaign_id' => $testWinbackCampaignId,
+    ], $token, 20);
+    mobileApiExpect($winbackDecline['status'] === 200 && ($winbackDecline['json']['data']['status'] ?? '') === 'declined', 'Win-back case can be declined from an open follow-up');
+
+    $winbackReopen = mobileApiRequest('/api/v1/administration/winback.php', 'POST', [
+        'action' => 'reopen_case',
+        'campaign_id' => $testWinbackCampaignId,
+    ], $token, 20);
+    mobileApiExpect($winbackReopen['status'] === 200 && ($winbackReopen['json']['data']['status'] ?? '') === 'open', 'Declined win-back case can be reopened');
+
+    $winbackReactivators = $winbackList['json']['data']['reactivators'] ?? [];
+    if (!$winbackReactivators) throw new RuntimeException('Win-back integration requires an eligible active employee for reactivation attribution.');
+    $testWinbackReactivatorUserId = (int)($winbackReactivators[0]['user_id'] ?? 0);
+    $testWinbackNotificationMaxId = (int)$pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn();
+    $winbackReturned = mobileApiRequest('/api/v1/administration/winback.php', 'POST', [
+        'action' => 'mark_returned',
+        'campaign_id' => $testWinbackCampaignId,
+        'reactivated_by_user_id' => $testWinbackReactivatorUserId,
+    ], $token, 20);
+    $winbackState = $pdo->prepare('SELECT status, reactivated_by_user_id, reactivation_confirmed_by_user_id, reactivated_at FROM winback_campaigns WHERE id=?');
+    $winbackState->execute([$testWinbackCampaignId]);
+    $winbackStateRow = $winbackState->fetch(PDO::FETCH_ASSOC) ?: [];
+    $winbackSponsorState = $pdo->prepare('SELECT status FROM sponsors WHERE id=?');
+    $winbackSponsorState->execute([$testSponsorId]);
+    mobileApiExpect(
+        $winbackReturned['status'] === 200
+        && ($winbackReturned['json']['data']['status'] ?? '') === 'persuaded'
+        && ($winbackStateRow['status'] ?? '') === 'persuaded'
+        && (int)($winbackStateRow['reactivated_by_user_id'] ?? 0) === $testWinbackReactivatorUserId
+        && (int)($winbackStateRow['reactivation_confirmed_by_user_id'] ?? 0) === $userId
+        && !empty($winbackStateRow['reactivated_at'])
+        && (string)$winbackSponsorState->fetchColumn() === 'active',
+        'Win-back reactivation activates the sponsor and preserves actual reactivator/confirmer attribution'
+    );
+    $winbackDuplicateReturn = mobileApiRequest('/api/v1/administration/winback.php', 'POST', [
+        'action' => 'mark_returned',
+        'campaign_id' => $testWinbackCampaignId,
+        'reactivated_by_user_id' => $testWinbackReactivatorUserId,
+    ], $token, 20);
+    mobileApiExpect($winbackDuplicateReturn['status'] === 409, 'Repeated win-back reactivation is rejected');
+
     $r = mobileApiRequest('/api/v1/projects/index.php', 'GET', null, $token);
     $portfolioItems = $r['json']['data']['items'] ?? [];
     $fixture = null;
@@ -2599,6 +2713,17 @@ try {
     if ($testFinaSourceId > 0) {
         $pdo->prepare('DELETE FROM fina_sources WHERE id=?')->execute([$testFinaSourceId]);
     }
+    if ($testWinbackNotificationMaxId >= 0 && $testWinbackReactivatorUserId > 0) {
+        $pdo->prepare("DELETE FROM notifications WHERE id > ? AND recipient_user_id=? AND type='incentive' AND title='تم تسجيل نشاط مرتبط بحافز'")
+            ->execute([$testWinbackNotificationMaxId, $testWinbackReactivatorUserId]);
+    }
+    if ($testWinbackCampaignId > 0) {
+        $pdo->prepare("DELETE FROM audit_log WHERE entity_type='winback' AND entity_id=?")->execute([$testWinbackCampaignId]);
+        $pdo->prepare('DELETE FROM winback_contacts WHERE campaign_id=?')->execute([$testWinbackCampaignId]);
+        $pdo->prepare('DELETE FROM winback_campaigns WHERE id=?')->execute([$testWinbackCampaignId]);
+    }
+    $pdo->prepare("DELETE FROM audit_log WHERE entity_type='winback' AND user_id=? AND created_at>=?")
+        ->execute([$userId, $testStart]);
     if ($testSponsorId > 0) {
         $pdo->prepare('DELETE FROM sponsors WHERE id=?')->execute([$testSponsorId]);
     }

@@ -112,10 +112,11 @@ if ($method === 'GET') {
         if ((int)$viewId > 0) {
             $detail = dbFetchOne(
                 "SELECT wc.*, s.full_name AS sponsor_name, s.sponsor_code, s.phone AS sponsor_phone,
-                        s.status AS sponsor_status, u.full_name AS handler_name
+                        s.status AS sponsor_status, u.full_name AS handler_name, ru.full_name AS reactivated_by_name
                  FROM winback_campaigns wc
                  JOIN sponsors s ON s.id = wc.sponsor_id
                  LEFT JOIN users u ON u.id = wc.handled_by
+                 LEFT JOIN users ru ON ru.id = wc.reactivated_by_user_id
                  WHERE wc.id = ?",
                 [(int)$viewId]
             );
@@ -202,7 +203,7 @@ try {
 
         dbExecute('INSERT INTO winback_campaigns (sponsor_id, handled_by) VALUES (?, ?)', [(int)$sponsorId, $userId]);
         $campaignId = (int)dbLastInsertId();
-        ak_api_winback_audit($userId, 'OPEN', $campaignId, ['sponsor_id' => (int)$sponsorId]);
+        ak_api_winback_audit($userId, 'OPEN', (int)$sponsorId, []);
         ak_api_json(201, ['ok' => true, 'data' => ['campaign_id' => $campaignId, 'status' => 'open']]);
     }
 
