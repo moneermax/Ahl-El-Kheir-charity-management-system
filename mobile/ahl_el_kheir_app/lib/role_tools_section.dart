@@ -102,6 +102,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/sponsors/new_requests.php',
     'modules/sponsors/contacted_requests.php',
     'modules/accounting/disbursements.php',
+    'modules/accounting/gm_reconciliation.php',
     'modules/accounting/journal.php',
     'modules/accounting/vouchers.php',
     'modules/reports/financial.php',
@@ -143,6 +144,7 @@ class RoleToolsSection extends StatelessWidget {
         return [
           g('الإشراف والتوزيع', 'Supervision and assignment', [
             t('إدارة مجموعات الأيتام', 'Orphan groups', 'إدارة المجموعات ودورة حياتها', 'Manage orphan groups and their lifecycle', 'modules/deputy_gm/groups.php', Icons.groups_outlined),
+            t('مطابقة المدير العام', 'GM reconciliation', 'مراجعة المطابقة المالية المتاحة للإدارة', 'Review financial reconciliation available to management', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
             t('مركز التقارير', 'Report center', 'تقارير التشغيل المتاحة للدور', 'Operational reports available to this role', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة تعليق الكفالات', 'Manage sponsorship suspensions', 'تعليق أو رفع التعليق وفق الصلاحيات', 'Suspend or lift suspensions within your permissions', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),
@@ -153,6 +155,7 @@ class RoleToolsSection extends StatelessWidget {
         return [
           g('العمليات المالية', 'Financial operations', [
             t('الرصيد الافتتاحي', 'Opening balance', 'إدارة الرصيد الافتتاحي وسياسة الرسوم الإدارية', 'Manage opening balance and administrative-fee policy', 'modules/accounting/opening_balance.php', Icons.account_balance_outlined),
+            t('مطابقة المدير العام', 'GM reconciliation', 'مراجعة المطابقة المالية', 'Review financial reconciliation', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
             t('الحاضنات المعيّنات', 'Assigned nannies', 'متابعة الحاضنات المعيّنات والتحقق', 'Review assigned nannies and verification', 'modules/accounting/my_nannies.php', Icons.support_agent_outlined),
             if (role == 'financial_manager') t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات والصرف', 'Review monthly transfers and disbursements', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
             t('دليل الحسابات', 'Chart of accounts', 'الحسابات المحاسبية', 'Accounting accounts', 'modules/accounting/accounts.php', Icons.account_tree_outlined),
@@ -176,7 +179,7 @@ class RoleToolsSection extends StatelessWidget {
             if (role == 'accountant_staff') t('السندات', 'Vouchers', 'عرض سندات القبض والصرف', 'View receipt and payment vouchers', 'modules/accounting/vouchers.php', Icons.receipt_long_outlined),
             t('الحاضنات المعيّنات', 'Assigned nannies', 'متابعة الحاضنات المعيّنات والتحقق', 'Review assigned nannies and verification', 'modules/accounting/my_nannies.php', Icons.support_agent_outlined),
             if (role == 'accountant_staff') t('استمارات الأيتام', 'Orphan forms', 'عرض استمارات الأيتام وفق الصلاحيات', 'View orphan forms within your permissions', 'modules/families/orphan_forms_index.php', Icons.assignment_outlined),
-            if (role == 'accountant') t('مطابقة المدير العام', 'GM reconciliation', 'عرض تقرير المطابقة المالية', 'View the financial reconciliation report', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
+
             t('مركز التقارير', 'Report center', 'التقارير المتاحة للمحاسبة', 'Reports available to accounting staff', 'modules/reports/index.php', Icons.assessment_outlined),
           ]),
         ];
