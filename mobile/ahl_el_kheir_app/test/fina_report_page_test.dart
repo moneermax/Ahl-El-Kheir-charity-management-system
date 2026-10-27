@@ -94,7 +94,7 @@ void main() {
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(calls, 2);
-    expect(find.text('No data for this period.'), findsNWidgets(2));
+    expect(find.text('No data for this period.'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }
