@@ -301,7 +301,7 @@ class _SalaryAdvanceWaiverPageState extends State<SalaryAdvanceWaiverPage> {
             label: Text(t('تحديث السلف للشهر', 'Refresh advances for month')),
           )),
           DropdownButtonFormField<String>(
-            value: decisionType,
+            initialValue: decisionType,
             decoration: InputDecoration(labelText: t('نوع القرار', 'Decision type')),
             items: [
               DropdownMenuItem(value: 'blanket', child: Text(t('جماعي — جميع السلف القائمة', 'Blanket — all eligible advances'))),
@@ -312,7 +312,7 @@ class _SalaryAdvanceWaiverPageState extends State<SalaryAdvanceWaiverPage> {
           if (decisionType == 'individual') ...[
             const SizedBox(height: 12),
             DropdownButtonFormField<int>(
-              value: employeeId,
+              initialValue: employeeId,
               decoration: InputDecoration(labelText: t('الموظف', 'Employee')),
               items: employees.map((row) => DropdownMenuItem<int>(
                 value: number(row['id']),
@@ -323,7 +323,7 @@ class _SalaryAdvanceWaiverPageState extends State<SalaryAdvanceWaiverPage> {
           ],
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
-            value: refunds.any((row) => number(row['id']) == refundAccountId) ? refundAccountId : null,
+            initialValue: refunds.any((row) => number(row['id']) == refundAccountId) ? refundAccountId : null,
             decoration: InputDecoration(labelText: t('حساب رد الخصم', 'Refund source account')),
             items: refunds.map((row) => DropdownMenuItem<int>(
               value: number(row['id']),
@@ -333,7 +333,7 @@ class _SalaryAdvanceWaiverPageState extends State<SalaryAdvanceWaiverPage> {
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
-            value: expenses.any((row) => number(row['id']) == expenseAccountId) ? expenseAccountId : null,
+            initialValue: expenses.any((row) => number(row['id']) == expenseAccountId) ? expenseAccountId : null,
             decoration: InputDecoration(labelText: t('حساب مصروف الإعفاء', 'Waiver expense account')),
             items: expenses.map((row) => DropdownMenuItem<int>(
               value: number(row['id']),

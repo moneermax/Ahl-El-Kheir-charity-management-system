@@ -450,3 +450,8 @@ The native layer now reuses the existing waiver business service rather than rei
 - No migration, runtime DDL, new accounting rules, or changes to historical waiver logic are included.
 
 Status at this checkpoint: **implementation submitted for CI; not yet verified**. The existing waiver financial acceptance remains closed and must not be rerun without regression evidence. Multiple eligible advances for one employee and true two-process concurrent execution remain explicit evidence gaps. No local XAMPP or physical-device acceptance is claimed.
+
+
+## 2026-10-27 — Waiver page analyzer correction pending re-verification
+
+The first Flutter run for the new waiver page (#606) failed at Dart analysis with four deprecated `DropdownButtonFormField.value` diagnostics. These were corrected to `initialValue`; the replacement build/test run remains pending. The API-auth workflow #217 and Salary Advance Verification workflow #3530 both passed on the original feature commit; those results do not substitute for the pending Flutter tests/APK build.

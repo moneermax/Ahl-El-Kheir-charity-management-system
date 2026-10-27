@@ -422,3 +422,8 @@ This is an adjacent documentation/UI verification checkpoint only. It does not r
 The Flutter project now has a native-only adapter for the existing GM Salary Advance Waiver workflow. The new API endpoint `api/v1/hr/salary_advance_waiver.php` delegates preparation, GM review, and FM execution to the existing `hrSalaryAdvanceWaiverCreateDecision()`, `hrSalaryAdvanceWaiverGMReview()`, and `hrSalaryAdvanceWaiverExecute()` functions. The native screen does not duplicate the accounting/payroll calculations and preserves the same action split. No schema migration or production financial behavior was changed.
 
 This is a mobile implementation checkpoint only. CI verification is pending; no local XAMPP/API or physical-device acceptance is claimed. The previously closed financial acceptance gates remain closed. The same-employee/multiple-advance and true two-process concurrency evidence gaps remain explicitly unproven.
+
+
+## 2026-10-27 — Mobile CI recovery note
+
+The first Flutter run for the mobile adapter, #606, failed before widget tests/APK build because Dart analysis reported four deprecated `DropdownButtonFormField.value` properties. The screen now uses `initialValue`; the replacement Flutter verification is pending. PHP lint and the existing API-auth integration workflow passed on the original feature commit. These results do not prove native-screen acceptance or device connectivity.

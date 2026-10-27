@@ -1288,3 +1288,8 @@ Added a native-only Flutter page and authenticated API adapter for the existing 
 - Widget tests cover GM/FM action separation, approval/execution confirmation, and the safe behavior when the waiver migration is not present. The PHP verification workflow now includes the new endpoint and existing waiver service/pages in its lint list.
 
 **Verification pending:** the source changes are committed, but the resulting GitHub Actions runs have not yet been checked. Do not claim PHP lint, Flutter tests, APK build, API integration, local XAMPP acceptance, or physical-device acceptance until each applicable result is observed. The existing financial waiver logic remains at its previously closed acceptance boundary; do not rerun its closed financial harnesses. The two documented evidence gaps (same employee with multiple eligible advances and true two-process concurrency) remain unproven.
+
+
+## 2026-10-27 — Waiver screen analyzer correction after run #606
+
+Flutter run #606 failed before widget tests/APK build because the current Flutter stable analyzer reports four deprecated `DropdownButtonFormField.value` usages in the new waiver page (lines 304, 315, 326, 336). The source has been corrected to use `initialValue`, preserving the current form-field selection model. No API, role, or financial-service code changed in this correction. The replacement Flutter workflow has not yet run; do not claim it passed until its actual result is checked.

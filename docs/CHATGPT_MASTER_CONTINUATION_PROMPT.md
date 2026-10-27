@@ -2962,3 +2962,8 @@ Next mobile feature to audit: GM Salary Advance Waiver. Read `docs/HR_SALARY_ADV
 ## 2026-10-27 — GM Salary Advance Waiver mobile layer: verification boundary
 
 The next native gap is now implemented in source and awaits CI verification: authenticated API `api/v1/hr/salary_advance_waiver.php`, Flutter page `mobile/ahl_el_kheir_app/lib/salary_advance_waiver_page.dart`, and GM/FM native role-tool routing. The endpoint delegates all business/financial changes to the existing waiver service functions and adds no DDL or new financial semantics. Do not claim success until the resulting GitHub Actions runs are inspected. If a run fails, diagnose its exact failure before editing; ensure any failed/obsolete active run is no longer running before starting a replacement, and never overlap workflow runs. Do not rerun closed waiver financial tests. The existing multiple-advances-per-employee and true two-process concurrency gaps remain unproven.
+
+
+## 2026-10-27 — Waiver analyzer failure and recovery gate
+
+Flutter run #606 failed in `flutter analyze` only: four deprecated `DropdownButtonFormField.value` diagnostics in the new waiver page. Replace these with `initialValue` (now prepared in the recovery change), then verify the next Flutter workflow's analyzer, widget tests, APK build, provenance and artifact publication. The PHP Salary Advance Verification workflow #3530 and Mobile API Auth Integration workflow #217 passed; they do not prove the Flutter build. Before pushing the recovery commit, confirm no earlier workflow remains active. Do not rerun closed waiver financial harnesses.
