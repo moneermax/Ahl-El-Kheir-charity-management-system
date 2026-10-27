@@ -30,6 +30,14 @@ foreach ($roles as $role) {
     try {
         $metrics = ak_mobile_dashboard_metrics($role, $fixtureUserId);
         $assert(count($metrics) > 0, $role . ': no dashboard metrics returned.');
+        if ($role === 'general_manager') {
+            $pendingFamilies = array_values(array_filter(
+                $metrics,
+                static fn(array $metric): bool => $metric['key'] === 'pending_families'
+            ));
+            $assert(count($pendingFamilies) === 1, 'general_manager: pending_families metric is missing or duplicated.');
+            $assert(is_numeric($pendingFamilies[0]['value']), 'general_manager: pending_families metric value is not numeric.');
+        }
         foreach ($metrics as $metric) {
             $assert(isset($metric['key'], $metric['label_ar'], $metric['label_en']) && array_key_exists('value', $metric),
                 $role . ': metric response is missing a required field.');

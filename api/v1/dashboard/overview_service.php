@@ -42,6 +42,7 @@ if (!function_exists('ak_mobile_dashboard_metrics')) {
                     $metrics = [
                         $metric('active_sponsors','الكفلاء النشطون','Active sponsors',$row['active_sponsors']??0),
                         $metric('active_families','الأسر النشطة','Active families',$row['active_families']??0),
+                        $metric('pending_families','أسر بانتظار الإجراء','Families awaiting action',$row['pending_families']??0),
                         $metric('uncovered_families','أسر بلا كفالة نشطة','Families without active sponsorship',$row['uncovered_families']??0),
                         $metric('active_sponsorships','الكفالات النشطة','Active sponsorships',$row['active_sponsorships']??0),
                         $metric('paused_sponsorships','الكفالات المتوقفة','Paused sponsorships',$row['paused_sponsorships']??0),

@@ -467,3 +467,9 @@ Flutter run #607 completed with Dart analysis passing, but widget tests failed (
 The GM mobile dashboard now presents actionable attention cards for positive counts already exposed by the role dashboard API: uncovered families, paused sponsorships, open sponsor win-back cases, unassigned supervisor letters, and open sponsor requests. Each card routes to an existing native screen/report through the native-only dispatcher. No web handoff, new API endpoint, schema change, or financial behavior was added. The app's distinct violet/amber/pink theme is preserved.
 
 Known remaining parity gap: the web GM dashboard includes pending families, but the current mobile API response does not include its existing `pending_families` query value in the returned metric list. This first slice intentionally does not infer that count. Add and verify the metric in a separate sequential change before claiming complete attention-queue parity. CI and device acceptance are pending.
+
+## 2026-10-27 — GM pending-family API metric (backend stage)
+
+The existing General Manager SQL already counts `families.status='pending'`, matching `dashboard/gm_dashboard.php`; the gap was that `ak_mobile_dashboard_metrics()` did not include that selected value in its returned metric list. The API now exposes `pending_families` with the web dashboard's Arabic label and an English label. No query semantics, schema, permissions, or financial behavior changed.
+
+The mobile role-dashboard query harness now asserts that the General Manager metric is present exactly once and numeric. The Mobile API Auth Integration workflow runs this harness against its imported disposable MariaDB schema and lints the overview endpoint/service. Flutter attention-card wiring remains the next sequential step; full GM attention parity is not yet complete.

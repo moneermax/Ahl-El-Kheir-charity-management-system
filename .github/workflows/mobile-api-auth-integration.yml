@@ -22,6 +22,7 @@ on:
       - 'database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql'
       - 'database/migrations/2026-10-23_document_archive_catalogue.sql'
       - 'tools/test_mobile_api_auth_integration.php'
+      - 'tools/test_mobile_role_dashboard_queries.php'
       - 'tools/test_mobile_admin_users_action_service.php'
       - 'modules/hr/lib_employee_provisioning.php'
       - 'modules/hr/lib_payroll_management.php'
@@ -133,10 +134,15 @@ jobs:
           php -l api/v1/auth/complete_forced_password_change.php
           php -l api/v1/auth/password_recovery_request.php
           php -l api/v1/auth/login.php
+          php -l api/v1/dashboard/overview.php
+          php -l api/v1/dashboard/overview_service.php
           php -l modules/hr/lib_payroll_management.php
           php -l modules/hr/lib_payroll_accounting.php
           php -l modules/hr/payroll.php
           php -l tools/test_mobile_api_auth_integration.php
+
+      - name: Verify mobile role dashboard metrics against imported schema
+        run: php tools/test_mobile_role_dashboard_queries.php
 
       - name: Verify native user actions and rollback against disposable MariaDB
         run: php tools/test_mobile_admin_users_action_service.php

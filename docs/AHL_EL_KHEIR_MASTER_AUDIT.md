@@ -5536,3 +5536,7 @@ Flutter run #607 completed with Dart analysis passing, but widget tests failed (
 ### 2026-10-27 — Flutter GM attention queue (CI pending)
 
 The latest main checkpoint is `51a0a053135020bd339b0e4b61f816f01f748481`; APK workflow run #608 passed. The next mobile parity slice adds a native GM attention queue using only metrics already exposed by the authenticated dashboard API. Pending-family attention remains explicitly incomplete because the API does not yet return the existing `pending_families` query value. Preserve the distinct app theme, native-only navigation, and sequential workflow verification.
+
+## 2026-10-27 — GM pending-family API metric (backend stage)
+
+The mobile dashboard API now returns the existing `pending_families` count already selected by the General Manager overview query, using the web dashboard's `families.status='pending'` definition. The dedicated role-dashboard query harness asserts the metric is present exactly once and numeric, and the Mobile API Auth Integration workflow runs that harness against disposable MariaDB. The native Flutter attention card remains the next sequential step; full parity is pending until that step passes CI.
