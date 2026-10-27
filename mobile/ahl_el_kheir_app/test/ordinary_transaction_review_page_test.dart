@@ -64,6 +64,8 @@ void main() {
     expect(submittedId, 41);
     expect(submittedAction, 'return');
     expect(submittedReason, 'Attach a clearer receipt');
+    await tester.tap(find.textContaining('Review history'));
+    await tester.pumpAndSettle();
     expect(find.text('Returned'), findsOneWidget);
   });
 
