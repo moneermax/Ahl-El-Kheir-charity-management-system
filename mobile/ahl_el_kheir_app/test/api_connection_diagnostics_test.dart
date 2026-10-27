@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:ahl_el_kheir_app/main.dart';
 
@@ -36,6 +35,4 @@ void main() {
       'https://api.example.test/AhlElKheir/api/v1',
     );
   });
-
-
 }

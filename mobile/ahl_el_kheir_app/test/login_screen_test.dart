@@ -13,7 +13,7 @@ void main() {
     expect(normalizeApiBaseUrl('https://example.com/api/v1?redirect=bad'), isNull);
   });
 
-  testWidgets('shows the Arabic sign-in form', (tester) async {
+  testWidgets('shows the Arabic sign-in form without connection diagnostics', (tester) async {
     await tester.pumpWidget(
       MaterialApp(
         home: Directionality(
@@ -22,10 +22,7 @@ void main() {
             english: false,
             toggle: () {},
             submit: (_, __) async {},
-            apiBaseUrl: 'http://192.168.1.10:8081/AhlElKheir/api/v1',
             buildRevision: 'test-revision-123456',
-            onConfigureApi: () async {},
-            onTestApi: () async {},
             onForgotPassword: () async {},
           ),
         ),
@@ -35,11 +32,10 @@ void main() {
     expect(find.text('تسجيل الدخول'), findsOneWidget);
     expect(find.text('اسم المستخدم'), findsOneWidget);
     expect(find.text('Build: test-revisio'), findsOneWidget);
-    expect(find.text('العربية'), findsOneWidget);
+    expect(find.text('English'), findsOneWidget);
     expect(find.text('الخادم'), findsNothing);
     expect(find.text('اختبار الاتصال'), findsNothing);
     expect(find.text('http://192.168.1.10:8081/AhlElKheir/api/v1'), findsNothing);
     expect(tester.takeException(), isNull);
   });
 }
-
