@@ -1368,3 +1368,16 @@ Widget test updated to provide a payload link but verify there is no related-pag
 - Initial Flutter workflow #625 failed one create-dialog widget test: the dialog overflowed by 22 pixels and its disposed `TextEditingController` was still attached. The source was corrected in commit `1545496e0caaee0371de81373f30f63a45fb4f63` by removing the unsafe controller lifecycle and making the dialogs scrollable.
 - Verification: Mobile API auth integration workflow [40507040144](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40507040144) passed PHP lint, the rollback-only full-schema suspension service harness (including generic child/family creation, duplicate and nanny-scope guards), and API integration on source `adaef343c9fa23d53511ab62ba4f1a0b395f686c`. Flutter workflow [#626](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40508054070) passed Dart analysis, all Flutter tests, Android debug APK build, provenance and artifact publication for source `1545496e0caaee0371de81373f30f63a45fb4f63`. Artifact ID `12736527104`; archive SHA-256 `3a3dc777f1ec4ceff90812675d1266f25bff760296063cdcbf6ed3341403389d`; expires 2026-11-26.
 - These are CI/disposable-database results only. Local XAMPP/API acceptance and physical-device testing remain for the user. The debug APK still targets the local development API; do not expose XAMPP publicly. Release requires a verified HTTPS API host.
+
+
+
+## 2026-10-27 — Native assigned-nanny overview verified
+
+Implemented AssignedNanniesPage for modules/accounting/my_nannies.php. It supports month selection, active nanny summary, active family detail, bank/contact fields, verification status/notes, and monthly batch status. GET api/v1/accounting/assigned_nannies.php authorizes only the existing persisted roles admin, accountant, accountant_staff, and financial_manager; Accountant Staff sees only assigned active nannies and cannot read out-of-scope nanny detail. It uses the existing schema directly, with no migration or runtime DDL.
+
+- API integration run 40513189589: PASS for unauthenticated denial, admin summary/detail, and Accountant Staff scope.
+- Flutter APK run 40513730679: PASS for analysis, full widget tests, debug APK build, provenance, and artifact publication.
+- Artifact ID 12737979531; SHA-256 a2c819e4d0cd5afe8edd20b56b42ca33c12c56f78a24aefda151398d1b1fb7ca; expires 2026-11-26.
+- Code commits: 204e74d1af2e129a690ab32e4328b24f1f91951f, 2499189543b039f0a1bc8e4c36c3d92a6b7bd249, 77e4926a620b57d7f222b91b39811722f6e8f201.
+
+CI evidence only. Local XAMPP/API/database and physical-device acceptance remain pending. The debug artifact targets the local development API; do not expose XAMPP publicly. Release requires a verified HTTPS API host.
