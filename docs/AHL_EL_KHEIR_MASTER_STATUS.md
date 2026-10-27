@@ -5231,3 +5231,7 @@ APK workflow run #571 passed on commit `2422efc2c7d38e1d86f4bed1ca7b315a48888542
 ## 2026-10-27 — Native GM reconciliation
 
 The native GM reconciliation workflow is implemented and CI-verified. API integration run `40450633032` passed PHP syntax and disposable-MariaDB checks for allowed General Manager/Financial Manager reads, GET-only behavior (405 for non-GET), and Accountant denial (403). Flutter run `40450764757` passed analysis, 140 tests, Android debug APK build, provenance, and artifact publication for source `82fd2570793e794b99fe9bf55f878596107b124c`. Artifact ID `12710033148`, SHA-256 `87a816236f9648087c4bef0b3822947f7e2a98e53ccf4f4cb734df8ea936ff47`, expires 2026-11-26. No migration or runtime DDL was added. Local XAMPP/API and physical-device acceptance are still pending.
+
+## 2026-10-27 — Native sponsor win-back
+
+The native sponsor win-back workflow is implemented and CI-verified. API run `40452694704` passed PHP syntax and disposable-MariaDB tests for allowed/denied roles, eligibility, duplicate case prevention, contact logging, detail reads, decline/reopen, reactivation attribution, and duplicate-return protection. Flutter run `40452694443` passed analysis, 141 tests, Android debug APK build, provenance, and artifact publication. App source revision `d6cab6772b3e2683434a1bb927d62ec55c5be9c6`; artifact ID `12710904687`; SHA-256 `eaf1ecc57262b1a71329dbcdb85dfb23121d478912a81013b6d3225df3e71fd8`, expires 2026-11-26. No schema migration was added. Local XAMPP/API and physical-device acceptance remain pending.

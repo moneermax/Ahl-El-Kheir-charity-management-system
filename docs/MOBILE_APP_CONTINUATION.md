@@ -1252,3 +1252,13 @@ Flutter analysis, widget tests, Android debug APK build, and artifact publicatio
 - Flutter run `40450764757` passed analysis, 140 tests, Android debug APK build, build provenance, and artifact publication. Source revision `82fd2570793e794b99fe9bf55f878596107b124c`; artifact ID `12710033148`; SHA-256 `87a816236f9648087c4bef0b3822947f7e2a98e53ccf4f4cb734df8ea936ff47`.
 - No migration was added. Local XAMPP/API and physical-device acceptance remain pending.
 - Continue with the next audited role-tool gap only after inspecting its exact web authorization, source workflow, and schema dependencies.
+
+## 2026-10-27 — Native sponsor win-back completed
+
+- Added `api/v1/administration/winback.php` and `mobile/ahl_el_kheir_app/lib/sponsor_winback_page.dart`, including queue, case detail, contact logging, decline/reopen, reactivation, prior-family coverage, and available-family reference.
+- Preserved source behavior and reactivation attribution by reusing `wb_mark_returned()`; immediate incentive notice is attempted after the successful transition.
+- Native role visibility and server authorization match the existing page guard: admin, General Manager, Vice General Manager, administration. Accountant access is denied.
+- API run `40452694704` passed PHP syntax and full disposable-MariaDB integration for queue eligibility, duplicate-open rejection, contact logging, detail, decline/reopen, successful reactivation attribution, and duplicate-return rejection.
+- Flutter run `40452694443` passed analysis, 141 tests, Android debug APK build, provenance, and artifact publication. Source `d6cab6772b3e2683434a1bb927d62ec55c5be9c6`; artifact ID `12710904687`; SHA-256 `eaf1ecc57262b1a71329dbcdb85dfb23121d478912a81013b6d3225df3e71fd8`.
+- No migration was added. Local XAMPP/API and physical-device acceptance remain pending.
+- Next: inspect and implement the Incentive Policy native workflow from the current web implementation, without assuming policy or approval rules.

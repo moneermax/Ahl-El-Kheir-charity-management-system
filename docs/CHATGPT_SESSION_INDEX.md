@@ -3000,3 +3000,14 @@ Implemented the native GM reconciliation workflow in the existing Flutter app. S
 - Artifact: `ahl-el-kheir-flutter-android-debug-apk`, ID `12710033148`, SHA-256 `87a816236f9648087c4bef0b3822947f7e2a98e53ccf4f4cb734df8ea936ff47`, expires 2026-11-26.
 - No database migration or schema change was made. Local XAMPP/API and physical-device acceptance remain unverified; a successful CI build does not prove the phone can reach the configured LAN API.
 - Remaining native gaps from the prior role-tool audit are still open; do not label a role-tool IN APP without equivalent authorization and behavior tests.
+
+## 2026-10-27 — Native sponsor win-back implementation
+
+Implemented sponsor win-back in the existing Flutter app with authenticated API support. Sources: `api/v1/administration/winback.php`, `mobile/ahl_el_kheir_app/lib/sponsor_winback_page.dart`, and native routing/role-tool updates.
+
+- Preserves the web workflow: eligible lapsed-sponsor queue (90-day rule), open follow-up, contact history, decline/reopen transitions, successful reactivation with actual employee attribution, previous-family coverage reference, and available-family quick reference.
+- Server-side access follows the existing web guard: admin, General Manager, Vice General Manager, and administration. Accountant access is denied. Reactivation reuses `wb_mark_returned()`; the immediate incentive activity notice is attempted after the successful transition and notification failure is isolated.
+- API integration run [40452694704](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40452694704) passed PHP syntax and disposable-MariaDB integration: role allow/deny, queue eligibility, duplicate-open rejection, contact/status update, case detail, decline/reopen, successful reactivation attribution, and duplicate-return rejection.
+- Flutter run [40452694443](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40452694443) passed analysis, all 141 tests, Android debug APK build, provenance recording, and artifact publication for source revision `d6cab6772b3e2683434a1bb927d62ec55c5be9c6`.
+- Artifact: `ahl-el-kheir-flutter-android-debug-apk`, ID `12710904687`, SHA-256 `eaf1ecc57262b1a71329dbcdb85dfb23121d478912a81013b6d3225df3e71fd8`, expires 2026-11-26.
+- No database migration or runtime DDL was added. Local XAMPP/API and physical-device acceptance remain unverified.

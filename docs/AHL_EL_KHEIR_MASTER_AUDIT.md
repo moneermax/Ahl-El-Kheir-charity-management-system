@@ -5518,3 +5518,11 @@ Implemented a read-only authenticated endpoint at `api/v1/accounting/gm_reconcil
 Authorization is checked server-side using canonical role normalization and the existing report permission boundary: admin, General Manager, Vice General Manager, and Financial Manager. CI evidence: API integration run `40450633032` passed PHP syntax, General Manager/Financial Manager reads, GET-only enforcement, and Accountant denial. Flutter run `40450764757` passed analysis, 140 tests, APK build, and artifact publication. Source revision: `82fd2570793e794b99fe9bf55f878596107b124c`; artifact `12710033148`; SHA-256 `87a816236f9648087c4bef0b3822947f7e2a98e53ccf4f4cb734df8ea936ff47`.
 
 No schema migration was needed. No local XAMPP/API or physical-device acceptance is claimed. Remaining role-tool parity findings remain open and must be completed one at a time with exact workflow and permission evidence.
+
+## 2026-10-27 — Sponsor win-back audit evidence
+
+Native implementation now covers the existing `modules/administration/winback.php` workflow through `api/v1/administration/winback.php` and `mobile/ahl_el_kheir_app/lib/sponsor_winback_page.dart`. It reuses `wb_mark_returned()` for the atomic sponsor/campaign transition and preserves the actual reactivator, confirmer, and reactivation timestamp. No DDL is performed by the endpoint.
+
+CI run `40452694704` passed PHP syntax and disposable-MariaDB tests for role authorization, eligibility, duplicate-open protection, contact history, decline/reopen, successful reactivation attribution, and duplicate-return protection. Flutter run `40452694443` passed analysis, 141 tests, APK build, and artifact publication. Revision `d6cab6772b3e2683434a1bb927d62ec55c5be9c6`; artifact `12710904687`; SHA-256 `eaf1ecc57262b1a71329dbcdb85dfb23121d478912a81013b6d3225df3e71fd8`.
+
+No schema migration was required. Local XAMPP/API and physical-device acceptance are not claimed. Remaining native gaps still require source-first review and independent verification.

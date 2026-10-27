@@ -2936,3 +2936,15 @@ Verification:
 - Local XAMPP/API and physical-device acceptance remain unverified.
 
 Next native role-tool gap to inspect against the existing web source is Sponsor win-back; do not assume that a similar screen is workflow-equivalent.
+
+## 2026-10-27 — Native sponsor win-back
+
+Closed the sponsor win-back role-tool gap. The native screen supports eligible lapsed-sponsor queue, contact logging, decline/reopen, reactivation attribution, previous-family reference, and available-family reference. API authorization matches the existing web guard (admin, General Manager, Vice General Manager, administration); Accountant is denied.
+
+Verification:
+- API run `40452694704`: PHP syntax and disposable-MariaDB integration passed, including duplicate-open and duplicate-reactivation protections and the full contact/decline/reopen/reactivation path.
+- Flutter run `40452694443`: analysis passed, 141 tests passed, APK built and published.
+- Source revision: `d6cab6772b3e2683434a1bb927d62ec55c5be9c6`; artifact ID `12710904687`; SHA-256 `eaf1ecc57262b1a71329dbcdb85dfb23121d478912a81013b6d3225df3e71fd8`.
+- Local XAMPP/API and physical-device acceptance remain unverified.
+
+Next native role-tool gap to inspect against the existing web source is Incentive Policy; inspect its actual rules, permission matrix, and API/schema dependencies before changing it.
