@@ -34,7 +34,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('SAR-2026-00001'), findsOneWidget);
     expect(find.text('Test Employee'), findsOneWidget);
-    expect(find.text('Disbursed'), findsOneWidget);
+    expect(find.text('Disbursed'), findsWidgets);
     expect(find.text('2500.00 SDG'), findsOneWidget);
     expect(find.text('Policy management, request processing and rescheduling are not available in-app yet. This screen does not open external pages.'), findsOneWidget);
     expect(find.byType(OutlinedButton), findsNothing);
