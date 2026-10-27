@@ -426,3 +426,16 @@ The following role-tool paths are now native and have been verified against the 
 API/disposable-MariaDB integration passed in run `40452694704`, including queue eligibility, duplicate-open rejection, contact logging, case detail, decline/reopen, successful reactivation attribution, and duplicate-return rejection. Flutter analysis, 141 tests, Android debug APK build, and artifact publication passed in run `40452694443`. App source revision `d6cab6772b3e2683434a1bb927d62ec55c5be9c6`; artifact ID `12710904687`; SHA-256 `eaf1ecc57262b1a71329dbcdb85dfb23121d478912a81013b6d3225df3e71fd8`.
 
 No local XAMPP/API or physical-device result is claimed. Incentive Policy remains a separate open native workflow and must be implemented only after auditing its current versioning, approval, activation, and protected active R5 rules.
+
+
+## 2026-10-27 — Incentive Policy native route verified; GM waiver is next
+
+The earlier entry listing Incentive Policy as an unimplemented native gap is superseded for native-screen/CI status by the following evidence:
+- `api/v1/hr/incentive_policy.php` and `mobile/ahl_el_kheir_app/lib/incentive_policy_page.dart` now back the native workflow.
+- HR Manager, General Manager, and Financial Manager actions remain separated by the existing server-side permission boundary.
+- Flutter workflow [40455075748](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40455075748), run #605, passed analysis, widget tests, Android debug APK build, provenance, and artifact publication at revision `729030ff00536cb567946ef41a73ddb6ea49feaa`.
+- Latest main head `7e68238bb506f08779e4055b91d01cb9981f8d3a` also passed the Salary Advance Verification and Mobile API Auth Integration workflows.
+
+This is **native route/build verification only**. It does not close the broader employee-incentives module's previously documented real-browser acceptance gaps, and it is not permission to alter active R5 or historical incentive/accounting/payroll evidence. No local XAMPP or physical-device acceptance is claimed.
+
+Next audited native gap: **GM Salary Advance Waiver**. Implement only after mapping the existing FM preparation → GM approve/reject → FM execution flow, role guards, decision/item/schedule tables, journal behavior, notifications, and payroll interaction. The existing waiver implementation and its closed acceptance boundary must be reused; do not re-run closed financial harnesses or change business semantics merely to support the mobile UI.
