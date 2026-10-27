@@ -549,3 +549,10 @@ The native ordinary financial-transaction review screen now supports in-app rece
 
 ## 2026-10-27 — Native payroll portal hub verified
 The salary/payroll portal is now a native in-app hub for the roles allowed by `modules/hr/salary_portal.php`. It links to already-native waiver, payroll, and incentive-policy screens where the destination's own role guard allows access. Salary advances remains visibly NOT READY rather than opening a website; the admin incentive-policy card is disabled because its destination guard currently rejects admin. Workflow #637 / run `40532657459` passed analysis, all Flutter tests, debug APK build, provenance and artifact publication. Artifact `12747371626`, SHA-256 `460cef9f4a5ba3214c8a2aa53b45eb3e90ff9e738affcdb1ed2caa1b0040df43`, expires 2026-11-26. Next parity slice: inspect and implement the salary-advance dashboard only after confirming its existing authorization and business operations.
+
+
+## 2026-10-27 — Native salary-advance dashboard verified in CI
+
+The Salary Portal's salary-advance dashboard is now native and read-only. It shows status counts and processed-request history, refresh/retry, and does not open external links or perform financial actions. The GET API preserves the existing web guard (`financial_manager`, `admin`, `fm`) and returns counts/history from the existing query/helper. Disposable MariaDB integration verified data parity, unauthenticated denial, Financial Manager access and nanny denial. No migration or financial mutation was added.
+
+API integration run `40535893510` passed. Flutter run `40537946711` passed analysis, all tests, debug APK build, provenance and publication. Artifact `12748619953`; SHA-256 `1b1c4713863790bb8fa6dc043318fc4c25a5d6f34bcc98f5ed5fff8a4ae220cd`; expires 2026-11-26. Local API/device acceptance remains open. Salary-advance policy, request processing and rescheduling remain separate NOT READY workflows.

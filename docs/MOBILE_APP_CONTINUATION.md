@@ -1399,3 +1399,15 @@ The native ordinary FM transaction review page now previews authorized receipt b
 
 ## 2026-10-27 — Native salary portal hub verified
 Added `SalaryPortalPage` with role-aware cards for `modules/hr/salary_portal.php`, native route wiring, and role-tool coverage. Roles match the existing portal guard. Native destinations open in-app; the salary-advance dashboard is disabled until its own native screen exists. Admin incentive-policy access remains disabled because the destination's current guard rejects admin. Workflow #637 / run `40532657459` passed Dart analysis, all tests, Android debug APK build, provenance and publication. Artifact `12747371626`; SHA-256 `460cef9f4a5ba3214c8a2aa53b45eb3e90ff9e738affcdb1ed2caa1b0040df43`; expires 2026-11-26. Next inspect `modules/hr/salary_advance_dashboard.php` and its underlying helpers before selecting the native scope.
+
+
+## 2026-10-27 — Native salary-advance dashboard verified
+
+Implemented `SalaryAdvanceDashboardPage` for the existing salary-advance dashboard route. The screen is read-only: four status metrics, processed-request history, refresh and retry, and no external links. API `api/v1/hr/salary_advance_dashboard.php` is GET-only and matches the web guard exactly: `financial_manager`, `admin`, and `fm`. It uses the existing request table and `hrSalaryAdvanceAccountingHistory()`; it does not create/alter schema or mutate finance records.
+
+- API integration run `40535893510`: PASS for unauthenticated denial, summary/history comparison against disposable MariaDB, Financial Manager access, and nanny denial.
+- Flutter run `40537946711`: PASS for Dart analysis, full Flutter tests, Android debug APK build, provenance and artifact publication.
+- Feature commits: API `d3fe5ab1a7bfdd1945aa88c6c053cdf14aa3ff01`; Flutter `3a3a02df609dc9fbd1a1e881ff15504283a2cdb6`; final test correction `e75174f6e776065440768705f7c9277872d5c0c5`.
+- Artifact ID `12748619953`; SHA-256 `1b1c4713863790bb8fa6dc043318fc4c25a5d6f34bcc98f5ed5fff8a4ae220cd`; expires 2026-11-26.
+
+CI evidence only. Local XAMPP/API and physical-device acceptance remain for the user. Debug artifact uses the local development API; never expose XAMPP publicly. Release requires a verified HTTPS API host. Next: inspect one remaining NOT READY role tool from current source before implementation.
