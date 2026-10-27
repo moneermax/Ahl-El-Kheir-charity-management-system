@@ -121,6 +121,8 @@ jobs:
           php -l api/v1/accounting/gm_reconciliation.php
           php -l api/v1/administration/winback.php
           php -l api/v1/deputy_gm/groups.php
+          php -l api/v1/suspensions/index.php
+          php -l api/v1/suspensions/case_service.php
           php -l api/v1/fina/report.php
           php -l api/v1/search/sponsors.php
           php -l api/v1/search/documents.php
@@ -145,6 +147,9 @@ jobs:
 
       - name: Verify mobile role dashboard metrics against imported schema
         run: php tools/test_mobile_role_dashboard_queries.php
+
+      - name: Verify native suspension create/lift service and rollback against disposable MariaDB
+        run: php tools/test_mobile_api_suspension_service.php
 
       - name: Verify native user actions and rollback against disposable MariaDB
         run: php tools/test_mobile_admin_users_action_service.php

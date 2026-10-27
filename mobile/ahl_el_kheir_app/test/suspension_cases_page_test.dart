@@ -29,6 +29,8 @@ void main() {
           'items': [sampleCase(lifted ? 'lifted' : 'active')],
           'can_lift': true,
         },
+        loadOptions: (_) async => {'options': [], 'can_create': true},
+        createCase: (_) async => {'case_id': 18},
         liftCase: (id) async {
           expect(id, 17);
           liftCalls++;
@@ -60,6 +62,8 @@ void main() {
         english: false,
         canLift: false,
         loadCases: () async => {'items': [sampleCase('active')], 'can_lift': false},
+        loadOptions: (_) async => {'options': [], 'can_create': true},
+        createCase: (_) async => fail('Read-only role must not create a suspension'),
         liftCase: (_) async => fail('Read-only role must not call lift'),
       ),
     ));
@@ -69,4 +73,43 @@ void main() {
     expect(find.text('رفع التعليق'), findsNothing);
     expect(find.text('بلوغ السن القانوني'), findsOneWidget);
   });
+
+  testWidgets('authorized role searches and creates a suspension in-app', (tester) async {
+    Map<String, dynamic>? submitted;
+    var created = false;
+    var optionQuery = '';
+    await tester.pumpWidget(MaterialApp(home: SuspensionCasesPage(
+      english: true, canLift: false,
+      loadCases: () async => {'items': created ? [sampleCase('active')] : <Map<String, dynamic>>[], 'can_lift': false, 'can_create': true},
+      loadOptions: (query) async {
+        optionQuery = query;
+        return {'options': [{'entity_type': 'child', 'entity_id': 9, 'entity_name': 'Ahmed Mohamed', 'family_code': 'FAM-009', 'mother_name': 'Mona'}], 'can_create': true};
+      },
+      createCase: (values) async { submitted = Map<String, dynamic>.from(values); created = true; return {'case_id': 18}; },
+      liftCase: (_) async => fail('This test does not lift cases'),
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('New suspension'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const ValueKey('suspension-search')), 'Ahmed');
+    await tester.tap(find.text('Search'));
+    await tester.pumpAndSettle();
+    expect(optionQuery, 'Ahmed');
+    await tester.tap(find.byKey(const ValueKey('suspension-option-child-9')));
+    await tester.pumpAndSettle();
+    expect(find.text('Suspension details'), findsOneWidget);
+    await tester.enterText(find.byKey(const ValueKey('suspension-notes')), 'Verified by supervisor');
+    await tester.tap(find.text('Continue'));
+    await tester.pumpAndSettle();
+    expect(find.text('Confirm suspension?'), findsOneWidget);
+    await tester.tap(find.text('Suspend'));
+    await tester.pumpAndSettle();
+    expect(submitted, isNotNull);
+    expect(submitted!['entity_type'], 'child');
+    expect(submitted!['entity_id'], 9);
+    expect(submitted!['reason'], 'other');
+    expect(submitted!['notes'], 'Verified by supervisor');
+    expect(tester.takeException(), isNull);
+  });
+
 }

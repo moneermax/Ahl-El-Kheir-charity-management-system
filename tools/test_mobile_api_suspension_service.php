@@ -22,7 +22,7 @@ $nanny = dbFetchOne(
 );
 $candidate = dbFetchOne(
     "SELECT fc.id AS child_id, fc.family_id, fc.birth_date, fc.is_active,
-            fc.disqualified_at, fc.disqualification_reason, f.nanny_id
+            fc.disqualified_at, fc.disqualification_reason, f.nanny_id, f.family_code
      FROM family_children fc
      JOIN families f ON f.id = fc.family_id
      JOIN sponsorship_children sc ON sc.family_child_id = fc.id
@@ -164,6 +164,38 @@ try {
     )['c'] ?? 0);
     $assert($activeAfterLift === $activeBefore, 'Linked sponsorships were not fully restored by lifting.');
 
+
+    // General-purpose suspension creation follows the web workflow for reasons other than age-out.
+    $genericChild = ak_api_create_suspension_case($actorId, 'admin', 'child', $childId, 'false_info', 'CI generic suspension');
+    $genericChildId = (int)$genericChild['case_id'];
+    $assert($genericChildId > 0 && (int)$genericChild['sponsorships_paused'] === $activeBefore, 'Generic child suspension did not pause all linked active sponsorships.');
+    $genericCase = dbFetchOne('SELECT reason, status, notes FROM suspension_cases WHERE id = ?', [$genericChildId]);
+    $assert($genericCase !== null && $genericCase['reason'] === 'false_info' && $genericCase['status'] === 'active', 'Generic child suspension fields were not preserved.');
+    $assert($genericCase !== null && $genericCase['notes'] === 'CI generic suspension', 'Generic child suspension notes were not saved.');
+    $genericDuplicateRejected = false;
+    try { ak_api_create_suspension_case($actorId, 'admin', 'child', $childId, 'other', ''); }
+    catch (DomainException $e) { $genericDuplicateRejected = true; }
+    $assert($genericDuplicateRejected, 'Generic creation did not reject a duplicate active case.');
+    $genericWrongScopeRejected = false;
+    try { ak_api_create_suspension_case($wrongNannyId, 'nanny', 'child', $childId, 'other', ''); }
+    catch (AkSuspensionCreateForbidden $e) { $genericWrongScopeRejected = true; }
+    $assert($genericWrongScopeRejected, 'Generic creation did not reject a nanny outside the family assignment.');
+    $genericNannyOptions = ak_api_suspension_options($nannyId, 'nanny', (string)$candidate['family_code']);
+    foreach ($genericNannyOptions['options'] as $option) $assert((int)$option['family_id'] === $familyId, 'Nanny search returned a family outside the assigned family scope.');
+    $liftGenericChild = ak_api_lift_suspension_case($actorId, 'admin', $genericChildId);
+    $assert((int)$liftGenericChild['sponsorships_reactivated'] === $activeBefore, 'Generic child case could not be lifted cleanly inside the rollback fixture.');
+    $familyActiveBefore = (int)(dbFetchOne("SELECT COUNT(*) AS c FROM sponsorships WHERE family_id = ? AND status = 'active'", [$familyId])['c'] ?? 0);
+    $assert($familyActiveBefore > 0, 'The family fixture must have active sponsorships before family suspension.');
+    $genericFamily = ak_api_create_suspension_case($actorId, 'general_manager', 'family', $familyId, 'other_support', 'CI family suspension');
+    $genericFamilyId = (int)$genericFamily['case_id'];
+    $assert($genericFamilyId > 0 && (int)$genericFamily['sponsorships_paused'] === $familyActiveBefore, 'Family suspension did not pause every active sponsorship.');
+    $pausedFamily = dbFetchOne('SELECT status FROM families WHERE id = ?', [$familyId]);
+    $assert($pausedFamily !== null && $pausedFamily['status'] === 'paused', 'Family suspension did not pause the family record.');
+    $familyDuplicateRejected = false;
+    try { ak_api_create_suspension_case($actorId, 'admin', 'family', $familyId, 'other', ''); }
+    catch (DomainException $e) { $familyDuplicateRejected = true; }
+    $assert($familyDuplicateRejected, 'Family suspension did not reject a duplicate active case.');
+
     $pdo->rollBack();
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) {
@@ -195,4 +227,4 @@ $assert($restoredFamily !== null && (int)($restoredFamily['nanny_id'] ?? 0) === 
 $assert($restoredActive === $activeBefore, 'Rollback did not restore linked sponsorship statuses.');
 $assert($remainingCase === null, 'Rollback left an active suspension case behind.');
 
-echo 'PASS | mobile legal-age suspension service | suspend/lift, linked sponsorship pause/resume, duplicate guard, role/scope guards, rollback' . PHP_EOL;
+echo 'PASS | mobile suspension service | legal-age and general family/child suspend/lift, duplicate guard, role/scope guards, rollback' . PHP_EOL;

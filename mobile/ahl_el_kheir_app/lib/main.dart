@@ -2155,6 +2155,19 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     return call('POST', 'suspensions/lift.php', token: token, body: {'case_id': caseId});
   }
 
+  Future<Map<String, dynamic>> loadSuspensionOptions(String query) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final encoded = Uri.encodeQueryComponent(query);
+    return call('GET', 'suspensions/index.php?options=1&query=$encoded', token: token);
+  }
+
+  Future<Map<String, dynamic>> createSuspensionCase(Map<String, dynamic> values) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'suspensions/index.php', token: token, body: values);
+  }
+
   void openSuspensionCases() {
     final role = user?['role_code']?.toString() ?? '';
     final canLift = ['admin', 'sudo', 'super_admin', 'vice_general_manager', 'vgm'].contains(role);
@@ -2164,6 +2177,8 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
         canLift: canLift,
         loadCases: loadSuspensionCases,
         liftCase: liftSuspensionCase,
+        loadOptions: loadSuspensionOptions,
+        createCase: createSuspensionCase,
       ),
     ));
   }
