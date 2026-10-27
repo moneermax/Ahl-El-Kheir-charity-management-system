@@ -1293,3 +1293,8 @@ Added a native-only Flutter page and authenticated API adapter for the existing 
 ## 2026-10-27 — Waiver screen analyzer correction after run #606
 
 Flutter run #606 failed before widget tests/APK build because the current Flutter stable analyzer reports four deprecated `DropdownButtonFormField.value` usages in the new waiver page (lines 304, 315, 326, 336). The source has been corrected to use `initialValue`, preserving the current form-field selection model. No API, role, or financial-service code changed in this correction. The replacement Flutter workflow has not yet run; do not claim it passed until its actual result is checked.
+
+
+## 2026-10-27 — Waiver widget-test failure diagnosis
+
+Flutter run #607 completed with Dart analysis passing, but widget tests failed (148 passed, 2 failed), so APK build/provenance/publication were skipped. The exact failures are in `salary_advance_waiver_page_test.dart`: the GM test tapped the approval action while its card control was outside the test viewport, and the FM test looked for the execution action before scrolling the long preparation form/decision list into view. Source inspection shows the production page places decision cards after the introductory panel and, for FM, the preparation form; these are `ListView` children and later controls may not yet be built by the lazy viewport. The narrow correction is to use `scrollUntilVisible` for the actual GM approval and FM execution controls before tapping/asserting them. No production UI, API, or financial service logic is changed. Await the next sequential Flutter run before claiming test/build success; do not overlap runs or rerun closed financial waiver harnesses.

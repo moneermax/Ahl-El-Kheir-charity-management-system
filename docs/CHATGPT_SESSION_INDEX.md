@@ -3011,3 +3011,8 @@ Implemented sponsor win-back in the existing Flutter app with authenticated API 
 - Flutter run [40452694443](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40452694443) passed analysis, all 141 tests, Android debug APK build, provenance recording, and artifact publication for source revision `d6cab6772b3e2683434a1bb927d62ec55c5be9c6`.
 - Artifact: `ahl-el-kheir-flutter-android-debug-apk`, ID `12710904687`, SHA-256 `eaf1ecc57262b1a71329dbcdb85dfb23121d478912a81013b6d3225df3e71fd8`, expires 2026-11-26.
 - No database migration or runtime DDL was added. Local XAMPP/API and physical-device acceptance remain unverified.
+
+
+## 2026-10-27 — Waiver widget-test failure diagnosis
+
+Flutter run #607 completed with Dart analysis passing, but widget tests failed (148 passed, 2 failed), so APK build/provenance/publication were skipped. The exact failures are in `salary_advance_waiver_page_test.dart`: the GM test tapped the approval action while its card control was outside the test viewport, and the FM test looked for the execution action before scrolling the long preparation form/decision list into view. Source inspection shows the production page places decision cards after the introductory panel and, for FM, the preparation form; these are `ListView` children and later controls may not yet be built by the lazy viewport. The narrow correction is to use `scrollUntilVisible` for the actual GM approval and FM execution controls before tapping/asserting them. No production UI, API, or financial service logic is changed. Await the next sequential Flutter run before claiming test/build success; do not overlap runs or rerun closed financial waiver harnesses.

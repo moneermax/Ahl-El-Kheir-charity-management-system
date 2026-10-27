@@ -65,7 +65,13 @@ void main() {
     expect(find.text('Prepare a new waiver decision'), findsNothing);
     expect(find.text('Execute financial decision'), findsNothing);
 
-    await tester.tap(find.text('Approve'));
+    await tester.scrollUntilVisible(
+      find.widgetWithText(FilledButton, 'Approve').last,
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(FilledButton, 'Approve').first);
     await tester.pumpAndSettle();
     expect(find.text('Approve waiver decision?'), findsOneWidget);
     await tester.tap(find.widgetWithText(FilledButton, 'Approve').last);
@@ -88,8 +94,14 @@ void main() {
     );
 
     expect(find.text('Prepare a new waiver decision'), findsOneWidget);
-    expect(find.text('Execute financial decision'), findsOneWidget);
     expect(find.text('Approve'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Execute financial decision'),
+      250,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Execute financial decision'), findsOneWidget);
 
     await tester.tap(find.text('Execute financial decision'));
     await tester.pumpAndSettle();
