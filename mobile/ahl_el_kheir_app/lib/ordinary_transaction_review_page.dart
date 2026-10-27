@@ -1,4 +1,7 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:pdfrx/pdfrx.dart';
 
 class OrdinaryTransactionReviewPage extends StatefulWidget {
   const OrdinaryTransactionReviewPage({
@@ -6,11 +9,13 @@ class OrdinaryTransactionReviewPage extends StatefulWidget {
     required this.english,
     required this.loadQueue,
     required this.submitAction,
+    required this.loadReceipt,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function() loadQueue;
   final Future<void> Function(int transactionId, String action, String returnReason) submitAction;
+  final Future<Map<String, dynamic>> Function(int transactionId, String kind) loadReceipt;
 
   @override
   State<OrdinaryTransactionReviewPage> createState() => _OrdinaryTransactionReviewPageState();
@@ -22,6 +27,7 @@ class _OrdinaryTransactionReviewPageState extends State<OrdinaryTransactionRevie
   List<Map<String, dynamic>> pending = [];
   List<Map<String, dynamic>> history = [];
   final Set<int> submitting = {};
+  final Set<String> openingReceipts = {};
   final Map<int, TextEditingController> returnReasons = {};
 
   String t(String ar, String en) => widget.english ? en : ar;
@@ -145,6 +151,35 @@ class _OrdinaryTransactionReviewPageState extends State<OrdinaryTransactionRevie
         ),
       );
 
+  Future<void> openReceipt(Map<String, dynamic> item, String kind) async {
+    final id = int.tryParse(item['id']?.toString() ?? '') ?? 0;
+    final key = '$id:$kind';
+    if (id < 1 || openingReceipts.contains(key)) return;
+    setState(() => openingReceipts.add(key));
+    try {
+      final result = await widget.loadReceipt(id, kind);
+      if (!mounted) return;
+      final rawBytes = result['bytes'];
+      final bytes = rawBytes is Uint8List
+          ? rawBytes
+          : Uint8List.fromList(List<int>.from(rawBytes as List));
+      final mime = (result['mime']?.toString() ?? '').toLowerCase();
+      final filename = result['filename']?.toString() ?? 'transaction-receipt';
+      await Navigator.of(context).push(MaterialPageRoute<void>(
+        builder: (_) => OrdinaryTransactionReceiptViewerPage(
+          english: widget.english,
+          bytes: bytes,
+          mime: mime,
+          filename: filename,
+        ),
+      ));
+    } catch (e) {
+      if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString())));
+    } finally {
+      if (mounted) setState(() => openingReceipts.remove(key));
+    }
+  }
+
   Widget pendingCard(Map<String, dynamic> item) {
     final id = int.tryParse(item['id']?.toString() ?? '') ?? 0;
     final busy = submitting.contains(id);
@@ -187,6 +222,27 @@ class _OrdinaryTransactionReviewPageState extends State<OrdinaryTransactionRevie
                 label: Text(receipt ? t('يوجد إيصال مرفق', 'Receipt attached') : t('لا يوجد إيصال', 'No receipt attached')),
               ),
             ),
+            if (receipt)
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  if (item['has_receipt'] == true)
+                    OutlinedButton.icon(
+                      onPressed: openingReceipts.contains('$id:own') ? null : () => openReceipt(item, 'own'),
+                      icon: const Icon(Icons.visibility_outlined),
+                      label: Text(t('عرض الإيصال', 'View receipt')),
+                    ),
+                  if (item['has_unified_receipt'] == true)
+                    OutlinedButton.icon(
+                      onPressed: openingReceipts.contains('$id:unified') ? null : () => openReceipt(item, 'unified'),
+                      icon: const Icon(Icons.receipt_long_outlined),
+                      label: Text(t('عرض الإيصال الموحد', 'View unified receipt')),
+                    ),
+                  if (openingReceipts.any((key) => key.startsWith('$id:')))
+                    const SizedBox(width: 22, height: 22, child: CircularProgressIndicator(strokeWidth: 2)),
+                ],
+              ),
             TextField(
               key: ValueKey('ordinary-return-reason-$id'),
               controller: reasonController(id),
@@ -294,4 +350,61 @@ class _OrdinaryTransactionReviewPageState extends State<OrdinaryTransactionRevie
           ]),
         ),
       );
+
+
+class OrdinaryTransactionReceiptViewerPage extends StatelessWidget {
+  const OrdinaryTransactionReceiptViewerPage({
+    super.key,
+    required this.english,
+    required this.bytes,
+    required this.mime,
+    required this.filename,
+  });
+
+  final bool english;
+  final Uint8List bytes;
+  final String mime;
+  final String filename;
+
+  @override
+  Widget build(BuildContext context) {
+    final title = english ? 'Transaction receipt' : 'إيصال المعاملة';
+    if (mime == 'application/pdf') {
+      return Scaffold(
+        appBar: AppBar(title: Text(title), subtitle: null),
+        body: PdfViewer.data(bytes, sourceName: filename),
+      );
+    }
+    if (mime == 'image/jpeg' || mime == 'image/png') {
+      return Scaffold(
+        appBar: AppBar(title: Text(title)),
+        body: Center(
+          child: InteractiveViewer(
+            minScale: 0.5,
+            maxScale: 5,
+            child: Image.memory(
+              bytes,
+              fit: BoxFit.contain,
+              errorBuilder: (_, __, ___) => Center(
+                child: Text(english ? 'This image receipt could not be displayed.' : 'تعذر عرض صورة الإيصال.'),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+    return Scaffold(
+      appBar: AppBar(title: Text(title)),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Text(english
+              ? 'This receipt format cannot be previewed inside the app.'
+              : 'لا يمكن معاينة صيغة هذا الإيصال داخل التطبيق.'),
+        ),
+      ),
+    );
+  }
+}
+
 }

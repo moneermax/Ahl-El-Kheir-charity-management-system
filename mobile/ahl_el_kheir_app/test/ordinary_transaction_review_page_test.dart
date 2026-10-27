@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
 import 'package:ahl_el_kheir_app/ordinary_transaction_review_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -36,6 +39,11 @@ void main() {
               ? {'pending': [sampleTransaction('pending_fm_review')], 'history': []}
               : {'pending': [], 'history': [sampleTransaction('returned')]};
         },
+        loadReceipt: (id, kind) async => {
+          'bytes': Uint8List.fromList(base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC')),
+          'mime': 'image/png',
+          'filename': 'receipt.png',
+        },
         submitAction: (id, action, reason) async {
           submittedId = id;
           submittedAction = action;
@@ -48,6 +56,13 @@ void main() {
     expect(find.text('TXN-041'), findsOneWidget);
     expect(find.text('Approve and post'), findsOneWidget);
     expect(find.text('Return for correction'), findsOneWidget);
+
+    await tester.tap(find.text('View receipt'));
+    await tester.pumpAndSettle();
+    expect(find.text('Transaction receipt'), findsOneWidget);
+    expect(find.byType(Image), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
 
     await tester.tap(find.text('Return for correction'));
     await tester.pumpAndSettle();
@@ -81,6 +96,11 @@ void main() {
           return loadCount == 1
               ? {'pending': [sampleTransaction('pending_fm_review')], 'history': []}
               : {'pending': [], 'history': [sampleTransaction('posted')]};
+        },
+        loadReceipt: (id, kind) async => {
+          'bytes': Uint8List.fromList(base64Decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAIAAACQd1PeAAAADUlEQVR4nGP4z8AAAAMBAQDJ/pLvAAAAAElFTkSuQmCC')),
+          'mime': 'image/png',
+          'filename': 'receipt.png',
         },
         submitAction: (id, action, reason) async {
           submittedId = id;
