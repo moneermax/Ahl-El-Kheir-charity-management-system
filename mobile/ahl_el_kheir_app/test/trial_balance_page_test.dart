@@ -46,10 +46,20 @@ void main() {
     expect(find.text('Total debit'), findsOneWidget);
     expect(find.text('Total credit'), findsOneWidget);
     expect(find.text('Balanced'), findsOneWidget);
+    final listScrollable = find.descendant(
+      of: find.byType(ListView).first,
+      matching: find.byType(Scrollable),
+    ).first;
+    await tester.scrollUntilVisible(find.text('1100'), 300, scrollable: listScrollable);
     expect(find.text('1100'), findsOneWidget);
     expect(find.text('Cash'), findsOneWidget);
     expect(find.text('1,000.00'), findsNothing);
     expect(find.text('1000.00'), findsWidgets);
+    await tester.scrollUntilVisible(
+      find.textContaining('Journal entries: 2'),
+      300,
+      scrollable: listScrollable,
+    );
     expect(find.textContaining('Journal entries: 2'), findsOneWidget);
 
     await tester.tap(find.text('Apply filters'));
@@ -85,6 +95,15 @@ void main() {
     await tester.tap(find.text('إعادة المحاولة'));
     await tester.pumpAndSettle();
     expect(calls, 2);
+    final listScrollable = find.descendant(
+      of: find.byType(ListView).first,
+      matching: find.byType(Scrollable),
+    ).first;
+    await tester.scrollUntilVisible(
+      find.text('لا توجد حركات مُرحّلة ضمن الفترة المحددة.'),
+      300,
+      scrollable: listScrollable,
+    );
     expect(find.text('لا توجد حركات مُرحّلة ضمن الفترة المحددة.'), findsOneWidget);
   });
 }
