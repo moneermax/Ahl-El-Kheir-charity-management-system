@@ -226,7 +226,7 @@ class _SponsorWinbackPageState extends State<SponsorWinbackPage> {
         Text(t('تسجيل محاولة تواصل', 'Record a contact attempt'), style: const TextStyle(fontWeight: FontWeight.w800)),
         const SizedBox(height: 12),
         DropdownButtonFormField<String>(
-          value: contactMethod,
+          initialValue: contactMethod,
           decoration: InputDecoration(labelText: t('طريقة التواصل', 'Contact method')),
           items: [
             DropdownMenuItem(value: 'phone', child: Text(t('هاتفياً', 'Phone'))),
@@ -237,7 +237,7 @@ class _SponsorWinbackPageState extends State<SponsorWinbackPage> {
         ),
         const SizedBox(height: 10),
         DropdownButtonFormField<String>(
-          value: contactOutcome,
+          initialValue: contactOutcome,
           decoration: InputDecoration(labelText: t('النتيجة', 'Outcome')),
           items: [
             DropdownMenuItem(value: 'no_answer', child: Text(t('لا رد', 'No answer'))),
@@ -272,7 +272,7 @@ class _SponsorWinbackPageState extends State<SponsorWinbackPage> {
           Text(t('لا يوجد موظف نشط مؤهل مرتبط بحساب مستخدم.', 'No eligible active employee is linked to a user account.'))
         else
           DropdownButtonFormField<int>(
-            value: selectedReactivatorId,
+            initialValue: selectedReactivatorId,
             decoration: InputDecoration(labelText: t('الموظف الذي أعاد الكفيل', 'Employee who reactivated the sponsor')),
             items: employees.map((employee) => DropdownMenuItem<int>(
               value: number(employee['user_id']),
