@@ -103,6 +103,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/sponsors/contacted_requests.php',
     'modules/accounting/disbursements.php',
     'modules/accounting/gm_reconciliation.php',
+    'modules/administration/winback.php',
     'modules/accounting/journal.php',
     'modules/accounting/vouchers.php',
     'modules/reports/financial.php',
@@ -118,6 +119,14 @@ class RoleToolsSection extends StatelessWidget {
         _ToolGroup(en ? eng : ar, tools);
 
     switch (role) {
+      case 'admin':
+      case 'sudo':
+      case 'super_admin':
+        return [
+          g('الإدارة والمتابعة', 'Administration and follow-up', [
+            t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة حملات استرجاع الكفلاء', 'Review sponsor win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
+          ]),
+        ];
       case 'general_manager':
       case 'gm':
         return [
@@ -144,6 +153,7 @@ class RoleToolsSection extends StatelessWidget {
         return [
           g('الإشراف والتوزيع', 'Supervision and assignment', [
             t('إدارة مجموعات الأيتام', 'Orphan groups', 'إدارة المجموعات ودورة حياتها', 'Manage orphan groups and their lifecycle', 'modules/deputy_gm/groups.php', Icons.groups_outlined),
+            t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة حملات استرجاع الكفلاء', 'Review sponsor win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
             t('مطابقة المدير العام', 'GM reconciliation', 'مراجعة المطابقة المالية المتاحة للإدارة', 'Review financial reconciliation available to management', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
             t('مركز التقارير', 'Report center', 'تقارير التشغيل المتاحة للدور', 'Operational reports available to this role', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة تعليق الكفالات', 'Manage sponsorship suspensions', 'تعليق أو رفع التعليق وفق الصلاحيات', 'Suspend or lift suspensions within your permissions', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),

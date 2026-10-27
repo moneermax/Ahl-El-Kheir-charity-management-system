@@ -58,6 +58,7 @@ import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
 import 'gm_reconciliation_page.dart';
+import 'sponsor_winback_page.dart';
 import 'employment_states_page.dart';
 import 'orphan_forms_index_page.dart';
 import 'package:file_picker/file_picker.dart';
@@ -605,6 +606,33 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/administration/winback.php') {
+      const allowedRoles = ['admin', 'sudo', 'super_admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'administration'];
+      if (!allowedRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Sponsor win-back is not available for this role.' : 'متابعات استرجاع الكفلاء غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => SponsorWinbackPage(
+          english: english,
+          loadPage: loadSponsorWinback,
+          submitAction: submitSponsorWinbackAction,
+          openFamily: (familyId) {
+            navigatorKey.currentState?.push(MaterialPageRoute<void>(
+              builder: (_) => FamilyDetailPage(
+                familyId: familyId,
+                english: english,
+                loadDetail: loadFamilyDetail,
+                openOrphanForm: openOrphanFormPage,
+              ),
+            ));
+          },
+        ),
+      ));
+      return;
+    }
     if (relativePath == 'modules/accounting/gm_reconciliation.php') {
       const allowedRoles = ['admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'financial_manager', 'fm', 'finance'];
       if (!allowedRoles.contains(user?['role_code']?.toString())) {
@@ -1119,6 +1147,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('GET', 'hr/employment_states.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadSponsorWinback(int? viewId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final suffix = viewId == null ? '' : '?view_id=$viewId';
+    return call('GET', 'administration/winback.php' + suffix, token: token);
+  }
+
+  Future<Map<String, dynamic>> submitSponsorWinbackAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'administration/winback.php', body: body, token: token);
   }
 
   Future<Map<String, dynamic>> loadGmReconciliation() async {

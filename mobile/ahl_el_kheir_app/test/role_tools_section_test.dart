@@ -26,6 +26,32 @@ void main() {
   });
 
 
+  testWidgets('Sponsor win-back is native for roles allowed by the web page guard', (tester) async {
+    for (final role in ['admin', 'general_manager', 'vice_general_manager', 'administration']) {
+      final opened = <String>[];
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RoleToolsSection(
+              roleCode: role,
+              english: true,
+              onOpen: opened.add,
+            ),
+          ),
+        ),
+      ));
+
+      expect(find.text('Sponsor win-back'), findsOneWidget, reason: role);
+      final card = find.ancestor(of: find.text('Sponsor win-back'), matching: find.byType(Card));
+      expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget, reason: role);
+      await tester.ensureVisible(find.text('Sponsor win-back'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sponsor win-back'));
+      expect(opened, contains('modules/administration/winback.php'), reason: role);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
   testWidgets('GM report subpages are marked in-app and dispatch to native report routes', (tester) async {
     final opened = <String>[];
     await tester.pumpWidget(MaterialApp(
