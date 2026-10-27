@@ -320,14 +320,16 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
             OutlinedButton.icon(onPressed: saving ? null : () => _confirm('delete_group'), icon: const Icon(Icons.delete_outline_rounded), label: Text(en ? 'Delete unused group' : 'حذف مجموعة غير مستخدمة')),
         ]),
       ]))),
-      if (editableMembers) Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Text(en ? 'Nanny assignment' : 'تعيين الحاضنة', style: Theme.of(context).textTheme.titleMedium),
-        const SizedBox(height: 6),
-        Text(currentNanny == null ? (en ? 'No current nanny assigned.' : 'لا توجد حاضنة معينة حالياً.') : (en ? 'Current: ' : 'الحالية: ') + _s(currentNanny['nanny_name']) + ' • ' + _s(currentNanny['start_date'])),
-        Align(alignment: AlignmentDirectional.centerStart, child: OutlinedButton.icon(
-          onPressed: saving || nannies.isEmpty ? null : _assignNanny,
-          icon: const Icon(Icons.person_add_alt_1_rounded), label: Text(en ? 'Assign / replace nanny' : 'تعيين / تغيير الحاضنة'))),
-        const Divider(),
+      Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        if (editableMembers) ...[
+          Text(en ? 'Nanny assignment' : 'تعيين الحاضنة', style: Theme.of(context).textTheme.titleMedium),
+          const SizedBox(height: 6),
+          Text(currentNanny == null ? (en ? 'No current nanny assigned.' : 'لا توجد حاضنة معينة حالياً.') : (en ? 'Current: ' : 'الحالية: ') + _s(currentNanny['nanny_name']) + ' • ' + _s(currentNanny['start_date'])),
+          Align(alignment: AlignmentDirectional.centerStart, child: OutlinedButton.icon(
+            onPressed: saving || nannies.isEmpty ? null : _assignNanny,
+            icon: const Icon(Icons.person_add_alt_1_rounded), label: Text(en ? 'Assign / replace nanny' : 'تعيين / تغيير الحاضنة'))),
+          const Divider(),
+        ],
         Row(children: [Expanded(child: Text(en ? 'Current members' : 'الأعضاء الحاليون', style: Theme.of(context).textTheme.titleMedium)), Text(members.length.toString())]),
         if (members.isEmpty) Padding(padding: const EdgeInsets.symmetric(vertical: 12), child: Text(en ? 'No current members.' : 'لا يوجد أعضاء حاليون.')),
         ...members.map((m) => ListTile(
@@ -335,7 +337,7 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
           leading: const CircleAvatar(child: Icon(Icons.child_care_rounded)),
           title: Text(_s(m['child_name'])),
           subtitle: Text(_s(m['family_name']) + ' • ' + _s(m['joined_date']) + (_s(m['age']).isNotEmpty ? ' • ' + _s(m['age']) : '')),
-          trailing: locked ? null : PopupMenuButton<String>(
+          trailing: !editableMembers || locked ? null : PopupMenuButton<String>(
             enabled: !saving,
             onSelected: (v) { if (v == 'remove') _removeMember(m); if (v == 'transfer') _transfer(m); },
             itemBuilder: (_) => [
@@ -344,11 +346,13 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
             ],
           ),
         )),
-        const Divider(),
-        Align(alignment: AlignmentDirectional.centerStart, child: OutlinedButton.icon(
-          onPressed: saving || locked || eligible.isEmpty ? null : _addMembers,
-          icon: const Icon(Icons.group_add_rounded),
-          label: Text((en ? 'Add eligible children (' : 'إضافة أيتام مؤهلين (') + eligible.length.toString() + ')'))),
+        if (editableMembers) ...[
+          const Divider(),
+          Align(alignment: AlignmentDirectional.centerStart, child: OutlinedButton.icon(
+            onPressed: saving || locked || eligible.isEmpty ? null : _addMembers,
+            icon: const Icon(Icons.group_add_rounded),
+            label: Text((en ? 'Add eligible children (' : 'إضافة أيتام مؤهلين (') + eligible.length.toString() + ')'))),
+        ],
       ]))),
       if (_maps(data['nanny_history']).isNotEmpty)
         Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [

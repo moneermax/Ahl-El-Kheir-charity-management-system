@@ -52,7 +52,7 @@ void main() {
     expect(selectedId, 7);
     expect(find.text('Current members'), findsWidgets);
     expect(find.text('Test child'), findsOneWidget);
-    expect(find.text('Membership history'), findsOneWidget);
+    expect(find.text('Member history'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -84,6 +84,31 @@ void main() {
     expect(submitted?['group_name'], 'New mobile group');
     expect(submitted?['description'], 'Created from Flutter');
     expect(find.text('New mobile group'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('closed group keeps current members visible without mutation controls', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: OrphanGroupsPage(
+        english: true,
+        loadPage: (id) async => groupData(
+          groups: [{'id': 12, 'group_name': 'Closed group', 'status': 'closed', 'orphan_count': 1, 'nanny_name': ''}],
+          selected: {'id': 12, 'group_name': 'Closed group', 'description': 'Historical group', 'status': 'closed'},
+          members: [{'child_id': 4, 'child_name': 'Historical child', 'family_name': 'Historical family', 'joined_date': '2026-09-01', 'age': 9}],
+          canChange: false,
+        ),
+        submitAction: (_) async => {'message': 'ok'},
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Closed group').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Historical child'), findsOneWidget);
+    expect(find.text('Current members'), findsWidgets);
+    expect(find.text('Assign / replace nanny'), findsNothing);
+    expect(find.textContaining('Add eligible children'), findsNothing);
+    expect(find.byType(PopupMenuButton<String>), findsNothing);
     expect(tester.takeException(), isNull);
   });
 
