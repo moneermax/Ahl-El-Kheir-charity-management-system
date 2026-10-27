@@ -1352,3 +1352,10 @@ Commit `bb929687b16cbec1fa66d2fe8b39adb7e73d9d90` fixes the assertion and keeps 
 **CI evidence:** Workflow [#622](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40500061042) passed Dart analysis, all Flutter widget tests, debug APK build, provenance, and artifact publication for source `e2e3873cb2a2650f373f155dbdd770bed23e1e83`. Artifact ID `12733350066`; archive SHA-256 `d02aa283ffc3b53742458bb0be1cd9ce62247714247c318ff6e088dfbf0eee50`; expires 2026-11-26. CI does not prove phone runtime behavior.
 
 **XAMPP is development-only.** This artifact embeds the test API base URL `http://192.168.18.9:8081/AhlElKheir/api/v1`. Never expose the XAMPP machine to the public internet. The app's API base URL is build-configurable; the online/release build must use the actual deployed HTTPS API URL. Before release, verify authentication/session migration state on the intended host and test native HTTP API calls end-to-end. A website that loads in a browser is not sufficient evidence that the host supports Flutter/mobile API traffic. Do not bypass provider verification layers. No production host has been validated by this checkpoint, and no device runtime verification is claimed.
+
+
+## 2026-10-27 follow-up — Remove notification link actions
+
+Source commit: `82a04b7d9daac51b657c6b7cba6c39c2ecb632db`. The notification details screen now contains only the notification content (title, timestamp, body). Removed the related-page action/card and its link parser/routing callback. Tapping a notification opens the details screen in the app; it does not follow the payload link. Mark-as-read failures still do not block opening details and are reported after returning to the inbox.
+
+Widget test updated to provide a payload link but verify there is no related-page action/label. Workflow #623 validates analysis, tests, APK build, and artifact publication; record final outcome only after it completes. No phone runtime or production hosting acceptance is claimed. XAMPP remains development-only; production requires a verified HTTPS API endpoint.

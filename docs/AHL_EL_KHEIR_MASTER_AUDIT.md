@@ -5582,3 +5582,15 @@ Source commit: `e2e3873cb2a2650f373f155dbdd770bed23e1e83`.
 - Verification: Flutter analysis, the full Flutter widget test suite, Android debug APK build, and artifact publication all passed in workflow [#622](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40500061042). Artifact: `ahl-el-kheir-flutter-android-debug-apk`, ID `12733350066`, archive SHA-256 `d02aa283ffc3b53742458bb0be1cd9ce62247714247c318ff6e088dfbf0eee50`, expires 2026-11-26. This is CI evidence only; no physical-device verification is claimed.
 - Deployment boundary: this artifact is a **debug build** configured for local testing at `http://192.168.18.9:8081/AhlElKheir/api/v1`. XAMPP remains development-only and must not be exposed publicly. An online/release build must be configured with the actual deployed HTTPS API base URL, and that host must be tested with native API requests before release. Do not assume a hosting provider supports mobile API traffic merely because the website loads in a browser; do not bypass hosting verification controls.
 - Next acceptance: install this artifact on the test phone and verify tapping both read and unread notifications, opening a supported related native destination, returning to the inbox, and mark-read failure behavior. Before online release, select and verify the API-compatible HTTPS host. Do not rerun unrelated closed HR/payroll/waiver suites.
+
+
+## 2026-10-27 — Notification details remain in-app; link actions removed
+
+Source commit: `82a04b7d9daac51b657c6b7cba6c39c2ecb632db`.
+
+- Notification tap opens the native notification details screen containing title, timestamp, and message body.
+- Removed the related-page button/card and the notification-specific link parsing/routing callback. Notification payload links are not presented as actions and do not navigate anywhere from the detail screen.
+- Preserved the independent mark-as-read behavior: a read-state request failure does not block details; returning to the inbox refreshes it and reports the failure.
+- Added/updated a widget test with a notification that has a link value and asserts the details screen is shown with no related-page action or link label.
+- Workflow #623 is validating Dart analysis, Flutter tests, Android debug APK build, and artifact publication: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40503179161. Do not claim the workflow or APK complete until it reports success.
+- Hosting boundary unchanged: XAMPP is development-only. This debug build targets the local test API; the eventual release must use a verified deployed HTTPS API endpoint. No physical-device acceptance or production-host verification is claimed.

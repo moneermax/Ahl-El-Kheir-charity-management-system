@@ -510,3 +510,8 @@ Commit `bb929687b16cbec1fa66d2fe8b39adb7e73d9d90` fixes the assertion and keeps 
 Notification detail navigation is now independent of mark-as-read success. Supported module links can invoke an existing native app route through the app's existing role-aware router; arbitrary website URLs are not opened. Links to destinations without a native implementation remain a documented parity gap. Workflow #622 passed Dart analysis, all widget tests, Android debug APK build, and artifact publication for `e2e3873cb2a2650f373f155dbdd770bed23e1e83`. No physical-device acceptance is claimed.
 
 Online deployment remains a release gate: the artifact is debug-only and points to the local XAMPP test API. Production must use a verified HTTPS API host and must not expose XAMPP publicly.
+
+
+## 2026-10-27 follow-up — Notification details only
+
+Removed notification related-page/link actions. Tapping a notification shows its details in the app and does not navigate to the payload URL. Mark-as-read failure remains independent of opening details. Widget coverage verifies no related-page action is displayed. Workflow #623 is pending verification at this documentation checkpoint; do not claim it passed until confirmed.
