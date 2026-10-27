@@ -26,21 +26,16 @@ void main() {
   });
 
 
-  testWidgets('Incentive policy is native for HR Manager, General Manager, and Financial Manager', (tester) async {
+  testWidgets('Incentive policy is native for HR Manager, GM and FM roles', (tester) async {
     for (final role in ['hr_manager', 'general_manager', 'financial_manager']) {
       final opened = <String>[];
       await tester.pumpWidget(MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(
-            child: RoleToolsSection(
-              roleCode: role,
-              english: true,
-              onOpen: opened.add,
-            ),
+            child: RoleToolsSection(roleCode: role, english: true, onOpen: opened.add),
           ),
         ),
       ));
-
       expect(find.text('Incentive policy'), findsOneWidget, reason: role);
       final card = find.ancestor(of: find.text('Incentive policy'), matching: find.byType(Card));
       expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget, reason: role);
@@ -431,5 +426,6 @@ void main() {
 
     expect(find.text('Additional role tools'), findsNothing);
   });
+}
 
-  testWidgets('incentive policy is native for HR Manager, GM and FM roles', (tester) async {
+void _ignorePath(String path) {}
