@@ -147,6 +147,24 @@ void main() {
     expect(find.text('سياسة الرواتب'), findsNothing);
   });
 
+  testWidgets('returned-funds redelivery is native and routes only from the nanny tools', (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(roleCode: 'nanny', english: true, onOpen: opened.add),
+        ),
+      ),
+    ));
+    expect(find.text('Reissue returned funds'), findsOneWidget);
+    final card = find.ancestor(of: find.text('Reissue returned funds'), matching: find.byType(Card));
+    expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget);
+    await tester.ensureVisible(find.text('Reissue returned funds'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Reissue returned funds'));
+    expect(opened, contains('modules/accounting/returned_funds_nanny.php'));
+  });
+
   testWidgets('staff sees request queues and profile without Administration-only tools', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: SingleChildScrollView(
