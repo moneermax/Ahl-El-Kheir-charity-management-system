@@ -251,7 +251,6 @@ class _SponsorWinbackPageState extends State<SponsorWinbackPage> {
         TextField(
           controller: notesController,
           maxLines: 2,
-          maxLength: 4000,
           decoration: InputDecoration(labelText: t('ملاحظات', 'Notes'), border: const OutlineInputBorder()),
         ),
         Align(alignment: AlignmentDirectional.centerEnd, child: FilledButton.icon(

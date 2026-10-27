@@ -229,9 +229,6 @@ try {
             ak_api_json(422, ['ok' => false, 'error' => ['code' => 'invalid_contact_outcome', 'message' => 'Choose a valid contact outcome.']]);
         }
         $notes = trim((string)($input['notes'] ?? ''));
-        if (mb_strlen($notes, 'UTF-8') > 4000) {
-            ak_api_json(422, ['ok' => false, 'error' => ['code' => 'notes_too_long', 'message' => 'Contact notes must not exceed 4000 characters.']]);
-        }
 
         dbExecute(
             'INSERT INTO winback_contacts (campaign_id, contacted_by, method, outcome, notes) VALUES (?, ?, ?, ?, ?)',
