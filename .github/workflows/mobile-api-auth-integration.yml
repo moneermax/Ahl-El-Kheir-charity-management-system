@@ -119,6 +119,7 @@ jobs:
           php -l api/v1/accounting/journal.php
           php -l api/v1/accounting/vouchers.php
           php -l api/v1/accounting/fm_transaction_review.php
+          php -l api/v1/accounting/fm_transaction_receipt.php
           php -l api/v1/accounting/gm_reconciliation.php
           php -l api/v1/administration/winback.php
           php -l api/v1/deputy_gm/groups.php

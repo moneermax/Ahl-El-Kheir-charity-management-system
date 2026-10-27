@@ -171,6 +171,10 @@ $testOrdinaryReturnTransactionId = 0;
 $testOrdinarySelfTransactionId = 0;
 $testOrdinaryJournalId = 0;
 $testOrdinaryCreatorId = 0;
+$testOrdinaryReceiptAbsolutePath = '';
+$testOrdinaryReceiptDirectory = '';
+$testOrdinaryReceiptRelativePath = '';
+$testOrdinaryReceiptBytes = '';
 $testJournalEntryId = 0;
 $testVoucherId = 0;
 $testManualJournalEntryId = 0;
@@ -640,7 +644,37 @@ try {
     $testOrdinaryApproveTransactionId = $makeOrdinaryTransaction('APPROVE', $testOrdinaryCreatorId);
     $testOrdinaryReturnTransactionId = $makeOrdinaryTransaction('RETURN', $testOrdinaryCreatorId);
     $testOrdinarySelfTransactionId = $makeOrdinaryTransaction('SELF', $userId);
+
+    $testOrdinaryReceiptDirectory = dirname(__DIR__) . '/storage/mobile_test_receipts';
+    if (!is_dir($testOrdinaryReceiptDirectory) && !mkdir($testOrdinaryReceiptDirectory, 0775, true) && !is_dir($testOrdinaryReceiptDirectory)) {
+        throw new RuntimeException('Unable to create temporary transaction receipt fixture directory.');
+    }
+    $testOrdinaryReceiptAbsolutePath = $testOrdinaryReceiptDirectory . '/receipt-' . bin2hex(random_bytes(5)) . '.png';
+    $testOrdinaryReceiptRelativePath = 'storage/mobile_test_receipts/' . basename($testOrdinaryReceiptAbsolutePath);
+    $testOrdinaryReceiptBytes = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/b1cAAAAASUVORK5CYII=', true) ?: '';
+    if ($testOrdinaryReceiptBytes === '' || file_put_contents($testOrdinaryReceiptAbsolutePath, $testOrdinaryReceiptBytes) === false) {
+        throw new RuntimeException('Unable to create temporary transaction receipt fixture.');
+    }
+    $pdo->prepare('UPDATE transactions SET receipt_path=? WHERE id=?')->execute([$testOrdinaryReceiptRelativePath, $testOrdinaryApproveTransactionId]);
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+
+    $receiptUnauth = mobileApiRequest('/api/v1/accounting/fm_transaction_receipt.php?id=' . $testOrdinaryApproveTransactionId);
+    mobileApiExpect($receiptUnauth['status'] === 401, 'ordinary transaction receipt requires authentication');
+    $receiptResponse = mobileApiRequest('/api/v1/accounting/fm_transaction_receipt.php?id=' . $testOrdinaryApproveTransactionId, 'GET', null, $adminToken, 20);
+    $receiptContentType = '';
+    foreach (($receiptResponse['headers'] ?? []) as $receiptHeader) {
+        if (stripos($receiptHeader, 'Content-Type:') === 0) $receiptContentType = strtolower(trim(substr($receiptHeader, strlen('Content-Type:'))));
+    }
+    mobileApiExpect($receiptResponse['status'] === 200
+        && $receiptResponse['raw'] === $testOrdinaryReceiptBytes
+        && str_starts_with($receiptContentType, 'image/png'),
+        'Financial Manager can stream the transaction receipt as an authenticated in-app response');
+
+    $pdo->prepare('UPDATE transactions SET receipt_path=? WHERE id=?')->execute(['../config/config.php', $testOrdinaryApproveTransactionId]);
+    $traversalReceipt = mobileApiRequest('/api/v1/accounting/fm_transaction_receipt.php?id=' . $testOrdinaryApproveTransactionId, 'GET', null, $adminToken, 20);
+    mobileApiExpect($traversalReceipt['status'] === 404, 'transaction receipt endpoint blocks paths escaping the application root');
+    $pdo->prepare('UPDATE transactions SET receipt_path=? WHERE id=?')->execute([$testOrdinaryReceiptRelativePath, $testOrdinaryApproveTransactionId]);
+
     $ordinaryQueue = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'GET', null, $adminToken, 20);
     $ordinaryPending = $ordinaryQueue['json']['data']['pending'] ?? [];
     $ordinaryPendingIds = array_map(static fn(array $row): int => (int)$row['id'], is_array($ordinaryPending) ? $ordinaryPending : []);
@@ -3050,6 +3084,8 @@ try {
         $pdo->prepare("DELETE FROM audit_log WHERE entity_type='transactions' AND entity_id=?")->execute([$ordinaryTransactionId]);
         $pdo->prepare('DELETE FROM transactions WHERE id=?')->execute([$ordinaryTransactionId]);
     }
+    if ($testOrdinaryReceiptAbsolutePath !== '' && is_file($testOrdinaryReceiptAbsolutePath)) @unlink($testOrdinaryReceiptAbsolutePath);
+    if ($testOrdinaryReceiptDirectory !== '' && is_dir($testOrdinaryReceiptDirectory)) @rmdir($testOrdinaryReceiptDirectory);
     if ($testOrdinaryCreatorId > 0) {
         $pdo->prepare("DELETE FROM notifications WHERE recipient_user_id=? AND title IN ('تم اعتماد الدفعة','تم إرجاع الدفعة للتعديل') AND created_at>=?")
             ->execute([$testOrdinaryCreatorId, $testStart]);
