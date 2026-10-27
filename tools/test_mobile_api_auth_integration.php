@@ -550,11 +550,19 @@ try {
          ORDER BY f.children_count DESC, f.monthly_need_amount DESC"
     )->fetchAll(PDO::FETCH_COLUMN));
     $actualAvailableIds = array_map(static fn(array $row): int => (int)$row['id'], is_array($availableItems) ? $availableItems : []);
+    // The web query has no tie-breaker for equal child-count/monthly-need rows,
+    // so compare the eligible set rather than relying on unspecified tie order.
+    sort($expectedAvailableIds);
+    sort($actualAvailableIds);
     mobileApiExpect(
         $availableFamiliesAdmin['status'] === 200
         && (int)($availableData['total'] ?? -1) === count($expectedAvailableIds)
         && $actualAvailableIds === $expectedAvailableIds,
-        'available-family API matches the exact existing web eligibility query and order'
+        'available-family API matches the existing web eligibility set; status='
+            . $availableFamiliesAdmin['status'] . '; response='
+            . json_encode($availableFamiliesAdmin['json'], JSON_UNESCAPED_UNICODE)
+            . '; expected_ids=' . json_encode($expectedAvailableIds)
+            . '; actual_ids=' . json_encode($actualAvailableIds)
     );
     $familyForAdminRole = (int)($pdo->query('SELECT id FROM families ORDER BY id LIMIT 1')->fetchColumn() ?: 0);
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['administration'], $userId]);
