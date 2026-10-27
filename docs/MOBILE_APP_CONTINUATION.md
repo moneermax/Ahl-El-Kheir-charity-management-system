@@ -1311,3 +1311,7 @@ Scope is intentionally limited to metrics already exposed by the API. The web GM
 The existing General Manager SQL already counts `families.status='pending'`, matching `dashboard/gm_dashboard.php`; the gap was that `ak_mobile_dashboard_metrics()` did not include that selected value in its returned metric list. The API now exposes `pending_families` with the web dashboard's Arabic label and an English label. No query semantics, schema, permissions, or financial behavior changed.
 
 The mobile role-dashboard query harness now asserts that the General Manager metric is present exactly once and numeric. The Mobile API Auth Integration workflow runs this harness against its imported disposable MariaDB schema and lints the overview endpoint/service. Flutter attention-card wiring remains the next sequential step; full GM attention parity is not yet complete.
+
+## 2026-10-27 — GM pending-family attention card (Flutter CI pending)
+
+The API-side metric change passed Mobile API Auth Integration run #218 (40469806870), including the role-dashboard query harness against disposable MariaDB and the API syntax checks. The Flutter GM attention queue now consumes 'pending_families' and adds an actionable card using the existing web-dashboard destination 'modules/reports/operational.php'. Its widget test supplies a positive pending-family count and verifies the card routes through the native dispatcher. The Android workflow for this UI follow-up has not yet been verified; local XAMPP/API and physical-device acceptance remain pending.

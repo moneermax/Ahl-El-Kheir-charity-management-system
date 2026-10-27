@@ -260,6 +260,9 @@ class _RoleDashboardPageState extends State<RoleDashboardPage> {
     }
 
     // Use only counts returned by the authenticated role-dashboard API.
+    addIfPositive('pending_families', 'أسر بانتظار الإجراء', 'Families awaiting action',
+      'مراجعة الأسر التي تنتظر استكمال الإجراء', 'Review families awaiting the next action',
+      'modules/reports/operational.php', Icons.hourglass_top_rounded);
     addIfPositive('uncovered_families', 'أسر بلا كفالة نشطة', 'Families without active sponsorship',
       'مراجعة الأسر التي تحتاج إلى تغطية', 'Review families that need sponsorship coverage',
       'modules/reports/orphaned_families.php', Icons.home_work_outlined);

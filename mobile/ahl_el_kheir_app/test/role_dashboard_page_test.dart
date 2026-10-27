@@ -42,6 +42,7 @@ void main() {
             roleCode: 'general_manager',
             loadOverview: () async => {
               'metrics': [
+                {'key': 'pending_families', 'label_ar': 'أسر بانتظار الإجراء', 'label_en': 'Families awaiting action', 'value': 6},
                 {'key': 'uncovered_families', 'label_ar': 'أسر بلا كفالة نشطة', 'label_en': 'Families without active sponsorship', 'value': 4},
                 {'key': 'paused_sponsorships', 'label_ar': 'كفالات متوقفة', 'label_en': 'Paused sponsorships', 'value': 0},
                 {'key': 'open_winback', 'label_ar': 'متابعات استعادة الكفلاء', 'label_en': 'Open sponsor win-back', 'value': 2},
@@ -57,11 +58,17 @@ void main() {
 
     await tester.pumpAndSettle();
     expect(find.text('Needs your attention'), findsOneWidget);
+    expect(find.ancestor(of: find.text('Families awaiting action'), matching: find.byType(ListTile)), findsOneWidget);
     expect(find.ancestor(of: find.text('Families without active sponsorship'), matching: find.byType(ListTile)), findsOneWidget);
     expect(find.ancestor(of: find.text('Open sponsor win-back cases'), matching: find.byType(ListTile)), findsOneWidget);
     expect(find.ancestor(of: find.text('Sponsor requests awaiting follow-up'), matching: find.byType(ListTile)), findsOneWidget);
     expect(find.ancestor(of: find.text('Paused sponsorships'), matching: find.byType(ListTile)), findsNothing);
     expect(find.ancestor(of: find.text('Unassigned supervisor letters'), matching: find.byType(ListTile)), findsNothing);
+
+    await tester.ensureVisible(find.text('Families awaiting action'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Families awaiting action'));
+    expect(opened, contains('modules/reports/operational.php'));
 
     await tester.ensureVisible(find.text('Open sponsor win-back cases'));
     await tester.pumpAndSettle();

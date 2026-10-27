@@ -5249,3 +5249,7 @@ The latest main checkpoint is `51a0a053135020bd339b0e4b61f816f01f748481`; APK wo
 ## 2026-10-27 — GM pending-family API metric (backend stage)
 
 The mobile dashboard API now returns the existing `pending_families` count already selected by the General Manager overview query, using the web dashboard's `families.status='pending'` definition. The dedicated role-dashboard query harness asserts the metric is present exactly once and numeric, and the Mobile API Auth Integration workflow runs that harness against disposable MariaDB. The native Flutter attention card remains the next sequential step; full parity is pending until that step passes CI.
+
+## 2026-10-27 — GM pending-family attention card (Flutter CI pending)
+
+Mobile API Auth Integration run #218 (40469806870) passed after the authenticated General Manager metric response began exposing the existing 'pending_families' count. The Flutter attention queue and widget test now include an actionable pending-family card routed to the existing operational report. Await the sequential Android workflow before claiming UI/build verification. Local XAMPP/API and physical-device acceptance remain pending.
