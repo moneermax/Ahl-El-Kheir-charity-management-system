@@ -156,6 +156,10 @@ $testOrphanFormFamilySnapshot = null;
 $testDisbursementId = 0;
 $testDisbursementItemId = 0;
 $testDisbursementReturnItemId = 0;
+$testReturnedReissueId = 0;
+$testReturnedRedeliveryTransactionId = 0;
+$testReturnedRedeliveryJournalId = 0;
+$testReturnedRedeliveryReceiptPath = '';
 $testBatchCreatedId = 0;
 $testBatchCreatedItemId = 0;
 $testBatchGroupId = 0;
@@ -2245,6 +2249,83 @@ try {
         'nanny closes a partially paid batch with a required return receipt and a balanced cash/expense reversal'
     );
 
+    $pdo->prepare(
+        "INSERT INTO returned_disbursement_reissues
+         (disbursement_item_id,disbursement_id,family_id,amount,original_month,original_return_journal_id,original_return_reason,original_returned_at,original_return_receipt_path,status,authorized_by,authorized_at,authorization_reason)
+         SELECT i.id,d.id,i.family_id,i.amount,d.month,i.reversal_journal_id,i.return_reason,i.returned_at,d.return_receipt_file_path,'authorized',NULL,NOW(),'Disposable mobile API integration'
+         FROM disbursement_items i INNER JOIN monthly_disbursements d ON d.id=i.disbursement_id
+         WHERE i.id=? AND d.id=?"
+    )->execute([$testDisbursementReturnItemId, $testDisbursementId]);
+    $testReturnedReissueId = (int)$pdo->lastInsertId();
+    if ($testReturnedReissueId < 1) throw new RuntimeException('Could not prepare returned-funds reissue fixture.');
+
+    $returnedFundsList = mobileApiRequest('/api/v1/nanny/returned_funds.php', 'GET', null, $receiptNannyToken, 20);
+    mobileApiExpect(
+        $returnedFundsList['status'] === 200
+        && count($returnedFundsList['json']['data']['items'] ?? []) === 1
+        && (int)($returnedFundsList['json']['data']['items'][0]['id'] ?? 0) === $testReturnedReissueId,
+        'nanny sees only their authorized returned-funds redelivery item'
+    );
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+    $returnedFundsAdminLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+    mobileApiExpect($returnedFundsAdminLogin['status'] === 200 && isset($returnedFundsAdminLogin['json']['data']['access_token']), 'admin session is available for returned-funds role denial');
+    $returnedFundsAdminToken = (string)$returnedFundsAdminLogin['json']['data']['access_token'];
+    $testTokenHashes[] = hash('sha256', $returnedFundsAdminToken);
+    $returnedFundsAdminDenied = mobileApiRequest('/api/v1/nanny/returned_funds.php', 'GET', null, $returnedFundsAdminToken);
+    mobileApiExpect($returnedFundsAdminDenied['status'] === 403, 'non-nanny roles are denied returned-funds redelivery');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+
+    $pdfBytes = "%PDF-1.4\\n% Mobile API disposable receipt\\n%%EOF\\n";
+    $redelivered = mobileApiMultipartRequest(
+        '/api/v1/nanny/returned_funds.php',
+        ['reissue_id' => (string)$testReturnedReissueId],
+        'redelivery_receipt',
+        'redelivery.pdf',
+        $pdfBytes,
+        'application/pdf',
+        $receiptNannyToken,
+        20
+    );
+    $redeliveryRow = $pdo->prepare('SELECT status,redelivery_receipt_path,redelivery_transaction_id,redelivery_journal_id FROM returned_disbursement_reissues WHERE id=?');
+    $redeliveryRow->execute([$testReturnedReissueId]);
+    $redeliveryData = $redeliveryRow->fetch(PDO::FETCH_ASSOC) ?: [];
+    $testReturnedRedeliveryTransactionId = (int)($redeliveryData['redelivery_transaction_id'] ?? 0);
+    $testReturnedRedeliveryJournalId = (int)($redeliveryData['redelivery_journal_id'] ?? 0);
+    $testReturnedRedeliveryReceiptPath = (string)($redeliveryData['redelivery_receipt_path'] ?? '');
+    $redeliveryItemStatus = (string)$pdo->query('SELECT status FROM disbursement_items WHERE id=' . $testDisbursementReturnItemId)->fetchColumn();
+    $redeliveryJournalTotals = $pdo->query(
+        'SELECT COALESCE(SUM(debit),0) debit_total, COALESCE(SUM(credit),0) credit_total FROM journal_lines WHERE entry_id=' . $testReturnedRedeliveryJournalId
+    )->fetch(PDO::FETCH_ASSOC);
+    mobileApiExpect(
+        $redelivered['status'] === 200
+        && ($redelivered['json']['data']['status'] ?? '') === 'redelivered'
+        && ($redeliveryData['status'] ?? '') === 'redelivered'
+        && $redeliveryItemStatus === 'paid'
+        && $testReturnedRedeliveryTransactionId > 0
+        && $testReturnedRedeliveryJournalId > 0
+        && str_starts_with($testReturnedRedeliveryReceiptPath, 'storage/receipts/returned_redelivery/')
+        && is_file(dirname(__DIR__) . '/' . $testReturnedRedeliveryReceiptPath)
+        && abs((float)($redeliveryJournalTotals['debit_total'] ?? 0) - 250.00) < 0.005
+        && abs((float)($redeliveryJournalTotals['credit_total'] ?? 0) - 250.00) < 0.005,
+        'nanny redelivers an authorized returned amount only with receipt and balanced new transaction/journal'
+    );
+    $duplicateRedelivery = mobileApiMultipartRequest(
+        '/api/v1/nanny/returned_funds.php',
+        ['reissue_id' => (string)$testReturnedReissueId],
+        'redelivery_receipt',
+        'duplicate.pdf',
+        $pdfBytes,
+        'application/pdf',
+        $receiptNannyToken,
+        20
+    );
+    mobileApiExpect(
+        $duplicateRedelivery['status'] === 409
+        && (string)$pdo->query('SELECT status FROM returned_disbursement_reissues WHERE id=' . $testReturnedReissueId)->fetchColumn() === 'redelivered',
+        'duplicate redelivery is rejected without creating a second transaction'
+    );
+
     $r = mobileApiRequest('/api/v1/notifications/index.php', 'GET', null, $token);
     $listedNotificationIds = array_map(
         static fn(array $item): int => (int)($item['id'] ?? 0),
@@ -3379,6 +3460,24 @@ try {
     if ($testBatchVerificationFamilyId > 0) {
         $pdo->prepare('DELETE FROM nanny_family_verifications WHERE family_id=? AND month=? AND nanny_id=?')
             ->execute([$testBatchVerificationFamilyId,$testBatchVerificationMonth,$testBatchNannyId]);
+    }
+    if ($testReturnedReissueId > 0) {
+        $reissueLookup = $pdo->prepare('SELECT redelivery_receipt_path,redelivery_transaction_id,redelivery_journal_id FROM returned_disbursement_reissues WHERE id=?');
+        $reissueLookup->execute([$testReturnedReissueId]);
+        $reissueCleanup = $reissueLookup->fetch(PDO::FETCH_ASSOC) ?: [];
+        $storedRedeliveryPath = (string)($reissueCleanup['redelivery_receipt_path'] ?? $testReturnedRedeliveryReceiptPath);
+        if (str_starts_with($storedRedeliveryPath, 'storage/receipts/returned_redelivery/')) {
+            $redeliveryFile = dirname(__DIR__) . '/' . $storedRedeliveryPath;
+            if (is_file($redeliveryFile)) @unlink($redeliveryFile);
+        }
+        $cleanupJournalId = (int)($reissueCleanup['redelivery_journal_id'] ?? $testReturnedRedeliveryJournalId);
+        $cleanupTransactionId = (int)($reissueCleanup['redelivery_transaction_id'] ?? $testReturnedRedeliveryTransactionId);
+        $pdo->prepare('DELETE FROM returned_disbursement_reissues WHERE id=?')->execute([$testReturnedReissueId]);
+        if ($cleanupJournalId > 0) {
+            $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([$cleanupJournalId]);
+            $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([$cleanupJournalId]);
+        }
+        if ($cleanupTransactionId > 0) $pdo->prepare('DELETE FROM transactions WHERE id=?')->execute([$cleanupTransactionId]);
     }
     if ($testDisbursementItemId > 0) {
         $receiptLookup = $pdo->prepare('SELECT receipt_file_path FROM disbursement_items WHERE id=?');

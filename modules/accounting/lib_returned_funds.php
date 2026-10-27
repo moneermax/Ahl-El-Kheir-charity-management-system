@@ -15,37 +15,22 @@ function returned_funds_ensure_table(): void
     if ($done) {
         return;
     }
-    $done = true;
 
-    dbExecute("CREATE TABLE IF NOT EXISTS returned_disbursement_reissues (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        disbursement_item_id INT UNSIGNED NOT NULL,
-        disbursement_id INT UNSIGNED NOT NULL,
-        family_id INT UNSIGNED NOT NULL,
-        amount DECIMAL(14,2) NOT NULL,
-        original_month VARCHAR(7) NOT NULL,
-        original_return_journal_id INT UNSIGNED NULL,
-        original_return_reason VARCHAR(500) NULL,
-        original_returned_at DATETIME NULL,
-        original_return_receipt_path VARCHAR(255) NULL,
-        status VARCHAR(30) NOT NULL DEFAULT 'awaiting_redelivery',
-        authorized_by INT UNSIGNED NULL,
-        authorized_at DATETIME NULL,
-        authorization_reason VARCHAR(500) NULL,
-        redelivered_by INT UNSIGNED NULL,
-        redelivered_at DATETIME NULL,
-        redelivery_receipt_path VARCHAR(255) NULL,
-        redelivery_transaction_id INT UNSIGNED NULL,
-        redelivery_journal_id INT UNSIGNED NULL,
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY uq_returned_reissue_item (disbursement_item_id),
-        KEY idx_returned_reissue_status (status),
-        KEY idx_returned_reissue_family (family_id),
-        KEY idx_returned_reissue_disbursement (disbursement_id),
-        CONSTRAINT fk_returned_reissue_item FOREIGN KEY (disbursement_item_id) REFERENCES disbursement_items(id) ON DELETE RESTRICT,
-        CONSTRAINT fk_returned_reissue_batch FOREIGN KEY (disbursement_id) REFERENCES monthly_disbursements(id) ON DELETE RESTRICT
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    // The table is part of database/ahl_el_kheir.sql. Never create or alter
+    // application tables during a web/API request; fail clearly if deployment
+    // has not applied the checked-in schema.
+    $exists = dbFetchOne(
+        "SELECT 1 AS present
+         FROM information_schema.tables
+         WHERE table_schema = DATABASE()
+           AND table_name = 'returned_disbursement_reissues'
+         LIMIT 1"
+    );
+    if (!$exists) {
+        throw new RuntimeException('Required table returned_disbursement_reissues is missing from the installed schema.');
+    }
+
+    $done = true;
 }
 
 function returned_funds_get_item(int $itemId): ?array
