@@ -606,7 +606,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       return;
     }
     if (relativePath == 'modules/accounting/gm_reconciliation.php') {
-      const allowedRoles = ['admin', 'general_manager', 'vice_general_manager', 'financial_manager'];
+      const allowedRoles = ['admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'financial_manager', 'fm', 'finance'];
       if (!allowedRoles.contains(user?['role_code']?.toString())) {
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
           SnackBar(content: Text(english ? 'Reconciliation access is not available for this role.' : 'عرض المصالحة غير متاح لهذا الدور.')),
