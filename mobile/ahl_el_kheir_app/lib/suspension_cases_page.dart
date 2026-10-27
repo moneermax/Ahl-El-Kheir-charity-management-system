@@ -174,7 +174,7 @@ class _SuspensionCasesPageState extends State<SuspensionCasesPage> {
               );
             })),
           ])),
-          actions: [TextButton(onPressed: searching ? null : () => Navigator.pop(dialogContext), child: Text(t('إلغاء', 'Cancel'))],
+          actions: [TextButton(onPressed: searching ? null : () => Navigator.pop(dialogContext), child: Text(t('إلغاء', 'Cancel')))],
         ),
       ),
     );
