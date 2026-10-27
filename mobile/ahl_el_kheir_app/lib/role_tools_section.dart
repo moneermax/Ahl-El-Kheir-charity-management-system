@@ -109,6 +109,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/accounting/group_disbursements.php',
     'modules/accounting/gm_reconciliation.php',
     'modules/accounting/trial_balance.php',
+    'modules/accounting/accounts.php',
     'modules/administration/winback.php',
     'modules/administration/available_families.php',
     'modules/hr/incentive_policy.php',
