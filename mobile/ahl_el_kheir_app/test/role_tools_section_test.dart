@@ -456,9 +456,6 @@ void main() {
     }
   });
 
-}
-
-void _ignorePath(String path) {}
 
     for (final role in ['admin', 'general_manager', 'vice_general_manager', 'administration']) {
       final opened = <String>[];
