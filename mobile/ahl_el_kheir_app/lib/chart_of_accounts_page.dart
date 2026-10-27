@@ -95,13 +95,13 @@ class _ChartOfAccountsPageState extends State<ChartOfAccountsPage> {
           TextField(controller:_code,keyboardType:TextInputType.number,textDirection:TextDirection.ltr,decoration:InputDecoration(labelText:t('رمز الحساب (3–6 أرقام) *','Account code (3–6 digits) *'))),
           TextField(controller:_nameAr,decoration:InputDecoration(labelText:t('اسم الحساب بالعربية *','Arabic account name *'))),
           TextField(controller:_nameEn,textDirection:TextDirection.ltr,decoration:InputDecoration(labelText:t('اسم الحساب بالإنجليزية','English account name'))),
-          DropdownButtonFormField<String>(value:_type,decoration:InputDecoration(labelText:t('نوع الحساب','Account type')),items:_types.map((x)=>DropdownMenuItem(value:x,child:Text(_typeName(x)))).toList(),onChanged:_busy?null:(x){if(x!=null)setState(()=>_type=x);}),
+          DropdownButtonFormField<String>(initialValue:_type,decoration:InputDecoration(labelText:t('نوع الحساب','Account type')),items:_types.map((x)=>DropdownMenuItem(value:x,child:Text(_typeName(x)))).toList(),onChanged:_busy?null:(x){if(x!=null)setState(()=>_type=x);}),
           const SizedBox(height:10), FilledButton.icon(onPressed:_busy?null:_add,icon:const Icon(Icons.add_rounded),label:Text(t('إضافة الحساب','Add account'))),
         ]))),
         for (final a in _accounts) Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
             Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-              Text('${a['code'] ?? ''} · ${a['name_ar'] ?? ''}',style:const TextStyle(fontWeight:FontWeight.w800,fontSize:15)),
+              Text('${a["code"] ?? ""} · ${a["name_ar"] ?? ""}',style:const TextStyle(fontWeight:FontWeight.w800,fontSize:15)),
               if ((a['name_en']?.toString()??'').isNotEmpty) Text(a['name_en'].toString(),textDirection:TextDirection.ltr,style:const TextStyle(color:Color(0xFF667085),fontSize:12)),
             ])),
             Text((int.tryParse(a['is_active']?.toString()??'')??0)==1?t('نشط','Active'):t('موقوف','Inactive')),
