@@ -26,6 +26,19 @@ void main() {
   });
 
 
+  testWidgets('assigned nannies is native for accountant and financial-manager roles', (tester) async {
+    for (final role in ['accountant', 'accountant_staff', 'financial_manager']) {
+      final opened = <String>[];
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
+        child: RoleToolsSection(roleCode: role, english: true, onOpen: opened.add),
+      ))));
+      expect(find.text('Assigned nannies'), findsOneWidget);
+      expect(find.text('IN APP'), findsWidgets);
+      await tester.tap(find.text('Assigned nannies'));
+      expect(opened, ['modules/accounting/my_nannies.php']);
+    }
+  });
+
   testWidgets('Incentive policy is native for HR Manager, GM and FM roles', (tester) async {
     for (final role in ['hr_manager', 'general_manager', 'financial_manager']) {
       final opened = <String>[];

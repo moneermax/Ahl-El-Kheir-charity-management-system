@@ -46,6 +46,7 @@ import 'fina_collection_page.dart';
 import 'fina_review_page.dart';
 import 'fina_dashboard_page.dart';
 import 'fina_report_page.dart';
+import 'assigned_nannies_page.dart';
 import 'admin_database_page.dart';
 import 'admin_backup_page.dart';
 import 'payroll_integrity_page.dart';
@@ -513,6 +514,19 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     if (relativePath == 'modules/accounting/fina_payment_review.php' ||
         relativePath == 'modules/accounting/fina_payment_history.php') {
       openFinaReviewPage();
+      return;
+    }
+    if (relativePath == 'modules/accounting/my_nannies.php') {
+      const allowedRoles = ['admin', 'accountant', 'accountant_staff', 'financial_manager'];
+      if (!allowedRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Assigned-nanny overview is not available for this role.' : 'عرض الحاضنات المعيّنات غير متاح لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => AssignedNanniesPage(english: english, loadPage: loadAssignedNannies),
+      ));
       return;
     }
     if (relativePath == 'modules/families/suspensions.php') {
@@ -1615,6 +1629,14 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
       loadDashboard: loadFinaDashboard,
       onOpenReview: () => openNativeTool('modules/accounting/fina_payment_review.php'),
     )));
+  }
+
+  Future<Map<String, dynamic>> loadAssignedNannies(String month, {int? nannyId}) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final parameters = <String, String>{'vmonth': month};
+    if (nannyId != null) parameters['nanny'] = nannyId.toString();
+    return call('GET', 'accounting/assigned_nannies.php?\${Uri(queryParameters: parameters).query}', token: token);
   }
 
   Future<Map<String, dynamic>> loadFinaReport(String from, String to) async {

@@ -162,6 +162,7 @@ $testBatchGroupId = 0;
 $testBatchNannyId = 0;
 $testBatchVerificationFamilyId = 0;
 $testBatchVerificationMonth = '2099-12';
+$testAssignedNannyAssignmentId = 0;
 $testBatchTransferTransactionId = 0;
 $testBatchTransferJournalId = 0;
 $testAccountId = 0;
@@ -536,6 +537,40 @@ try {
     $adminToken = (string)$adminLogin['json']['data']['access_token'];
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
+
+    $assignedUnauth = mobileApiRequest('/api/v1/accounting/assigned_nannies.php?vmonth=2099-12');
+    mobileApiExpect($assignedUnauth['status'] === 401, 'assigned-nanny overview rejects unauthenticated requests');
+    $assignedAdmin = mobileApiRequest('/api/v1/accounting/assigned_nannies.php?vmonth=2099-12', 'GET', null, $adminToken, 20);
+    $assignedData = $assignedAdmin['json']['data'] ?? [];
+    $assignedItems = $assignedData['nannies'] ?? [];
+    $firstNanny = is_array($assignedItems) ? ($assignedItems[0] ?? null) : null;
+    mobileApiExpect($assignedAdmin['status'] === 200 && ($assignedData['month'] ?? '') === '2099-12'
+        && is_array($firstNanny) && isset($firstNanny['id'], $firstNanny['active_families'], $firstNanny['verified_now']),
+        'administrator reads assigned-nanny month summary');
+    $firstNannyId = (int)($firstNanny['id'] ?? 0);
+    $assignedDetail = mobileApiRequest('/api/v1/accounting/assigned_nannies.php?vmonth=2099-12&nanny=' . $firstNannyId, 'GET', null, $adminToken, 20);
+    mobileApiExpect($firstNannyId > 0 && $assignedDetail['status'] === 200
+        && (int)($assignedDetail['json']['data']['detail']['id'] ?? 0) === $firstNannyId
+        && is_array($assignedDetail['json']['data']['families'] ?? null),
+        'assigned-nanny detail returns active families and month-specific verification');
+
+    $existingAssignment = $pdo->prepare('SELECT id FROM accountant_nanny_assignments WHERE accountant_id=? AND nanny_id=? LIMIT 1');
+    $existingAssignment->execute([$userId, $firstNannyId]);
+    if (!$existingAssignment->fetchColumn()) {
+        $pdo->prepare('INSERT INTO accountant_nanny_assignments (accountant_id,nanny_id,assigned_by) VALUES (?,?,?)')->execute([$userId,$firstNannyId,$userId]);
+        $testAssignedNannyAssignmentId = (int)$pdo->lastInsertId();
+    }
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['accountant_staff'],$userId]);
+    $staffLogin = mobileApiRequest('/api/v1/auth/login.php','POST',['username'=>$username,'password'=>$knownPassword]);
+    mobileApiExpect($staffLogin['status']===200 && isset($staffLogin['json']['data']['access_token']), 'accountant staff login succeeds for assigned-nanny scope test');
+    $staffToken=(string)$staffLogin['json']['data']['access_token']; $testTokenHashes[]=hash('sha256',$staffToken);
+    $staffNannies=mobileApiRequest('/api/v1/accounting/assigned_nannies.php?vmonth=2099-12','GET',null,$staffToken,20);
+    $scopedIds=array_map(static fn(array $row):int=>(int)$row['id'],$staffNannies['json']['data']['nannies']??[]);
+    $expectedStmt=$pdo->prepare("SELECT u.id FROM users u JOIN roles r ON r.id=u.role_id JOIN accountant_nanny_assignments a ON a.nanny_id=u.id AND a.accountant_id=? WHERE r.code='nanny' AND u.is_active=1 ORDER BY u.full_name");
+    $expectedStmt->execute([$userId]); $expectedIds=array_map('intval',$expectedStmt->fetchAll(PDO::FETCH_COLUMN));
+    sort($scopedIds); sort($expectedIds);
+    mobileApiExpect($staffNannies['status']===200 && $scopedIds===$expectedIds, 'accountant staff sees only active nannies assigned to the authenticated account');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'],$userId]);
 
     $policyUnauthenticated = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET');
     mobileApiExpect($policyUnauthenticated['status'] === 401, 'incentive policy requires bearer authentication');
@@ -2856,6 +2891,7 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    if ($testAssignedNannyAssignmentId > 0) $pdo->prepare('DELETE FROM accountant_nanny_assignments WHERE id=?')->execute([$testAssignedNannyAssignmentId]);
     if ($testOrphanGroupId > 0) {
         $pdo->prepare('DELETE FROM nanny_group_assignments WHERE group_id=?')->execute([$testOrphanGroupId]);
         $pdo->prepare('DELETE FROM group_children WHERE group_id=?')->execute([$testOrphanGroupId]);
