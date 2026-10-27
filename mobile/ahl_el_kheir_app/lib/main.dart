@@ -54,6 +54,7 @@ import 'password_recovery_page.dart';
 import 'journal_page.dart';
 import 'voucher_page.dart';
 import 'payroll_policy_page.dart';
+import 'incentive_policy_page.dart';
 import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
@@ -686,6 +687,26 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/hr/incentive_policy.php') {
+      const allowedRoles = ['hr_manager', 'general_manager', 'gm', 'financial_manager'];
+      if (!allowedRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english
+              ? 'Incentive policy is not available for this role.'
+              : 'سياسة الحوافز غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => IncentivePolicyPage(
+          english: english,
+          roleCode: user?['role_code']?.toString() ?? '',
+          loadPage: loadIncentivePolicy,
+          submitAction: submitIncentivePolicyAction,
+        ),
+      ));
+      return;
+    }
     if (relativePath == 'modules/hr/payroll_policy.php') {
       if (!['hr_manager', 'hr_staff', 'admin'].contains(user?['role_code']?.toString())) {
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
@@ -1211,6 +1232,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('POST', 'hr/payroll_policy.php', token: token, body: body);
+  }
+
+  Future<Map<String, dynamic>> loadIncentivePolicy() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/incentive_policy.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> submitIncentivePolicyAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'hr/incentive_policy.php', token: token, body: body);
   }
 
   Future<Map<String, dynamic>> loadAttendancePolicy() async {
