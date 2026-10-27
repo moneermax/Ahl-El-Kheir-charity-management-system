@@ -503,3 +503,10 @@ Flutter APK run #614 then narrowed the remaining failure to a stale test asserti
 Commit `bb929687b16cbec1fa66d2fe8b39adb7e73d9d90` fixes the assertion and keeps current group members visible in read-only mode. Nanny assignment, member transfer/removal, and add-member controls remain conditional on member editability; member popup actions also remain hidden under the current-month disbursement lock. A widget regression test covers a closed group with a visible historical member and no mutation controls.
 
 **Verification: PASS in Flutter APK workflow #615** — Dart source analysis, Flutter tests, and debug APK build all completed successfully. Earlier commit `6e82f4b36c79c9cf47737a9a94a44fb7a423ac9b` also had Mobile API auth integration #221 PASS, salary advance verification #3534 PASS, and Sponsor QR Scanner APK #214 PASS. Those workflows were not rerun for the Flutter-only follow-up commit. Local XAMPP/API acceptance and physical-device acceptance remain unverified; do not claim them. Next step: inspect the current role-feature parity backlog and proceed with the next uncompleted, evidence-backed mobile feature only after reviewing the current source and schema. Do not repeat closed payroll/HR acceptance suites without regression evidence.
+
+
+## 2026-10-27 — Notification navigation checkpoint
+
+Notification detail navigation is now independent of mark-as-read success. Supported module links can invoke an existing native app route through the app's existing role-aware router; arbitrary website URLs are not opened. Links to destinations without a native implementation remain a documented parity gap. Workflow #622 passed Dart analysis, all widget tests, Android debug APK build, and artifact publication for `e2e3873cb2a2650f373f155dbdd770bed23e1e83`. No physical-device acceptance is claimed.
+
+Online deployment remains a release gate: the artifact is debug-only and points to the local XAMPP test API. Production must use a verified HTTPS API host and must not expose XAMPP publicly.
