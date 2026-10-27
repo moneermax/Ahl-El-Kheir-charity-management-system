@@ -125,12 +125,12 @@ class _SuspensionCasesPageState extends State<SuspensionCasesPage> {
 
   Future<void> createSuspension() async {
     if (!canCreate || creating || !mounted) return;
-    final queryController = TextEditingController();
+    String queryText = '';
     List<Map<String, dynamic>> options = [];
     bool searching = false;
     String? searchError;
     Future<void> search(StateSetter setDialogState) async {
-      final query = queryController.text.trim();
+      final query = queryText.trim();
       if (query.length < 2) {
         setDialogState(() => searchError = t('أدخل حرفين على الأقل للبحث.', 'Enter at least two characters to search.'));
         return;
@@ -150,18 +150,19 @@ class _SuspensionCasesPageState extends State<SuspensionCasesPage> {
       context: context,
       builder: (dialogContext) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
+          scrollable: true,
           title: Text(t('تعليق جديد', 'New suspension')),
           content: SizedBox(width: 460, child: Column(mainAxisSize: MainAxisSize.min, children: [
             Text(t('ابحث عن الأسرة أو اليتيم. تظهر النتائج وفق صلاحيات حسابك.', 'Search for a family or child. Results are scoped to your account permissions.')),
             const SizedBox(height: 12),
-            TextField(key: const ValueKey('suspension-search'), controller: queryController, onSubmitted: (_) => search(setDialogState),
+            TextField(key: const ValueKey('suspension-search'), onChanged: (value) => queryText = value, onSubmitted: (_) => search(setDialogState),
               decoration: InputDecoration(labelText: t('اسم أو كود الأسرة أو اسم اليتيم', 'Family name/code or child name'), border: const OutlineInputBorder())),
             Align(alignment: AlignmentDirectional.centerEnd, child: TextButton.icon(onPressed: searching ? null : () => search(setDialogState),
               icon: const Icon(Icons.search_rounded), label: Text(t('بحث', 'Search')))),
             if (searchError != null) Padding(padding: const EdgeInsets.only(bottom: 8), child: Text(searchError!, style: TextStyle(color: Theme.of(context).colorScheme.error))),
             if (searching) const LinearProgressIndicator(),
             if (!searching && options.isEmpty) Padding(padding: const EdgeInsets.all(10), child: Text(t('لا توجد نتائج. أدخل عبارة بحث أخرى.', 'No results. Try another search.'))),
-            if (options.isNotEmpty) SizedBox(height: 230, child: ListView.builder(shrinkWrap: true, itemCount: options.length, itemBuilder: (context, index) {
+            if (options.isNotEmpty) SizedBox(height: 180, child: ListView.builder(shrinkWrap: true, itemCount: options.length, itemBuilder: (context, index) {
               final option = options[index];
               final isChild = option['entity_type'] == 'child';
               final code = option['family_code']?.toString() ?? '';
@@ -178,13 +179,13 @@ class _SuspensionCasesPageState extends State<SuspensionCasesPage> {
         ),
       ),
     );
-    queryController.dispose();
     if (selected == null || !mounted) return;
-    final notesController = TextEditingController();
+    String notesText = '';
     String reason = 'other';
     final details = await showDialog<Map<String, dynamic>>(
       context: context,
       builder: (dialogContext) => StatefulBuilder(builder: (context, setDialogState) => AlertDialog(
+        scrollable: true,
         title: Text(t('تفاصيل التعليق', 'Suspension details')),
         content: Column(mainAxisSize: MainAxisSize.min, crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text((selected['entity_type'] == 'child' ? t('اليتيم: ', 'Child: ') : t('الأسرة: ', 'Family: ')) + (selected['entity_name']?.toString() ?? '') + ' · ' + (selected['family_code']?.toString() ?? '')),
@@ -199,15 +200,14 @@ class _SuspensionCasesPageState extends State<SuspensionCasesPage> {
             ],
             onChanged: (value) { if (value != null) setDialogState(() => reason = value); }),
           const SizedBox(height: 12),
-          TextField(key: const ValueKey('suspension-notes'), controller: notesController, maxLines: 3, decoration: InputDecoration(labelText: t('ملاحظات', 'Notes'), border: const OutlineInputBorder())),
+          TextField(key: const ValueKey('suspension-notes'), onChanged: (value) => notesText = value, maxLines: 3, decoration: InputDecoration(labelText: t('ملاحظات', 'Notes'), border: const OutlineInputBorder())),
         ]),
         actions: [
           TextButton(onPressed: () => Navigator.pop(dialogContext), child: Text(t('إلغاء', 'Cancel'))),
-          FilledButton(onPressed: () => Navigator.pop(dialogContext, {'reason': reason, 'notes': notesController.text.trim()}), child: Text(t('متابعة', 'Continue'))),
+          FilledButton(onPressed: () => Navigator.pop(dialogContext, {'reason': reason, 'notes': notesText.trim()}), child: Text(t('متابعة', 'Continue'))),
         ],
       )),
     );
-    notesController.dispose();
     if (details == null || !mounted) return;
     final confirmed = await showDialog<bool>(context: context, builder: (dialogContext) => AlertDialog(
       title: Text(t('تأكيد التعليق؟', 'Confirm suspension?')),
