@@ -166,6 +166,11 @@ $testAssignedNannyAssignmentId = 0;
 $testBatchTransferTransactionId = 0;
 $testBatchTransferJournalId = 0;
 $testAccountId = 0;
+$testOrdinaryApproveTransactionId = 0;
+$testOrdinaryReturnTransactionId = 0;
+$testOrdinarySelfTransactionId = 0;
+$testOrdinaryJournalId = 0;
+$testOrdinaryCreatorId = 0;
 $testJournalEntryId = 0;
 $testVoucherId = 0;
 $testManualJournalEntryId = 0;
@@ -613,6 +618,107 @@ try {
     sort($scopedIds); sort($expectedIds);
     mobileApiExpect($staffNannies['status']===200 && $scopedIds===$expectedIds, 'accountant staff sees only active nannies assigned to the authenticated account');
     $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'],$userId]);
+
+
+    $ordinaryReviewUnauth = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php');
+    mobileApiExpect($ordinaryReviewUnauth['status'] === 401, 'ordinary FM transaction review requires authentication');
+    $otherCreatorStmt = $pdo->prepare('SELECT id FROM users WHERE id <> ? ORDER BY id LIMIT 1');
+    $otherCreatorStmt->execute([$userId]);
+    $testOrdinaryCreatorId = (int)($otherCreatorStmt->fetchColumn() ?: 0);
+    if ($testOrdinaryCreatorId < 1) throw new RuntimeException('Ordinary transaction review tests require a second user fixture.');
+    $makeOrdinaryTransaction = static function (string $suffix, int $creatorId) use ($pdo): int {
+        $code = 'MOB-ORD-FM-' . $suffix . '-' . bin2hex(random_bytes(4));
+        $stmt = $pdo->prepare(
+            "INSERT INTO transactions
+                (transaction_code, amount, currency_code, payment_method, transaction_date, status,
+                 created_by, transaction_type, purpose, submitted_at, description)
+             VALUES (?, 125.00, 'SDG', 'cash', CURDATE(), 'pending_fm_review', ?, 'general_donation', 'general_donation', NOW(), ?)"
+        );
+        $stmt->execute([$code, $creatorId, 'Mobile ordinary FM review integration fixture']);
+        return (int)$pdo->lastInsertId();
+    };
+    $testOrdinaryApproveTransactionId = $makeOrdinaryTransaction('APPROVE', $testOrdinaryCreatorId);
+    $testOrdinaryReturnTransactionId = $makeOrdinaryTransaction('RETURN', $testOrdinaryCreatorId);
+    $testOrdinarySelfTransactionId = $makeOrdinaryTransaction('SELF', $userId);
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $ordinaryQueue = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'GET', null, $adminToken, 20);
+    $ordinaryPending = $ordinaryQueue['json']['data']['pending'] ?? [];
+    $ordinaryPendingIds = array_map(static fn(array $row): int => (int)$row['id'], is_array($ordinaryPending) ? $ordinaryPending : []);
+    mobileApiExpect($ordinaryQueue['status'] === 200
+        && in_array($testOrdinaryApproveTransactionId, $ordinaryPendingIds, true)
+        && in_array($testOrdinaryReturnTransactionId, $ordinaryPendingIds, true),
+        'Financial Manager sees pending ordinary transactions in the native review API');
+
+    $selfReview = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'POST', [
+        'action' => 'approve', 'transaction_id' => $testOrdinarySelfTransactionId,
+    ], $adminToken, 20);
+    mobileApiExpect($selfReview['status'] === 409
+        && (string)$pdo->query('SELECT status FROM transactions WHERE id=' . $testOrdinarySelfTransactionId)->fetchColumn() === 'pending_fm_review'
+        && (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type='transaction' AND reference_id=" . $testOrdinarySelfTransactionId)->fetchColumn() === 0,
+        'transaction creator cannot approve their own ordinary transaction');
+
+    $returnMissingReason = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'POST', [
+        'action' => 'return', 'transaction_id' => $testOrdinaryReturnTransactionId,
+    ], $adminToken, 20);
+    mobileApiExpect($returnMissingReason['status'] === 422, 'ordinary transaction return requires a reason');
+    $returnResult = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'POST', [
+        'action' => 'return', 'transaction_id' => $testOrdinaryReturnTransactionId, 'return_reason' => 'Attach a clearer receipt',
+    ], $adminToken, 20);
+    $returnedRow = $pdo->query('SELECT status,fm_reviewed_by,fm_review_reason FROM transactions WHERE id=' . $testOrdinaryReturnTransactionId)->fetch(PDO::FETCH_ASSOC) ?: [];
+    $returnJournalCount = (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type='transaction' AND reference_id=" . $testOrdinaryReturnTransactionId)->fetchColumn();
+    mobileApiExpect($returnResult['status'] === 200
+        && ($returnedRow['status'] ?? '') === 'returned'
+        && (int)($returnedRow['fm_reviewed_by'] ?? 0) === $userId
+        && ($returnedRow['fm_review_reason'] ?? '') === 'Attach a clearer receipt'
+        && $returnJournalCount === 0,
+        'ordinary transaction return stores reviewer and reason without posting a journal');
+
+    $approveResult = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'POST', [
+        'action' => 'approve', 'transaction_id' => $testOrdinaryApproveTransactionId,
+    ], $adminToken, 20);
+    $testOrdinaryJournalId = (int)($approveResult['json']['data']['journal_id'] ?? 0);
+    $approvedRow = $pdo->query('SELECT status,fm_reviewed_by,fm_review_reason FROM transactions WHERE id=' . $testOrdinaryApproveTransactionId)->fetch(PDO::FETCH_ASSOC) ?: [];
+    $journalCheck = $pdo->prepare(
+        "SELECT je.status,je.reference_type,je.reference_id,je.created_by,
+                COUNT(jl.id) line_count,ROUND(COALESCE(SUM(jl.debit),0),2) debit_total,
+                ROUND(COALESCE(SUM(jl.credit),0),2) credit_total
+         FROM journal_entries je LEFT JOIN journal_lines jl ON jl.entry_id=je.id
+         WHERE je.id=? GROUP BY je.id"
+    );
+    $journalCheck->execute([$testOrdinaryJournalId]);
+    $postedJournal = $journalCheck->fetch(PDO::FETCH_ASSOC) ?: [];
+    mobileApiExpect($approveResult['status'] === 200
+        && ($approvedRow['status'] ?? '') === 'posted'
+        && (int)($approvedRow['fm_reviewed_by'] ?? 0) === $userId
+        && $approvedRow['fm_review_reason'] === null
+        && $testOrdinaryJournalId > 0
+        && ($postedJournal['status'] ?? '') === 'posted'
+        && ($postedJournal['reference_type'] ?? '') === 'transaction'
+        && (int)($postedJournal['reference_id'] ?? 0) === $testOrdinaryApproveTransactionId
+        && (int)($postedJournal['created_by'] ?? 0) === $userId
+        && (int)($postedJournal['line_count'] ?? 0) >= 2
+        && (float)($postedJournal['debit_total'] ?? 0) === (float)($postedJournal['credit_total'] ?? -1),
+        'ordinary transaction approval and balanced journal commit atomically');
+
+    $duplicateApprove = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'POST', [
+        'action' => 'approve', 'transaction_id' => $testOrdinaryApproveTransactionId,
+    ], $adminToken, 20);
+    $approveJournalCount = (int)$pdo->query("SELECT COUNT(*) FROM journal_entries WHERE reference_type='transaction' AND reference_id=" . $testOrdinaryApproveTransactionId)->fetchColumn();
+    mobileApiExpect($duplicateApprove['status'] === 409 && $approveJournalCount === 1,
+        'repeated ordinary transaction approval is rejected without duplicate journal posting');
+
+    $ordinaryHistory = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'GET', null, $adminToken, 20);
+    $historyRows = $ordinaryHistory['json']['data']['history'] ?? [];
+    $historyIds = array_map(static fn(array $row): int => (int)$row['id'], is_array($historyRows) ? $historyRows : []);
+    mobileApiExpect($ordinaryHistory['status'] === 200
+        && in_array($testOrdinaryReturnTransactionId, $historyIds, true)
+        && in_array($testOrdinaryApproveTransactionId, $historyIds, true),
+        'ordinary transaction review history includes returned and approved decisions');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+    $ordinaryDenied = mobileApiRequest('/api/v1/accounting/fm_transaction_review.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect($ordinaryDenied['status'] === 403, 'ordinary transaction review denies non-FM roles');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
 
     $policyUnauthenticated = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET');
     mobileApiExpect($policyUnauthenticated['status'] === 401, 'incentive policy requires bearer authentication');
@@ -2933,6 +3039,21 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
+    foreach ([$testOrdinaryApproveTransactionId, $testOrdinaryReturnTransactionId, $testOrdinarySelfTransactionId] as $ordinaryTransactionId) {
+        if ($ordinaryTransactionId <= 0) continue;
+        $ordinaryJournalStmt = $pdo->prepare("SELECT id FROM journal_entries WHERE reference_type IN ('transaction','transaction_void') AND reference_id=?");
+        $ordinaryJournalStmt->execute([$ordinaryTransactionId]);
+        foreach ($ordinaryJournalStmt->fetchAll(PDO::FETCH_COLUMN) as $ordinaryJournalId) {
+            $pdo->prepare('DELETE FROM journal_lines WHERE entry_id=?')->execute([(int)$ordinaryJournalId]);
+            $pdo->prepare('DELETE FROM journal_entries WHERE id=?')->execute([(int)$ordinaryJournalId]);
+        }
+        $pdo->prepare("DELETE FROM audit_log WHERE entity_type='transactions' AND entity_id=?")->execute([$ordinaryTransactionId]);
+        $pdo->prepare('DELETE FROM transactions WHERE id=?')->execute([$ordinaryTransactionId]);
+    }
+    if ($testOrdinaryCreatorId > 0) {
+        $pdo->prepare("DELETE FROM notifications WHERE recipient_user_id=? AND title IN ('تم اعتماد الدفعة','تم إرجاع الدفعة للتعديل') AND created_at>=?")
+            ->execute([$testOrdinaryCreatorId, $testStart]);
+    }
     if ($testAssignedNannyAssignmentId > 0) $pdo->prepare('DELETE FROM accountant_nanny_assignments WHERE id=?')->execute([$testAssignedNannyAssignmentId]);
     if ($testOrphanGroupId > 0) {
         $pdo->prepare('DELETE FROM nanny_group_assignments WHERE group_id=?')->execute([$testOrphanGroupId]);
