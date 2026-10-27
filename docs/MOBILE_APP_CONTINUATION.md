@@ -1262,3 +1262,18 @@ Flutter analysis, widget tests, Android debug APK build, and artifact publicatio
 - Flutter run `40452694443` passed analysis, 141 tests, Android debug APK build, provenance, and artifact publication. Source `d6cab6772b3e2683434a1bb927d62ec55c5be9c6`; artifact ID `12710904687`; SHA-256 `eaf1ecc57262b1a71329dbcdb85dfb23121d478912a81013b6d3225df3e71fd8`.
 - No migration was added. Local XAMPP/API and physical-device acceptance remain pending.
 - Next: inspect and implement the Incentive Policy native workflow from the current web implementation, without assuming policy or approval rules.
+
+
+## 2026-10-27 — Native Incentive Policy screen CI verification
+
+The existing web incentive-policy workflow was audited and exposed natively in Flutter using `api/v1/hr/incentive_policy.php` and `mobile/ahl_el_kheir_app/lib/incentive_policy_page.dart`. The API preserves the existing role boundaries: HR Manager manages drafts/categories/custom fields and submits policies; General Manager reviews/approves/rejects or withdraws approval; Financial Manager activates approved versions. The policy lifecycle continues to be server-authoritative, including effective-date ordering, required custom-field validation, approval history, and protected active-policy behavior. No duplicate route was added and no policy R5 or production data was changed.
+
+Verification evidence:
+- Flutter Android workflow [40455075748](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40455075748), run #605, completed successfully at source revision `729030ff00536cb567946ef41a73ddb6ea49feaa`: Dart analysis, Flutter tests, debug APK build, build provenance, and artifact publication all passed.
+- Artifact `ahl-el-kheir-flutter-android-debug-apk`, ID `12712411159`, size 102,453,014 bytes, SHA-256 `a48c86815476cdfca6e4e2c23319fbf79fa0228385ea7a393b3a6a228fb8e6ef`, expires 2026-11-26.
+- The latest main head `7e68238bb506f08779e4055b91d01cb9981f8d3a` has successful Salary Advance Verification and Mobile API Auth Integration workflows. The salary verification run's migration/schema and PHP lint jobs passed; the dedicated API-auth job passed.
+- Runs #602–#604 are historical failures and #605 is the successful recovery build. No workflow was left running at the time of inspection.
+
+Scope boundary: this closes the **native Incentive Policy screen's CI/build verification**, not the entire employee-incentives business module. The module continuation document still records real-browser acceptance gaps for project PM-to-FM closure notices, provisional notice inbox behavior, and project-team assignment UI. Do not change active R5, recreate deleted disposable incentive databases, or repeat closed tests without concrete regression evidence. Local XAMPP/API and physical-device acceptance remain unverified.
+
+Next native role-tool gap: GM Salary Advance Waiver. Inspect the existing FM preparation / GM review / FM execution workflow, exact role guards, schema, and accounting/payroll effects before adding any API or Flutter code. Do not add schema or alter closed waiver behavior unless source evidence proves it necessary.
