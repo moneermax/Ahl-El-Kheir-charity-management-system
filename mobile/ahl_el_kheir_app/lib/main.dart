@@ -242,17 +242,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
   }
 
-  Future<void> testApiConnection() async {
-    final result = await probeApiEndpoint(apiBaseUrl, english: english);
-    final context = navigatorKey.currentContext;
-    if (context == null || !context.mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-      content: Text(result.message),
-      duration: Duration(seconds: result.success ? 4 : 8),
-    ));
-  }
-
-  @override
+@override
   void initState() {
     super.initState();
     restore();
@@ -290,79 +280,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     }
   }
 
-  Future<void> configureApiBaseUrl() async {
-    final controller = TextEditingController(text: apiBaseUrl);
-    final value = await showDialog<String>(
-      context: navigatorKey.currentContext!,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(english ? 'API server address' : 'عنوان خادم API'),
-        content: SizedBox(
-          width: 420,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                english
-                    ? 'Enter the full API URL ending in /api/v1. For a phone, use your computer’s reachable LAN IP, not localhost.'
-                    : 'أدخل رابط API كاملاً وينتهي بـ /api/v1. عند استخدام الهاتف، أدخل عنوان IP المحلي القابل للوصول من الهاتف، وليس localhost.',
-                style: const TextStyle(height: 1.45),
-              ),
-              const SizedBox(height: 14),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                keyboardType: TextInputType.url,
-                textDirection: TextDirection.ltr,
-                decoration: const InputDecoration(
-                  labelText: 'http://192.168.x.x:8081/AhlElKheir/api/v1',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(dialogContext),
-            child: Text(english ? 'Cancel' : 'إلغاء'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(dialogContext, controller.text),
-            child: Text(english ? 'Save server' : 'حفظ الخادم'),
-          ),
-        ],
-      ),
-    );
-    controller.dispose();
-    if (value == null || !mounted) return;
-    final normalized = normalizeApiBaseUrl(value);
-    if (normalized == null) {
-      ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-        SnackBar(
-          content: Text(english
-              ? 'Invalid API URL. Use http:// or https:// and end the path with /api/v1.'
-              : 'رابط API غير صالح. استخدم http:// أو https:// وأنهِ المسار بـ /api/v1.'),
-          duration: const Duration(seconds: 5),
-        ),
-      );
-      return;
-    }
-    await storage.write(key: apiBaseUrlKey, value: normalized);
-    await storage.delete(key: tokenKey);
-    if (!mounted) return;
-    setState(() {
-      apiBaseUrl = normalized;
-      user = null;
-      error = null;
-      loading = false;
-    });
-    ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
-      SnackBar(content: Text(english ? 'API server saved. Sign in again.' : 'تم حفظ خادم API. سجّل الدخول مرة أخرى.')),
-    );
-  }
-
-  Future<void> completeForcedPasswordChange(String username, String currentPassword, String newPassword, String confirmPassword) async {
+Future<void> completeForcedPasswordChange(String username, String currentPassword, String newPassword, String confirmPassword) async {
     final uri = Uri.parse('${apiBaseUrl.replaceFirst(RegExp(r'/+$'), '')}/auth/complete_forced_password_change.php');
     final response = await http.post(
       uri,
@@ -2824,10 +2742,7 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
               english: english,
               toggle: () => setState(() => english = !english),
               submit: login,
-              apiBaseUrl: apiBaseUrl,
               buildRevision: mobileBuildRevision,
-              onConfigureApi: configureApiBaseUrl,
-              onTestApi: testApiConnection,
               onForgotPassword: () async => openPasswordRecoveryPage(),
             )
           : Scaffold(
@@ -3674,14 +3589,11 @@ class OrganizationLogo extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key, required this.english, required this.toggle, required this.submit, required this.apiBaseUrl, required this.buildRevision, required this.onConfigureApi, required this.onTestApi, required this.onForgotPassword});
+  const LoginPage({super.key, required this.english, required this.toggle, required this.submit, required this.buildRevision, required this.onForgotPassword});
   final bool english;
   final VoidCallback toggle;
   final Future<void> Function(String, String) submit;
-  final String apiBaseUrl;
   final String buildRevision;
-  final Future<void> Function() onConfigureApi;
-  final Future<void> Function() onTestApi;
   final Future<void> Function() onForgotPassword;
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -3736,34 +3648,6 @@ class _LoginPageState extends State<LoginPage> {
                       spacing: 8,
                       runSpacing: 8,
                       children: [
-                        TextButton.icon(
-                          onPressed: widget.onConfigureApi,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.white.withValues(alpha: 0.10),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              side: BorderSide(color: Colors.white.withValues(alpha: 0.24)),
-                            ),
-                          ),
-                          icon: const Icon(Icons.dns_outlined, size: 18),
-                          label: Text(en ? 'API server' : 'الخادم'),
-                        ),
-                        TextButton.icon(
-                          onPressed: widget.onTestApi,
-                          style: TextButton.styleFrom(
-                            foregroundColor: Colors.white,
-                            backgroundColor: Colors.white.withValues(alpha: 0.10),
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(24),
-                              side: BorderSide(color: Colors.white.withValues(alpha: 0.24)),
-                            ),
-                          ),
-                          icon: const Icon(Icons.wifi_tethering_rounded, size: 18),
-                          label: Text(en ? 'Test connection' : 'اختبار الاتصال'),
-                        ),
                         TextButton.icon(
                           onPressed: widget.toggle,
                           style: TextButton.styleFrom(
@@ -3865,19 +3749,6 @@ class _LoginPageState extends State<LoginPage> {
                                   : Text(en ? 'Sign in' : 'دخول'),
                               ),
                               const SizedBox(height: 17),
-                              Text(
-                                en ? 'Secure access to Ahl El Kheir' : 'دخول آمن إلى نظام أهل الخير',
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF756B84), fontSize: 12),
-                              ),
-                              const SizedBox(height: 7),
-                              SelectableText(
-                                widget.apiBaseUrl,
-                                textDirection: TextDirection.ltr,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(color: Color(0xFF756B84), fontSize: 10),
-                              ),
-                              const SizedBox(height: 4),
                               Text(
                                 'Build: ${widget.buildRevision.length > 12 ? widget.buildRevision.substring(0, 12) : widget.buildRevision}',
                                 textAlign: TextAlign.center,
