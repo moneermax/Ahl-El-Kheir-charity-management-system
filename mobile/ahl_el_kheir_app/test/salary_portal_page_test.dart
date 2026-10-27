@@ -19,7 +19,7 @@ void main() {
     await tester.tap(find.text('Salary advances'));
     expect(opened, ['modules/hr/salary_advance_dashboard.php']);
     await tester.tap(find.text('Payroll management'));
-    expect(opened, ['modules/hr/payroll.php']);
+    expect(opened, ['modules/hr/salary_advance_dashboard.php', 'modules/hr/payroll.php']);
     await tester.pumpWidget(const SizedBox.shrink());
   });
 

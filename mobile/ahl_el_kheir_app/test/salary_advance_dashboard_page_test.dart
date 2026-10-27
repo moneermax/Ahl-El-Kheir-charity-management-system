@@ -29,6 +29,9 @@ void main() {
     expect(find.text('Salary-advance dashboard'), findsOneWidget);
     expect(find.text('Pending FM review'), findsOneWidget);
     expect(find.text('Pending accounting'), findsOneWidget);
+    final listScrollable = find.descendant(of: find.byType(ListView).first, matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.text('SAR-2026-00001'), 300, scrollable: listScrollable);
+    await tester.pumpAndSettle();
     expect(find.text('SAR-2026-00001'), findsOneWidget);
     expect(find.text('Test Employee'), findsOneWidget);
     expect(find.text('Disbursed'), findsOneWidget);
@@ -54,6 +57,9 @@ void main() {
     await tester.tap(find.text('إعادة المحاولة'));
     await tester.pumpAndSettle();
     expect(calls, 2);
+    final listScrollable = find.descendant(of: find.byType(ListView).first, matching: find.byType(Scrollable)).first;
+    await tester.scrollUntilVisible(find.text('لا توجد طلبات سابقة في السجل.'), 300, scrollable: listScrollable);
+    await tester.pumpAndSettle();
     expect(find.text('لا توجد طلبات سابقة في السجل.'), findsOneWidget);
   });
 }
