@@ -13,6 +13,7 @@ import 'my_salary_statements_page.dart';
 import 'leave_requests_page.dart';
 import 'sponsors_page.dart';
 import 'supervisors_page.dart';
+import 'orphan_groups_page.dart';
 import 'families_page.dart';
 import 'admin_dashboard_page.dart';
 import 'admin_finance_overview_page.dart';
@@ -530,6 +531,22 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
 
   Future<void> openNativeTool(String relativePath, {Map<String, String>? queryParameters}) async {
     // Native-only policy: never launch a website, browser, or external application.
+    if (relativePath == 'modules/deputy_gm/groups.php') {
+      if (!['vice_general_manager', 'vgm'].contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Orphan-group management is restricted to the Vice General Manager.' : 'إدارة مجموعات الأيتام متاحة لنائب المدير العام فقط.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => OrphanGroupsPage(
+          english: english,
+          loadPage: loadOrphanGroups,
+          submitAction: submitOrphanGroupAction,
+        ),
+      ));
+      return;
+    }
     if (relativePath == 'modules/accounting/vouchers.php') {
       const viewRoles = ['admin', 'financial_manager', 'accountant_staff', 'accountant', 'general_manager', 'vice_general_manager'];
       if (!viewRoles.contains(user?['role_code']?.toString())) {
@@ -2517,6 +2534,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       throw const ApiFailure('Authentication is required.', statusCode: 401);
     }
     return call('POST', 'projects/progress_update.php', token: token, body: body);
+  }
+
+  Future<Map<String, dynamic>> loadOrphanGroups(int? groupId) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final suffix = groupId == null ? '' : '?group_id=' + groupId.toString();
+    return call('GET', 'deputy_gm/groups.php' + suffix, token: token);
+  }
+
+  Future<Map<String, dynamic>> submitOrphanGroupAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'deputy_gm/groups.php', body: body, token: token);
   }
 
   Future<Map<String, dynamic>> loadSupervisors(String query, bool showArchived, int page) async {

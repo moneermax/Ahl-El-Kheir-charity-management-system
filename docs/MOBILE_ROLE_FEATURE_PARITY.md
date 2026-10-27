@@ -481,3 +481,14 @@ The API-side metric change passed Mobile API Auth Integration run #218 (40469806
 ## 2026-10-27 — Flutter GM attention widget-test selector correction (CI pending)
 
 Android workflow #610 (run ID 40470131963) failed in the new GM attention test, not during Dart analysis or APK compilation. The exact failure was `Bad state: Too many elements` from `tester.ensureVisible(find.text('Families awaiting action'))` because the text finder matched more than one widget. The test now selects the matching `ListTile` ancestor and uses that tile for visibility and tap, avoiding ambiguous text selection. No production app behavior changed in this correction. Await the next sequential Flutter workflow before claiming the test/build passes; do not push another code change until it finishes.
+
+
+## 2026-10-27 — Native VGM orphan-group management implementation submitted for CI
+
+The next mobile parity slice adds a bearer-authenticated API at `api/v1/deputy_gm/groups.php` and a native Flutter screen at `mobile/ahl_el_kheir_app/lib/orphan_groups_page.dart`. The existing VGM role tool now dispatches to this screen and is marked IN APP in the source. The API authorizes only the canonical Vice General Manager role; the UI role label is not treated as authorization.
+
+The implementation follows the existing `modules/deputy_gm/groups.php` workflow and the checked-in `orphan_groups`, `group_children`, `nanny_group_assignments`, and `monthly_disbursements` schema. It adds no migration, runtime DDL, or financial logic. It preserves group/member/nanny history, blocks member changes when a current-month disbursement exists, requires active-family/active-sponsorship eligibility for additions, keeps the transfer history, and allows permanent deletion only for never-used groups. Group lifecycle actions are restricted to the actions exposed by the existing web UI.
+
+Regression coverage has been added for VGM-only API access, list/detail, draft creation/edit, rejecting activation of an empty group, deleting a never-used draft, the native role-tool route, group/member display, and the current-month disbursement UI lock.
+
+**Verification status: PENDING CI.** Do not claim API integration, PHP syntax, Flutter widget tests, Android APK build, local XAMPP/API acceptance, or physical-device acceptance until the corresponding results are observed for the current commit. The existing group workflow and financial acceptance boundaries have not been changed. Next gate: inspect the API integration and Flutter workflow results sequentially; if either fails, diagnose its exact failure before editing or pushing another commit.
