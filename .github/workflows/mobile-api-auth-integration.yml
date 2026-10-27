@@ -121,6 +121,7 @@ jobs:
           php -l api/v1/accounting/gm_reconciliation.php
           php -l api/v1/administration/winback.php
           php -l api/v1/deputy_gm/groups.php
+          php -l api/v1/fina/report.php
           php -l api/v1/search/sponsors.php
           php -l api/v1/search/documents.php
           php -l api/v1/search/document_file.php

@@ -1543,6 +1543,8 @@ try {
     mobileApiExpect($nannyFinaSponsors['status'] === 403, 'nanny cannot use Fina sponsor lookup');
     $nannyFinaReview = mobileApiRequest('/api/v1/fina/review.php', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinaReview['status'] === 403, 'nanny cannot view Fina review/history');
+    $nannyFinaReport = mobileApiRequest('/api/v1/fina/report.php', 'GET', null, $nannyFinaToken);
+    mobileApiExpect($nannyFinaReport['status'] === 403, 'nanny cannot view the Fina collection report');
     $nannyFinaReceipt = mobileApiRequest('/api/v1/fina/receipt.php?id=1', 'GET', null, $nannyFinaToken);
     mobileApiExpect($nannyFinaReceipt['status'] === 403, 'nanny cannot access Fina receipt delivery');
     $nannyConfirmWithoutReceipt = mobileApiRequest('/api/v1/admin/disbursements_action.php', 'POST', [
@@ -1646,6 +1648,31 @@ try {
         && ($finaQueue['json']['data']['can_review'] ?? false) === true
         && $foundFinaPending,
         'Fina pending review queue exposes the newly registered collection'
+    );
+
+    $finaReport = mobileApiRequest('/api/v1/fina/report.php?from=' . date('Y-m-d') . '&to=' . date('Y-m-d'), 'GET', null, $adminToken, 20);
+    $finaReportData = $finaReport['json']['data'] ?? [];
+    $finaReportCurrency = array_values(array_filter($finaReportData['summary'] ?? [], static fn($row) => ($row['currency_code'] ?? '') === 'SDG'));
+    $finaReportCash = array_values(array_filter($finaReportData['methods'] ?? [], static fn($row) => ($row['payment_method'] ?? '') === 'cash'));
+    $finaReportPerson = array_values(array_filter($finaReportData['sources'] ?? [], static fn($row) => ($row['source_type'] ?? '') === 'person'));
+    mobileApiExpect(
+        $finaReport['status'] === 200
+        && ($finaReportData['from'] ?? '') === date('Y-m-d')
+        && ($finaReportData['to'] ?? '') === date('Y-m-d')
+        && isset($finaReportData['reviewed']['total_count'], $finaReportData['reviewed']['approved_amount'])
+        && count($finaReportCurrency) === 1
+        && (int)$finaReportCurrency[0]['pending_count'] >= 1
+        && count($finaReportCash) === 1
+        && (int)$finaReportCash[0]['pending_count'] >= 1
+        && count($finaReportPerson) === 1
+        && (int)$finaReportPerson[0]['total_count'] >= 1,
+        'Fina report returns date-scoped status, payment-method and source aggregates from the imported schema'
+    );
+    $invalidFinaReport = mobileApiRequest('/api/v1/fina/report.php?from=2026-02-30&to=2026-03-01', 'GET', null, $adminToken);
+    mobileApiExpect(
+        $invalidFinaReport['status'] === 422
+        && ($invalidFinaReport['json']['error']['code'] ?? '') === 'invalid_date_range',
+        'Fina report rejects impossible dates before querying'
     );
 
     $selfApprove = mobileApiRequest('/api/v1/fina/review.php', 'POST', [
