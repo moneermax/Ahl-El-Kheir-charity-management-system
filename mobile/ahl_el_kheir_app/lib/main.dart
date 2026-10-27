@@ -57,6 +57,7 @@ import 'payroll_policy_page.dart';
 import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
+import 'gm_reconciliation_page.dart';
 import 'employment_states_page.dart';
 import 'orphan_forms_index_page.dart';
 import 'package:file_picker/file_picker.dart';
@@ -604,6 +605,19 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/accounting/gm_reconciliation.php') {
+      const allowedRoles = ['admin', 'general_manager', 'vice_general_manager', 'financial_manager'];
+      if (!allowedRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Reconciliation access is not available for this role.' : 'عرض المصالحة غير متاح لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => GmReconciliationPage(english: english, loadPage: loadGmReconciliation),
+      ));
+      return;
+    }
     if (relativePath == 'modules/hr/gm_payroll_period_history.php') {
       if (!['general_manager', 'gm'].contains(user?['role_code']?.toString())) {
         ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
@@ -1105,6 +1119,12 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('GET', 'hr/employment_states.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadGmReconciliation() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'accounting/gm_reconciliation.php', token: token);
   }
 
   Future<Map<String, dynamic>> loadGmPayrollHistory() async {
