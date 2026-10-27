@@ -2948,3 +2948,12 @@ Verification:
 - Local XAMPP/API and physical-device acceptance remain unverified.
 
 Next native role-tool gap to inspect against the existing web source is Incentive Policy; inspect its actual rules, permission matrix, and API/schema dependencies before changing it.
+
+
+## 2026-10-27 — Mobile continuation checkpoint correction
+
+The previous instruction to implement native Incentive Policy is superseded: the native screen and route are implemented and CI-verified. Flutter APK workflow #605 passed at source revision `729030ff00536cb567946ef41a73ddb6ea49feaa`; artifact ID `12712411159`; SHA-256 `a48c86815476cdfca6e4e2c23319fbf79fa0228385ea7a393b3a6a228fb8e6ef`. The latest main head `7e68238bb506f08779e4055b91d01cb9981f8d3a` has successful Salary Advance Verification and Mobile API Auth Integration workflows.
+
+Do not claim full employee-incentives module closure: its separate browser acceptance gaps remain recorded in `docs/HR_EMPLOYEE_INCENTIVES_CONTINUATION.md`. No local XAMPP/API or physical-device acceptance is claimed.
+
+Next mobile feature to audit: GM Salary Advance Waiver. Read `docs/HR_SALARY_ADVANCE_GM_WAIVER_CONTINUATION.md`, inspect `modules/hr/salary_advance_waiver_fm.php`, `modules/hr/salary_advance_waiver_gm.php`, `modules/hr/lib_salary_advance_waiver.php`, the migration/schema, and existing authenticated API conventions. Determine whether a mobile API already exists before adding one. Preserve the existing financial workflow and authorization exactly; do not reopen closed waiver tests or alter production financial semantics. Keep the app's distinct violet/amber/pink design, no browser handoff, and no overlapping workflows. Before starting any new workflow, inspect the latest run and stop a genuinely active obsolete run if needed.
