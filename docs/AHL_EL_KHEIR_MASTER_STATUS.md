@@ -5322,3 +5322,12 @@ The mobile app now has native coverage for modules/accounting/my_nannies.php: mo
 Verification: Mobile API auth integration #225 (https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40513189589) passed unauthenticated denial, administrator summary/detail, and Accountant Staff scope assertions. Flutter APK workflow #629 (https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40513730679) passed analysis, all tests, debug APK build, provenance, and publication. Artifact ID 12737979531, SHA-256 a2c819e4d0cd5afe8edd20b56b42ca33c12c56f78a24aefda151398d1b1fb7ca, expires 2026-11-26.
 
 Code commits: 204e74d1af2e129a690ab32e4328b24f1f91951f, 2499189543b039f0a1bc8e4c36c3d92a6b7bd249, 77e4926a620b57d7f222b91b39811722f6e8f201. This is CI/disposable-schema verification only; local XAMPP/API and physical-device acceptance remain open. The debug build still targets the LAN XAMPP API; do not expose XAMPP publicly. Online release requires a verified HTTPS API host.
+
+
+## 2026-10-27 — Native available-families list verified in CI
+
+The Flutter app now has a native, read-only available-families list for the existing Administration tool, with in-app family detail navigation. `GET api/v1/administration/available_families.php` follows the existing web eligibility query: family status is active/pending and no active sponsorship is linked through `family_children`. API authorization allows admin, general_manager, vice_general_manager, and administration; integration checks unauthenticated denial, Administration access/detail access, and financial_manager denial. Eligible ID sets are compared without assuming a stable tie order.
+
+Verification: Flutter workflow 40515806830 (#630) passed analysis, all tests, debug APK build, provenance, and artifact publication; artifact 12739941941, SHA-256 26cc42dd41e8616f409776dcd16f3a126d362c86e98df638013c96de117fac59. Mobile API integration 40516194914 (#228) passed on commit 952fcff2e147b91e73dfcaedf979ecb7dda15b0d. CI uses disposable MariaDB; local XAMPP/API and physical-device acceptance remain pending. The debug artifact targets the development API only; do not expose XAMPP publicly. Online release requires a verified HTTPS endpoint.
+
+Next: continue native parity only after inspecting each remaining NOT READY tool's actual web authorization, schema dependencies, and mutation semantics.

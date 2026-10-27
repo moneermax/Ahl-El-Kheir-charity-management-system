@@ -5613,3 +5613,12 @@ The modules/accounting/my_nannies.php role tool now opens a native Flutter overv
 Evidence: API integration run 40513189589 passed unauthenticated denial, summary/detail reads, and Accountant Staff scope assertions. Flutter run 40513730679 passed analysis, the complete widget suite, Android debug APK build, provenance, and artifact publication. Artifact 12737979531; SHA-256 a2c819e4d0cd5afe8edd20b56b42ca33c12c56f78a24aefda151398d1b1fb7ca; expires 2026-11-26. Commits: 204e74d1af2e129a690ab32e4328b24f1f91951f, 2499189543b039f0a1bc8e4c36c3d92a6b7bd249, 77e4926a620b57d7f222b91b39811722f6e8f201.
 
 Limitations: disposable CI database only; local XAMPP/API/database and physical-device acceptance remain unverified. The debug artifact uses the local development API. Do not expose XAMPP publicly; release requires a verified HTTPS API endpoint. Remaining mobile parity gaps remain open.
+
+
+## 2026-10-27 — Native available-families parity evidence
+
+- Native Flutter page: `available_families_page.dart`; entry path `modules/administration/available_families.php`; family details open in-app.
+- API: `api/v1/administration/available_families.php`, GET-only. Eligibility matches the existing web query for active/pending families with no active sponsorship connected through `family_children`. No data mutation or schema change was introduced.
+- Authorization evidence in integration test: unauthenticated request denied (401); admin listing succeeds; Administration listing and family-detail read succeed; financial_manager is denied (403). The test compares sorted eligible ID sets because equal sort-key ordering is unspecified in the web query.
+- Flutter workflow 40515806830 (#630): analysis, full widget tests, debug APK, provenance, publication all passed. Artifact 12739941941; SHA-256 26cc42dd41e8616f409776dcd16f3a126d362c86e98df638013c96de117fac59.
+- Mobile API integration workflow 40516194914 (#228): passed on `952fcff2e147b91e73dfcaedf979ecb7dda15b0d` against disposable MariaDB. This is not local-runtime or physical-device acceptance. Production still requires a verified HTTPS API host; never expose XAMPP publicly.

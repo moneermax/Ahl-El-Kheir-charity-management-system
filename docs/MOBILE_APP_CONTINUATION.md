@@ -1381,3 +1381,15 @@ Implemented AssignedNanniesPage for modules/accounting/my_nannies.php. It suppor
 - Code commits: 204e74d1af2e129a690ab32e4328b24f1f91951f, 2499189543b039f0a1bc8e4c36c3d92a6b7bd249, 77e4926a620b57d7f222b91b39811722f6e8f201.
 
 CI evidence only. Local XAMPP/API/database and physical-device acceptance remain pending. The debug artifact targets the local development API; do not expose XAMPP publicly. Release requires a verified HTTPS API host.
+
+
+## 2026-10-27 — Native available-families list verified
+
+Implemented the native Flutter available-families list and in-app family detail navigation for `modules/administration/available_families.php`. `GET api/v1/administration/available_families.php` mirrors the web eligibility query (active/pending family with no active sponsorship through `family_children`) and permits only admin, general_manager, vice_general_manager, and administration. The integration test covers unauthenticated denial, Administration list/detail access, and financial_manager denial. It compares eligible ID sets, not order for equal sort keys.
+
+- API integration run 40516194914 (#228): PASS.
+- Flutter APK run 40515806830 (#630): PASS analysis, full widget tests, debug build, provenance, and publication.
+- Artifact 12739941941; SHA-256 26cc42dd41e8616f409776dcd16f3a126d362c86e98df638013c96de117fac59; expires 2026-11-26.
+- CI/disposable-database evidence only. Local XAMPP/API and phone testing remain pending. Do not expose XAMPP publicly; release requires a verified HTTPS API host.
+
+Next: inspect one remaining NOT READY role tool at a time before implementing it.

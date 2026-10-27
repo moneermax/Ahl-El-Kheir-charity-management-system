@@ -534,3 +534,12 @@ modules/accounting/my_nannies.php now has a native route and Flutter page backed
 Verification PASS: API integration #225 / run 40513189589 (https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40513189589) passed unauthenticated denial, administrator summary/detail, and Accountant Staff scope. Flutter APK #629 / run 40513730679 (https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40513730679) passed Dart analysis, all widget tests, debug APK build, provenance, and publication. Artifact ID 12737979531, SHA-256 a2c819e4d0cd5afe8edd20b56b42ca33c12c56f78a24aefda151398d1b1fb7ca, expires 2026-11-26.
 
 Local XAMPP/API and physical-device acceptance remain unverified. The artifact targets the local development API and is debug-only. Do not expose XAMPP publicly; online release requires a verified HTTPS API host. Native role parity remains incomplete; continue from current NOT READY tool paths only after reviewing their exact source and guards.
+
+
+## 2026-10-27 — Available families native parity verified in CI
+
+The Administration role's available-families tool is now native and read-only, with in-app family-detail navigation. API eligibility follows the existing web query: families in `active` or `pending` status without an active sponsorship linked through `family_children`. Only admin, general_manager, vice_general_manager, and administration can list this data. Integration coverage verifies unauthenticated denial, Administration listing/detail access, and financial_manager denial. Eligibility is compared as a set because the web query has no deterministic tie-breaker for equal child-count/monthly-need values.
+
+Flutter #630 / run 40515806830 passed analysis, widget tests, Android debug APK build, provenance, and artifact publication (artifact 12739941941; SHA-256 26cc42dd41e8616f409776dcd16f3a126d362c86e98df638013c96de117fac59). API integration #228 / run 40516194914 passed on commit 952fcff2e147b91e73dfcaedf979ecb7dda15b0d. Local XAMPP/API and physical-device acceptance remain open. The debug APK targets the local development API; do not expose XAMPP publicly. Online release needs a verified HTTPS endpoint.
+
+Remaining NOT READY paths must be inspected against their existing web role guards, schema and mutation workflows before implementation.
