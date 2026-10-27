@@ -531,6 +531,38 @@ void main() {
     }
   });
 
+  testWidgets('Trial balance is native only for the exact web-authorized roles', (tester) async {
+    for (final role in ['admin', 'financial_manager']) {
+      final opened = <String>[];
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RoleToolsSection(roleCode: role, english: true, onOpen: opened.add),
+          ),
+        ),
+      ));
+      expect(find.text('Trial balance'), findsOneWidget, reason: role);
+      final card = find.ancestor(of: find.text('Trial balance'), matching: find.byType(Card));
+      expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget, reason: role);
+      await tester.ensureVisible(find.text('Trial balance'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Trial balance'));
+      expect(opened, contains('modules/accounting/trial_balance.php'), reason: role);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+
+    for (final role in ['fm', 'finance', 'general_manager', 'vice_general_manager']) {
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RoleToolsSection(roleCode: role, english: true, onOpen: (_) {}),
+          ),
+        ),
+      ));
+      expect(find.text('Trial balance'), findsNothing, reason: role);
+    }
+  });
+
 }
 
 void _ignorePath(String path) {}

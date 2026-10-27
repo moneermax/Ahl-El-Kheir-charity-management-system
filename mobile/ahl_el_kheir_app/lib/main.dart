@@ -64,6 +64,7 @@ import 'incentive_verification_page.dart';
 import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
 import 'gm_reconciliation_page.dart';
+import 'trial_balance_page.dart';
 import 'sponsor_winback_page.dart';
 import 'incentive_policy_page.dart';
 import 'salary_advance_waiver_page.dart';
@@ -679,6 +680,24 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
       ));
       return;
     }
+    if (relativePath == 'modules/accounting/trial_balance.php') {
+      const allowedRoles = ['admin', 'financial_manager'];
+      if (!allowedRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english
+              ? 'Trial balance is restricted to administrator and Financial Manager.'
+              : 'ميزان المراجعة متاح للمسؤول والمدير المالي فقط.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => TrialBalancePage(
+          english: english,
+          loadReport: loadTrialBalance,
+        ),
+      ));
+      return;
+    }
     if (relativePath == 'modules/accounting/gm_reconciliation.php') {
       const allowedRoles = ['admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'financial_manager', 'fm', 'finance'];
       if (!allowedRoles.contains(user?['role_code']?.toString())) {
@@ -1254,6 +1273,16 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('POST', 'administration/winback.php', body: body, token: token);
+  }
+
+  Future<Map<String, dynamic>> loadTrialBalance(String from, String to) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    final query = <String>[];
+    if (from.isNotEmpty) query.add('from=' + Uri.encodeQueryComponent(from));
+    if (to.isNotEmpty) query.add('to=' + Uri.encodeQueryComponent(to));
+    final suffix = query.isEmpty ? '' : '?' + query.join('&');
+    return call('GET', 'accounting/trial_balance.php' + suffix, token: token);
   }
 
   Future<Map<String, dynamic>> loadGmReconciliation() async {

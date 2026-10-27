@@ -107,6 +107,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/sponsors/contacted_requests.php',
     'modules/accounting/disbursements.php',
     'modules/accounting/gm_reconciliation.php',
+    'modules/accounting/trial_balance.php',
     'modules/administration/winback.php',
     'modules/administration/available_families.php',
     'modules/hr/incentive_policy.php',
@@ -136,6 +137,10 @@ class RoleToolsSection extends StatelessWidget {
             t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة حملات استرجاع الكفلاء', 'Review sponsor win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
             if (role == 'admin') t('بوابة الرواتب والحوافز', 'Payroll and incentives portal', 'خدمات الرواتب والسلف والحوافز', 'Payroll, advances and incentive tools', 'modules/hr/salary_portal.php', Icons.payments_outlined),
           ]),
+          if (role == 'admin')
+            g('المراجعة المحاسبية', 'Accounting review', [
+              t('ميزان المراجعة', 'Trial balance', 'ملخص قراءة للقيود المحاسبية المُرحّلة', 'Read-only summary of posted journal entries', 'modules/accounting/trial_balance.php', Icons.scale_outlined),
+            ]),
         ];
       case 'general_manager':
       case 'gm':
@@ -179,6 +184,7 @@ class RoleToolsSection extends StatelessWidget {
             t('الحاضنات المعيّنات', 'Assigned nannies', 'متابعة الحاضنات المعيّنات والتحقق', 'Review assigned nannies and verification', 'modules/accounting/my_nannies.php', Icons.support_agent_outlined),
             if (role == 'financial_manager') t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات والصرف', 'Review monthly transfers and disbursements', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
             t('دليل الحسابات', 'Chart of accounts', 'الحسابات المحاسبية', 'Accounting accounts', 'modules/accounting/accounts.php', Icons.account_tree_outlined),
+            if (role == 'financial_manager') t('ميزان المراجعة', 'Trial balance', 'ملخص قراءة للقيود المحاسبية المُرحّلة', 'Read-only summary of posted journal entries', 'modules/accounting/trial_balance.php', Icons.scale_outlined),
             t('دفتر اليومية', 'Journal', 'قيود اليومية المحاسبية', 'Accounting journal entries', 'modules/accounting/journal.php', Icons.menu_book_outlined),
             t('السندات', 'Vouchers', 'سندات القبض والصرف', 'Receipt and payment vouchers', 'modules/accounting/vouchers.php', Icons.receipt_long_outlined),
             t('مراجعة المعاملات المالية', 'Financial transaction review', 'مراجعة المعاملات الواردة', 'Review incoming financial transactions', 'modules/accounting/fm_transaction_review.php', Icons.fact_check_outlined),
