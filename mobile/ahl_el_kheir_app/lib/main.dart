@@ -65,6 +65,7 @@ import 'gm_payroll_history_page.dart';
 import 'gm_payroll_report_page.dart';
 import 'gm_reconciliation_page.dart';
 import 'trial_balance_page.dart';
+import 'chart_of_accounts_page.dart';
 import 'sponsor_winback_page.dart';
 import 'incentive_policy_page.dart';
 import 'salary_advance_waiver_page.dart';
@@ -483,6 +484,17 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
         builder: (_) => VoucherPage(english: english, loadVouchers: loadVouchers, issueVoucher: issueVoucher, voidVoucher: voidVoucher),
       ));
+      return;
+    }
+    if (relativePath == 'modules/accounting/accounts.php') {
+      const viewRoles = ['admin', 'financial_manager', 'general_manager', 'vice_general_manager'];
+      if (!viewRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Chart of accounts access is not available for this role.' : 'دليل الحسابات غير متاح لهذا الدور.')),
+        );
+        return;
+      }
+      openChartOfAccountsPage();
       return;
     }
     if (relativePath == 'modules/accounting/journal.php') {
@@ -1033,6 +1045,24 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     return call('GET', 'accounting/vouchers.php$suffix', token: token);
   }
 
+  Future<Map<String, dynamic>> loadChartOfAccounts() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'accounting/accounts.php', token: token);
+  }
+
+  Future<Map<String, dynamic>> addChartAccount(Map<String, dynamic> input) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'accounting/accounts.php', token: token, body: input);
+  }
+
+  Future<Map<String, dynamic>> toggleChartAccount(int id) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'accounting/accounts.php', token: token, body: {'action': 'toggle_account', 'account_id': id});
+  }
+
   Future<Map<String, dynamic>> loadJournalEntries({required String from, required String to}) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
@@ -1066,6 +1096,18 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('POST', 'accounting/journal.php', token: token, body: {'action': 'void_manual_entry', 'entry_id': id, 'reason': reason});
+  }
+
+  void openChartOfAccountsPage() {
+    navigatorKey.currentState?.push(MaterialPageRoute<void>(
+      builder: (_) => ChartOfAccountsPage(
+        english: english,
+        roleCode: user?['role_code']?.toString() ?? '',
+        loadAccounts: loadChartOfAccounts,
+        addAccount: addChartAccount,
+        toggleAccount: toggleChartAccount,
+      ),
+    ));
   }
 
   void openJournalPage() {

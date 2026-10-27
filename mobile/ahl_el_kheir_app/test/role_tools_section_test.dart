@@ -584,6 +584,21 @@ void main() {
     }
   });
 
+
+  testWidgets('chart of accounts is native for Financial Manager', (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
+      child: RoleToolsSection(roleCode: 'financial_manager', english: true, onOpen: opened.add),
+    ))));
+    expect(find.text('Chart of accounts'), findsOneWidget);
+    final card = find.ancestor(of: find.text('Chart of accounts'), matching: find.byType(Card));
+    expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget);
+    await tester.ensureVisible(find.text('Chart of accounts'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Chart of accounts'));
+    expect(opened, contains('modules/accounting/accounts.php'));
+  });
+
 }
 
 void _ignorePath(String path) {}
