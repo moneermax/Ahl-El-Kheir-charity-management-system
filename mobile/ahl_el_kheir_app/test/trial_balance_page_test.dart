@@ -62,7 +62,7 @@ void main() {
     );
     expect(find.textContaining('Journal entries: 2'), findsOneWidget);
 
-    await tester.dragUntilVisible(find.text('Apply filters'), listScrollable, const Offset(0, 500));
+    await tester.dragUntilVisible(find.text('Apply filters'), find.byType(ListView).first, const Offset(0, 500));
     await tester.tap(find.text('Apply filters'));
     await tester.pumpAndSettle();
     expect(calls, 2);
