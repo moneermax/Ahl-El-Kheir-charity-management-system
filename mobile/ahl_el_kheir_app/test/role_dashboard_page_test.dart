@@ -65,9 +65,15 @@ void main() {
     expect(find.ancestor(of: find.text('Paused sponsorships'), matching: find.byType(ListTile)), findsNothing);
     expect(find.ancestor(of: find.text('Unassigned supervisor letters'), matching: find.byType(ListTile)), findsNothing);
 
-    await tester.ensureVisible(find.text('Families awaiting action'));
+    final pendingFamilyAttentionTile = find
+        .ancestor(
+          of: find.text('Families awaiting action'),
+          matching: find.byType(ListTile),
+        )
+        .last;
+    await tester.ensureVisible(pendingFamilyAttentionTile);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Families awaiting action'));
+    await tester.tap(pendingFamilyAttentionTile);
     expect(opened, contains('modules/reports/operational.php'));
 
     await tester.ensureVisible(find.text('Open sponsor win-back cases'));

@@ -5253,3 +5253,7 @@ The mobile dashboard API now returns the existing `pending_families` count alrea
 ## 2026-10-27 — GM pending-family attention card (Flutter CI pending)
 
 Mobile API Auth Integration run #218 (40469806870) passed after the authenticated General Manager metric response began exposing the existing 'pending_families' count. The Flutter attention queue and widget test now include an actionable pending-family card routed to the existing operational report. Await the sequential Android workflow before claiming UI/build verification. Local XAMPP/API and physical-device acceptance remain pending.
+
+## 2026-10-27 — Flutter GM attention widget-test selector correction (CI pending)
+
+Android workflow #610 (run ID 40470131963) failed in the new GM attention test, not during Dart analysis or APK compilation. The exact failure was `Bad state: Too many elements` from `tester.ensureVisible(find.text('Families awaiting action'))` because the text finder matched more than one widget. The test now selects the matching `ListTile` ancestor and uses that tile for visibility and tap, avoiding ambiguous text selection. No production app behavior changed in this correction. Await the next sequential Flutter workflow before claiming the test/build passes; do not push another code change until it finishes.
