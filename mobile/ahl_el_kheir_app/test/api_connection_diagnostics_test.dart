@@ -37,24 +37,5 @@ void main() {
     );
   });
 
-  testWidgets('login screen exposes an in-app API connectivity check', (tester) async {
-    var testPressed = false;
-    await tester.pumpWidget(MaterialApp(
-      home: LoginPage(
-        english: true,
-        toggle: () {},
-        submit: (username, password) async {},
-        apiBaseUrl: 'http://192.168.18.9:881/AhlElKheir/api/v1',
-        buildRevision: 'test-revision-123456',
-        onConfigureApi: () async {},
-        onTestApi: () async { testPressed = true; },
-        onForgotPassword: () async {},
-      ),
-    ));
-    expect(find.text('Test connection'), findsOneWidget);
-    expect(find.text('Build: test-revisio'), findsOneWidget);
-    await tester.tap(find.text('Test connection'));
-    await tester.pump();
-    expect(testPressed, isTrue);
-  });
+
 }

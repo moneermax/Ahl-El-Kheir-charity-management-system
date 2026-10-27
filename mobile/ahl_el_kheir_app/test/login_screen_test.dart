@@ -34,8 +34,12 @@ void main() {
 
     expect(find.text('تسجيل الدخول'), findsOneWidget);
     expect(find.text('اسم المستخدم'), findsOneWidget);
-    expect(find.text('الخادم'), findsOneWidget);
-    expect(find.text('http://192.168.1.10:8081/AhlElKheir/api/v1'), findsOneWidget);
+    expect(find.text('Build: test-revisio'), findsOneWidget);
+    expect(find.text('العربية'), findsOneWidget);
+    expect(find.text('الخادم'), findsNothing);
+    expect(find.text('اختبار الاتصال'), findsNothing);
+    expect(find.text('http://192.168.1.10:8081/AhlElKheir/api/v1'), findsNothing);
+    expect(tester.takeException(), isNull);
   });
 }
 
