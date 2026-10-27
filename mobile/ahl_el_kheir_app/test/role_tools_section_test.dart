@@ -137,6 +137,7 @@ void main() {
     ));
 
     expect(find.text('Report center'), findsOneWidget);
+    expect(find.text('GM reconciliation'), findsNothing);
     expect(find.text('Monthly disbursements'), findsNothing);
     expect(find.text('Group disbursements'), findsNothing);
   });
@@ -211,6 +212,32 @@ void main() {
 
     expect(find.text('Manage sponsorship suspensions'), findsOneWidget);
     expect(find.text('APP'), findsOneWidget);
+  });
+
+  testWidgets('GM reconciliation is native for the roles allowed by the web report registry', (tester) async {
+    for (final role in ['general_manager', 'vice_general_manager', 'financial_manager']) {
+      final opened = <String>[];
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RoleToolsSection(
+              roleCode: role,
+              english: true,
+              onOpen: opened.add,
+            ),
+          ),
+        ),
+      ));
+
+      expect(find.text('GM reconciliation'), findsOneWidget, reason: role);
+      final card = find.ancestor(of: find.text('GM reconciliation'), matching: find.byType(Card));
+      expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget, reason: role);
+      await tester.ensureVisible(find.text('GM reconciliation'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('GM reconciliation'));
+      expect(opened, contains('modules/accounting/gm_reconciliation.php'), reason: role);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
   });
 
   testWidgets('GM sees the salary-advance waiver workflow from the web sidebar', (tester) async {
