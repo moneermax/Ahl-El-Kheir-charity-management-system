@@ -1393,3 +1393,6 @@ Implemented the native Flutter available-families list and in-app family detail 
 - CI/disposable-database evidence only. Local XAMPP/API and phone testing remain pending. Do not expose XAMPP publicly; release requires a verified HTTPS API host.
 
 Next: inspect one remaining NOT READY role tool at a time before implementing it.
+
+## 2026-10-27 — Ordinary transaction receipt preview CI PASS
+The native ordinary FM transaction review page now previews authorized receipt bytes in-app for PDF and image formats through `GET api/v1/accounting/fm_transaction_receipt.php`, preserving bearer authentication and avoiding external navigation. Initial Flutter source insertion failed analysis (#633); corrective commit `2a932eeb1a08df2439643fa011f676c1e9b072ac` restored the known-good `main.dart` structure and applied only the intended loader/wiring. Workflow #635 / run `40529923422` passed Dart analysis, all Flutter tests, Android debug build, provenance and publication. Artifact `12746676243`; SHA-256 `d1e8d4681bb65324598cac8eda122ae9844acccce457c5a92fdcc0789fe74832`; expires 2026-11-26. Local API and phone acceptance are still pending.
