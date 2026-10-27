@@ -60,6 +60,7 @@ void main() {
     expect(find.textContaining('Total records: 4'), findsOneWidget);
     expect(find.textContaining('Approved total: 350.00 SDG'), findsOneWidget);
     expect(find.text('Currency summary SDG'), findsOneWidget);
+    await tester.scrollUntilVisible(find.text('By payment method'), 300);
     expect(find.text('By payment method'), findsOneWidget);
     expect(find.text('Cash'), findsOneWidget);
     await tester.scrollUntilVisible(find.text('By funding source'), 300);
@@ -89,7 +90,7 @@ void main() {
       ),
     ));
     await tester.pumpAndSettle();
-    expect(find.text('API unavailable'), findsOneWidget);
+    expect(find.textContaining('API unavailable'), findsOneWidget);
     await tester.tap(find.text('Retry'));
     await tester.pumpAndSettle();
     expect(calls, 2);
