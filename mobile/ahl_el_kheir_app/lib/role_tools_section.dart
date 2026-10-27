@@ -134,6 +134,7 @@ class RoleToolsSection extends StatelessWidget {
         return [
           g('الإدارة والمتابعة', 'Administration and follow-up', [
             t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة حملات استرجاع الكفلاء', 'Review sponsor win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
+            if (role == 'admin') t('بوابة الرواتب والحوافز', 'Payroll and incentives portal', 'خدمات الرواتب والسلف والحوافز', 'Payroll, advances and incentive tools', 'modules/hr/salary_portal.php', Icons.payments_outlined),
           ]),
         ];
       case 'general_manager':
@@ -182,7 +183,7 @@ class RoleToolsSection extends StatelessWidget {
             t('السندات', 'Vouchers', 'سندات القبض والصرف', 'Receipt and payment vouchers', 'modules/accounting/vouchers.php', Icons.receipt_long_outlined),
             t('مراجعة المعاملات المالية', 'Financial transaction review', 'مراجعة المعاملات الواردة', 'Review incoming financial transactions', 'modules/accounting/fm_transaction_review.php', Icons.fact_check_outlined),
             t('تقارير مالية', 'Financial reports', 'التقارير المالية', 'Financial reporting', 'modules/reports/financial.php', Icons.bar_chart_rounded),
-            t('بوابة الرواتب والحوافز', 'Payroll and incentives portal', 'الرواتب والحوافز والعمليات المرتبطة', 'Payroll, incentives and related operations', 'modules/hr/salary_portal.php', Icons.badge_outlined),
+            if (role != 'finance') t('بوابة الرواتب والحوافز', 'Payroll and incentives portal', 'الرواتب والحوافز والعمليات المرتبطة', 'Payroll, incentives and related operations', 'modules/hr/salary_portal.php', Icons.badge_outlined),
             t('سياسة الحوافز', 'Incentive policy', 'تفعيل سياسة الحوافز المعتمدة', 'Activate approved incentive policies', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
             t('إعفاء السلف', 'Salary advance waivers', 'تجهيز قرارات الإعفاء وتنفيذ القرارات المعتمدة', 'Prepare waiver decisions and execute GM-approved decisions', 'modules/hr/salary_advance_waiver_fm.php', Icons.handshake_outlined),
             if (role == 'financial_manager') t('إدارة الرواتب', 'Payroll management', 'إدارة فترات الرواتب وإثباتات التحويل', 'Manage payroll periods and transfer proofs', 'modules/hr/payroll.php', Icons.payments_outlined),
@@ -240,6 +241,7 @@ class RoleToolsSection extends StatelessWidget {
       case 'hr_staff':
         return [
           g('إدارة الموارد البشرية', 'Human resources operations', [
+            t('بوابة الرواتب والحوافز', 'Payroll and incentives portal', 'خدمات الرواتب والسلف والحوافز', 'Payroll, advances and incentive tools', 'modules/hr/salary_portal.php', Icons.payments_outlined),
             t('مركز التقارير', 'Report center', 'التقارير المتاحة للموارد البشرية', 'Reports available to Human Resources', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة الموظفين', 'Employee management', 'سجل الموظفين وإجراءات الموارد البشرية', 'Employee records and HR actions', 'modules/hr/employees.php', Icons.badge_outlined),
             t('الحضور والانصراف', 'Attendance management', 'إدارة سجلات الحضور', 'Manage attendance records', 'modules/hr/attendance.php', Icons.fact_check_outlined),
