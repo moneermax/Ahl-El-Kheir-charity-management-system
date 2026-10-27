@@ -165,25 +165,9 @@ void main() {
     expect(markReadCalls, 0);
   });
 
-  test('notification links resolve to an in-app module path only', () {
-    expect(
-      notificationNativeTargetPath(
-        'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_waiver_gm.php?decision_id=17',
-      ),
-      'modules/hr/salary_advance_waiver_gm.php',
-    );
-    expect(notificationNativeTargetPath('https://example.invalid/related'), isNull);
-    expect(
-      notificationNativeTargetPath('https://example.invalid/modules/notifications/index.php'),
-      isNull,
-    );
-    expect(notificationNativeTargetPath('javascript:alert(1)'), isNull);
-  });
-
-  testWidgets('opens notification details and exposes its supported in-app destination',
+  testWidgets('opens notification details without any related-page action',
       (tester) async {
     const relatedLink = 'http://localhost:8081/AhlElKheir/modules/hr/salary_advance_waiver_gm.php?decision_id=17';
-    String? openedLink;
     await tester.pumpWidget(
       MaterialApp(
         home: NotificationPage(
@@ -205,9 +189,6 @@ void main() {
             'pages': 1,
           },
           markRead: (_) async {},
-          openLinkedPage: (link) async {
-            openedLink = link;
-          },
         ),
       ),
     );
@@ -218,12 +199,12 @@ void main() {
 
     expect(find.text('تفاصيل الإشعار'), findsOneWidget);
     expect(find.text('محتوى الإشعار داخل التطبيق'), findsOneWidget);
-    expect(find.text('فتح الصفحة المرتبطة'), findsOneWidget);
-
-    await tester.tap(find.text('فتح الصفحة المرتبطة'));
-    await tester.pumpAndSettle();
-
-    expect(openedLink, relatedLink);
+    expect(find.text('فتح الصفحة المرتبطة'), findsNothing);
+    expect(find.text('Open related page'), findsNothing);
+    expect(find.text('الصفحة المرتبطة'), findsNothing);
+    expect(find.text('Related page'), findsNothing);
+    expect(find.text('No supported in-app destination is available for this notification.'), findsNothing);
+    expect(find.textContaining('لا توجد وجهة مرتبطة مدعومة'), findsNothing);
   });
 
 

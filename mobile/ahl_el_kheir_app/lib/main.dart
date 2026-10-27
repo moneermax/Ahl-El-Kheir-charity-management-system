@@ -86,33 +86,6 @@ String? normalizeApiBaseUrl(String value) {
   return normalized;
 }
 
-String? notificationNativeTargetPath(String rawLink) {
-  final value = rawLink.trim();
-  if (value.isEmpty) return null;
-  final uri = Uri.tryParse(value);
-  if (uri == null ||
-      uri.userInfo.isNotEmpty ||
-      uri.hasFragment ||
-      (uri.hasScheme &&
-          (!['http', 'https'].contains(uri.scheme.toLowerCase()) ||
-              uri.host.isEmpty))) {
-    return null;
-  }
-
-  final path = uri.path;
-  final moduleMarker = path.lastIndexOf('/modules/');
-  final relativePath = moduleMarker >= 0
-      ? path.substring(moduleMarker + 1)
-      : path.startsWith('modules/')
-          ? path
-          : '';
-  if (relativePath.isEmpty || relativePath.split('/').contains('..')) {
-    return null;
-  }
-  if (relativePath == 'modules/notifications/index.php') return null;
-  return relativePath;
-}
-
 String migrateKnownLegacyApiBaseUrl(String value) {
   final uri = Uri.tryParse(value);
   if (uri != null
@@ -2414,12 +2387,6 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     }
   }
 
-  Future<void> openNotificationLinkedPage(String rawLink) async {
-    final path = notificationNativeTargetPath(rawLink);
-    if (path == null) return;
-    await openNativeTool(path);
-  }
-
   Future<Map<String, dynamic>> loadNotifications(int page) async {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) {
@@ -2827,7 +2794,6 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
                                   english: english,
                                   loadPage: loadNotifications,
                                   markRead: markNotificationRead,
-                                  openLinkedPage: openNotificationLinkedPage,
                                 ),
                               ),
                             ),
@@ -3353,13 +3319,11 @@ class NotificationPage extends StatefulWidget {
     required this.english,
     required this.loadPage,
     required this.markRead,
-    this.openLinkedPage,
   });
 
   final bool english;
   final Future<Map<String, dynamic>> Function(int page) loadPage;
   final Future<void> Function(int notificationId) markRead;
-  final Future<void> Function(String link)? openLinkedPage;
 
   @override
   State<NotificationPage> createState() => _NotificationPageState();
@@ -3419,7 +3383,6 @@ class _NotificationPageState extends State<NotificationPage> {
       builder: (_) => NotificationDetailPage(
         english: widget.english,
         item: item,
-        onOpenLink: widget.openLinkedPage,
       ),
     ));
 
@@ -3816,19 +3779,16 @@ class NotificationDetailPage extends StatelessWidget {
     super.key,
     required this.english,
     required this.item,
-    this.onOpenLink,
   });
 
   final bool english;
   final Map<String, dynamic> item;
-  final Future<void> Function(String link)? onOpenLink;
 
   @override
   Widget build(BuildContext context) {
     final title = item['title']?.toString() ?? '';
     final body = item['body']?.toString() ?? '';
     final createdAt = item['created_at']?.toString() ?? '';
-    final link = item['link']?.toString() ?? '';
     return Scaffold(
       appBar: AppBar(title: Text(english ? 'Notification details' : 'تفاصيل الإشعار')),
       body: ListView(
@@ -3861,27 +3821,6 @@ class NotificationDetailPage extends StatelessWidget {
               child: SelectableText(body, style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.6)),
             ),
           ),
-          if (link.isNotEmpty) ...[
-            const SizedBox(height: 18),
-            if (onOpenLink != null && notificationNativeTargetPath(link) != null)
-              FilledButton.icon(
-                onPressed: () => onOpenLink!(link),
-                icon: const Icon(Icons.open_in_new_rounded),
-                label: Text(english ? 'Open related page' : 'فتح الصفحة المرتبطة'),
-              )
-            else
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.info_outline_rounded),
-                  title: Text(english ? 'Related page' : 'الصفحة المرتبطة'),
-                  subtitle: Text(
-                    english
-                        ? 'No supported in-app destination is available for this notification.'
-                        : 'لا توجد وجهة مرتبطة مدعومة داخل التطبيق لهذا الإشعار.',
-                  ),
-                ),
-              ),
-          ],
         ],
       ),
     );
