@@ -100,7 +100,6 @@ class _ReturnedFundsNannyPageState extends State<ReturnedFundsNannyPage> {
 
   @override
   Widget build(BuildContext context) {
-    final en = widget.english;
     return Scaffold(
       appBar: AppBar(
         title: Text(text('إعادة صرف المبالغ المرتجعة', 'Reissue returned funds')),
