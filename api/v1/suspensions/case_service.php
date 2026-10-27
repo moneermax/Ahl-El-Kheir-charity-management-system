@@ -144,7 +144,14 @@ function ak_api_create_suspension_case(int $userId, string $role, string $entity
         dbExecute("UPDATE sponsorships sp JOIN sponsorship_children sc ON sc.sponsorship_id = sp.id SET sp.status = 'paused', sp.pause_reason = ?, sp.pause_start_date = CURDATE(), sp.updated_at = NOW() WHERE sc.family_child_id = ? AND sp.status = 'active'", [$marker, $entityId]);
     } else {
         dbExecute("UPDATE families SET status = 'paused', updated_at = NOW() WHERE id = ?", [$entityId]);
-        dbExecute("UPDATE sponsorships SET status = 'paused', pause_reason = ?, pause_start_date = CURDATE(), updated_at = NOW() WHERE family_id = ? AND status = 'active'", [$marker, $entityId]);
+        dbExecute(
+            "UPDATE sponsorships sp
+             JOIN sponsorship_children sc ON sc.sponsorship_id = sp.id
+             JOIN family_children fc ON fc.id = sc.family_child_id
+             SET sp.status = 'paused', sp.pause_reason = ?, sp.pause_start_date = CURDATE(), sp.updated_at = NOW()
+             WHERE fc.family_id = ? AND sp.status = 'active'",
+            [$marker, $entityId]
+        );
     }
     $paused = (int)db()->query('SELECT ROW_COUNT()')->fetchColumn();
     return ['case_id' => $caseId, 'entity_type' => $entityType, 'entity_id' => $entityId, 'reason' => $reason, 'sponsorships_paused' => $paused];

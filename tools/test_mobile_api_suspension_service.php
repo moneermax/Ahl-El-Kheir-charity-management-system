@@ -184,7 +184,7 @@ try {
     foreach ($genericNannyOptions['options'] as $option) $assert((int)$option['family_id'] === $familyId, 'Nanny search returned a family outside the assigned family scope.');
     $liftGenericChild = ak_api_lift_suspension_case($actorId, 'admin', $genericChildId);
     $assert((int)$liftGenericChild['sponsorships_reactivated'] === $activeBefore, 'Generic child case could not be lifted cleanly inside the rollback fixture.');
-    $familyActiveBefore = (int)(dbFetchOne("SELECT COUNT(*) AS c FROM sponsorships WHERE family_id = ? AND status = 'active'", [$familyId])['c'] ?? 0);
+    $familyActiveBefore = (int)(dbFetchOne("SELECT COUNT(DISTINCT sp.id) AS c FROM sponsorships sp JOIN sponsorship_children sc ON sc.sponsorship_id = sp.id JOIN family_children fc ON fc.id = sc.family_child_id WHERE fc.family_id = ? AND sp.status = 'active'", [$familyId])['c'] ?? 0);
     $assert($familyActiveBefore > 0, 'The family fixture must have active sponsorships before family suspension.');
     $genericFamily = ak_api_create_suspension_case($actorId, 'general_manager', 'family', $familyId, 'other_support', 'CI family suspension');
     $genericFamilyId = (int)$genericFamily['case_id'];
