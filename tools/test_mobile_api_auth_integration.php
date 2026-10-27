@@ -464,6 +464,43 @@ try {
     $adminToken = (string)$adminLogin['json']['data']['access_token'];
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
+
+    $policyUnauthenticated = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET');
+    mobileApiExpect($policyUnauthenticated['status'] === 401, 'incentive policy requires bearer authentication');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_manager'], $userId]);
+    $policyHrRead = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $adminToken);
+    mobileApiExpect(
+        $policyHrRead['status'] === 200
+        && ($policyHrRead['json']['data']['can_manage'] ?? false) === true
+        && is_array($policyHrRead['json']['data']['types'] ?? null)
+        && is_array($policyHrRead['json']['data']['policies'] ?? null),
+        'HR Manager can read incentive policy categories and versions'
+    );
+    $policyHrApprovalDenied = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', ['action' => 'approve_policy', 'policy_id' => 1], $adminToken);
+    mobileApiExpect($policyHrApprovalDenied['status'] === 403, 'HR Manager cannot approve incentive policy');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['general_manager'], $userId]);
+    $policyGmRead = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $adminToken);
+    mobileApiExpect(
+        $policyGmRead['status'] === 200
+        && ($policyGmRead['json']['data']['can_review'] ?? false) === true
+        && is_array($policyGmRead['json']['data']['approval_history'] ?? null),
+        'General Manager can read incentive policy approval queue and history'
+    );
+    $policyGmManageDenied = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', ['action' => 'create_category', 'name_ar' => 'blocked', 'name_en' => 'blocked'], $adminToken);
+    mobileApiExpect($policyGmManageDenied['status'] === 403, 'General Manager cannot create incentive policy categories');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $policyFmRead = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $adminToken);
+    mobileApiExpect(
+        $policyFmRead['status'] === 200
+        && ($policyFmRead['json']['data']['can_activate'] ?? false) === true,
+        'Financial Manager can read approved incentive policies for activation'
+    );
+    $policyFmManageDenied = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', ['action' => 'submit_policy', 'policy_id' => 1], $adminToken);
+    mobileApiExpect($policyFmManageDenied['status'] === 403, 'Financial Manager cannot submit HR incentive policy drafts');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+    $policyNannyDenied = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $adminToken);
+    mobileApiExpect($policyNannyDenied['status'] === 403, 'Nanny is denied incentive policy access');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
     // Register one real file through the existing archive adapter so both search and
     // bearer-protected binary delivery are exercised with a real archive row.
     $testArchiveRelativePath = 'storage/documents/projects/' . $testProjectId . '/mobile-api-archive-fixture.pdf';

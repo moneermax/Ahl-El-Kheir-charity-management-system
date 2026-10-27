@@ -91,6 +91,9 @@ jobs:
         run: |
           set -euo pipefail
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/ahl_el_kheir.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-12_hr_employee_incentive_catalogue_and_policy_fields.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-13_hr_incentive_policy_gm_approval.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-15_hr_incentive_policy_approval_withdrawal.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-09-17_fina_standalone_schema.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-05_hr_attendance_policy.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-26_hr_attendance_policy_working_days.sql
