@@ -3088,3 +3088,13 @@ This is GitHub CI evidence only; local XAMPP/API and physical-device acceptance 
 ## 2026-10-27 — Mobile Chart of Accounts role parity (CI pending)
 
 The native Flutter Chart of Accounts route now matches the existing web page's role boundary: admin and Financial Manager can manage accounts; General Manager and Vice General Manager can view account balances without mutation controls. Their role tools route in-app and do not open a browser. The Flutter widget test scrolls the account-status action into view before tapping, and the disposable full-schema API harness checks FM/GM/VGM read access and GM/VGM mutation denial. No schema or accounting-rule changes were made. Await the sequential Flutter/API CI result before marking this milestone verified; local XAMPP/API and physical-device acceptance remain unverified.
+
+
+## 2026-10-27 — Native Chart of Accounts role parity verified in CI
+
+Commit: `6550c9bcbed841aa631097ca9d178f7e3ab0906a`.
+
+- Flutter workflow [#647](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40551368392) passed Dart analysis, all Flutter widget tests, Android debug APK build, provenance and artifact publication.
+- Mobile API integration workflow [40551368548](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40551368548) passed full-schema role checks: Financial Manager, General Manager and Vice General Manager can read the chart; GM/VGM mutation requests are rejected with HTTP 403.
+- APK artifact ID `12754229320`, size 102,601,768 bytes. Debug-only and configured for the local development API.
+- No schema or accounting rules changed. Local XAMPP/API and physical-device acceptance remain unverified; do not expose XAMPP publicly. Online release requires a verified HTTPS API host.
