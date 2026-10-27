@@ -27,6 +27,7 @@ import 'sponsorship_detail_page.dart';
 import 'global_search_page.dart';
 import 'orphan_form_page.dart';
 import 'fm_review_queue_page.dart';
+import 'ordinary_transaction_review_page.dart';
 import 'transactions_page.dart';
 import 'sponsorships_page.dart';
 import 'sponsor_requests_page.dart';
@@ -905,6 +906,23 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     if (relativePath == 'modules/transactions/index.php') {
       navigatorKey.currentState?.push(MaterialPageRoute<void>(
         builder: (_) => TransactionsPage(english: english, loadTransactions: loadTransactions),
+      ));
+      return;
+    }
+    if (relativePath == 'modules/accounting/fm_transaction_review.php') {
+      const allowedRoles = ['admin', 'financial_manager', 'fm', 'finance'];
+      if (!allowedRoles.contains(user?['role_code']?.toString())) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Financial transaction review is not available for this role.' : 'مراجعة الدفعات المالية غير متاحة لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => OrdinaryTransactionReviewPage(
+          english: english,
+          loadQueue: loadOrdinaryTransactionReview,
+          submitAction: submitOrdinaryTransactionReviewAction,
+        ),
       ));
       return;
     }
@@ -2649,6 +2667,22 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     final q = Uri.encodeQueryComponent(query);
     return call('GET', 'families/index.php?q=$q&status=$status&page=$page', token: token);
+  }
+
+  Future<Map<String, dynamic>> loadOrdinaryTransactionReview() async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'accounting/fm_transaction_review.php', token: token);
+  }
+
+  Future<void> submitOrdinaryTransactionReviewAction(int transactionId, String action, String returnReason) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    await call('POST', 'accounting/fm_transaction_review.php', token: token, body: {
+      'transaction_id': transactionId,
+      'action': action,
+      'return_reason': returnReason,
+    });
   }
 
   Future<Map<String, dynamic>> loadFmReviewQueue() async {

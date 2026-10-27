@@ -486,6 +486,29 @@ void main() {
     }
   });
 
+
+  testWidgets('ordinary financial transaction review is marked native for Financial Manager', (tester) async {
+    final opened = <String>[];
+    await tester.pumpWidget(MaterialApp(
+      home: Scaffold(
+        body: SingleChildScrollView(
+          child: RoleToolsSection(
+            roleCode: 'financial_manager',
+            english: true,
+            onOpen: opened.add,
+          ),
+        ),
+      ),
+    ));
+    expect(find.text('Financial transaction review'), findsOneWidget);
+    final card = find.ancestor(of: find.text('Financial transaction review'), matching: find.byType(Card));
+    expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget);
+    await tester.ensureVisible(find.text('Financial transaction review'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Financial transaction review'));
+    expect(opened, contains('modules/accounting/fm_transaction_review.php'));
+  });
+
 }
 
 void _ignorePath(String path) {}

@@ -91,6 +91,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/accounting/fina_payment_review.php',
     'modules/accounting/fina_payment_history.php',
     'modules/accounting/my_nannies.php',
+    'modules/accounting/fm_transaction_review.php',
     'modules/accounting/fina_payment_report.php',
     'modules/reports/index.php',
     'modules/reports/orphaned_families.php',
