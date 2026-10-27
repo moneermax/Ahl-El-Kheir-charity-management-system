@@ -1411,3 +1411,10 @@ Implemented `SalaryAdvanceDashboardPage` for the existing salary-advance dashboa
 - Artifact ID `12748619953`; SHA-256 `1b1c4713863790bb8fa6dc043318fc4c25a5d6f34bcc98f5ed5fff8a4ae220cd`; expires 2026-11-26.
 
 CI evidence only. Local XAMPP/API and physical-device acceptance remain for the user. Debug artifact uses the local development API; never expose XAMPP publicly. Release requires a verified HTTPS API host. Next: inspect one remaining NOT READY role tool from current source before implementation.
+
+
+## 2026-10-27 — Trial Balance test and group-disbursement route verified
+
+Flutter workflow [#646](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40544549643) completed successfully on `e53e886044b52e035e167c1a6db64f3cd81ce12c`: Dart analysis, all Flutter widget tests, Android debug APK build, build provenance, and artifact publication passed. This closes the Trial Balance widget-test scrolling correction and verifies that the Accountant Staff legacy route `modules/accounting/group_disbursements.php` dispatches to the existing native disbursement screen, with role-tool regression coverage. Artifact ID `12752901569`, SHA-256 `1e70ff5a83ac60fd3c33677c2b6c8b732163fcf67f94ad467f4b9f3d4b632cd9`, expires 2026-11-26.
+
+This is GitHub CI evidence only; local XAMPP/API and physical-device acceptance remain unverified. The debug APK targets the local development API. Do not expose XAMPP publicly; an online release requires a verified HTTPS API host. Next, continue with one remaining role-tool parity gap only after reviewing the actual web guard, source workflow, and schema. Avoid further Trial Balance reruns without regression evidence.
