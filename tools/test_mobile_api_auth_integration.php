@@ -2057,6 +2057,22 @@ try {
         'chart account list reflects status change and zero balance'
     );
 
+    foreach (['financial_manager', 'general_manager', 'vice_general_manager'] as $chartRoleCode) {
+        $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles[$chartRoleCode], $userId]);
+        $chartRoleLogin = mobileApiRequest('/api/v1/auth/login.php', 'POST', ['username' => $username, 'password' => $knownPassword]);
+        mobileApiExpect($chartRoleLogin['status'] === 200 && isset($chartRoleLogin['json']['data']['access_token']), $chartRoleCode . ' login succeeds for chart-of-accounts authorization coverage');
+        $chartRoleToken = (string)$chartRoleLogin['json']['data']['access_token'];
+        $testTokenHashes[] = hash('sha256', $chartRoleToken);
+        $chartRoleList = mobileApiRequest('/api/v1/accounting/accounts.php', 'GET', null, $chartRoleToken, 20);
+        $expectedCanManage = $chartRoleCode === 'financial_manager';
+        mobileApiExpect($chartRoleList['status'] === 200 && is_array($chartRoleList['json']['data']['accounts'] ?? null) && ($chartRoleList['json']['data']['can_manage'] ?? null) === $expectedCanManage, $chartRoleCode . ' sees chart-of-accounts data with the correct management capability');
+        if (in_array($chartRoleCode, ['general_manager', 'vice_general_manager'], true)) {
+            $deniedChartMutation = mobileApiRequest('/api/v1/accounting/accounts.php', 'POST', ['action' => 'toggle_account', 'account_id' => $testAccountId], $chartRoleToken, 20);
+            mobileApiExpect($deniedChartMutation['status'] === 403, $chartRoleCode . ' cannot mutate chart-of-accounts records');
+        }
+    }
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+
     $sudoRoleId = (int)$pdo->query("SELECT id FROM roles WHERE code='sudo' LIMIT 1")->fetchColumn();
     if ($sudoRoleId > 0) {
         $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$sudoRoleId, $userId]);

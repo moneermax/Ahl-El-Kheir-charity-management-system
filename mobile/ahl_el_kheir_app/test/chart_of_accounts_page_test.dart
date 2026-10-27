@@ -15,6 +15,8 @@ void main() {
   await tester.enterText(find.byType(TextField).at(2),'Bank');
   await tester.tap(find.widgetWithText(FilledButton,'Add account')); await tester.pumpAndSettle();
   expect(added['code'],'102'); expect(added['name_ar'],'البنك');
+  await tester.ensureVisible(find.text('Deactivate account'));
+  await tester.pumpAndSettle();
   await tester.tap(find.text('Deactivate account')); await tester.pumpAndSettle(); expect(toggled,12);
  });
  testWidgets('read-only roles have no account mutation controls',(tester) async {

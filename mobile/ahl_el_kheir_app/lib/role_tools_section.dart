@@ -156,6 +156,7 @@ class RoleToolsSection extends StatelessWidget {
             t('تقرير الموارد البشرية', 'HR report', 'مؤشرات وتقارير الموارد البشرية', 'Human resources indicators and reports', 'modules/reports/hr.php', Icons.badge_outlined),
             t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة دفعات الكفالات الشهرية', 'Review monthly sponsorship disbursements', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
             t('مطابقة المدير العام', 'GM reconciliation', 'مراجعة المطابقة المالية المتاحة للمدير العام', 'Review reconciliation available to the General Manager', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
+            t('دليل الحسابات', 'Chart of accounts', 'عرض الحسابات والأرصدة المحاسبية', 'View accounting accounts and balances', 'modules/accounting/accounts.php', Icons.account_tree_outlined),
           ]),
           g('المتابعة والاعتماد', 'Follow-up and approvals', [
             t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة الحملات المفتوحة', 'Review open win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
@@ -172,6 +173,7 @@ class RoleToolsSection extends StatelessWidget {
             t('إدارة مجموعات الأيتام', 'Orphan groups', 'إدارة المجموعات ودورة حياتها', 'Manage orphan groups and their lifecycle', 'modules/deputy_gm/groups.php', Icons.groups_outlined),
             t('متابعات استرجاع الكفلاء', 'Sponsor win-back', 'متابعة حملات استرجاع الكفلاء', 'Review sponsor win-back campaigns', 'modules/administration/winback.php', Icons.replay_rounded),
             t('مطابقة المدير العام', 'GM reconciliation', 'مراجعة المطابقة المالية المتاحة للإدارة', 'Review financial reconciliation available to management', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
+            t('دليل الحسابات', 'Chart of accounts', 'عرض الحسابات والأرصدة المحاسبية', 'View accounting accounts and balances', 'modules/accounting/accounts.php', Icons.account_tree_outlined),
             t('مركز التقارير', 'Report center', 'تقارير التشغيل المتاحة للدور', 'Operational reports available to this role', 'modules/reports/index.php', Icons.assessment_outlined),
             t('إدارة تعليق الكفالات', 'Manage sponsorship suspensions', 'تعليق أو رفع التعليق وفق الصلاحيات', 'Suspend or lift suspensions within your permissions', 'modules/families/suspensions.php', Icons.pause_circle_outline_rounded),
           ]),

@@ -585,18 +585,21 @@ void main() {
   });
 
 
-  testWidgets('chart of accounts is native for Financial Manager', (tester) async {
-    final opened = <String>[];
-    await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
-      child: RoleToolsSection(roleCode: 'financial_manager', english: true, onOpen: opened.add),
-    ))));
-    expect(find.text('Chart of accounts'), findsOneWidget);
-    final card = find.ancestor(of: find.text('Chart of accounts'), matching: find.byType(Card));
-    expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget);
-    await tester.ensureVisible(find.text('Chart of accounts'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Chart of accounts'));
-    expect(opened, contains('modules/accounting/accounts.php'));
+  testWidgets('chart of accounts is native for all web-authorized view roles', (tester) async {
+    for (final role in ['financial_manager', 'general_manager', 'vice_general_manager']) {
+      final opened = <String>[];
+      await tester.pumpWidget(MaterialApp(home: Scaffold(body: SingleChildScrollView(
+        child: RoleToolsSection(roleCode: role, english: true, onOpen: opened.add),
+      ))));
+      expect(find.text('Chart of accounts'), findsOneWidget, reason: role);
+      final card = find.ancestor(of: find.text('Chart of accounts'), matching: find.byType(Card));
+      expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget, reason: role);
+      await tester.ensureVisible(find.text('Chart of accounts'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Chart of accounts'));
+      expect(opened, contains('modules/accounting/accounts.php'), reason: role);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
   });
 
 }
