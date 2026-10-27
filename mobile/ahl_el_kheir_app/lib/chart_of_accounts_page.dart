@@ -85,7 +85,7 @@ class _ChartOfAccountsPageState extends State<ChartOfAccountsPage> {
         Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Text(t('الحسابات المحاسبية','Accounting accounts'), style: const TextStyle(fontSize:18,fontWeight:FontWeight.w800)),
           const SizedBox(height:6), Text(t('الأرصدة محسوبة من القيود المحاسبية المُرحّلة فقط.','Balances include posted journal entries only.')),
-          const SizedBox(height:10), Text(t('عدد الحسابات: \${_accounts.length}','Accounts: \${_accounts.length}'), style: const TextStyle(fontWeight:FontWeight.w700)),
+          const SizedBox(height:10), Text(t('عدد الحسابات: ${_accounts.length}','Accounts: ${_accounts.length}'), style: const TextStyle(fontWeight:FontWeight.w700)),
           if (_loading) const LinearProgressIndicator(),
         ]))),
         if (_error != null) Card(child: Padding(padding: const EdgeInsets.all(12), child: Text(_error!,style: const TextStyle(color:Color(0xFFB42318))))),
@@ -101,7 +101,7 @@ class _ChartOfAccountsPageState extends State<ChartOfAccountsPage> {
         for (final a in _accounts) Card(child: Padding(padding: const EdgeInsets.all(14), child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Row(crossAxisAlignment:CrossAxisAlignment.start,children:[
             Expanded(child:Column(crossAxisAlignment:CrossAxisAlignment.start,children:[
-              Text('\${a['code'] ?? ''} · \${a['name_ar'] ?? ''}',style:const TextStyle(fontWeight:FontWeight.w800,fontSize:15)),
+              Text('${a['code'] ?? ''} · ${a['name_ar'] ?? ''}',style:const TextStyle(fontWeight:FontWeight.w800,fontSize:15)),
               if ((a['name_en']?.toString()??'').isNotEmpty) Text(a['name_en'].toString(),textDirection:TextDirection.ltr,style:const TextStyle(color:Color(0xFF667085),fontSize:12)),
             ])),
             Text((int.tryParse(a['is_active']?.toString()??'')??0)==1?t('نشط','Active'):t('موقوف','Inactive')),
