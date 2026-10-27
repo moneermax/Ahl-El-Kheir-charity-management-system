@@ -547,6 +547,40 @@ try {
     $adminHash = hash('sha256', $adminToken);
     $testTokenHashes[] = $adminHash;
 
+    $salaryAdvanceDashboardUnauth = mobileApiRequest('/api/v1/hr/salary_advance_dashboard.php');
+    mobileApiExpect($salaryAdvanceDashboardUnauth['status'] === 401, 'salary-advance dashboard rejects unauthenticated requests');
+    $salaryAdvanceDashboardAdmin = mobileApiRequest('/api/v1/hr/salary_advance_dashboard.php', 'GET', null, $adminToken, 20);
+    $salaryAdvanceDashboardData = $salaryAdvanceDashboardAdmin['json']['data'] ?? [];
+    $expectedAdvanceCounts = $pdo->query(
+        "SELECT
+            SUM(CASE WHEN status IN ('submitted','fm_review') THEN 1 ELSE 0 END) AS fm_pending,
+            SUM(CASE WHEN status = 'approved' THEN 1 ELSE 0 END) AS accounting_pending,
+            SUM(CASE WHEN status = 'disbursed' THEN 1 ELSE 0 END) AS disbursed,
+            SUM(CASE WHEN status = 'settled' THEN 1 ELSE 0 END) AS settled
+         FROM hr_salary_advance_requests"
+    )->fetch();
+    $expectedAdvanceHistoryCount = (int)$pdo->query(
+        "SELECT COUNT(*) FROM hr_salary_advance_requests WHERE status IN ('disbursed','settled','rejected','cancelled')"
+    )->fetchColumn();
+    mobileApiExpect(
+        $salaryAdvanceDashboardAdmin['status'] === 200
+        && is_array($salaryAdvanceDashboardData['counts'] ?? null)
+        && is_array($salaryAdvanceDashboardData['history'] ?? null)
+        && count($salaryAdvanceDashboardData['history']) === $expectedAdvanceHistoryCount
+        && (int)($salaryAdvanceDashboardData['counts']['fm_pending'] ?? -1) === (int)($expectedAdvanceCounts['fm_pending'] ?? 0)
+        && (int)($salaryAdvanceDashboardData['counts']['accounting_pending'] ?? -1) === (int)($expectedAdvanceCounts['accounting_pending'] ?? 0)
+        && (int)($salaryAdvanceDashboardData['counts']['disbursed'] ?? -1) === (int)($expectedAdvanceCounts['disbursed'] ?? 0)
+        && (int)($salaryAdvanceDashboardData['counts']['settled'] ?? -1) === (int)($expectedAdvanceCounts['settled'] ?? 0),
+        'administrator dashboard summary and history match the existing salary-advance queries'
+    );
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $salaryAdvanceDashboardFm = mobileApiRequest('/api/v1/hr/salary_advance_dashboard.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect($salaryAdvanceDashboardFm['status'] === 200, 'Financial Manager can read salary-advance dashboard');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
+    $salaryAdvanceDashboardNanny = mobileApiRequest('/api/v1/hr/salary_advance_dashboard.php', 'GET', null, $adminToken, 20);
+    mobileApiExpect($salaryAdvanceDashboardNanny['status'] === 403, 'salary-advance dashboard denies roles outside the existing web guard');
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+
     $availableFamiliesUnauth = mobileApiRequest('/api/v1/administration/available_families.php');
     mobileApiExpect($availableFamiliesUnauth['status'] === 401, 'available families rejects unauthenticated requests');
     $availableFamiliesAdmin = mobileApiRequest('/api/v1/administration/available_families.php', 'GET', null, $adminToken, 20);
