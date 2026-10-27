@@ -80,6 +80,7 @@ class RoleToolsSection extends StatelessWidget {
     'modules/hr/payroll_integrity.php',
     'modules/hr/payroll.php',
     'modules/hr/payroll_policy.php',
+    'modules/hr/incentive_policy.php',
     'modules/hr/incentive_verification.php',
     'modules/hr/employment_states.php',
     'modules/hr/gm_payroll_period_history.php',
@@ -166,6 +167,7 @@ class RoleToolsSection extends StatelessWidget {
           g('العمليات المالية', 'Financial operations', [
             t('الرصيد الافتتاحي', 'Opening balance', 'إدارة الرصيد الافتتاحي وسياسة الرسوم الإدارية', 'Manage opening balance and administrative-fee policy', 'modules/accounting/opening_balance.php', Icons.account_balance_outlined),
             t('مطابقة المدير العام', 'GM reconciliation', 'مراجعة المطابقة المالية', 'Review financial reconciliation', 'modules/accounting/gm_reconciliation.php', Icons.balance_outlined),
+            t('سياسة الحوافز', 'Incentive policy', 'تفعيل سياسة الحوافز المعتمدة', 'Activate approved incentive policies', 'modules/hr/incentive_policy.php', Icons.workspace_premium_outlined),
             t('الحاضنات المعيّنات', 'Assigned nannies', 'متابعة الحاضنات المعيّنات والتحقق', 'Review assigned nannies and verification', 'modules/accounting/my_nannies.php', Icons.support_agent_outlined),
             if (role == 'financial_manager') t('التحويلات الشهرية', 'Monthly disbursements', 'متابعة التحويلات والصرف', 'Review monthly transfers and disbursements', 'modules/accounting/disbursements.php', Icons.account_balance_wallet_outlined),
             t('دليل الحسابات', 'Chart of accounts', 'الحسابات المحاسبية', 'Accounting accounts', 'modules/accounting/accounts.php', Icons.account_tree_outlined),
