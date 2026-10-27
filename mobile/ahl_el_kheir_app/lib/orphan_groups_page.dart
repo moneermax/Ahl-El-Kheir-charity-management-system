@@ -97,25 +97,9 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
   }
 
   Future<void> _edit({Map<String, dynamic>? existing}) async {
-    final name = TextEditingController(text: _s(existing?['group_name']));
-    final description = TextEditingController(text: _s(existing?['description']));
     final result = await showDialog<Map<String, String>>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(en ? (existing == null ? 'Create group draft' : 'Edit group') : (existing == null ? 'إنشاء مجموعة كمسودة' : 'تعديل المجموعة')),
-        content: SizedBox(width: 440, child: Column(mainAxisSize: MainAxisSize.min, children: [
-          TextField(controller: name, maxLength: 150, decoration: InputDecoration(labelText: en ? 'Group name' : 'اسم المجموعة')),
-          TextField(controller: description, maxLength: 1000, minLines: 2, maxLines: 4, decoration: InputDecoration(labelText: en ? 'Description' : 'الوصف')),
-        ])),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(en ? 'Cancel' : 'إلغاء')),
-          FilledButton(onPressed: () {
-            if (name.text.trim().isNotEmpty) {
-              Navigator.pop(ctx, {'group_name': name.text.trim(), 'description': description.text.trim()});
-            }
-          }, child: Text(en ? 'Save' : 'حفظ')),
-        ],
-      ),
+      builder: (ctx) => _OrphanGroupEditDialog(english: en, existing: existing),
     );
     if (result != null) {
       final body = <String, dynamic>{
@@ -125,8 +109,6 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
       };
       await _act(body, created: existing == null);
     }
-    name.dispose();
-    description.dispose();
   }
 
   Future<void> _confirm(String action, {String reason = ''}) async {
@@ -399,5 +381,62 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
           _details(),
           if (saving) const Padding(padding: EdgeInsets.all(12), child: LinearProgressIndicator()),
         ])),
+  );
+}
+
+
+class _OrphanGroupEditDialog extends StatefulWidget {
+  const _OrphanGroupEditDialog({required this.english, this.existing});
+
+  final bool english;
+  final Map<String, dynamic>? existing;
+
+  @override
+  State<_OrphanGroupEditDialog> createState() => _OrphanGroupEditDialogState();
+}
+
+class _OrphanGroupEditDialogState extends State<_OrphanGroupEditDialog> {
+  late final TextEditingController _name;
+  late final TextEditingController _description;
+
+  bool get en => widget.english;
+
+  @override
+  void initState() {
+    super.initState();
+    _name = TextEditingController(text: widget.existing?['group_name']?.toString() ?? '');
+    _description = TextEditingController(text: widget.existing?['description']?.toString() ?? '');
+  }
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _description.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => AlertDialog(
+    title: Text(en
+        ? (widget.existing == null ? 'Create group draft' : 'Edit group')
+        : (widget.existing == null ? 'إنشاء مجموعة كمسودة' : 'تعديل المجموعة')),
+    content: SizedBox(width: 440, child: Column(mainAxisSize: MainAxisSize.min, children: [
+      TextField(controller: _name, maxLength: 150,
+        decoration: InputDecoration(labelText: en ? 'Group name' : 'اسم المجموعة')),
+      TextField(controller: _description, maxLength: 1000, minLines: 2, maxLines: 4,
+        decoration: InputDecoration(labelText: en ? 'Description' : 'الوصف')),
+    ])),
+    actions: [
+      TextButton(onPressed: () => Navigator.pop(context),
+        child: Text(en ? 'Cancel' : 'إلغاء')),
+      FilledButton(onPressed: () {
+        if (_name.text.trim().isNotEmpty) {
+          Navigator.pop(context, {
+            'group_name': _name.text.trim(),
+            'description': _description.text.trim(),
+          });
+        }
+      }, child: Text(en ? 'Save' : 'حفظ')),
+    ],
   );
 }

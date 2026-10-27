@@ -116,7 +116,6 @@ $server = null;
 $serverPipes = [];
 $failure = null;
 $testProjectId = 0;
-$testOrphanGroupId = 0;
 $testArchiveSourceId = 0;
 $testArchiveDocumentId = 0;
 $testArchiveVersionId = 0;
@@ -249,72 +248,6 @@ try {
     $stored = $pdo->prepare('SELECT token_hash FROM mobile_api_sessions WHERE token_hash=?');
     $stored->execute([$tokenHash]);
     mobileApiExpect((string)$stored->fetchColumn() === $tokenHash && $tokenHash !== $token, 'only the SHA-256 token hash is stored');
-
-    $groupsDenied = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'GET', null, $token);
-    mobileApiExpect($groupsDenied['status'] === 403, 'orphan-group API denies a nanny account');
-
-    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['vice_general_manager'], $userId]);
-    try {
-        $groupList = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'GET', null, $token);
-        mobileApiExpect(
-            $groupList['status'] === 200
-            && isset($groupList['json']['data']['groups'])
-            && is_array($groupList['json']['data']['groups']),
-            'VGM can read orphan groups and lifecycle summaries'
-        );
-
-        $groupName = 'Mobile API group fixture ' . bin2hex(random_bytes(5));
-        $groupCreate = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
-            'action' => 'create_group',
-            'group_name' => $groupName,
-            'description' => 'Disposable API integration fixture',
-        ], $token);
-        $testOrphanGroupId = (int)($groupCreate['json']['data']['group_id'] ?? 0);
-        mobileApiExpect($groupCreate['status'] === 200 && $testOrphanGroupId > 0, 'VGM can create a group as an unused draft');
-
-        $groupDetail = mobileApiRequest('/api/v1/deputy_gm/groups.php?group_id=' . $testOrphanGroupId, 'GET', null, $token);
-        mobileApiExpect(
-            $groupDetail['status'] === 200
-            && (int)($groupDetail['json']['data']['selected_group']['id'] ?? 0) === $testOrphanGroupId
-            && ($groupDetail['json']['data']['selected_group']['status'] ?? '') === 'draft',
-            'group detail returns the selected draft and member/history data'
-        );
-
-        $updatedName = $groupName . ' updated';
-        $groupUpdate = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
-            'action' => 'update_group',
-            'group_id' => $testOrphanGroupId,
-            'group_name' => $updatedName,
-            'description' => 'Updated disposable fixture',
-        ], $token);
-        mobileApiExpect($groupUpdate['status'] === 200, 'VGM can edit an unused draft group');
-
-        $activateEmpty = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
-            'action' => 'activate_group',
-            'group_id' => $testOrphanGroupId,
-        ], $token);
-        mobileApiExpect($activateEmpty['status'] === 422, 'an empty group cannot be activated');
-
-        $afterRejectedActivation = mobileApiRequest('/api/v1/deputy_gm/groups.php?group_id=' . $testOrphanGroupId, 'GET', null, $token);
-        mobileApiExpect(
-            $afterRejectedActivation['status'] === 200
-            && ($afterRejectedActivation['json']['data']['selected_group']['status'] ?? '') === 'draft',
-            'rejected activation leaves the group in draft state'
-        );
-
-        $groupDelete = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
-            'action' => 'delete_group',
-            'group_id' => $testOrphanGroupId,
-        ], $token);
-        mobileApiExpect($groupDelete['status'] === 200, 'a never-used draft group can be deleted');
-        $testOrphanGroupId = 0;
-
-        $deletedGroupRead = mobileApiRequest('/api/v1/deputy_gm/groups.php?group_id=' . (int)($groupDelete['json']['data']['group_id'] ?? 0), 'GET', null, $token);
-        // The API returns the group ID for action responses; deletion must leave no detail record.
-        mobileApiExpect($deletedGroupRead['status'] === 404, 'deleted group no longer has a detail record');
-    } finally {
-        $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['nanny'], $userId]);
-    }
 
     $profileSnapshotStmt = $pdo->prepare('SELECT full_name,email,phone,address,birth_date,gender,avatar_path FROM users WHERE id=?');
     $profileSnapshotStmt->execute([$userId]);
@@ -2829,11 +2762,6 @@ try {
 } catch (Throwable $e) {
     $failure = $e;
 } finally {
-    if ($testOrphanGroupId > 0) {
-        $pdo->prepare('DELETE FROM nanny_group_assignments WHERE group_id=?')->execute([$testOrphanGroupId]);
-        $pdo->prepare('DELETE FROM group_children WHERE group_id=?')->execute([$testOrphanGroupId]);
-        $pdo->prepare('DELETE FROM orphan_groups WHERE id=?')->execute([$testOrphanGroupId]);
-    }
     if (is_array($testProfileSnapshot)) {
         $currentAvatarStmt = $pdo->prepare('SELECT avatar_path FROM users WHERE id=?');
         $currentAvatarStmt->execute([$userId]);

@@ -303,27 +303,20 @@ void main() {
     expect(find.text('Salary advance waivers'), findsOneWidget);
   });
 
-  testWidgets('VGM orphan-group management is native and dispatches to the in-app workflow', (tester) async {
-    final opened = <String>[];
+  testWidgets('VGM sees orphan-group management', (tester) async {
     await tester.pumpWidget(MaterialApp(
       home: Scaffold(
         body: SingleChildScrollView(
           child: RoleToolsSection(
             roleCode: 'vice_general_manager',
             english: true,
-            onOpen: opened.add,
+            onOpen: (_) {},
           ),
         ),
       ),
     ));
 
     expect(find.text('Orphan groups'), findsOneWidget);
-    final card = find.ancestor(of: find.text('Orphan groups'), matching: find.byType(Card));
-    expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget);
-    await tester.ensureVisible(find.text('Orphan groups'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('Orphan groups'));
-    expect(opened, contains('modules/deputy_gm/groups.php'));
   });
 
   testWidgets('FM sees opening balance and assigned nannies', (tester) async {

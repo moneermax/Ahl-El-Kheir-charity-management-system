@@ -50,7 +50,7 @@ void main() {
     await tester.tap(find.text('North group').first);
     await tester.pumpAndSettle();
     expect(selectedId, 7);
-    expect(find.text('Current members'), findsOneWidget);
+    expect(find.text('Current members'), findsWidgets);
     expect(find.text('Test child'), findsOneWidget);
     expect(find.text('Membership history'), findsOneWidget);
     expect(tester.takeException(), isNull);

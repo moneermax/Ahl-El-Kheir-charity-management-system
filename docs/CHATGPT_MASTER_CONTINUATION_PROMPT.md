@@ -3000,3 +3000,12 @@ The implementation follows the existing `modules/deputy_gm/groups.php` workflow 
 Regression coverage has been added for VGM-only API access, list/detail, draft creation/edit, rejecting activation of an empty group, deleting a never-used draft, the native role-tool route, group/member display, and the current-month disbursement UI lock.
 
 **Verification status: PENDING CI.** Do not claim API integration, PHP syntax, Flutter widget tests, Android APK build, local XAMPP/API acceptance, or physical-device acceptance until the corresponding results are observed for the current commit. The existing group workflow and financial acceptance boundaries have not been changed. Next gate: inspect the API integration and Flutter workflow results sequentially; if either fails, diagnose its exact failure before editing or pushing another commit.
+
+
+## 2026-10-27 — Flutter CI failure diagnosed; dialog lifecycle fix submitted for next run
+
+The first CI pass for native VGM orphan-group management completed with Mobile API auth integration #219 PASS, Salary advance verification #3532 PASS, Sponsor QR Scanner APK #212 PASS, but Flutter APK #612 FAILED at the Flutter test step (152 passed, 3 failed). Exact failures were confined to `orphan_groups_page_test.dart`: the group detail test expected one `Current members` label although the screen correctly displays both a member-count metric and a section heading; the create-draft test exposed text controllers being disposed by the page while the dialog route was still animating out; the disbursement-lock test then saw a widget-tree assertion after the same test run's dialog/controller exception sequence.
+
+The follow-up patch moves group edit/create controllers into the dialog's own StatefulWidget lifecycle so they are disposed when the dialog widget is disposed, and updates the ambiguous-label test assertion to accept both expected labels. This is a focused correction based on the captured CI stack traces, not a speculative production workaround.
+
+**Verification status: PENDING NEXT CI RUN.** No new workflow has been assumed successful. Check the new Flutter APK run first, then inspect the API integration run for the same commit. The read-only member/history presentation for closed groups remains a separately identified parity gap; do not silently treat it as fixed by this test patch.

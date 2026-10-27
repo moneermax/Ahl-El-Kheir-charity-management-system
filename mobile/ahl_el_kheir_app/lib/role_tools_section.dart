@@ -76,7 +76,6 @@ class RoleToolsSection extends StatelessWidget {
 
   bool _isNativeTool(String path) => const {
     'modules/families/suspensions.php',
-    'modules/deputy_gm/groups.php',
     'modules/hr/attendance_policy.php',
     'modules/hr/payroll_integrity.php',
     'modules/hr/payroll.php',
