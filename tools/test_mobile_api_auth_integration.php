@@ -138,6 +138,11 @@ $testSponsorId = 0;
 $testWinbackCampaignId = 0;
 $testWinbackReactivatorUserId = 0;
 $testWinbackNotificationMaxId = -1;
+$testIncentivePolicyId = 0;
+$testIncentiveTypeCode = '';
+$testIncentiveNotificationMaxId = -1;
+$testIncentiveActivePoliciesBefore = [];
+$testIncentiveSnapshotCaptured = false;
 $testFinaSourceId = 0;
 $testFinaCollectionId = 0;
 $testBackupName = '';
@@ -2148,6 +2153,233 @@ try {
     ], $token, 20);
     mobileApiExpect($winbackDuplicateReturn['status'] === 409, 'Repeated win-back reactivation is rejected');
 
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['accountant'], $userId]);
+    $accountantPolicyRead = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $token, 20);
+    mobileApiExpect($accountantPolicyRead['status'] === 403, 'Accountant is denied incentive policy access');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_manager'], $userId]);
+    $testIncentiveNotificationMaxId = (int)$pdo->query('SELECT COALESCE(MAX(id), 0) FROM notifications')->fetchColumn();
+    $hrPolicyRead = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $token, 20);
+    mobileApiExpect(
+        $hrPolicyRead['status'] === 200
+        && ($hrPolicyRead['json']['data']['can_manage'] ?? false) === true
+        && is_array($hrPolicyRead['json']['data']['policies'] ?? null)
+        && is_array($hrPolicyRead['json']['data']['types'] ?? null),
+        'HR Manager can read policy versions and category catalogue'
+    );
+
+    $createdPolicyCategory = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'create_category',
+        'name_ar' => 'فئة اختبار سياسة الهاتف',
+        'name_en' => 'Mobile Policy Test Category',
+    ], $token, 20);
+    $testIncentiveTypeCode = (string)($createdPolicyCategory['json']['data']['type_code'] ?? '');
+    mobileApiExpect(
+        $createdPolicyCategory['status'] === 201
+        && $testIncentiveTypeCode !== ''
+        && ($createdPolicyCategory['json']['data']['qualification_mode'] ?? '') === 'manual_review',
+        'New incentive category is created in manual-review mode'
+    );
+
+    $hrPolicyRead = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $token, 20);
+    $activePolicyTypes = array_values(array_filter(
+        $hrPolicyRead['json']['data']['types'] ?? [],
+        static fn(array $type): bool => (int)($type['is_active'] ?? 0) === 1
+    ));
+    if (!$activePolicyTypes) throw new RuntimeException('Incentive policy integration requires at least one active category.');
+    $enabledTypeCode = '';
+    foreach ($activePolicyTypes as $type) {
+        if ((string)($type['type_code'] ?? '') === 'new_sponsor') {
+            $enabledTypeCode = 'new_sponsor';
+            break;
+        }
+    }
+    if ($enabledTypeCode === '') $enabledTypeCode = (string)$activePolicyTypes[0]['type_code'];
+    $testPolicyRules = [];
+    foreach ($activePolicyTypes as $type) {
+        $code = (string)$type['type_code'];
+        $testPolicyRules[] = [
+            'type_code' => $code,
+            'enabled' => $code === $enabledTypeCode,
+            'amount' => $code === $enabledTypeCode ? '1.00' : '0.00',
+        ];
+    }
+
+    $testIncentiveActivePoliciesBefore = $pdo->query(
+        "SELECT id, status, effective_to, activated_by_user_id, activated_at, updated_at
+         FROM hr_incentive_policy_versions WHERE status='active' ORDER BY id"
+    )->fetchAll(PDO::FETCH_ASSOC);
+    $testIncentiveSnapshotCaptured = true;
+    $maxActivePolicyDate = $pdo->query(
+        "SELECT MAX(effective_from) FROM hr_incentive_policy_versions WHERE status='active'"
+    )->fetchColumn();
+    $basePolicyDate = max(date('Y-m-d'), (string)($maxActivePolicyDate ?: date('Y-m-d')));
+    $testPolicyEffectiveFrom = (new DateTimeImmutable($basePolicyDate))->modify('+2 days')->format('Y-m-d');
+    $testPolicyName = 'CI Mobile Incentive Policy ' . date('YmdHis') . '-' . $userId;
+
+    $createdPolicy = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'create_policy',
+        'policy_name' => $testPolicyName,
+        'effective_from' => $testPolicyEffectiveFrom,
+        'rules' => $testPolicyRules,
+    ], $token, 20);
+    $testIncentivePolicyId = (int)($createdPolicy['json']['data']['policy_id'] ?? 0);
+    mobileApiExpect(
+        $createdPolicy['status'] === 201
+        && $testIncentivePolicyId > 0
+        && ($createdPolicy['json']['data']['status'] ?? '') === 'draft',
+        'HR Manager can create a draft policy with rules for all active categories'
+    );
+    if ($testIncentivePolicyId <= 0) throw new RuntimeException('Could not create the disposable incentive policy fixture.');
+
+    $createdPolicyField = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'add_custom_field',
+        'policy_id' => $testIncentivePolicyId,
+        'label_ar' => 'حقل اختبار',
+        'label_en' => 'Test field',
+        'field_type' => 'select',
+        'is_required' => true,
+        'options' => ['Alpha', 'Beta'],
+        'field_value' => 'Alpha',
+    ], $token, 20);
+    $testIncentiveFieldId = (int)($createdPolicyField['json']['data']['field_id'] ?? 0);
+    mobileApiExpect($createdPolicyField['status'] === 201 && $testIncentiveFieldId > 0, 'HR Manager can add a required select custom field to a draft');
+    if ($testIncentiveFieldId <= 0) throw new RuntimeException('Could not create the disposable incentive-policy custom field.');
+
+    $updatedPolicy = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'update_policy',
+        'policy_id' => $testIncentivePolicyId,
+        'policy_name' => $testPolicyName . ' Revised',
+        'effective_from' => $testPolicyEffectiveFrom,
+        'rules' => $testPolicyRules,
+        'custom_values' => [(string)$testIncentiveFieldId => 'Beta'],
+    ], $token, 20);
+    mobileApiExpect($updatedPolicy['status'] === 200 && ($updatedPolicy['json']['data']['status'] ?? '') === 'draft', 'HR Manager can update draft rules and custom-field values');
+
+    $submitPolicy = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'submit_policy',
+        'policy_id' => $testIncentivePolicyId,
+    ], $token, 20);
+    mobileApiExpect($submitPolicy['status'] === 200 && ($submitPolicy['json']['data']['status'] ?? '') === 'pending_gm', 'HR Manager can submit a valid draft for GM approval');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['general_manager'], $userId]);
+    $gmPolicyRead = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $token, 20);
+    $gmPolicies = $gmPolicyRead['json']['data']['policies'] ?? [];
+    $gmPolicyStatuses = array_column($gmPolicies, 'status');
+    mobileApiExpect(
+        $gmPolicyRead['status'] === 200
+        && ($gmPolicyRead['json']['data']['can_review'] ?? false) === true
+        && in_array('pending_gm', $gmPolicyStatuses, true)
+        && !in_array('draft', $gmPolicyStatuses, true),
+        'General Manager sees pending policies but not private HR drafts'
+    );
+
+    $approvedPolicy = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'approve_policy',
+        'policy_id' => $testIncentivePolicyId,
+    ], $token, 20);
+    mobileApiExpect($approvedPolicy['status'] === 200 && ($approvedPolicy['json']['data']['status'] ?? '') === 'approved', 'General Manager can approve a submitted policy');
+
+    $withdrawnPolicy = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'withdraw_approval_to_draft',
+        'policy_id' => $testIncentivePolicyId,
+        'reason' => 'Disposable CI approval-withdrawal check',
+    ], $token, 20);
+    mobileApiExpect($withdrawnPolicy['status'] === 200 && ($withdrawnPolicy['json']['data']['status'] ?? '') === 'draft', 'General Manager can withdraw approval from an unactivated policy');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_manager'], $userId]);
+    $resubmitPolicy = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'submit_policy',
+        'policy_id' => $testIncentivePolicyId,
+    ], $token, 20);
+    mobileApiExpect($resubmitPolicy['status'] === 200 && ($resubmitPolicy['json']['data']['status'] ?? '') === 'pending_gm', 'HR Manager can resubmit a returned draft');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['general_manager'], $userId]);
+    $rejectedPolicy = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'reject_policy',
+        'policy_id' => $testIncentivePolicyId,
+        'reason' => 'Disposable CI rejection check',
+    ], $token, 20);
+    mobileApiExpect($rejectedPolicy['status'] === 200 && ($rejectedPolicy['json']['data']['status'] ?? '') === 'draft', 'General Manager can reject a policy with a recorded reason');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['hr_manager'], $userId]);
+    $resubmitAfterReject = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'submit_policy',
+        'policy_id' => $testIncentivePolicyId,
+    ], $token, 20);
+    mobileApiExpect($resubmitAfterReject['status'] === 200 && ($resubmitAfterReject['json']['data']['status'] ?? '') === 'pending_gm', 'Rejected draft can be revised and resubmitted');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['general_manager'], $userId]);
+    $finalApproval = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'approve_policy',
+        'policy_id' => $testIncentivePolicyId,
+    ], $token, 20);
+    mobileApiExpect($finalApproval['status'] === 200 && ($finalApproval['json']['data']['status'] ?? '') === 'approved', 'General Manager can approve the resubmitted policy');
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['financial_manager'], $userId]);
+    $fmPolicyRead = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'GET', null, $token, 20);
+    $fmPolicies = $fmPolicyRead['json']['data']['policies'] ?? [];
+    $fmPolicyIds = array_map(static fn(array $p): int => (int)($p['id'] ?? 0), $fmPolicies);
+    mobileApiExpect(
+        $fmPolicyRead['status'] === 200
+        && ($fmPolicyRead['json']['data']['can_activate'] ?? false) === true
+        && in_array($testIncentivePolicyId, $fmPolicyIds, true),
+        'Financial Manager can see an approved policy for activation'
+    );
+
+    $activatedPolicy = mobileApiRequest('/api/v1/hr/incentive_policy.php', 'POST', [
+        'action' => 'activate_policy',
+        'policy_id' => $testIncentivePolicyId,
+    ], $token, 20);
+    $testPolicyState = $pdo->prepare('SELECT status, activated_by_user_id, activated_at FROM hr_incentive_policy_versions WHERE id=?');
+    $testPolicyState->execute([$testIncentivePolicyId]);
+    $testPolicyStateRow = $testPolicyState->fetch(PDO::FETCH_ASSOC) ?: [];
+    mobileApiExpect(
+        $activatedPolicy['status'] === 200
+        && ($activatedPolicy['json']['data']['status'] ?? '') === 'active'
+        && ($testPolicyStateRow['status'] ?? '') === 'active'
+        && (int)($testPolicyStateRow['activated_by_user_id'] ?? 0) === $userId
+        && !empty($testPolicyStateRow['activated_at']),
+        'Financial Manager can activate an approved policy with a future effective date'
+    );
+
+    $pdo->prepare('UPDATE users SET role_id=? WHERE id=?')->execute([$roles['admin'], $userId]);
+    foreach ($testIncentiveActivePoliciesBefore as $oldPolicy) {
+        $pdo->prepare(
+            'UPDATE hr_incentive_policy_versions SET status=?, effective_to=?, activated_by_user_id=?, activated_at=?, updated_at=? WHERE id=?'
+        )->execute([
+            $oldPolicy['status'], $oldPolicy['effective_to'], $oldPolicy['activated_by_user_id'],
+            $oldPolicy['activated_at'], $oldPolicy['updated_at'], (int)$oldPolicy['id']
+        ]);
+    }
+    $pdo->prepare('DELETE FROM hr_incentive_policy_custom_fields WHERE policy_version_id=?')->execute([$testIncentivePolicyId]);
+    $pdo->prepare('DELETE FROM hr_incentive_policy_rules WHERE policy_version_id=?')->execute([$testIncentivePolicyId]);
+    $pdo->prepare('DELETE FROM hr_incentive_policy_approval_history WHERE policy_version_id=?')->execute([$testIncentivePolicyId]);
+    $pdo->prepare('DELETE FROM hr_incentive_policy_versions WHERE id=?')->execute([$testIncentivePolicyId]);
+    if ($testIncentiveTypeCode !== '') {
+        $pdo->prepare('DELETE FROM hr_incentive_types WHERE type_code=?')->execute([$testIncentiveTypeCode]);
+    }
+    $restorationOk = true;
+    foreach ($testIncentiveActivePoliciesBefore as $oldPolicy) {
+        $restoredQuery = $pdo->prepare('SELECT status, effective_to, activated_by_user_id, activated_at, updated_at FROM hr_incentive_policy_versions WHERE id=?');
+        $restoredQuery->execute([(int)$oldPolicy['id']]);
+        $restored = $restoredQuery->fetch(PDO::FETCH_ASSOC) ?: [];
+        if (($restored['status'] ?? null) !== $oldPolicy['status']
+            || (string)($restored['effective_to'] ?? '') !== (string)($oldPolicy['effective_to'] ?? '')
+            || (int)($restored['activated_by_user_id'] ?? 0) !== (int)($oldPolicy['activated_by_user_id'] ?? 0)
+            || (string)($restored['activated_at'] ?? '') !== (string)($oldPolicy['activated_at'] ?? '')
+            || (string)($restored['updated_at'] ?? '') !== (string)($oldPolicy['updated_at'] ?? '')) {
+            $restorationOk = false;
+        }
+    }
+    mobileApiExpect($restorationOk, 'Existing active incentive-policy rows are restored unchanged after the disposable activation test');
+    if ($restorationOk) {
+        $testIncentivePolicyId = 0;
+        $testIncentiveTypeCode = '';
+        $testIncentiveActivePoliciesBefore = [];
+        $testIncentiveSnapshotCaptured = false;
+    }
+
     $r = mobileApiRequest('/api/v1/projects/index.php', 'GET', null, $token);
     $portfolioItems = $r['json']['data']['items'] ?? [];
     $fixture = null;
@@ -2749,6 +2981,29 @@ try {
     }
     if ($testFinaSourceId > 0) {
         $pdo->prepare('DELETE FROM fina_sources WHERE id=?')->execute([$testFinaSourceId]);
+    }
+    if ($testIncentiveSnapshotCaptured) {
+        foreach ($testIncentiveActivePoliciesBefore as $oldPolicy) {
+            $pdo->prepare(
+                'UPDATE hr_incentive_policy_versions SET status=?, effective_to=?, activated_by_user_id=?, activated_at=?, updated_at=? WHERE id=?'
+            )->execute([
+                $oldPolicy['status'], $oldPolicy['effective_to'], $oldPolicy['activated_by_user_id'],
+                $oldPolicy['activated_at'], $oldPolicy['updated_at'], (int)$oldPolicy['id']
+            ]);
+        }
+    }
+    if ($testIncentivePolicyId > 0) {
+        $pdo->prepare('DELETE FROM hr_incentive_policy_custom_fields WHERE policy_version_id=?')->execute([$testIncentivePolicyId]);
+        $pdo->prepare('DELETE FROM hr_incentive_policy_rules WHERE policy_version_id=?')->execute([$testIncentivePolicyId]);
+        $pdo->prepare('DELETE FROM hr_incentive_policy_approval_history WHERE policy_version_id=?')->execute([$testIncentivePolicyId]);
+        $pdo->prepare('DELETE FROM hr_incentive_policy_versions WHERE id=?')->execute([$testIncentivePolicyId]);
+    }
+    if ($testIncentiveTypeCode !== '') {
+        $pdo->prepare('DELETE FROM hr_incentive_types WHERE type_code=?')->execute([$testIncentiveTypeCode]);
+    }
+    if ($testIncentiveNotificationMaxId >= 0) {
+        $pdo->prepare("DELETE FROM notifications WHERE id > ? AND link LIKE '%modules/hr/incentive_policy.php%'")
+            ->execute([$testIncentiveNotificationMaxId]);
     }
     if ($testWinbackNotificationMaxId >= 0 && $testWinbackReactivatorUserId > 0) {
         $pdo->prepare("DELETE FROM notifications WHERE id > ? AND recipient_user_id=? AND type='incentive' AND title='تم تسجيل نشاط مرتبط بحافز'")

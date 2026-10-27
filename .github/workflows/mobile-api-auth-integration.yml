@@ -15,6 +15,10 @@ on:
       - 'database/migrations/2026-09-17_fina_standalone_schema.sql'
       - 'database/migrations/2026-10-05_hr_attendance_policy.sql'
       - 'database/migrations/2026-10-26_hr_attendance_policy_working_days.sql'
+      - 'database/migrations/2026-10-12_hr_employee_incentives_ledger.sql'
+      - 'database/migrations/2026-10-12_hr_employee_incentive_catalogue_and_policy_fields.sql'
+      - 'database/migrations/2026-10-13_hr_incentive_policy_gm_approval.sql'
+      - 'database/migrations/2026-10-15_hr_incentive_policy_approval_withdrawal.sql'
       - 'database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql'
       - 'database/migrations/2026-10-23_document_archive_catalogue.sql'
       - 'tools/test_mobile_api_auth_integration.php'
@@ -39,6 +43,10 @@ on:
       - 'database/ahl_el_kheir.sql'
       - 'database/migrations/2026-10-24_mobile_api_sessions.sql'
       - 'database/migrations/2026-10-25_mobile_web_handoffs.sql'
+      - 'database/migrations/2026-10-12_hr_employee_incentives_ledger.sql'
+      - 'database/migrations/2026-10-12_hr_employee_incentive_catalogue_and_policy_fields.sql'
+      - 'database/migrations/2026-10-13_hr_incentive_policy_gm_approval.sql'
+      - 'database/migrations/2026-10-15_hr_incentive_policy_approval_withdrawal.sql'
       - 'database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql'
       - 'tools/test_mobile_api_auth_integration.php'
       - '.github/workflows/mobile-api-auth-integration.yml'
@@ -91,6 +99,7 @@ jobs:
         run: |
           set -euo pipefail
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/ahl_el_kheir.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-12_hr_employee_incentives_ledger.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-12_hr_employee_incentive_catalogue_and_policy_fields.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-13_hr_incentive_policy_gm_approval.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-15_hr_incentive_policy_approval_withdrawal.sql
@@ -115,6 +124,7 @@ jobs:
           php -l api/v1/search/document_file.php
           php -l modules/projects/project_lib.php
           php -l api/v1/hr/incentive_verification.php
+          php -l api/v1/hr/incentive_policy.php
           php -l modules/hr/lib_employee_incentives.php
           php -l api/v1/hr/payroll_policy.php
           php -l api/v1/hr/payroll_management.php
