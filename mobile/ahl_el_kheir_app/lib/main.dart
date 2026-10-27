@@ -60,6 +60,7 @@ import 'gm_payroll_report_page.dart';
 import 'gm_reconciliation_page.dart';
 import 'sponsor_winback_page.dart';
 import 'incentive_policy_page.dart';
+import 'salary_advance_waiver_page.dart';
 import 'employment_states_page.dart';
 import 'orphan_forms_index_page.dart';
 import 'package:file_picker/file_picker.dart';
@@ -625,6 +626,28 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
       ));
       return;
     }
+    if (relativePath == 'modules/hr/salary_advance_waiver_fm.php' ||
+        relativePath == 'modules/hr/salary_advance_waiver_gm.php') {
+      const fmRoles = ['admin', 'financial_manager', 'fm', 'finance'];
+      const gmRoles = ['admin', 'general_manager', 'gm'];
+      final currentRole = user?['role_code']?.toString() ?? '';
+      final isFmPath = relativePath == 'modules/hr/salary_advance_waiver_fm.php';
+      if (isFmPath ? !fmRoles.contains(currentRole) : !gmRoles.contains(currentRole)) {
+        ScaffoldMessenger.of(navigatorKey.currentContext!).showSnackBar(
+          SnackBar(content: Text(english ? 'Salary-advance waiver access is not available for this role.' : 'إعفاء السلف غير متاح لهذا الدور.')),
+        );
+        return;
+      }
+      navigatorKey.currentState?.push(MaterialPageRoute<void>(
+        builder: (_) => SalaryAdvanceWaiverPage(
+          english: english,
+          roleCode: currentRole,
+          loadPage: loadSalaryAdvanceWaiver,
+          submitAction: submitSalaryAdvanceWaiverAction,
+        ),
+      ));
+      return;
+    }
     if (relativePath == 'modules/administration/winback.php') {
       const allowedRoles = ['admin', 'sudo', 'super_admin', 'general_manager', 'gm', 'vice_general_manager', 'vgm', 'administration'];
       if (!allowedRoles.contains(user?['role_code']?.toString())) {
@@ -1178,6 +1201,18 @@ class _AhlElKheirAppState extends State<AhlElKheirApp> {
     final token = await storage.read(key: tokenKey);
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     return call('POST', 'hr/incentive_policy.php', body: body, token: token);
+  }
+
+  Future<Map<String, dynamic>> loadSalaryAdvanceWaiver(String effectiveMonth) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('GET', 'hr/salary_advance_waiver.php?effective_month=' + Uri.encodeQueryComponent(effectiveMonth), token: token);
+  }
+
+  Future<Map<String, dynamic>> submitSalaryAdvanceWaiverAction(Map<String, dynamic> body) async {
+    final token = await storage.read(key: tokenKey);
+    if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
+    return call('POST', 'hr/salary_advance_waiver.php', body: body, token: token);
   }
 
   Future<Map<String, dynamic>> loadSponsorWinback(int? viewId) async {

@@ -439,3 +439,14 @@ The earlier entry listing Incentive Policy as an unimplemented native gap is sup
 This is **native route/build verification only**. It does not close the broader employee-incentives module's previously documented real-browser acceptance gaps, and it is not permission to alter active R5 or historical incentive/accounting/payroll evidence. No local XAMPP or physical-device acceptance is claimed.
 
 Next audited native gap: **GM Salary Advance Waiver**. Implement only after mapping the existing FM preparation → GM approve/reject → FM execution flow, role guards, decision/item/schedule tables, journal behavior, notifications, and payroll interaction. The existing waiver implementation and its closed acceptance boundary must be reused; do not re-run closed financial harnesses or change business semantics merely to support the mobile UI.
+
+
+## 2026-10-27 — GM Salary Advance Waiver native implementation submitted for CI
+
+The native layer now reuses the existing waiver business service rather than reimplementing financial behavior:
+- Authenticated API: `api/v1/hr/salary_advance_waiver.php`.
+- Flutter page: `mobile/ahl_el_kheir_app/lib/salary_advance_waiver_page.dart`.
+- Existing GM and FM role-tool paths are marked IN APP and route to the same native screen, with separate role-appropriate actions. FM prepares and executes; GM reviews/approves/rejects; server-side role checks remain authoritative.
+- No migration, runtime DDL, new accounting rules, or changes to historical waiver logic are included.
+
+Status at this checkpoint: **implementation submitted for CI; not yet verified**. The existing waiver financial acceptance remains closed and must not be rerun without regression evidence. Multiple eligible advances for one employee and true two-process concurrent execution remain explicit evidence gaps. No local XAMPP or physical-device acceptance is claimed.

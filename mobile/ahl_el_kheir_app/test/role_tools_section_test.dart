@@ -426,6 +426,36 @@ void main() {
 
     expect(find.text('Additional role tools'), findsNothing);
   });
+
+  testWidgets('salary-advance waiver is marked native for the existing GM and FM roles', (tester) async {
+    for (final entry in <String, String>{
+      'general_manager': 'modules/hr/salary_advance_waiver_gm.php',
+      'financial_manager': 'modules/hr/salary_advance_waiver_fm.php',
+      'fm': 'modules/hr/salary_advance_waiver_fm.php',
+    }.entries) {
+      final opened = <String>[];
+      await tester.pumpWidget(MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: RoleToolsSection(
+              roleCode: entry.key,
+              english: true,
+              onOpen: opened.add,
+            ),
+          ),
+        ),
+      ));
+      expect(find.text('Salary advance waivers'), findsOneWidget, reason: entry.key);
+      final card = find.ancestor(of: find.text('Salary advance waivers'), matching: find.byType(Card));
+      expect(find.descendant(of: card, matching: find.text('IN APP')), findsOneWidget, reason: entry.key);
+      await tester.ensureVisible(find.text('Salary advance waivers'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Salary advance waivers'));
+      expect(opened, contains(entry.value), reason: entry.key);
+      await tester.pumpWidget(const SizedBox.shrink());
+    }
+  });
+
 }
 
 void _ignorePath(String path) {}

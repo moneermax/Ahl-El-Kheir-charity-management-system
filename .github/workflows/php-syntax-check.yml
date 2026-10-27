@@ -73,6 +73,7 @@ jobs:
             api/v1/hr/payroll_integrity.php
             api/v1/hr/gm_payroll_period_history.php
             api/v1/hr/gm_payroll_period_report.php
+            api/v1/hr/salary_advance_waiver.php
             api/v1/nanny/group_verification.php
             api/v1/nanny/group_verification_action.php
             api/v1/nanny/pre_verification.php
@@ -141,6 +142,9 @@ jobs:
             modules/hr/salary_advance_dashboard.php
             modules/hr/salary_advance_reschedule.php
             modules/hr/lib_salary_advance_payroll.php
+            modules/hr/lib_salary_advance_waiver.php
+            modules/hr/salary_advance_waiver_fm.php
+            modules/hr/salary_advance_waiver_gm.php
             modules/hr/salary_advance_processing.php
             modules/hr/salary_advance_request.php
             modules/accounting/lib_transaction_review.php

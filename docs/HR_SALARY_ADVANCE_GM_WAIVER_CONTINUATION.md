@@ -415,3 +415,10 @@ Runtime gate:
 The affected waiver FM/GM pages were opened in English mode using the language switch, and the user confirmed that everything is English and the pages behave normally.
 
 This is an adjacent documentation/UI verification checkpoint only. It does not reopen the closed waiver financial verification matrix and does not require any waiver harness to be rerun.
+
+
+## 2026-10-27 — Native mobile presentation layer added; CI pending
+
+The Flutter project now has a native-only adapter for the existing GM Salary Advance Waiver workflow. The new API endpoint `api/v1/hr/salary_advance_waiver.php` delegates preparation, GM review, and FM execution to the existing `hrSalaryAdvanceWaiverCreateDecision()`, `hrSalaryAdvanceWaiverGMReview()`, and `hrSalaryAdvanceWaiverExecute()` functions. The native screen does not duplicate the accounting/payroll calculations and preserves the same action split. No schema migration or production financial behavior was changed.
+
+This is a mobile implementation checkpoint only. CI verification is pending; no local XAMPP/API or physical-device acceptance is claimed. The previously closed financial acceptance gates remain closed. The same-employee/multiple-advance and true two-process concurrency evidence gaps remain explicitly unproven.

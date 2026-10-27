@@ -1277,3 +1277,14 @@ Verification evidence:
 Scope boundary: this closes the **native Incentive Policy screen's CI/build verification**, not the entire employee-incentives business module. The module continuation document still records real-browser acceptance gaps for project PM-to-FM closure notices, provisional notice inbox behavior, and project-team assignment UI. Do not change active R5, recreate deleted disposable incentive databases, or repeat closed tests without concrete regression evidence. Local XAMPP/API and physical-device acceptance remain unverified.
 
 Next native role-tool gap: GM Salary Advance Waiver. Inspect the existing FM preparation / GM review / FM execution workflow, exact role guards, schema, and accounting/payroll effects before adding any API or Flutter code. Do not add schema or alter closed waiver behavior unless source evidence proves it necessary.
+
+
+## 2026-10-27 — Native GM Salary Advance Waiver implementation checkpoint (CI pending)
+
+Added a native-only Flutter page and authenticated API adapter for the existing GM Salary Advance Waiver workflow:
+- `api/v1/hr/salary_advance_waiver.php` reuses the existing `hrSalaryAdvanceWaiverCreateDecision()`, `hrSalaryAdvanceWaiverGMReview()`, and `hrSalaryAdvanceWaiverExecute()` service functions. It adds no runtime DDL and no new financial logic.
+- The API role boundary preserves the existing web permissions: FM prepares and executes; GM approves/rejects; the administrator retains the existing dual access. GET exposes only the decision states and data appropriate to the authenticated role.
+- `mobile/ahl_el_kheir_app/lib/salary_advance_waiver_page.dart` provides FM preparation, GM review/rejection with required reason, and FM execution confirmation. Both existing GM and FM role-tool paths are routed in-app; no browser handoff is used.
+- Widget tests cover GM/FM action separation, approval/execution confirmation, and the safe behavior when the waiver migration is not present. The PHP verification workflow now includes the new endpoint and existing waiver service/pages in its lint list.
+
+**Verification pending:** the source changes are committed, but the resulting GitHub Actions runs have not yet been checked. Do not claim PHP lint, Flutter tests, APK build, API integration, local XAMPP acceptance, or physical-device acceptance until each applicable result is observed. The existing financial waiver logic remains at its previously closed acceptance boundary; do not rerun its closed financial harnesses. The two documented evidence gaps (same employee with multiple eligible advances and true two-process concurrency) remain unproven.
