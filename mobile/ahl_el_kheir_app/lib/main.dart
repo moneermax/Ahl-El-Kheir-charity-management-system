@@ -1636,7 +1636,7 @@ Future<void> completeForcedPasswordChange(String username, String currentPasswor
     if (token == null || token.isEmpty) throw const ApiFailure('Authentication is required.', statusCode: 401);
     final parameters = <String, String>{'vmonth': month};
     if (nannyId != null) parameters['nanny'] = nannyId.toString();
-    return call('GET', 'accounting/assigned_nannies.php?\${Uri(queryParameters: parameters).query}', token: token);
+    return call('GET', 'accounting/assigned_nannies.php?${Uri(queryParameters: parameters).query}', token: token);
   }
 
   Future<Map<String, dynamic>> loadFinaReport(String from, String to) async {
