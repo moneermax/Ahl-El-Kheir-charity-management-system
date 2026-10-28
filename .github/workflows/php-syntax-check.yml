@@ -133,6 +133,43 @@ jobs:
             api/v1/accounting/vouchers.php
             api/v1/sponsorships/index.php
             api/v1/sponsorships/detail.php
+            api/v1/account/avatar.php
+            api/v1/account/profile.php
+            api/v1/accounting/accounts.php
+            api/v1/accounting/assigned_nannies.php
+            api/v1/accounting/fm_transaction_receipt.php
+            api/v1/accounting/fm_transaction_review.php
+            api/v1/accounting/gm_reconciliation.php
+            api/v1/accounting/journal.php
+            api/v1/accounting/trial_balance.php
+            api/v1/admin/backups.php
+            api/v1/admin/database.php
+            api/v1/admin/disbursements.php
+            api/v1/admin/disbursements_action.php
+            api/v1/administration/available_families.php
+            api/v1/administration/winback.php
+            api/v1/auth/change_password.php
+            api/v1/auth/complete_forced_password_change.php
+            api/v1/auth/password_recovery_request.php
+            api/v1/auth/web_handoff.php
+            api/v1/deputy_gm/groups.php
+            api/v1/fina/collections.php
+            api/v1/fina/dashboard.php
+            api/v1/fina/receipt.php
+            api/v1/fina/report.php
+            api/v1/fina/review.php
+            api/v1/fina/sponsors.php
+            api/v1/hr/incentive_policy.php
+            api/v1/hr/incentive_verification.php
+            api/v1/hr/payroll_management.php
+            api/v1/hr/payroll_policy.php
+            api/v1/hr/payroll_proof.php
+            api/v1/hr/salary_advance_dashboard.php
+            api/v1/nanny/returned_funds.php
+            api/v1/search/document_file.php
+            api/v1/search/documents.php
+            api/v1/search/sponsors.php
+            api/v1/transactions/query_service.php
             modules/hr/contract_builder.php
             modules/hr/job_description_catalogue.php
             modules/hr/salary_portal.php
