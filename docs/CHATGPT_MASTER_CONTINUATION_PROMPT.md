@@ -3132,3 +3132,7 @@ Latest workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity
 ## 2026-10-28 — PHP API lint coverage checkpoint
 
 PHP remediation backlog: `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`, tracked by issue #96. Inventory found 111 API PHP files, with only 74 explicitly listed in `.github/workflows/php-syntax-check.yml`. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds all 37 omitted files. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) was queued at last check; confirm the actual result before claiming success. PHP-01 remains a local runtime verification gap. Do not run mutating integration tests against `ahl_el_kheir`; Flutter/native development remains paused.
+## 2026-10-28 — PHP API lint coverage verified
+
+
+Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds the 37 previously omitted API PHP files to the explicit lint list; all 111 `api/v1/*.php` files are now included. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) passed all five jobs. This verifies CI syntax coverage only. Continue the original PHP system remediation from `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`; PHP-01 local runtime acceptance remains open. Flutter/native work remains paused.
