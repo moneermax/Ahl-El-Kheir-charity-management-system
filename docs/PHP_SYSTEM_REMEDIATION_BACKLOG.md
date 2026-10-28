@@ -57,46 +57,29 @@ Next:
 Evidence: prior hosting investigation summarized in project conversation notes; mobile continuation's production-host warning.
 
 ### PHP-04 — Salary portal / incentive-policy role mismatch
-**Status:** OPEN — concrete source-level permission inconsistency recorded; re-confirm current source before editing.  
+**Status:** SOURCE FIX COMMITTED — local browser acceptance pending.
 **Priority:** Medium.
 
-During role-parity review, `modules/hr/salary_portal.php` exposed an incentive-policy destination while `modules/hr/incentive_policy.php` denies the `admin` role. The mobile hub deliberately disabled the admin card rather than broadening authorization. This leaves a user-facing inconsistency in the PHP portal/navigation if the source still matches the documented finding.
+The destination page `modules/hr/incentive_policy.php` authorizes `general_manager`/`gm`, `hr_manager`, and `financial_manager` for their distinct policy actions; `admin` is not authorized. The salary portal previously showed the link to `admin`, leading to an unauthorized page.
 
-Evidence and change:
-- `modules/hr/incentive_policy.php` authorizes only `general_manager`/`gm`, `hr_manager`, and `financial_manager` for their distinct policy actions; `admin` is not an authorized role.
-- `modules/hr/salary_portal.php` previously showed the incentive-policy link to `admin`, which would lead to a page that redirects unauthorized roles.
-- Commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9` changes the portal navigation condition to `financial_manager` only. It does not broaden the destination's access policy.
-
-Remaining acceptance:
-- Confirm the link is shown to Financial Manager and hidden from admin in a real browser; confirm the page's existing authorization remains unchanged for HR Manager and General Manager.
-- CI/runtime evidence is not yet recorded for this specific change.
-
+Commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9` changes `modules/hr/salary_portal.php` so only `financial_manager` sees that link. The destination guard was not broadened. Remaining acceptance: verify in a real browser that Financial Manager sees the link, Admin does not, and HR Manager/General Manager retain their existing destination access.
 ### PHP-05 — Incentive/project workflow browser acceptance
-**Status:** OPEN — prior module notes report acceptance gaps; current state must be rechecked.  
+**Status:** OPEN — one stale route corrected; real-browser acceptance remains pending.
 **Priority:** Medium.
 
-The employee-incentives module continuation notes identify real-browser acceptance still outstanding for:
-- project PM-to-FM closure notices;
-- provisional notice-inbox behavior;
-- project-team assignment UI.
+Documented browser gates remain:
+- PM-to-FM financial closure earned notices, including assigned recipients and retry/deduplication;
+- provisional new-sponsor/reactivation notices appearing in the browser inbox;
+- project-team assignment UI (initial selection, add, duplicate rejection, unassign/history retention, edit-page behavior).
 
-These are workflow acceptance gaps, not automatically proven implementation defects.
+Source audit found `modules/projects/form.php` explicitly owns project-team mutations on the edit page, while `modules/projects/view.php` retained a second, unrendered pair of assignment/unassignment POST handlers. Commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9` removes those stale duplicate handlers so the edit page remains the supported route. Workflow verification is pending.
 
-Next:
-- Read the relevant incentive/project continuation docs and current PHP source.
-- Check whether later commits or user runtime confirmation already closed any item.
-- Test only still-open workflows with the correct roles and representative records; do not modify active incentive policy R5 or recreate deleted disposable test databases.
-
+Next: verify the sequential PHP workflow; keep browser acceptance open until tested with correct roles and safe representative records. Do not modify active incentive policy R5, recreate deleted disposable incentive databases, or perform mutating acceptance against live `ahl_el_kheir`.
 ### PHP-06 — Test workflow invocation guard/configuration mismatch
-**Status:** RE-TRIAGE — previous CI failure may already be corrected.  
-**Priority:** Low unless it still blocks verification.
+**Status:** RESOLVED by current workflow configuration review.
+**Priority:** Closed.
 
-An earlier salary-verification workflow attempted `tools/test_mobile_admin_users_action_service.php` with the wrong database/context and the harness refused to run outside `mobile_api_auth_test` with `MOBILE_API_AUTH_TEST=1`. This was a test invocation/configuration mismatch, not evidence of a production PHP defect.
-
-Next:
-- Inspect the current workflow YAML and harness guard.
-- If current configuration is correct, mark this item resolved with evidence; do not change production code or rerun unrelated suites.
-
+The current `.github/workflows/mobile-api-auth-integration.yml` sets `MOBILE_API_AUTH_TEST: '1'` and `AHL_DB_NAME: mobile_api_auth_test` at job level, provisions/imports the same disposable database, and invokes `tools/test_mobile_admin_users_action_service.php`. The harness guard matches the current job configuration. `.github/workflows/php-syntax-check.yml` merely includes the file in its syntax-check list; that is not an execution. No production-code change or test rerun is needed for this item.
 ### PHP-07 — HR job-description migration CI fixture starts from the post-migration schema
 **Status:** FIX VERIFIED — all jobs in the sequential CI run passed.
 **Priority:** Medium; CI verification blocker, not evidence of a live-data defect.
