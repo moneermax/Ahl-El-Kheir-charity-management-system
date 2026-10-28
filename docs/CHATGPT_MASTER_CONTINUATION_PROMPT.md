@@ -3136,3 +3136,8 @@ PHP remediation backlog: `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`, tracked by is
 
 
 Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds the 37 previously omitted API PHP files to the explicit lint list; all 111 `api/v1/*.php` files are now included. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) passed all five jobs. This verifies CI syntax coverage only. Continue the original PHP system remediation from `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`; PHP-01 local runtime acceptance remains open. Flutter/native work remains paused.
+
+## 2026-10-28 — Resume original PHP system: PHP-08
+
+
+Flutter/native feature work remains paused. Source inspection of the original PHP system found request-time schema DDL and role/department data updates in `modules/users/index.php`; tracked as PHP-08 in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. Next task is to inspect the exact objects in `database/ahl_el_kheir.sql`, identify existing migration coverage and dependent queries, then make a minimal migration-backed change. Never delete runtime DDL blindly or invent schema definitions. No PHP-08 source changes have been made yet.
