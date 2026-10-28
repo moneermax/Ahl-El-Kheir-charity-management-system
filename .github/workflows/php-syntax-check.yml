@@ -368,6 +368,11 @@ jobs:
         run: |
           set -euo pipefail
           mysql=(mysql --host=127.0.0.1 --port=3306 --user=root --database=hr_job_description_migration_test)
+
+          # The checked-in schema is already the post-migration shape. Recreate
+          # the pre-role-catalogue table only in this disposable CI database so
+          # the historical migration sequence runs from its intended starting shape.
+          "${mysql[@]}" -e "DROP TABLE IF EXISTS hr_job_description_templates"
           "${mysql[@]}" < database/migrations/2026-10-20_hr_job_description_catalogue.sql
 
           # Build a CI-only approved-record fixture with intentionally blank fields.
