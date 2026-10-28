@@ -5371,3 +5371,8 @@ Commit: `6550c9bcbed841aa631097ca9d178f7e3ab0906a`.
 ## 2026-10-28 — PHP remediation backlog recorded; mobile paused
 
 Flutter/native-app development is paused at the user's request. PHP/backend issues and verification gaps discovered during mobile development are logged in [`docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`](PHP_SYSTEM_REMEDIATION_BACKLOG.md), tracked by [GitHub issue #96](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/issues/96). This is a triage backlog, not a declaration that every item is a confirmed defect. Current-source/schema review and evidence are required before changes. Closed acceptance remains closed absent concrete regression evidence.
+
+
+## 2026-10-28 — PHP backlog triage checkpoint
+
+The incentive-policy navigation mismatch was corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`: the salary portal now displays that link only to `financial_manager`, matching the existing destination authorization. The authorization guard itself was not broadened. Real-browser acceptance remains pending. PHP-06 was closed after source review confirmed the current mobile API auth workflow sets the required harness flag/database and provisions that test database. See `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md` for current item statuses.
