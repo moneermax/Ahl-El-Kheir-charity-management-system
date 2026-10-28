@@ -3238,3 +3238,8 @@ PHP-12 is committed on `main`: `modules/accounting/lib_outflows.php` no longer c
 ## 2026-10-28 — PHP-12 outflow migration CI verified
 
 PHP-12 is source- and CI-verified by GitHub Actions run [#40644551812](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40644551812): all five jobs passed. The full-schema job applied the migration twice; a separate disposable legacy fixture confirmed restoration of missing group/return columns, group FK/index, and `pending` → `pending_approval` status normalization before restoring the canonical ENUM. PHP-08 through PHP-12 now have source/migration CI evidence. Local browser acceptance for these original PHP workflows remains outstanding, and the next audit step is a focused scan of any remaining request-time DDL outside these tracked files.
+
+
+## 2026-10-28 — PHP-13 public sponsor application mismatch
+
+A focused scan outside `modules/` found a confirmed mismatch between `apply.php`, the checked-in `sponsor_requests` schema, and the admin/API request queue. The public page uses `full_name`/`pending`, while the canonical table and queue use `sponsor_name` and `new/contacted/converted/lost`; the old 2026-09-14 migration also creates an incomplete variant. The public form supports individual/company/organization requests but omits gender, while the admin conversion flow currently requires male/female. This is logged as PHP-13; no source change was made because the intended handling of individual versus organization applications must be clarified rather than guessed. PHP-08 through PHP-12 have source/migration CI evidence; local browser acceptance remains pending.
