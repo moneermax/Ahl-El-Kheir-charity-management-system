@@ -98,7 +98,7 @@ Next:
 - If current configuration is correct, mark this item resolved with evidence; do not change production code or rerun unrelated suites.
 
 ### PHP-07 — HR job-description migration CI fixture starts from the post-migration schema
-**Status:** FIX COMMITTED — awaiting the current sequential CI run.
+**Status:** FIX VERIFIED — all jobs in the sequential CI run passed.
 **Priority:** Medium; CI verification blocker, not evidence of a live-data defect.
 
 Workflow run [#40632821897](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40632821897) failed in job `hr-job-description-migrations` with:
@@ -110,7 +110,7 @@ Root cause from the checked-in schema and migration source:
 - The CI job imported that post-migration schema, then `CREATE TABLE IF NOT EXISTS` in `2026-10-20_hr_job_description_catalogue.sql` left the existing table unchanged.
 - The subsequent `2026-10-20_hr_job_description_system_roles.sql` expects the legacy title-only index and fails when it tries to drop it.
 
-Fix committed in `daa821f1d607aa74d5efd90227e47567043c5ec1`: the workflow now drops and recreates only `hr_job_description_templates` in its disposable CI database using the catalogue migration before applying the historical migration sequence. Schema inspection found no foreign-key references to this table in the checked-in dump. This is CI fixture setup only; it does not modify production schema or application data. Await run [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) before closing the item.
+Fix committed in `daa821f1d607aa74d5efd90227e47567043c5ec1`: the workflow now drops and recreates only `hr_job_description_templates` in its disposable CI database using the catalogue migration before applying the historical migration sequence. Schema inspection found no foreign-key references to this table in the checked-in dump. This is CI fixture setup only; it does not modify production schema or application data. Run [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) passed all five jobs: `php-lint`, `hr-job-description-migrations`, `migration-mariadb-10-4`, `rescheduling-service-tests`, and `migration-full-schema`. This closes the CI fixture issue; local HR browser/PDF acceptance remains a separate, previously documented boundary.
 
 ## Explicitly paused or excluded
 
@@ -132,4 +132,4 @@ Fix committed in `daa821f1d607aa74d5efd90227e47567043c5ec1`: the workflow now dr
 
 - 2026-10-28: Created at the user's request to pause Flutter work and log PHP/backend findings for future remediation. Tracking issue: #96.
 - 2026-10-28: PHP-04 navigation mismatch corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`; real-browser acceptance remains pending. PHP-06 re-triaged and closed after confirming the current auth integration workflow sets the required test flag and database.
-- 2026-10-28: PHP-07 added after workflow #40632821897 exposed a stale migration fixture; CI-only fixture correction committed as `daa821f1d607aa74d5efd90227e47567043c5ec1`, awaiting workflow #40633086558.
+- 2026-10-28: PHP-07 added after workflow #40632821897 exposed a stale migration fixture; CI-only fixture correction committed as `daa821f1d607aa74d5efd90227e47567043c5ec1`, verified by workflow #40633086558: all five jobs passed.
