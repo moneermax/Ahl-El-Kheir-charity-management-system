@@ -3193,3 +3193,8 @@ While returning to the original PHP system (not Flutter UI files), source inspec
 ## PHP system remediation checkpoint — 2026-10-28
 
 Flutter/native development remains paused. The original PHP website is active scope. PHP-08 source remediation is committed on `main`: `modules/users/index.php` no longer creates/alters schema or seeds/updates role and department reference data during page requests. Those operations are in `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql`. The uploaded checked-in schema was inspected before editing and confirmed the existing objects/columns, including the extra `family_documents` fields. CI verification is pending; do not treat the item as closed until the migration test passes.
+
+
+## PHP website checkpoint — 2026-10-28
+
+PHP-08 user-management runtime DDL cleanup is source- and CI-verified on `main`. The new migration was applied twice against the checked-in full schema in GitHub Actions run [#40640508040](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40640508040); all five jobs passed, including PHP lint and the full-schema migration/regression job. This does not replace browser acceptance on the user's actual local XAMPP instance. Next step is a targeted User Management browser smoke test after pulling the commits, then continue the original PHP backlog without resuming Flutter work.
