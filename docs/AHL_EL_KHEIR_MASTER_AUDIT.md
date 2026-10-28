@@ -5655,3 +5655,8 @@ Commit: `6550c9bcbed841aa631097ca9d178f7e3ab0906a`.
 - Mobile API integration workflow [40551368548](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40551368548) passed full-schema role checks: Financial Manager, General Manager and Vice General Manager can read the chart; GM/VGM mutation requests are rejected with HTTP 403.
 - APK artifact ID `12754229320`, size 102,601,768 bytes. Debug-only and configured for the local development API.
 - No schema or accounting rules changed. Local XAMPP/API and physical-device acceptance remain unverified; do not expose XAMPP publicly. Online release requires a verified HTTPS API host.
+
+
+## 2026-10-28 — PHP remediation backlog checkpoint
+
+At the user's request, Flutter/native-app work is paused and PHP project work resumes. Findings and outstanding acceptance gaps surfaced during mobile/API development are consolidated in [`docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`](PHP_SYSTEM_REMEDIATION_BACKLOG.md) and tracked by [issue #96](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/issues/96). The list explicitly separates the salary-portal/incentive-policy role mismatch from API local-runtime/security acceptance, hosting compatibility, previously reported incentive/project browser acceptance gaps, and a potentially stale test-workflow invocation mismatch. These must be re-triaged against current `main`; do not infer production defects from CI-only evidence. Native parity gaps remain paused, not PHP defects. Closed PHP work must not be reopened without regression evidence.
