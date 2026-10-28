@@ -1022,3 +1022,8 @@ Follow-up source commit: `97ca44232ecec3bdb306992e46f5aec4ff6d770c`. The project
 
 ## 2026-10-24 — Mobile API launch-boundary parity note
 Source audit of mobile project APIs found that project detail defaulted absent approval state to `approved`, while `akp_can_view_project()` and project portfolio use `draft`; this fallback is now `draft`. Mobile milestone creation also now enforces the approved/lifecycle operational gate for non-admin project supervisors, matching the existing web access boundary and progress API. The detail response's `can_add_milestone` flag matches the same gate. CI workflow [40119297504](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40119297504) passed all five PHP/database jobs. No project business rules or schema were changed; local runtime role tests remain open.
+
+
+## 2026-10-28 — Project-team mutation route alignment
+
+Source inspection confirmed `modules/projects/form.php` owns team assignment/unassignment on the edit page, and the project profile had no rendered forms for its legacy `assign_team_member` / `unassign_team_member` POST branches. Those duplicate handlers were removed from `modules/projects/view.php` in commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`, leaving the edit page as the supported mutation route. This is a source-level consistency correction, not browser acceptance. The sequential PHP workflow is pending; local PHP/browser acceptance remains required. Do not mutate live project membership just to test UI.
