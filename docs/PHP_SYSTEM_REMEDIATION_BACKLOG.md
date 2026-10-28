@@ -72,7 +72,7 @@ Documented browser gates remain:
 - provisional new-sponsor/reactivation notices appearing in the browser inbox;
 - project-team assignment UI (initial selection, add, duplicate rejection, unassign/history retention, edit-page behavior).
 
-Source audit found `modules/projects/form.php` explicitly owns project-team mutations on the edit page, while `modules/projects/view.php` retained a second, unrendered pair of assignment/unassignment POST handlers. Commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9` removes those stale duplicate handlers so the edit page remains the supported route. Workflow verification is pending.
+Source audit found `modules/projects/form.php` explicitly owns project-team mutations on the edit page, while `modules/projects/view.php` retained a second, unrendered pair of assignment/unassignment POST handlers. Commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9` removes those stale duplicate handlers so the edit page remains the supported route. Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs, including PHP lint and the HR migration test. The source cleanup is CI-verified.
 
 Next: verify the sequential PHP workflow; keep browser acceptance open until tested with correct roles and safe representative records. Do not modify active incentive policy R5, recreate deleted disposable incentive databases, or perform mutating acceptance against live `ahl_el_kheir`.
 ### PHP-06 — Test workflow invocation guard/configuration mismatch
