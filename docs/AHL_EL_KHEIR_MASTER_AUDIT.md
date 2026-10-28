@@ -5699,3 +5699,8 @@ Repository inventory found 111 PHP files under `api/v1/`, while the previous wor
 ## 2026-10-28 — PHP-08 remediation checkpoint
 
 A confirmed source-level architecture violation in `modules/users/index.php` was addressed on `main`. The page no longer runs schema DDL or role/department seeding on requests; migration `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql` owns those changes. The exact checked-in SQL dump was inspected first, including the complete `family_documents` definition and foreign keys. CI now lints the changed page and applies the migration twice against a disposable MariaDB full-schema import, then asserts key columns and reference data. This checkpoint remains pending CI verification; do not infer live local-runtime acceptance from source changes alone.
+
+
+## PHP website checkpoint — 2026-10-28
+
+PHP-08 user-management runtime DDL cleanup is source- and CI-verified on `main`. The new migration was applied twice against the checked-in full schema in GitHub Actions run [#40640508040](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40640508040); all five jobs passed, including PHP lint and the full-schema migration/regression job. This does not replace browser acceptance on the user's actual local XAMPP instance. Next step is a targeted User Management browser smoke test after pulling the commits, then continue the original PHP backlog without resuming Flutter work.
