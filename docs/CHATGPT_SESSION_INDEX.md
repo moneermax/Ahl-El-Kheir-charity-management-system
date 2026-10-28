@@ -3183,3 +3183,8 @@ A read-only inventory found 111 `api/v1/*.php` files, but `.github/workflows/php
 
 
 The API lint coverage expansion is verified. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` added the 37 previously omitted API files so all 111 `api/v1/*.php` files are in the explicit PHP lint list. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) passed all five jobs, including `php-lint`. PHP-01 local API runtime acceptance remains open; CI syntax success is not local runtime acceptance.
+
+## 2026-10-28 — Original PHP system audit: runtime DDL found
+
+
+While returning to the original PHP system (not Flutter UI files), source inspection found that `modules/users/index.php` runs `CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` during page requests and also performs data-seeding updates. Logged as PHP-08 in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. No code was changed yet: inspect `database/ahl_el_kheir.sql` object definitions and dependent behavior before creating migration(s) and removing runtime DDL. Do not delete statements blindly.
