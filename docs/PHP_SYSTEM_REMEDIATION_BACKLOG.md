@@ -92,7 +92,43 @@ Observed runtime schema operations include:
 - add `sponsors.gender`, `families.nanny_id`, and `supervisor_letters.gender`;
 - create `family_documents` and `accountant_nanny_assignments`.
 
-**Do not simply delete these statements.** The checked-in `database/ahl_el_kheir.sql` must first be inspected for each table/column/index/foreign-key definition, along with the full page's dependent queries and existing schema history. Then create only the justified migration(s), verify them on a disposable database, and remove runtime DDL/data-seeding from page requests while preserving existing behavior. Migration `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql` now owns the schema reconciliation and role/department seeding. Commit `f8b8b099ec4f307737ae7dcec7179f6439043408` adds the migration; commit `519bf7a21d562235c95f3bca7f66170557df54ce` removes the request-time schema/data mutations from `modules/users/index.php`. Commit `bbd81cacf738d9a369de947aa6df3e1d63a95f25` adds the page to PHP lint and applies the migration twice in the disposable full-schema CI job with schema/reference-data assertions. GitHub Actions run [#40640508040](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40640508040) passed all five jobs, including `php-lint` and `migration-full-schema`. The full-schema job imported `database/ahl_el_kheir.sql`, applied the new migration twice, verified the expected 9 columns plus six department and five role records, and passed its existing regression harnesses. The first CI attempt failed only in the newly added assertion SQL (MariaDB syntax in the test command); the assertion was simplified into separate count checks and the subsequent run passed. Local browser acceptance of User Management remains pending; do not claim live local-runtime verification.
+**Do not simply delete these statements.** The checked-in `database/ahl_el_kheir.sql` must first be inspected for each table/column/index/foreign-key definition, along with the full page's dependent queries and existing schema history. Then create only the justified migration(s), verify them on a disposable database, and remove runtime DDL/data-seeding from page requests while preserving existing behavior. Migration `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql` now owns the schema reconciliation and role/department seeding. Commit `f8b8b099ec4f307737ae7dcec7179f6439043408` adds the migration; commit `519bf7a21d562235c95f3bca7f66170557df54ce` removes the request-time schema/data mutations from `modules/users/index.php`. Commit `bbd81cacf738d9a369de947aa6df3e1d63a95f25` adds the page to PHP lint and applies the migration twice in the disposable full-schema CI job with schema/reference-data assertions. GitHub Actions run [#40641855323](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40641855323) passed all five jobs, including `php-lint` and `migration-full-schema`. The full-schema job imported `database/ahl_el_kheir.sql`, applied the new migration twice, verified the expected columns and reference data, then simulated the pre-cleanup shape by removing the five formerly runtime-added columns and the two formerly runtime-created tables; the migration restored them successfully. Existing regression harnesses also passed. Local browser acceptance of User Management remains pending; do not claim live local-runtime verification.
+
+### PHP-09 — Family workflows perform schema DDL during page requests
+**Status:** CONFIRMED SOURCE-LEVEL ARCHITECTURE VIOLATION — schema/migration reconciliation required; not yet remediated.
+**Priority:** High for schema/deployment reliability.
+
+Source inspection found request-time schema setup in:
+- `modules/families/create.php` — creates `family_bank_accounts` and adds family/child columns.
+- `modules/families/edit.php` — repeats the bank-account/table/column setup and creates `orphan_documents`.
+- `modules/families/orphan_form.php` — adds orphan/family fields during form requests.
+- `modules/families/documents.php` — creates `family_documents` using an incomplete definition and adds `doc_type`.
+
+The uploaded checked-in schema confirms `family_bank_accounts`, `orphan_documents`, `family_documents`, and the referenced family/child columns already exist. The checked-in `family_children.form_serial` is `VARCHAR(20)` with a unique index; source has historically attempted `VARCHAR(30)` in one path and `VARCHAR(20)` in others. Remediation must preserve the complete schema, keys and foreign keys, and should reconcile the inconsistent source declaration without truncating data. No source changes have been made for PHP-09 yet.
+
+### PHP-10 — Accounting libraries perform runtime schema creation and alteration
+**Status:** CONFIRMED SOURCE-LEVEL ARCHITECTURE VIOLATION — migration reconciliation required; not yet remediated.
+**Priority:** High because these helpers are shared by accounting operations.
+
+Source review found runtime DDL in:
+- `modules/accounting/lib.php` — creates `accounts`, `journal_entries`, `journal_lines`, `vouchers`, and `project_beneficiaries`; adds account-link columns to `other_projects`.
+- `modules/accounting/lib_admin_fee_policy.php` — creates `accounting_admin_fee_policies` and adds snapshot/payment columns to `transactions` and `sponsor_payments`.
+- `modules/accounting/lib_outflows.php` — creates/updates monthly disbursement, item and nanny verification schema, adds columns dynamically, and changes status ENUM definitions.
+
+The uploaded schema dump contains these referenced objects/columns, but their exact historical migration coverage and the full dynamic status/column allowlist must be reconciled before editing. Do not delete helper code blindly; move only confirmed schema work to migrations and preserve accounting behavior. No source changes have been made for PHP-10 yet.
+
+### PHP-11 — Additional original PHP pages perform runtime schema changes
+**Status:** CONFIRMED SOURCE-LEVEL ARCHITECTURE VIOLATION — grouped source audit finding; remediation pending.
+**Priority:** Medium to high depending on the endpoint's call frequency.
+
+Source hits found in:
+- `modules/users/profile.php` — adds profile columns to `users`.
+- `modules/system/import_sponsors.php` — creates `sponsor_import_exceptions`.
+- `modules/system/sync_sponsors.php` — adds `sponsors.is_manual_override`.
+- `modules/transactions/receipt_file.php` — adds receipt-path columns to `transactions`.
+- `modules/hr/payroll_reversal.php` — creates `hr_payroll_reversals`.
+
+The checked-in schema contains the referenced columns/tables. Each location still needs its own migration-history check and narrow cleanup; these are source-level violations, not evidence that the underlying workflows currently fail. No PHP-11 source changes have been made yet.
 
 ### PHP-07 — HR job-description migration CI fixture starts from the post-migration schema
 **Status:** FIX VERIFIED — all jobs in the sequential CI run passed.
@@ -183,3 +219,5 @@ This is a test-discovery result, **not** proof that these routes are untested by
 - 2026-10-28: PHP-08 remediation committed on `main`: schema dump inspected; schema/data setup moved to `2026-10-28_user_management_runtime_schema_cleanup.sql`; runtime mutations removed from `modules/users/index.php`; CI now tests repeat application and key schema/reference-data invariants. GitHub Actions run #40640508040 passed all five jobs. Local browser acceptance remains pending.
 
 - 2026-10-28: PHP-08 migration CI passed in workflow [#40640508040](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40640508040): all five jobs succeeded; `migration-full-schema` applied the new migration twice and passed schema/reference-data assertions. Local browser acceptance of User Management remains pending.
+
+- 2026-10-28: Follow-up read-only scan of all 206 PHP files under `modules/` found additional runtime DDL source findings PHP-09 (family workflows), PHP-10 (accounting libraries), and PHP-11 (profile/import/sync/receipt/payroll-reversal pages). Each remains open until schema/migration reconciliation and targeted CI verification.
