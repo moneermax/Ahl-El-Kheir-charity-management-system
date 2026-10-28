@@ -5396,3 +5396,7 @@ The stale project-profile team mutation handlers were removed in commit `0e67f8f
 ## 2026-10-28 — PHP source lint and CI verified
 
 Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633600907) passed all five jobs. PHP lint explicitly covered `modules/hr/salary_portal.php`, `modules/projects/form.php`, and `modules/projects/view.php`; all reported no syntax errors. HR migration and full-schema regression jobs passed. This does not replace local browser acceptance.
+## 2026-10-28 — PHP API lint coverage verified
+
+
+Commit `c4c212980d1a1677729db94d2b6815a07aba0289` expanded explicit PHP lint coverage to all 111 `api/v1/*.php` files. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) passed all five jobs. This closes the CI lint coverage gap only; local API runtime/authorization acceptance remains open under `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md` (PHP-01).
