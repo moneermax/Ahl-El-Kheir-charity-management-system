@@ -5660,3 +5660,8 @@ Commit: `6550c9bcbed841aa631097ca9d178f7e3ab0906a`.
 ## 2026-10-28 — PHP remediation backlog checkpoint
 
 At the user's request, Flutter/native-app work is paused and PHP project work resumes. Findings and outstanding acceptance gaps surfaced during mobile/API development are consolidated in [`docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`](PHP_SYSTEM_REMEDIATION_BACKLOG.md) and tracked by [issue #96](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/issues/96). The list explicitly separates the salary-portal/incentive-policy role mismatch from API local-runtime/security acceptance, hosting compatibility, previously reported incentive/project browser acceptance gaps, and a potentially stale test-workflow invocation mismatch. These must be re-triaged against current `main`; do not infer production defects from CI-only evidence. Native parity gaps remain paused, not PHP defects. Closed PHP work must not be reopened without regression evidence.
+
+
+## 2026-10-28 — PHP-04 and PHP-06 triage results
+
+PHP-04 source correction committed as `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`: `modules/hr/salary_portal.php` no longer advertises the incentive-policy page to `admin`, whose role is not authorized by `modules/hr/incentive_policy.php`. This is a navigation/visibility correction only; the destination guard is unchanged and browser acceptance remains unverified. PHP-06 is resolved by current-source review: `.github/workflows/mobile-api-auth-integration.yml` provides `MOBILE_API_AUTH_TEST=1` and `AHL_DB_NAME=mobile_api_auth_test` at job level and provisions the same database before running the guarded test. No production code was changed for PHP-06. Backlog: `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`.
