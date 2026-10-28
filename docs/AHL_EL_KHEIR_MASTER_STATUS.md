@@ -5386,3 +5386,8 @@ The PHP workflow's `hr-job-description-migrations` job failed because it importe
 ## 2026-10-28 — HR migration CI fixture verified
 
 Workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) passed all five jobs, including `hr-job-description-migrations` and `php-lint`. The disposable CI fixture correction is verified and PHP-07 is closed as a CI setup issue. No local database was modified. Local HR catalogue/contract browser and PDF acceptance remain unverified.
+
+
+## 2026-10-28 — Project-team route cleanup CI verified
+
+The stale project-profile team mutation handlers were removed in commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`; team membership changes remain on the project edit page. Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs. Real-browser team UI and incentive notification acceptance remain open under PHP-05; no live business records were changed.
