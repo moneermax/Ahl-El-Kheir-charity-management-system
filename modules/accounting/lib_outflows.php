@@ -17,14 +17,6 @@ function ak_out_columns(string $table): array {
     return $cache[$table];
 }}
 
-if (!function_exists('ak_out_add_col')) {
-function ak_out_add_col(string $table, string $col, string $def): void {
-    $cols = ak_out_columns($table);
-    if (!isset($cols[$col])) {
-        try { dbExecute("ALTER TABLE `$table` ADD COLUMN `$col` $def"); } catch (Throwable $ex) {}
-    }
-}}
-
 if (!function_exists('ak_out_enum_values')) {
 function ak_out_enum_values(string $table, string $col): array {
     $type = ak_out_columns($table)[$col] ?? '';
@@ -43,57 +35,7 @@ function ak_out_pick_enum(string $table, string $col, array $preferred, string $
     return in_array($fallback, $vals, true) ? $fallback : ($vals[0] ?? $fallback);
 }}
 
-/* - schema sync (idempotent) - */
-if (!function_exists('ak_out_ensure_schema')) {
-function ak_out_ensure_schema(): void {
-    try {
-        dbExecute("CREATE TABLE IF NOT EXISTS `monthly_disbursements` (`id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,`month` VARCHAR(7) NOT NULL,`nanny_id` INT UNSIGNED NOT NULL,`total_amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,`status` ENUM('draft','pending','pending_approval','approved','returned','transferred','received','cancelled','voided') NOT NULL DEFAULT 'draft',`transaction_id` INT UNSIGNED NULL,`expense_account_code` VARCHAR(20) NOT NULL DEFAULT '5100',`created_by` INT UNSIGNED NULL,`submitted_by` INT UNSIGNED NULL,`submitted_at` DATETIME NULL,`reviewed_by_user_id` INT UNSIGNED NULL,`reviewed_at` DATETIME NULL,`return_note` TEXT NULL,`created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,`transferred_at` DATETIME NULL,`received_at` DATETIME NULL,`receipt_file_path` VARCHAR(255) NULL,`transfer_receipt_by_user_id` INT UNSIGNED NULL,`transfer_receipt_at` DATETIME NULL,`voided_by_user_id` INT UNSIGNED NULL,`voided_at` DATETIME NULL,`void_reason` TEXT NULL,`reversal_journal_id` INT UNSIGNED NULL,CONSTRAINT `fk_md_nanny` FOREIGN KEY (`nanny_id`) REFERENCES `users`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    } catch (Throwable $ex) {}
-    
-    $st = ak_out_columns('monthly_disbursements')['status'] ?? '';
-    if ($st !== '' && stripos($st, 'voided') === false) {
-        try { dbExecute("ALTER TABLE `monthly_disbursements` MODIFY COLUMN `status` ENUM('draft','pending','pending_approval','approved','returned','transferred','received','cancelled','voided') NOT NULL DEFAULT 'draft'"); } catch (Throwable $ex) {}
-    }
-    
-    foreach (['expense_account_code' => "VARCHAR(20) NOT NULL DEFAULT '5100'", 'transaction_id' => 'INT UNSIGNED NULL',
-        'submitted_by' => 'INT UNSIGNED NULL', 'submitted_at' => 'DATETIME NULL',
-        'reviewed_by_user_id' => 'INT UNSIGNED NULL', 'reviewed_at' => 'DATETIME NULL', 'return_note' => 'TEXT NULL',
-        'transferred_at' => 'DATETIME NULL', 'received_at' => 'DATETIME NULL', 'receipt_file_path' => 'VARCHAR(255) NULL',
-        'transfer_receipt_by_user_id' => 'INT UNSIGNED NULL', 'transfer_receipt_at' => 'DATETIME NULL',
-        'voided_by_user_id' => 'INT UNSIGNED NULL', 'voided_at' => 'DATETIME NULL', 'void_reason' => 'TEXT NULL',
-        'reversal_journal_id' => 'INT UNSIGNED NULL',
-    ] as $c => $d) ak_out_add_col('monthly_disbursements', $c, $d);
-    
-    try {
-        dbExecute("CREATE TABLE IF NOT EXISTS `disbursement_items` (`id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,`disbursement_id` INT UNSIGNED NOT NULL,`family_id` INT UNSIGNED NOT NULL,`amount` DECIMAL(12,2) NOT NULL DEFAULT 0.00,`status` ENUM('pending','paid','return_requested','returned') NOT NULL DEFAULT 'pending',`receipt_file_path` VARCHAR(255) NULL,`child_id` INT UNSIGNED NULL,`description` VARCHAR(255) NULL,`is_orphan_verified` TINYINT(1) NOT NULL DEFAULT 0,`is_mother_contact_verified` TINYINT(1) NOT NULL DEFAULT 0,`is_bank_verified` TINYINT(1) NOT NULL DEFAULT 0,`verification_notes` TEXT NULL,`verified_by_user_id` INT UNSIGNED NULL,`verified_at` DATETIME NULL,`return_reason` TEXT NULL,`return_requested_at` DATETIME NULL,`return_requested_by_user_id` INT UNSIGNED NULL,`returned_at` DATETIME NULL,`returned_by_user_id` INT UNSIGNED NULL,`reversal_journal_id` INT UNSIGNED NULL,CONSTRAINT `fk_di_disbursement` FOREIGN KEY (`disbursement_id`) REFERENCES `monthly_disbursements`(`id`) ON DELETE CASCADE,CONSTRAINT `fk_di_family` FOREIGN KEY (`family_id`) REFERENCES `families`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    } catch (Throwable $ex) {}
-    
-    $itSt = ak_out_columns('disbursement_items')['status'] ?? '';
-    if ($itSt !== '' && stripos($itSt, 'return_requested') === false) {
-        try { dbExecute("ALTER TABLE `disbursement_items` MODIFY COLUMN `status` ENUM('pending','paid','return_requested','returned') NOT NULL DEFAULT 'pending'"); } catch (Throwable $ex) {}
-    }
-    
-    foreach (['receipt_file_path' => 'VARCHAR(255) NULL', 'child_id' => 'INT UNSIGNED NULL', 'description' => 'VARCHAR(255) NULL',
-        'is_orphan_verified' => 'TINYINT(1) NOT NULL DEFAULT 0', 'is_mother_contact_verified' => 'TINYINT(1) NOT NULL DEFAULT 0',
-        'is_bank_verified' => 'TINYINT(1) NOT NULL DEFAULT 0', 'verification_notes' => 'TEXT NULL',
-        'verified_by_user_id' => 'INT UNSIGNED NULL', 'verified_at' => 'DATETIME NULL',
-        'return_reason' => 'TEXT NULL', 'return_requested_at' => 'DATETIME NULL',
-        'return_requested_by_user_id' => 'INT UNSIGNED NULL', 'returned_at' => 'DATETIME NULL',
-        'returned_by_user_id' => 'INT UNSIGNED NULL', 'reversal_journal_id' => 'INT UNSIGNED NULL',
-    ] as $c => $d) ak_out_add_col('disbursement_items', $c, $d);
-    
-    try {
-        dbExecute("CREATE TABLE IF NOT EXISTS `nanny_family_verifications` (`id` INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        `family_id` INT UNSIGNED NOT NULL,`month` VARCHAR(7) NOT NULL,`nanny_id` INT UNSIGNED NOT NULL,
-        `is_orphan_verified` TINYINT(1) NOT NULL DEFAULT 0,`is_mother_contact_verified` TINYINT(1) NOT NULL DEFAULT 0,
-        `is_bank_verified` TINYINT(1) NOT NULL DEFAULT 0,`verification_notes` TEXT NULL,
-        `verified_by_user_id` INT UNSIGNED NULL,`verified_at` DATETIME NULL,
-        `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,`updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        UNIQUE KEY `uq_nfv_family_month` (`family_id`, `month`),KEY `idx_nfv_nanny_month` (`nanny_id`, `month`),
-        CONSTRAINT `fk_nfv_family` FOREIGN KEY (`family_id`) REFERENCES `families`(`id`) ON DELETE CASCADE,
-        CONSTRAINT `fk_nfv_nanny` FOREIGN KEY (`nanny_id`) REFERENCES `users`(`id`) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    } catch (Throwable $ex) {}
-}}
+/* Outflow schema is maintained by database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql. */
 
 /* - user & auth - */
 if (!function_exists('ak_out_user')) {
@@ -532,4 +474,4 @@ function ak_out_serve_receipt(int $id, int $uid, bool $allowed, string $kind = '
 }}
 
 // Initialize schema on first load
-ak_out_ensure_schema();
+// Required schema is provisioned by the migration above; no request-time DDL.

@@ -204,6 +204,7 @@ jobs:
             lang/bridge/ar_to_en.php
             modules/accounting/lib_admin_fee_policy.php
             modules/accounting/lib.php
+            modules/accounting/lib_outflows.php
             modules/accounting/fm_review_queue.php
             modules/accounting/lib_sponsor_payment_approval.php
             modules/ai_assistant/chat.php
@@ -228,7 +229,7 @@ jobs:
           for file in "${files[@]}"; do
             php -l "$file"
           done
-          if grep -nE 'CREATE[[:space:]]+TABLE|ALTER[[:space:]]+TABLE' modules/accounting/lib.php modules/accounting/lib_admin_fee_policy.php modules/users/profile.php modules/system/import_sponsors.php modules/system/sync_sponsors.php modules/transactions/receipt_file.php modules/hr/payroll_reversal.php; then
+          if grep -nE 'CREATE[[:space:]]+TABLE|ALTER[[:space:]]+TABLE' modules/accounting/lib.php modules/accounting/lib_admin_fee_policy.php modules/accounting/lib_outflows.php modules/users/profile.php modules/system/import_sponsors.php modules/system/sync_sponsors.php modules/transactions/receipt_file.php modules/hr/payroll_reversal.php; then
             echo "Runtime schema DDL found in migrated PHP helpers/pages" >&2
             exit 1
           fi
@@ -352,6 +353,8 @@ jobs:
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql
           user_management_columns=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'users' AND column_name IN ('department_id','manager_id')) OR (table_name = 'sponsors' AND column_name = 'gender') OR (table_name = 'families' AND column_name = 'nanny_id') OR (table_name = 'supervisor_letters' AND column_name = 'gender') OR (table_name = 'family_documents' AND column_name IN ('file_name','file_size','notes','doc_type')))")
           user_management_departments=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM departments WHERE name_en IN ('General Management','Mothers Affairs','Lost & Found','Social Media','Sponsor Affairs','Accounting & Finance')")
           user_management_roles=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM roles WHERE code IN ('financial_manager','accountant_staff','nanny','administration','social_media')")
@@ -366,6 +369,13 @@ jobs:
           other_php_schema_tables=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('sponsor_import_exceptions','hr_payroll_reversals')")
           test "$other_php_schema_columns" = "7"
           test "$other_php_schema_tables" = "2"
+          outflow_schema_columns=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'monthly_disbursements' AND column_name IN ('group_id','returned_amount','return_receipt_file_path','returned_by_user_id','returned_at','return_receipt_by_user_id','return_receipt_at')) OR (table_name = 'disbursement_items' AND column_name = 'updated_at'))")
+          outflow_schema_tables=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('monthly_disbursements','disbursement_items','nanny_family_verifications')")
+          outflow_schema_enum=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'monthly_disbursements' AND column_name = 'status'")
+          test "$outflow_schema_columns" = "8"
+          test "$outflow_schema_tables" = "3"
+          [[ "$outflow_schema_enum" == *"'pending_approval'"* ]]
+          [[ "$outflow_schema_enum" != *"'pending',"* ]]
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql
           # Exercise the mobile bearer-session migration on the disposable full schema.
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-24_mobile_api_sessions.sql
@@ -482,6 +492,91 @@ jobs:
           test "$other_php_columns" = "7"
           test "$other_php_tables" = "2"
           test "$reversal_indexes" = "3"
+
+      - name: Verify accounting outflow migration restores legacy schema and status
+        env:
+          MYSQL_PWD: root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root)
+          "${mysql[@]}" -e "CREATE DATABASE accounting_outflows_migration_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+          "${mysql[@]}" --database=accounting_outflows_migration_test <<'SQL'
+          CREATE TABLE users (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB;
+          CREATE TABLE families (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB;
+          CREATE TABLE orphan_groups (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB;
+          INSERT INTO users (id) VALUES (1);
+          INSERT INTO families (id) VALUES (1);
+          CREATE TABLE monthly_disbursements (
+              id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+              month VARCHAR(7) NOT NULL,
+              nanny_id INT UNSIGNED NOT NULL,
+              total_amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+              status ENUM('draft','pending','pending_approval','approved','returned','transferred','received','cancelled','voided') NOT NULL DEFAULT 'draft',
+              transaction_id INT UNSIGNED DEFAULT NULL,
+              expense_account_code VARCHAR(20) NOT NULL DEFAULT '5100',
+              created_by INT UNSIGNED DEFAULT NULL,
+              submitted_by INT UNSIGNED DEFAULT NULL,
+              submitted_at DATETIME DEFAULT NULL,
+              reviewed_by_user_id INT UNSIGNED DEFAULT NULL,
+              reviewed_at DATETIME DEFAULT NULL,
+              return_note TEXT DEFAULT NULL,
+              created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              transferred_at DATETIME DEFAULT NULL,
+              received_at DATETIME DEFAULT NULL,
+              receipt_file_path VARCHAR(255) DEFAULT NULL,
+              transfer_receipt_by_user_id INT UNSIGNED DEFAULT NULL,
+              transfer_receipt_at DATETIME DEFAULT NULL,
+              voided_by_user_id INT UNSIGNED DEFAULT NULL,
+              voided_at DATETIME DEFAULT NULL,
+              void_reason TEXT DEFAULT NULL,
+              reversal_journal_id INT UNSIGNED DEFAULT NULL,
+              CONSTRAINT fk_md_nanny FOREIGN KEY (nanny_id) REFERENCES users(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+          CREATE TABLE disbursement_items (
+              id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+              disbursement_id INT UNSIGNED NOT NULL,
+              family_id INT UNSIGNED NOT NULL,
+              amount DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+              status ENUM('pending','paid','return_requested','returned') NOT NULL DEFAULT 'pending',
+              receipt_file_path VARCHAR(255) DEFAULT NULL,
+              child_id INT UNSIGNED DEFAULT NULL,
+              description VARCHAR(255) DEFAULT NULL,
+              is_orphan_verified TINYINT(1) NOT NULL DEFAULT 0,
+              is_mother_contact_verified TINYINT(1) NOT NULL DEFAULT 0,
+              is_bank_verified TINYINT(1) NOT NULL DEFAULT 0,
+              verification_notes TEXT DEFAULT NULL,
+              verified_by_user_id INT UNSIGNED DEFAULT NULL,
+              verified_at DATETIME DEFAULT NULL,
+              return_reason TEXT DEFAULT NULL,
+              return_requested_at DATETIME DEFAULT NULL,
+              return_requested_by_user_id INT UNSIGNED DEFAULT NULL,
+              returned_at DATETIME DEFAULT NULL,
+              returned_by_user_id INT UNSIGNED DEFAULT NULL,
+              reversal_journal_id INT UNSIGNED DEFAULT NULL,
+              CONSTRAINT fk_di_disbursement FOREIGN KEY (disbursement_id) REFERENCES monthly_disbursements(id) ON DELETE CASCADE,
+              CONSTRAINT fk_di_family FOREIGN KEY (family_id) REFERENCES families(id) ON DELETE CASCADE
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+          INSERT INTO monthly_disbursements (id, month, nanny_id, total_amount, status) VALUES (1, '2026-10', 1, 100.00, 'pending');
+          INSERT INTO disbursement_items (id, disbursement_id, family_id, amount, status) VALUES (1, 1, 1, 100.00, 'pending');
+          SQL
+          "${mysql[@]}" --database=accounting_outflows_migration_test < database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql
+          "${mysql[@]}" --database=accounting_outflows_migration_test < database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql
+          outflow_status=$("${mysql[@]}" --database=accounting_outflows_migration_test --batch --skip-column-names -e "SELECT status FROM monthly_disbursements WHERE id=1")
+          outflow_item_status=$("${mysql[@]}" --database=accounting_outflows_migration_test --batch --skip-column-names -e "SELECT status FROM disbursement_items WHERE id=1")
+          outflow_columns=$("${mysql[@]}" --database=accounting_outflows_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'monthly_disbursements' AND column_name IN ('group_id','returned_amount','return_receipt_file_path','returned_by_user_id','returned_at','return_receipt_by_user_id','return_receipt_at')) OR (table_name = 'disbursement_items' AND column_name = 'updated_at'))")
+          outflow_tables=$("${mysql[@]}" --database=accounting_outflows_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('monthly_disbursements','disbursement_items','nanny_family_verifications')")
+          outflow_group_fk=$("${mysql[@]}" --database=accounting_outflows_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.key_column_usage WHERE table_schema = DATABASE() AND table_name = 'monthly_disbursements' AND column_name = 'group_id' AND referenced_table_name = 'orphan_groups'")
+          outflow_nfv_indexes=$("${mysql[@]}" --database=accounting_outflows_migration_test --batch --skip-column-names -e "SELECT COUNT(DISTINCT index_name) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'nanny_family_verifications'")
+          outflow_status_enum=$("${mysql[@]}" --database=accounting_outflows_migration_test --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'monthly_disbursements' AND column_name = 'status'")
+          test "$outflow_status" = "pending_approval"
+          test "$outflow_item_status" = "pending"
+          test "$outflow_columns" = "8"
+          test "$outflow_tables" = "3"
+          test "$outflow_group_fk" = "1"
+          test "$outflow_nfv_indexes" = "3"
+          [[ "$outflow_status_enum" == *"'pending_approval'"* ]]
+          [[ "$outflow_status_enum" != *"'pending',"* ]]
 
   hr-job-description-migrations:
     runs-on: ubuntu-latest
