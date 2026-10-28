@@ -3141,3 +3141,8 @@ Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds the 37 previously omitted
 
 
 Flutter/native feature work remains paused. Source inspection of the original PHP system found request-time schema DDL and role/department data updates in `modules/users/index.php`; tracked as PHP-08 in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. Next task is to inspect the exact objects in `database/ahl_el_kheir.sql`, identify existing migration coverage and dependent queries, then make a minimal migration-backed change. Never delete runtime DDL blindly or invent schema definitions. No PHP-08 source changes have been made yet.
+
+
+## Latest PHP website checkpoint — 2026-10-28
+
+Flutter/native work is paused. The current PHP website task PHP-08 is in remediation/CI verification: `modules/users/index.php` no longer performs request-time schema DDL or role/department data seeding. The new migration is `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql`. The uploaded checked-in schema was inspected before editing. CI applies the migration twice on a disposable full-schema database and asserts the expected columns/reference data. Do not mark complete until CI passes; continue only from current `main` and the PHP remediation backlog.
