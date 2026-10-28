@@ -5680,3 +5680,8 @@ Follow-up workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-char
 ## 2026-10-28 — Project-team mutation route consistency
 
 A source audit found the project profile retained legacy `assign_team_member`/`unassign_team_member` POST handlers without any corresponding forms. These duplicate routes were removed in commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`, leaving `modules/projects/form.php` as the supported team mutation path. Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs, including PHP lint. This is CI-verified source cleanup only; project-team browser acceptance and incentive notification browser acceptance remain pending.
+
+
+## 2026-10-28 — Follow-up PHP verification
+
+Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633600907) passed all five jobs. PHP lint explicitly checked `modules/hr/salary_portal.php`, `modules/projects/form.php`, and `modules/projects/view.php`; logs report no syntax errors for each. HR migration and full-schema jobs also passed. The portal visibility correction and project route cleanup are CI-verified source changes; browser/runtime acceptance remains pending.
