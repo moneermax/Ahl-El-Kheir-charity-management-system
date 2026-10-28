@@ -81,10 +81,10 @@ Next: verify the sequential PHP workflow; keep browser acceptance open until tes
 
 The current `.github/workflows/mobile-api-auth-integration.yml` sets `MOBILE_API_AUTH_TEST: '1'` and `AHL_DB_NAME: mobile_api_auth_test` at job level, provisions/imports the same disposable database, and invokes `tools/test_mobile_admin_users_action_service.php`. The harness guard matches the current job configuration. `.github/workflows/php-syntax-check.yml` merely includes the file in its syntax-check list; that is not an execution. No production-code change or test rerun is needed for this item.
 ### PHP-08 — User-management page performs schema DDL at runtime
-**Status:** CONFIRMED SOURCE-LEVEL ARCHITECTURE VIOLATION — remediation requires schema/migration reconciliation before code changes.
+**Status:** SOURCE FIX COMMITTED — disposable full-schema MariaDB CI verification pending.
 **Priority:** High for schema/deployment reliability.
 
-A source review of the original PHP page `modules/users/index.php` found runtime `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements. The page also performs role/department data updates during page load. This conflicts with the project rule that schema changes must be represented by migrations and that application requests must not create/alter schema.
+A source review of the original PHP page `modules/users/index.php` found runtime `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements. The page also performed role/department data updates and seed inserts during page load. This conflicted with the project rule that schema changes must be represented by migrations and that application requests must not create/alter schema. The uploaded 6.6 MB checked-in schema was inspected: all seven referenced tables exist; `users.department_id`, `users.manager_id`, `sponsors.gender`, `families.nanny_id`, and `supervisor_letters.gender` already exist; `family_documents` also contains `file_name`, `file_size`, `notes`, and `doc_type` beyond the old runtime definition.
 
 Observed runtime schema operations include:
 - create `departments`;
@@ -92,7 +92,7 @@ Observed runtime schema operations include:
 - add `sponsors.gender`, `families.nanny_id`, and `supervisor_letters.gender`;
 - create `family_documents` and `accountant_nanny_assignments`.
 
-**Do not simply delete these statements.** The checked-in `database/ahl_el_kheir.sql` must first be inspected for each table/column/index/foreign-key definition, along with the full page's dependent queries and existing schema history. Then create only the justified migration(s), verify them on a disposable database, and remove runtime DDL/data-seeding from page requests while preserving existing behavior. No production source/schema change has been made for PHP-08 yet; do not assume the dump contains every object until inspected.
+**Do not simply delete these statements.** The checked-in `database/ahl_el_kheir.sql` must first be inspected for each table/column/index/foreign-key definition, along with the full page's dependent queries and existing schema history. Then create only the justified migration(s), verify them on a disposable database, and remove runtime DDL/data-seeding from page requests while preserving existing behavior. Migration `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql` now owns the schema reconciliation and role/department seeding. Commit `f8b8b099ec4f307737ae7dcec7179f6439043408` adds the migration; commit `519bf7a21d562235c95f3bca7f66170557df54ce` removes the request-time schema/data mutations from `modules/users/index.php`. Commit `bbd81cacf738d9a369de947aa6df3e1d63a95f25` adds the page to PHP lint and applies the migration twice in the disposable full-schema CI job with schema/reference-data assertions. CI result is pending; do not mark PHP-08 closed until that run passes.
 
 ### PHP-07 — HR job-description migration CI fixture starts from the post-migration schema
 **Status:** FIX VERIFIED — all jobs in the sequential CI run passed.
@@ -179,3 +179,5 @@ This is a test-discovery result, **not** proof that these routes are untested by
 - 2026-10-28: PHP-04 navigation mismatch corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`; real-browser acceptance remains pending. PHP-06 re-triaged and closed after confirming the current auth integration workflow sets the required test flag and database.
 - 2026-10-28: PHP-07 added after workflow #40632821897 exposed a stale migration fixture; CI-only fixture correction committed as `daa821f1d607aa74d5efd90227e47567043c5ec1`, verified by workflow #40633086558: all five jobs passed.
 - 2026-10-28: PHP-01 API inventory found 111 API PHP files but only 74 listed in the PHP lint workflow. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` added the other 37 files to the lint list; workflow #40634508587 passed all five jobs, including `php-lint`; the coverage expansion is CI-verified.
+
+- 2026-10-28: PHP-08 remediation committed on `main`: schema dump inspected; schema/data setup moved to `2026-10-28_user_management_runtime_schema_cleanup.sql`; runtime mutations removed from `modules/users/index.php`; CI now tests repeat application and key schema/reference-data invariants. Awaiting CI result.
