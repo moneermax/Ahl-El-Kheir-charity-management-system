@@ -3175,3 +3175,7 @@ Commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9` removed stale, unrendered proj
 ## 2026-10-28 — Changed PHP files explicitly linted
 
 Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633600907) passed all five jobs. The PHP lint job explicitly includes changed `modules/hr/salary_portal.php` and project team route pages `modules/projects/form.php` and `modules/projects/view.php`; logs confirmed no syntax errors for all three. Full-schema migration, HR job-description migration, MariaDB 10.4 migration and rescheduling-service jobs also passed. Browser/runtime acceptance remains open where recorded in the PHP backlog.
+
+## 2026-10-28 — PHP API lint inventory and coverage expansion
+
+A read-only inventory found 111 `api/v1/*.php` files, but `.github/workflows/php-syntax-check.yml` explicitly linted 74. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds the remaining 37 files to the lint list. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) was queued at last check; verify its actual result before calling the change CI-verified. PHP-01 local runtime acceptance remains open. Flutter/native work is paused; do not run mutating API integration tests against live `ahl_el_kheir`.
