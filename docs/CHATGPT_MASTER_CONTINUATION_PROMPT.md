@@ -3108,3 +3108,8 @@ The user has paused Flutter/native-app feature development and wants to resume w
 ## 2026-10-28 — PHP backlog triage update
 
 PHP-04: committed a minimal salary-portal navigation correction (`046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`) so only `financial_manager` sees the incentive-policy link, matching the existing destination guard. Do not broaden authorization; local browser acceptance is still pending. PHP-06: resolved by inspecting current workflow configuration; the mobile API auth job passes the required test flag/database and provisions `mobile_api_auth_test`. Next, continue PHP backlog triage sequentially; use `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md` as the status source and avoid running mutating tests against live `ahl_el_kheir`.
+
+
+## 2026-10-28 — HR migration workflow failure being verified
+
+A PHP workflow failed in `hr-job-description-migrations` because the test imported the current post-migration schema, then attempted a historical migration that expects `uq_hr_job_description_position`. The current schema has `system_role_code` and `uq_hr_job_description_position_role`. CI-only fixture correction committed as `daa821f1d607aa74d5efd90227e47567043c5ec1`; it recreates the legacy catalogue table only in the disposable CI database. Await workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) and update PHP-07 in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md` with the exact result. Do not modify live database schema to address this CI fixture issue.
