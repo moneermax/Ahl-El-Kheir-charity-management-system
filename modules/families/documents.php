@@ -5,19 +5,7 @@ require_once __DIR__ . '/../../config/functions.php';
 require_once __DIR__ . '/../../config/session.php';
 Session::start();
 
-// Schema evolution: ensure table and doc_type column exist
-dbExecute("CREATE TABLE IF NOT EXISTS family_documents (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    family_id INT NOT NULL,
-    doc_type VARCHAR(50) NOT NULL DEFAULT 'other',
-    file_path VARCHAR(255) NOT NULL,
-    file_name VARCHAR(255) NOT NULL,
-    file_size INT NOT NULL,
-    uploaded_by INT NULL,
-    uploaded_at DATETIME NOT NULL,
-    INDEX (family_id)
-)");
-dbExecute("ALTER TABLE family_documents ADD COLUMN IF NOT EXISTS doc_type VARCHAR(50) NOT NULL DEFAULT 'other'");
+// Document schema is maintained by database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql.
 
 // Role guard
 $allowed_roles = ['admin', 'general_manager', 'vice_general_manager', 'supervisor', 'nanny', 'accountant', 'accountant_staff', 'financial_manager'];

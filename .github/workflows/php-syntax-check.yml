@@ -171,6 +171,9 @@ jobs:
             api/v1/search/sponsors.php
             api/v1/transactions/query_service.php
             modules/users/index.php
+            modules/families/create.php
+            modules/families/edit.php
+            modules/families/documents.php
             modules/hr/contract_builder.php
             modules/hr/job_description_catalogue.php
             modules/hr/salary_portal.php
@@ -401,6 +404,26 @@ jobs:
           test "$legacy_columns" = "9"
           test "$restored_tables" = "3"
           test "$restored_index" = "1"
+
+      - name: Verify family schema migration restores legacy schema shape
+        env:
+          MYSQL_PWD: root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test)
+          # Simulate the pre-cleanup family schema only after existing regression harnesses have finished.
+          "${mysql[@]}" -e "ALTER TABLE family_children DROP INDEX uq_family_children_form_serial, DROP COLUMN form_serial, DROP COLUMN national_id, DROP COLUMN nationality, DROP COLUMN health_status, DROP COLUMN health_status_other, DROP COLUMN psychological_state, DROP COLUMN psychological_state_other, DROP COLUMN guardian_name, DROP COLUMN guardian_relationship, DROP COLUMN photo_path, DROP COLUMN monthly_sponsorship_value, DROP COLUMN extra_allowance"
+          "${mysql[@]}" -e "ALTER TABLE families DROP COLUMN father_name, DROP COLUMN father_death_date, DROP COLUMN father_death_cause, DROP COLUMN mother_marital_status"
+          "${mysql[@]}" -e "DROP TABLE family_bank_accounts, orphan_documents"
+          "${mysql[@]}" < database/migrations/2026-10-28_family_runtime_schema_cleanup.sql
+          "${mysql[@]}" < database/migrations/2026-10-28_family_runtime_schema_cleanup.sql
+          family_columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'families' AND column_name IN ('father_name','father_death_date','father_death_cause','mother_marital_status')) OR (table_name = 'family_children' AND column_name IN ('national_id','nationality','health_status','health_status_other','psychological_state','psychological_state_other','guardian_name','guardian_relationship','photo_path','form_serial','monthly_sponsorship_value','extra_allowance')))")
+          family_tables=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('family_bank_accounts','orphan_documents')")
+          family_index=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(DISTINCT index_name) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'family_children' AND index_name = 'uq_family_children_form_serial'")
+          test "$family_columns" = "16"
+          test "$family_tables" = "2"
+          test "$family_index" = "1"
 
   hr-job-description-migrations:
     runs-on: ubuntu-latest

@@ -17,48 +17,7 @@ $uid = Session::getUserId();
 $id = (int)($_GET['id'] ?? $_POST['id'] ?? 0);
 $fam = dbFetchOne("SELECT * FROM families WHERE id = ?", [$id]);
 if (!$fam) { flash('error', 'الأسرة غير موجودة.'); redirect('modules/families/index.php'); }
-/* - schema sync - */
-try {
-dbExecute("CREATE TABLE IF NOT EXISTS family_bank_accounts (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-family_id INT UNSIGNED NOT NULL,
-bank_name VARCHAR(100) NOT NULL,
-bank_branch VARCHAR(100) NULL,
-account_number VARCHAR(50) NOT NULL,
-account_holder VARCHAR(150) NULL,
-is_primary TINYINT(1) NOT NULL DEFAULT 0,
-created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-FOREIGN KEY (family_id) REFERENCES families(id) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS father_name VARCHAR(150) NULL");
-dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS father_death_date DATE NULL");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS national_id VARCHAR(20) NULL");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) NOT NULL DEFAULT 'سودانية'");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS health_status VARCHAR(150) DEFAULT NULL");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS health_status_other VARCHAR(150) DEFAULT NULL");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS psychological_state VARCHAR(150) DEFAULT NULL");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS psychological_state_other VARCHAR(150) DEFAULT NULL");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS guardian_name VARCHAR(150) DEFAULT NULL");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS guardian_relationship VARCHAR(60) DEFAULT NULL");
-dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS father_death_cause VARCHAR(150) DEFAULT NULL");
-dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS mother_marital_status VARCHAR(30) DEFAULT 'أرملة'");
-/* Session-7: orphan financial fields (consistency across ALL orphans) */
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS monthly_sponsorship_value DECIMAL(12,2) NULL");
-dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS extra_allowance DECIMAL(12,2) NULL");
-/* Session-7: orphan documents archive */
-dbExecute("CREATE TABLE IF NOT EXISTS orphan_documents (
-id INT AUTO_INCREMENT PRIMARY KEY,
-child_id INT NOT NULL,
-family_id INT NOT NULL,
-doc_type VARCHAR(50) NOT NULL DEFAULT 'other',
-file_path VARCHAR(255) NOT NULL,
-file_name VARCHAR(255) NOT NULL,
-file_size INT NOT NULL,
-uploaded_by INT NULL,
-uploaded_at DATETIME NOT NULL,
-INDEX idx_od_child (child_id),
-INDEX idx_od_family (family_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-} catch (Throwable $e) { error_log('Families schema sync: ' . $e->getMessage()); }
+/* Family schema is maintained by database/migrations/2026-10-28_family_runtime_schema_cleanup.sql. */
 function sync_primary_bank(int $familyId): void {
 dbExecute("UPDATE family_bank_accounts SET is_primary = 0 WHERE family_id = ?", [$familyId]);
 $primary = dbFetchOne("SELECT * FROM family_bank_accounts WHERE family_id = ? ORDER BY is_primary DESC, id ASC LIMIT 1", [$familyId]);

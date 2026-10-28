@@ -38,20 +38,7 @@ if (isset($_GET['photo'])) {
 
 $AK_ORPHAN_OPTS = include dirname(__DIR__, 2) . '/includes/orphan_options.php';
 
-/* - idempotent schema evolution (incl. photo + form serial) - */
-try {
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) NOT NULL DEFAULT 'سودانية'");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS health_status VARCHAR(150) DEFAULT NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS health_status_other VARCHAR(150) DEFAULT NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS psychological_state VARCHAR(150) DEFAULT NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS psychological_state_other VARCHAR(150) DEFAULT NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS guardian_name VARCHAR(150) DEFAULT NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS guardian_relationship VARCHAR(60) DEFAULT NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS photo_path VARCHAR(255) DEFAULT NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS form_serial VARCHAR(20) DEFAULT NULL");
-    dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS father_death_cause VARCHAR(150) DEFAULT NULL");
-    dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS mother_marital_status VARCHAR(30) DEFAULT 'أرملة'");
-} catch (Throwable $e) {}
+/* Family/orphan schema is maintained by database/migrations/2026-10-28_family_runtime_schema_cleanup.sql. */
 
 /* - load child (FIX: accept ?id= from families buttons AND ?child= internally) - */
 $childId = (int)($_GET['child'] ?? $_GET['id'] ?? 0);

@@ -10,16 +10,7 @@ $role = Session::getUserRole();
 if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pageTitle = 'إضافة أسرة'; $active = 'families'; $uid = Session::getUserId();
 $AK_ORPHAN_OPTS = include dirname(__DIR__, 2) . '/includes/orphan_options.php';
-try {
-    dbExecute("CREATE TABLE IF NOT EXISTS family_bank_accounts (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,family_id INT UNSIGNED NOT NULL,bank_name VARCHAR(100) NOT NULL,bank_branch VARCHAR(100) NULL,account_number VARCHAR(50) NOT NULL,account_holder VARCHAR(150) NULL,is_primary TINYINT(1) NOT NULL DEFAULT 0,created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,FOREIGN KEY (family_id) REFERENCES families(id) ON DELETE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS father_name VARCHAR(150) NULL");
-    dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS father_death_date DATE NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS national_id VARCHAR(20) NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS nationality VARCHAR(50) NOT NULL DEFAULT 'سودانية'");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS monthly_sponsorship_value DECIMAL(12,2) NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS extra_allowance DECIMAL(12,2) NULL");
-    dbExecute("ALTER TABLE family_children ADD COLUMN IF NOT EXISTS form_serial VARCHAR(30) NULL");
-} catch (Throwable $e) { error_log('Families schema sync: '.$e->getMessage()); }
+// Family schema is maintained by database/migrations/2026-10-28_family_runtime_schema_cleanup.sql.
 $statuses=['pending'=>'قيد الانتظار','active'=>'نشطة','paused'=>'متوقفة','completed'=>'مكتملة','archived'=>'مؤرشفة','inactive'=>'غير نشطة','closed'=>'مغلقة'];
 $supervisors=in_array($role,['admin','vice_general_manager'],true)?dbFetchAll("SELECT u.id,u.full_name FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='supervisor' ORDER BY u.full_name"):[];
 $nannies=in_array($role,['admin','vice_general_manager'],true)?dbFetchAll("SELECT u.id,u.full_name FROM users u JOIN roles r ON r.id=u.role_id WHERE r.code='nanny' AND u.is_active=1 ORDER BY u.full_name"):[];
