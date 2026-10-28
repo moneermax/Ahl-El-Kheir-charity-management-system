@@ -3155,3 +3155,8 @@ The user has paused Flutter/native-app development to resume the existing PHP sy
 
 - Fixed the salary portal's incentive-policy link visibility: `modules/hr/salary_portal.php` now shows the link only to `financial_manager`, matching the destination guard in `modules/hr/incentive_policy.php`. Commit: `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`. This does not broaden page permissions; real-browser acceptance remains pending.
 - Re-triaged PHP-06: current `.github/workflows/mobile-api-auth-integration.yml` sets `MOBILE_API_AUTH_TEST=1` and `AHL_DB_NAME=mobile_api_auth_test` for the guarded test harness and provisions the matching disposable database. Marked resolved in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`; no production change needed.
+
+
+## 2026-10-28 — HR job-description migration CI fixture correction
+
+Workflow [#40632821897](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40632821897) exposed a stale test setup: the checked-in schema already contains the post-migration `system_role_code` column and role-aware unique index, while the HR migration job then tried to apply the historical migration that expects the old title-only index. The workflow fixture was corrected in commit `daa821f1d607aa74d5efd90227e47567043c5ec1` to recreate the catalogue table only inside the disposable CI database before applying the migration sequence. Verification is pending run [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558). Tracked as PHP-07 in the remediation backlog.
