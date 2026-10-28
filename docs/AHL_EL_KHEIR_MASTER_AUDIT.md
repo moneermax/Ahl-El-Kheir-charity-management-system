@@ -5685,3 +5685,7 @@ A source audit found the project profile retained legacy `assign_team_member`/`u
 ## 2026-10-28 — Follow-up PHP verification
 
 Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633600907) passed all five jobs. PHP lint explicitly checked `modules/hr/salary_portal.php`, `modules/projects/form.php`, and `modules/projects/view.php`; logs report no syntax errors for each. HR migration and full-schema jobs also passed. The portal visibility correction and project route cleanup are CI-verified source changes; browser/runtime acceptance remains pending.
+## 2026-10-28 — API lint inventory correction verified
+
+
+Repository inventory found 111 PHP files under `api/v1/`, while the previous workflow explicitly linted 74. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds the remaining 37 to `.github/workflows/php-syntax-check.yml`. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) passed all five jobs including `php-lint`. This is CI syntax-coverage evidence, not proof of endpoint runtime correctness or production readiness; local acceptance remains open under PHP-01.
