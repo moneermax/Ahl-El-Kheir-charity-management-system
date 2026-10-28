@@ -5366,3 +5366,8 @@ Commit: `6550c9bcbed841aa631097ca9d178f7e3ab0906a`.
 - Mobile API integration workflow [40551368548](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40551368548) passed full-schema role checks: Financial Manager, General Manager and Vice General Manager can read the chart; GM/VGM mutation requests are rejected with HTTP 403.
 - APK artifact ID `12754229320`, size 102,601,768 bytes. Debug-only and configured for the local development API.
 - No schema or accounting rules changed. Local XAMPP/API and physical-device acceptance remain unverified; do not expose XAMPP publicly. Online release requires a verified HTTPS API host.
+
+
+## 2026-10-28 — PHP remediation backlog recorded; mobile paused
+
+Flutter/native-app development is paused at the user's request. PHP/backend issues and verification gaps discovered during mobile development are logged in [`docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`](PHP_SYSTEM_REMEDIATION_BACKLOG.md), tracked by [GitHub issue #96](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/issues/96). This is a triage backlog, not a declaration that every item is a confirmed defect. Current-source/schema review and evidence are required before changes. Closed acceptance remains closed absent concrete regression evidence.
