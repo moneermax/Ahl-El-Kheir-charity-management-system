@@ -62,13 +62,14 @@ Evidence: prior hosting investigation summarized in project conversation notes; 
 
 During role-parity review, `modules/hr/salary_portal.php` exposed an incentive-policy destination while `modules/hr/incentive_policy.php` denies the `admin` role. The mobile hub deliberately disabled the admin card rather than broadening authorization. This leaves a user-facing inconsistency in the PHP portal/navigation if the source still matches the documented finding.
 
-Next:
-- Inspect both current PHP files and role/permission definitions.
-- Determine the intended business authorization; do not infer whether admin should gain access.
-- Align the portal link/visibility with the destination guard, or change the guard only if the approved business rule supports it.
-- Test the relevant roles on the actual web pages.
+Evidence and change:
+- `modules/hr/incentive_policy.php` authorizes only `general_manager`/`gm`, `hr_manager`, and `financial_manager` for their distinct policy actions; `admin` is not an authorized role.
+- `modules/hr/salary_portal.php` previously showed the incentive-policy link to `admin`, which would lead to a page that redirects unauthorized roles.
+- Commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9` changes the portal navigation condition to `financial_manager` only. It does not broaden the destination's access policy.
 
-Evidence: `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`, 2026-10-27 “Native payroll portal role visibility correction”; `docs/MOBILE_APP_CONTINUATION.md`, “Native salary portal hub verified”.
+Remaining acceptance:
+- Confirm the link is shown to Financial Manager and hidden from admin in a real browser; confirm the page's existing authorization remains unchanged for HR Manager and General Manager.
+- CI/runtime evidence is not yet recorded for this specific change.
 
 ### PHP-05 — Incentive/project workflow browser acceptance
 **Status:** OPEN — prior module notes report acceptance gaps; current state must be rechecked.  
@@ -115,3 +116,4 @@ Next:
 ## Change log
 
 - 2026-10-28: Created at the user's request to pause Flutter work and log PHP/backend findings for future remediation. Tracking issue: #96.
+- 2026-10-28: PHP-04 navigation mismatch corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`; real-browser acceptance remains pending. PHP-06 re-triaged and closed after confirming the current auth integration workflow sets the required test flag and database.
