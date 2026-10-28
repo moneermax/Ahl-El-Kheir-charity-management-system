@@ -5689,3 +5689,8 @@ Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-manage
 
 
 Repository inventory found 111 PHP files under `api/v1/`, while the previous workflow explicitly linted 74. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds the remaining 37 to `.github/workflows/php-syntax-check.yml`. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) passed all five jobs including `php-lint`. This is CI syntax-coverage evidence, not proof of endpoint runtime correctness or production readiness; local acceptance remains open under PHP-01.
+
+## 2026-10-28 — User management runtime DDL audit finding
+
+
+`modules/users/index.php` contains request-time `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements for departments, user/role-related columns, family documents and accountant/nanny assignments, plus role/department data updates. This violates the no-runtime-DDL rule. Tracked as PHP-08. Do not remove or move statements until the schema dump and all dependent code are reconciled; then implement migration-backed schema setup and verify on a disposable database.
