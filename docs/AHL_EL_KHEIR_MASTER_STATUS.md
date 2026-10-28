@@ -5391,3 +5391,8 @@ Workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-manage
 ## 2026-10-28 — Project-team route cleanup CI verified
 
 The stale project-profile team mutation handlers were removed in commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`; team membership changes remain on the project edit page. Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs. Real-browser team UI and incentive notification acceptance remain open under PHP-05; no live business records were changed.
+
+
+## 2026-10-28 — PHP source lint and CI verified
+
+Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633600907) passed all five jobs. PHP lint explicitly covered `modules/hr/salary_portal.php`, `modules/projects/form.php`, and `modules/projects/view.php`; all reported no syntax errors. HR migration and full-schema regression jobs passed. This does not replace local browser acceptance.
