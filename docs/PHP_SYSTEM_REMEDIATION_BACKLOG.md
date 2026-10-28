@@ -132,6 +132,33 @@ The existing mobile API auth integration workflow runs an endpoint integration h
 
 **Source change committed; CI pending:** commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds all 37 previously unlisted API PHP files to the existing selected PHP lint list, so the workflow now explicitly lints all 111 API PHP files. This is a verification-coverage correction, not a claim that the files were defective. GitHub Actions run [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) completed successfully; all five jobs passed, including `php-lint`, `hr-job-description-migrations`, `migration-mariadb-10-4`, `rescheduling-service-tests`, and `migration-full-schema`. The expanded lint coverage is CI-verified. Next, inspect sensitive route/service coverage and define the smallest local runtime acceptance matrix. PHP-01 remains OPEN until still-unverified local runtime acceptance is completed.
 
+## PHP-01 API integration-test inventory — 2026-10-28
+
+A source-only comparison between `api/v1/*.php` and URL literals in `tools/test_mobile_api_auth_integration.php` found 100 PHP files that are neither `_bootstrap.php` nor named `*_service.php`. The harness directly references 80 of these route files; 20 are not directly referenced by a URL literal in this harness:
+
+- `api/v1/admin/departments.php`
+- `api/v1/admin/departments_action.php`
+- `api/v1/admin/overview.php`
+- `api/v1/admin/recovery.php`
+- `api/v1/admin/recovery_action.php`
+- `api/v1/admin/users.php`
+- `api/v1/admin/users_action.php`
+- `api/v1/age_alerts/index.php`
+- `api/v1/age_alerts/suspend_child.php`
+- `api/v1/audit/index.php`
+- `api/v1/dashboard/overview.php`
+- `api/v1/hr/my_salary_statements.php`
+- `api/v1/hr/salary_advance_waiver.php`
+- `api/v1/reports/orphaned_families.php`
+- `api/v1/reports/overview.php`
+- `api/v1/sponsors/assign.php`
+- `api/v1/sponsors/assignment_options.php`
+- `api/v1/supervisors/action.php`
+- `api/v1/suspensions/index.php`
+- `api/v1/suspensions/lift.php`
+
+This is a test-discovery result, **not** proof that these routes are untested by every other harness or that they contain defects. Service-level tests may cover underlying operations without exercising route authentication/role checks. The next source review should prioritize role-sensitive admin user/departments/recovery mutations and suspension/age-alert actions, then determine whether route-level negative/positive cases can be added safely to the disposable CI harness. Do not modify salary-advance waiver business logic or reopen its closed acceptance without concrete regression evidence. No local database or business records were changed during this inventory.
+
 ## Change log
 
 - 2026-10-28: Created at the user's request to pause Flutter work and log PHP/backend findings for future remediation. Tracking issue: #96.
