@@ -398,7 +398,7 @@ jobs:
           legacy_columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'users' AND column_name IN ('department_id','manager_id')) OR (table_name = 'sponsors' AND column_name = 'gender') OR (table_name = 'families' AND column_name = 'nanny_id') OR (table_name = 'supervisor_letters' AND column_name = 'gender') OR (table_name = 'family_documents' AND column_name IN ('file_name','file_size','notes','doc_type')))")
           restored_tables=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('departments','family_documents','accountant_nanny_assignments')")
           restored_index=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'supervisor_letters' AND index_name = 'uq_supervisor_letter_gender'")
-          test "$legacy_columns" = "8"
+          test "$legacy_columns" = "9"
           test "$restored_tables" = "3"
           test "$restored_index" = "1"
 
