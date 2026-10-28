@@ -5440,3 +5440,8 @@ PHP-10 is committed on `main`: `modules/accounting/lib.php` and `modules/account
 ## 2026-10-28 — PHP runtime-DDL cleanup checkpoint
 
 PHP-10 accounting core cleanup is CI-verified by run [#40643161875](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40643161875): all five jobs passed, including migration repeatability on the checked-in schema and table creation in a separate blank database. PHP-11 cleanup is now committed on `main`: profile, sponsor-import, sponsor-sync, transaction receipt, and payroll-reversal pages no longer perform schema DDL; migration `database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql` owns the required columns/tables. CI verification is pending. PHP-12 outflow schema sync remains open because its status ENUM and dynamic-column behavior need a separate evidence-based migration plan.
+
+
+## 2026-10-28 — PHP-11 migration CI verified
+
+PHP-11 source cleanup is CI-verified by GitHub Actions run [#40643694231](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40643694231): all five jobs passed, including PHP lint, full-schema application, and legacy-shape restoration for the profile, sponsor import/sync, receipt, and payroll-reversal schema. PHP-08 through PHP-11 now have source/migration CI evidence; local browser acceptance remains pending. PHP-12 outflow schema synchronization is the next source finding, and its ENUM/data behavior must be audited before changes.
