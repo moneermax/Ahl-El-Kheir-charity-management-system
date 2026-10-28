@@ -3165,3 +3165,8 @@ Workflow [#40632821897](https://github.com/moneermax/Ahl-El-Kheir-charity-manage
 ## 2026-10-28 — PHP workflow verification: HR migration fixture passed
 
 Workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) completed successfully. All five jobs passed: PHP lint, HR job-description migrations, MariaDB 10.4 migration, rescheduling service tests, and full-schema migration/regressions. PHP-07 is closed as a CI fixture issue in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. This does not replace local HR browser/PDF acceptance.
+
+
+## 2026-10-28 — Project-team route cleanup verified in CI
+
+Commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9` removed stale, unrendered project-team assignment/unassignment POST handlers from `modules/projects/view.php`; `modules/projects/form.php` remains the supported edit-page mutation route. Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs, including PHP lint. PHP-05 remains open for real-browser team UI acceptance and incentive-notification browser acceptance; do not mutate live project/incentive data to test.
