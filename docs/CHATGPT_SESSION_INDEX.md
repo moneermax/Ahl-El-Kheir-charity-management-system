@@ -3160,3 +3160,8 @@ The user has paused Flutter/native-app development to resume the existing PHP sy
 ## 2026-10-28 — HR job-description migration CI fixture correction
 
 Workflow [#40632821897](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40632821897) exposed a stale test setup: the checked-in schema already contains the post-migration `system_role_code` column and role-aware unique index, while the HR migration job then tried to apply the historical migration that expects the old title-only index. The workflow fixture was corrected in commit `daa821f1d607aa74d5efd90227e47567043c5ec1` to recreate the catalogue table only inside the disposable CI database before applying the migration sequence. Verification is pending run [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558). Tracked as PHP-07 in the remediation backlog.
+
+
+## 2026-10-28 — PHP workflow verification: HR migration fixture passed
+
+Workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) completed successfully. All five jobs passed: PHP lint, HR job-description migrations, MariaDB 10.4 migration, rescheduling service tests, and full-schema migration/regressions. PHP-07 is closed as a CI fixture issue in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. This does not replace local HR browser/PDF acceptance.
