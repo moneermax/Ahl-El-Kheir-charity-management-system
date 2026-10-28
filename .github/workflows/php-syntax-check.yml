@@ -170,6 +170,7 @@ jobs:
             api/v1/search/documents.php
             api/v1/search/sponsors.php
             api/v1/transactions/query_service.php
+            modules/users/index.php
             modules/hr/contract_builder.php
             modules/hr/job_description_catalogue.php
             modules/hr/salary_portal.php
@@ -332,6 +333,11 @@ jobs:
           MYSQL_PWD: root
         run: |
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/ahl_el_kheir.sql
+          # Move User Management schema/reference-data setup out of page requests; verify repeatability on the full checked-in schema.
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql
+          user_management_guard=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT IF((SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'users' AND column_name IN ('department_id','manager_id')) OR (table_name = 'sponsors' AND column_name = 'gender') OR (table_name = 'families' AND column_name = 'nanny_id') OR (table_name = 'supervisor_letters' AND column_name = 'gender') OR (table_name = 'family_documents' AND column_name IN ('file_name','file_size','notes','doc_type'))) = 9 AND (SELECT COUNT(*) FROM departments WHERE name_en IN ('General Management','Mothers Affairs','Lost & Found','Social Media','Sponsor Affairs','Accounting & Finance')) = 6 AND (SELECT COUNT(*) FROM roles WHERE code IN ('financial_manager','accountant_staff','nanny','administration','social_media')) = 5, 1, 0)")
+          test "$user_management_guard" = "1"
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql
           # Exercise the mobile bearer-session migration on the disposable full schema.
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-24_mobile_api_sessions.sql
