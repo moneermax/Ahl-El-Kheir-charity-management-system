@@ -5425,3 +5425,8 @@ PHP-08 user-management remediation is verified by GitHub Actions run [#406418553
 ## 2026-10-28 — Family schema cleanup in progress
 
 PHP-09 remediation is committed on `main` as `599ad25302df14af3e7d0fb034fa3ddc35214c41`: schema additions used by family creation/editing, orphan forms and document uploads now live in `database/migrations/2026-10-28_family_runtime_schema_cleanup.sql`, and the four pages no longer perform request-time DDL. CI now lints the pages and tests migration repeatability from a disposable legacy-shaped schema. CI is pending; do not claim runtime acceptance until verified. PHP-10 and PHP-11 remain open findings.
+
+
+## 2026-10-28 — Family schema migration CI verified
+
+PHP-09 source cleanup is CI-verified by GitHub Actions run [#40642297829](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40642297829): all five jobs passed. The full-schema job applied the family migration twice and then simulated missing family/child columns and the two family tables in the disposable database; migration restoration and the unique form-serial index passed. This is not local browser acceptance. PHP-10 (accounting libraries) and PHP-11 (other pages) remain open.
