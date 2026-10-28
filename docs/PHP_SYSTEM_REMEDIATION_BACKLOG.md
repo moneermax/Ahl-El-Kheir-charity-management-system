@@ -111,6 +111,27 @@ Fix committed in `daa821f1d607aa74d5efd90227e47567043c5ec1`: the workflow now dr
 4. Review PHP-02 and PHP-03 before any public API deployment; these do not block ordinary local PHP development.
 5. Continue PHP-05 only after checking the module continuation docs and current evidence.
 
+## PHP-01 inventory checkpoint — 2026-10-28
+
+A read-only repository inventory of current `main` found **111 PHP files under `api/v1/`**. The current `.github/workflows/php-syntax-check.yml` explicitly runs `php -l` against **74** of those API PHP files; **37** API PHP files are not in that selected lint list. This is a coverage inventory, not evidence that those 37 files contain syntax errors or runtime defects.
+
+API files absent from the selected lint list:
+- `api/v1/account/avatar.php`, `api/v1/account/profile.php`
+- `api/v1/accounting/accounts.php`, `api/v1/accounting/assigned_nannies.php`, `api/v1/accounting/fm_transaction_receipt.php`, `api/v1/accounting/fm_transaction_review.php`, `api/v1/accounting/gm_reconciliation.php`, `api/v1/accounting/journal.php`, `api/v1/accounting/trial_balance.php`
+- `api/v1/admin/backups.php`, `api/v1/admin/database.php`, `api/v1/admin/disbursements.php`, `api/v1/admin/disbursements_action.php`
+- `api/v1/administration/available_families.php`, `api/v1/administration/winback.php`
+- `api/v1/auth/change_password.php`, `api/v1/auth/complete_forced_password_change.php`, `api/v1/auth/password_recovery_request.php`, `api/v1/auth/web_handoff.php`
+- `api/v1/deputy_gm/groups.php`
+- `api/v1/fina/collections.php`, `api/v1/fina/dashboard.php`, `api/v1/fina/receipt.php`, `api/v1/fina/report.php`, `api/v1/fina/review.php`, `api/v1/fina/sponsors.php`
+- `api/v1/hr/incentive_policy.php`, `api/v1/hr/incentive_verification.php`, `api/v1/hr/payroll_management.php`, `api/v1/hr/payroll_policy.php`, `api/v1/hr/payroll_proof.php`, `api/v1/hr/salary_advance_dashboard.php`
+- `api/v1/nanny/returned_funds.php`
+- `api/v1/search/document_file.php`, `api/v1/search/documents.php`, `api/v1/search/sponsors.php`
+- `api/v1/transactions/query_service.php`
+
+The existing mobile API auth integration workflow runs an endpoint integration harness against a disposable full-schema MariaDB database and includes auth, role/scope, archive, project, HR, sponsor, nanny, accounting and other paths. That CI coverage is useful but does not replace runtime acceptance against the user's actual local XAMPP/Apache/PHP 8.2 instance. Do not run its destructive integration harness against `ahl_el_kheir`; the harness explicitly refuses databases other than `mobile_api_auth_test`.
+
+**Next bounded action:** inspect the 37 unlisted files for the reason they are outside the lint list and their actual route/service coverage, then add only justified lint coverage or tests. Prioritize sensitive financial mutations, proof/document delivery, account/profile operations, and authentication/handoff flows. Do not bulk-edit the workflow or claim all 37 are defects solely because they are absent from the list. PHP-01 remains OPEN until the still-unverified local runtime acceptance matrix is completed.
+
 ## Change log
 
 - 2026-10-28: Created at the user's request to pause Flutter work and log PHP/backend findings for future remediation. Tracking issue: #96.
