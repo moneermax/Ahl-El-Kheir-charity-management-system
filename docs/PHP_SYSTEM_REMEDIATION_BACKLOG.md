@@ -14,7 +14,7 @@ Do not treat every item as a confirmed defect. For each item: inspect current `m
 ## Backlog
 
 ### PHP-01 — Local API runtime and authorization acceptance
-**Status:** OPEN — verification gap, not a proven general API defect.  
+**Status:** OPEN — verification gap, not a proven general API defect. CI lint coverage expansion is now verified.  
 **Priority:** High before relying on API features outside CI.
 
 The API grew during mobile development. Many endpoint integrations and service harnesses passed against disposable CI MariaDB schemas, but that does not prove behavior against the real local XAMPP/Apache/PHP 8.2 instance and `ahl_el_kheir` database. Existing notes report that physical-phone login succeeded after the Android INTERNET permission correction, and the user confirmed the `mobile_api_sessions` migration was applied; preserve that evidence rather than restarting from zero.
@@ -130,11 +130,11 @@ API files absent from the selected lint list:
 
 The existing mobile API auth integration workflow runs an endpoint integration harness against a disposable full-schema MariaDB database and includes auth, role/scope, archive, project, HR, sponsor, nanny, accounting and other paths. That CI coverage is useful but does not replace runtime acceptance against the user's actual local XAMPP/Apache/PHP 8.2 instance. Do not run its destructive integration harness against `ahl_el_kheir`; the harness explicitly refuses databases other than `mobile_api_auth_test`.
 
-**Source change committed; CI pending:** commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds all 37 previously unlisted API PHP files to the existing selected PHP lint list, so the workflow now explicitly lints all 111 API PHP files. This is a verification-coverage correction, not a claim that the files were defective. GitHub Actions run [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) was queued at the last check. Await its actual result before marking this CI coverage correction verified. Afterward, inspect sensitive route/service coverage and define the smallest local runtime acceptance matrix. PHP-01 remains OPEN until still-unverified local runtime acceptance is completed.
+**Source change committed; CI pending:** commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds all 37 previously unlisted API PHP files to the existing selected PHP lint list, so the workflow now explicitly lints all 111 API PHP files. This is a verification-coverage correction, not a claim that the files were defective. GitHub Actions run [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) completed successfully; all five jobs passed, including `php-lint`, `hr-job-description-migrations`, `migration-mariadb-10-4`, `rescheduling-service-tests`, and `migration-full-schema`. The expanded lint coverage is CI-verified. Next, inspect sensitive route/service coverage and define the smallest local runtime acceptance matrix. PHP-01 remains OPEN until still-unverified local runtime acceptance is completed.
 
 ## Change log
 
 - 2026-10-28: Created at the user's request to pause Flutter work and log PHP/backend findings for future remediation. Tracking issue: #96.
 - 2026-10-28: PHP-04 navigation mismatch corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`; real-browser acceptance remains pending. PHP-06 re-triaged and closed after confirming the current auth integration workflow sets the required test flag and database.
 - 2026-10-28: PHP-07 added after workflow #40632821897 exposed a stale migration fixture; CI-only fixture correction committed as `daa821f1d607aa74d5efd90227e47567043c5ec1`, verified by workflow #40633086558: all five jobs passed.
-- 2026-10-28: PHP-01 API inventory found 111 API PHP files but only 74 listed in the PHP lint workflow. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` added the other 37 files to the lint list; workflow #40634508587 is pending, so this change is not yet CI-verified.
+- 2026-10-28: PHP-01 API inventory found 111 API PHP files but only 74 listed in the PHP lint workflow. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` added the other 37 files to the lint list; workflow #40634508587 passed all five jobs, including `php-lint`; the coverage expansion is CI-verified.
