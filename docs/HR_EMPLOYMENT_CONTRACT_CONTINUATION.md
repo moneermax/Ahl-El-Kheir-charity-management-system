@@ -510,3 +510,8 @@ Read-only verification:
 - `HR Test` ID 11 remains `needs_review` and is inactive.
 
 This closes the migration's reporting-line verification gate. It does not prove every field changed by the migration and does not establish that the other seven job-description migrations were applied. The existing PHP lint and dedicated CI migration job passed, but local Contract Builder/catalogue browser behavior and contract PDF behavior remain unverified. If resuming this module, make one focused browser check: open Contract Builder, confirm the job-description catalogue prefill is available and manual entry remains usable, then open the job-description catalogue page. Verify PDF behavior only if contract preview/download is part of the next task. Do not repeat the migration or touch existing contract files without a specific reason.
+
+
+## 2026-10-28 — Migration CI verification result
+
+Follow-up workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) passed, including the HR job-description migration job and PHP lint. The CI fixture correction is verified; it does not establish local catalogue/contract browser or PDF acceptance. No local database changes were made.
