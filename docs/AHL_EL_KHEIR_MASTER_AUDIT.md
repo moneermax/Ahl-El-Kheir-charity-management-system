@@ -5665,3 +5665,8 @@ At the user's request, Flutter/native-app work is paused and PHP project work re
 ## 2026-10-28 — PHP-04 and PHP-06 triage results
 
 PHP-04 source correction committed as `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`: `modules/hr/salary_portal.php` no longer advertises the incentive-policy page to `admin`, whose role is not authorized by `modules/hr/incentive_policy.php`. This is a navigation/visibility correction only; the destination guard is unchanged and browser acceptance remains unverified. PHP-06 is resolved by current-source review: `.github/workflows/mobile-api-auth-integration.yml` provides `MOBILE_API_AUTH_TEST=1` and `AHL_DB_NAME=mobile_api_auth_test` at job level and provisions the same database before running the guarded test. No production code was changed for PHP-06. Backlog: `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`.
+
+
+## 2026-10-28 — HR migration workflow failure triage
+
+Run [#40632821897](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40632821897) failed only in `hr-job-description-migrations`; PHP lint and the other jobs passed. The exact error was `ERROR 1091 (42000): Can't DROP INDEX uq_hr_job_description_position; check that it exists`. The checked-in schema already has `system_role_code` and `uq_hr_job_description_position_role`, while the historical migration expects the pre-role schema. Commit `daa821f1d607aa74d5efd90227e47567043c5ec1` adjusts the disposable CI fixture to recreate the original catalogue table before applying the migration sequence. No production schema/data was changed. Await [run #40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558). Backlog item PHP-07 records the evidence.
