@@ -5400,3 +5400,8 @@ Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-manage
 
 
 Commit `c4c212980d1a1677729db94d2b6815a07aba0289` expanded explicit PHP lint coverage to all 111 `api/v1/*.php` files. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) passed all five jobs. This closes the CI lint coverage gap only; local API runtime/authorization acceptance remains open under `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md` (PHP-01).
+
+## 2026-10-28 — PHP-08 runtime schema DDL found in user management
+
+
+Source review confirmed that `modules/users/index.php` performs table/column DDL at runtime, contrary to the project architecture rule. Tracked as PHP-08 in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. This remains an open source finding; no code/schema changes made pending exact reconciliation with `database/ahl_el_kheir.sql` and existing migrations.
