@@ -5704,3 +5704,8 @@ A confirmed source-level architecture violation in `modules/users/index.php` was
 ## PHP website checkpoint — 2026-10-28
 
 PHP-08 user-management runtime DDL cleanup is source- and CI-verified on `main`. The new migration was applied twice against the checked-in full schema in GitHub Actions run [#40640508040](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40640508040); all five jobs passed, including PHP lint and the full-schema migration/regression job. This does not replace browser acceptance on the user's actual local XAMPP instance. Next step is a targeted User Management browser smoke test after pulling the commits, then continue the original PHP backlog without resuming Flutter work.
+
+
+## 2026-10-28 — Follow-up PHP runtime-DDL audit
+
+PHP-08 user-management remediation is verified by GitHub Actions run [#40641855323](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40641855323): all five jobs passed, including the legacy-shape migration test. A read-only scan of all 206 PHP files under `modules/` found further confirmed runtime DDL in the family workflows (PHP-09), accounting libraries (PHP-10), and profile/import/sync/receipt/payroll-reversal pages (PHP-11). These are logged in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`; they are separate open items and must be reconciled against the checked-in schema before changes. Continue on the original PHP website; Flutter/native work remains paused.
