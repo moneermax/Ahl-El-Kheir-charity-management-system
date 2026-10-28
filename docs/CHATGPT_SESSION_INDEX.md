@@ -3179,3 +3179,7 @@ Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-manage
 ## 2026-10-28 — PHP API lint inventory and coverage expansion
 
 A read-only inventory found 111 `api/v1/*.php` files, but `.github/workflows/php-syntax-check.yml` explicitly linted 74. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds the remaining 37 files to the lint list. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) was queued at last check; verify its actual result before calling the change CI-verified. PHP-01 local runtime acceptance remains open. Flutter/native work is paused; do not run mutating API integration tests against live `ahl_el_kheir`.
+## 2026-10-28 — PHP API lint coverage verified
+
+
+The API lint coverage expansion is verified. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` added the 37 previously omitted API files so all 111 `api/v1/*.php` files are in the explicit PHP lint list. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) passed all five jobs, including `php-lint`. PHP-01 local API runtime acceptance remains open; CI syntax success is not local runtime acceptance.
