@@ -5694,3 +5694,8 @@ Repository inventory found 111 PHP files under `api/v1/`, while the previous wor
 
 
 `modules/users/index.php` contains request-time `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements for departments, user/role-related columns, family documents and accountant/nanny assignments, plus role/department data updates. This violates the no-runtime-DDL rule. Tracked as PHP-08. Do not remove or move statements until the schema dump and all dependent code are reconciled; then implement migration-backed schema setup and verify on a disposable database.
+
+
+## 2026-10-28 — PHP-08 remediation checkpoint
+
+A confirmed source-level architecture violation in `modules/users/index.php` was addressed on `main`. The page no longer runs schema DDL or role/department seeding on requests; migration `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql` owns those changes. The exact checked-in SQL dump was inspected first, including the complete `family_documents` definition and foreign keys. CI now lints the changed page and applies the migration twice against a disposable MariaDB full-schema import, then asserts key columns and reference data. This checkpoint remains pending CI verification; do not infer live local-runtime acceptance from source changes alone.
