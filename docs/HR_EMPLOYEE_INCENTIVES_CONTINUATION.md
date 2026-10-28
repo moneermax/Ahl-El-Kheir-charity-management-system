@@ -1219,3 +1219,8 @@ The user ran PHP 8.2 syntax checks locally after syncing `main`; both commands p
 - `php -l modules\\projects\\view.php` — `No syntax errors detected in modules\\projects\\view.php`.
 
 This closes only the local PHP syntax-check item. Browser acceptance for initial team selection, edit-page display and authorization, add/duplicate rejection, unassignment/history retention, and success feedback remains pending. The user confirmed the two disposable incentive databases are deleted; do not recreate them and do not perform mutating acceptance tests against live `ahl_el_kheir`. No database rows or project assignments were changed as part of this syntax check.
+
+
+## 2026-10-28 — Salary portal navigation permission alignment
+
+Related PHP backlog item PHP-04 was corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`: `modules/hr/salary_portal.php` now shows the incentive-policy navigation link only to `financial_manager`, matching the existing `modules/hr/incentive_policy.php` authorization. This does not change incentive-policy permissions or policy/accounting behavior. Real-browser visibility acceptance remains pending. The separate end-to-end gates listed above (PM-to-FM closure earned notices, POST-to-inbox provisional notices, and project-team assignment UI) remain open until evidence closes them. Do not recreate the deleted disposable incentive databases or mutate live `ahl_el_kheir` to test them.
