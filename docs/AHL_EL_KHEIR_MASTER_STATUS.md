@@ -5376,3 +5376,8 @@ Flutter/native-app development is paused at the user's request. PHP/backend issu
 ## 2026-10-28 — PHP backlog triage checkpoint
 
 The incentive-policy navigation mismatch was corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`: the salary portal now displays that link only to `financial_manager`, matching the existing destination authorization. The authorization guard itself was not broadened. Real-browser acceptance remains pending. PHP-06 was closed after source review confirmed the current mobile API auth workflow sets the required harness flag/database and provisions that test database. See `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md` for current item statuses.
+
+
+## 2026-10-28 — HR job-description migration CI fixture
+
+The PHP workflow's `hr-job-description-migrations` job failed because it imported the current post-migration schema and then reapplied a historical migration that expects the legacy title-only index. This is a CI fixture/schema-state mismatch, not evidence of production data loss. Commit `daa821f1d607aa74d5efd90227e47567043c5ec1` now recreates the legacy catalogue table only in the disposable CI database before running the historical migration sequence. Await run [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) before marking it verified. See PHP-07 in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`.
