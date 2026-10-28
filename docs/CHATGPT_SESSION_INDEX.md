@@ -3149,3 +3149,9 @@ Commit: `6550c9bcbed841aa631097ca9d178f7e3ab0906a`.
 ## 2026-10-28 — PHP work resumed; Flutter development paused
 
 The user has paused Flutter/native-app development to resume the existing PHP system. PHP/backend findings and acceptance gaps discovered during mobile development are tracked in [`docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`](PHP_SYSTEM_REMEDIATION_BACKLOG.md) and GitHub issue [#96](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/issues/96). The backlog distinguishes confirmed source-level permission inconsistency from runtime/deployment verification gaps and items requiring re-triage. Do not treat missing native screens as PHP defects or reopen closed PHP acceptance without regression evidence. Read the backlog alongside the four canonical project documents before selecting the next PHP task.
+
+
+## 2026-10-28 — PHP backlog triage: salary portal navigation and test guard
+
+- Fixed the salary portal's incentive-policy link visibility: `modules/hr/salary_portal.php` now shows the link only to `financial_manager`, matching the destination guard in `modules/hr/incentive_policy.php`. Commit: `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`. This does not broaden page permissions; real-browser acceptance remains pending.
+- Re-triaged PHP-06: current `.github/workflows/mobile-api-auth-integration.yml` sets `MOBILE_API_AUTH_TEST=1` and `AHL_DB_NAME=mobile_api_auth_test` for the guarded test harness and provisions the matching disposable database. Marked resolved in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`; no production change needed.
