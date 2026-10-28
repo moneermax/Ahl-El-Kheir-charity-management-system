@@ -5670,3 +5670,8 @@ PHP-04 source correction committed as `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`
 ## 2026-10-28 — HR migration workflow failure triage
 
 Run [#40632821897](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40632821897) failed only in `hr-job-description-migrations`; PHP lint and the other jobs passed. The exact error was `ERROR 1091 (42000): Can't DROP INDEX uq_hr_job_description_position; check that it exists`. The checked-in schema already has `system_role_code` and `uq_hr_job_description_position_role`, while the historical migration expects the pre-role schema. Commit `daa821f1d607aa74d5efd90227e47567043c5ec1` adjusts the disposable CI fixture to recreate the original catalogue table before applying the migration sequence. No production schema/data was changed. Await [run #40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558). Backlog item PHP-07 records the evidence.
+
+
+## 2026-10-28 — HR migration CI fixture closure
+
+Follow-up workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) passed all five jobs: `php-lint`, `hr-job-description-migrations`, `migration-mariadb-10-4`, `rescheduling-service-tests`, and `migration-full-schema`. The disposable-database fixture now starts from the legacy catalogue schema and successfully applies the historical migration sequence. PHP-07 is closed as a CI setup defect. This does not establish local browser/PDF acceptance or authorize live database DDL.
