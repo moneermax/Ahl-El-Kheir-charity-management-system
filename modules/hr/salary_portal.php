@@ -49,7 +49,7 @@ if (in_array($role, ['hr_manager', 'hr_staff', 'financial_manager', 'admin'], tr
         'theme' => 'info',
     ];
 }
-if (in_array($role, ['financial_manager', 'admin'], true)) {
+if ($role === 'financial_manager') {
     $links[] = [
         'title' => 'سياسة حوافز الموظفين',
         'description' => 'إدارة إصدارات سياسة الحوافز وإرسالها لاعتماد المدير العام ومتابعة مبالغها.',
