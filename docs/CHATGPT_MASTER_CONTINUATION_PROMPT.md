@@ -3098,3 +3098,8 @@ Commit: `6550c9bcbed841aa631097ca9d178f7e3ab0906a`.
 - Mobile API integration workflow [40551368548](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40551368548) passed full-schema role checks: Financial Manager, General Manager and Vice General Manager can read the chart; GM/VGM mutation requests are rejected with HTTP 403.
 - APK artifact ID `12754229320`, size 102,601,768 bytes. Debug-only and configured for the local development API.
 - No schema or accounting rules changed. Local XAMPP/API and physical-device acceptance remain unverified; do not expose XAMPP publicly. Online release requires a verified HTTPS API host.
+
+
+## 2026-10-28 — Current direction: pause Flutter, resume PHP
+
+The user has paused Flutter/native-app feature development and wants to resume work on the existing PHP system. First read the canonical documents and [`docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`](PHP_SYSTEM_REMEDIATION_BACKLOG.md); GitHub tracking issue: [#96](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/issues/96). Triage PHP-04 and PHP-06 from current source, then inventory still-unverified API runtime acceptance. Do not treat native parity gaps as PHP defects, do not infer defects from CI-only evidence, and do not reopen closed PHP acceptance without concrete regression evidence. Work sequentially to avoid overlapping workflows and connection timeouts.
