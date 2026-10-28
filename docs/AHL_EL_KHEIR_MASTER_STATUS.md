@@ -5410,3 +5410,8 @@ Source review confirmed that `modules/users/index.php` performs table/column DDL
 ## 2026-10-28 — PHP-08 user-management runtime DDL remediation
 
 The checked-in `database/ahl_el_kheir.sql` was inspected after the user supplied the full dump. The schema already contains `departments`, `family_documents`, `accountant_nanny_assignments`, and the five columns that `modules/users/index.php` attempted to add; `family_documents` also contains four additional fields absent from the old runtime CREATE definition. The request-time DDL and role/department seed/update operations have been removed from that page and transferred to `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql`. CI was updated to lint the page and apply the migration twice to the disposable full schema, with assertions. Commits: migration `f8b8b099ec4f307737ae7dcec7179f6439043408`; page cleanup `519bf7a21d562235c95f3bca7f66170557df54ce`; CI `bbd81cacf738d9a369de947aa6df3e1d63a95f25`. Runtime behavior is not yet declared verified; await CI and then decide whether local browser acceptance is needed.
+
+
+## PHP website checkpoint — 2026-10-28
+
+PHP-08 user-management runtime DDL cleanup is source- and CI-verified on `main`. The new migration was applied twice against the checked-in full schema in GitHub Actions run [#40640508040](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40640508040); all five jobs passed, including PHP lint and the full-schema migration/regression job. This does not replace browser acceptance on the user's actual local XAMPP instance. Next step is a targeted User Management browser smoke test after pulling the commits, then continue the original PHP backlog without resuming Flutter work.
