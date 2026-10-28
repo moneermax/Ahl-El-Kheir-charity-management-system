@@ -14,72 +14,7 @@ $active    = 'users';
 $lang = defined('AK_LANG') ? AK_LANG : 'ar';
 $nameCol = ($lang === 'en') ? 'name_en' : 'name_ar';
 
-/* ═══════════════════════════════════════════════════════════
-   SCHEMA SYNC
-   ═══════════════════════════════════════════════════════════ */
-try {
-    dbExecute("CREATE TABLE IF NOT EXISTS departments (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        name_ar VARCHAR(100) NOT NULL,
-        name_en VARCHAR(100) NOT NULL,
-        description TEXT,
-        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    dbExecute("UPDATE departments SET name_ar = 'استرجاع الكفلاء السابقين', name_en = 'Lost & Found'
-               WHERE name_en = 'Administration' OR name_ar = 'الإدارة التنفيذية' OR name_ar = 'المفقودات والاسترجاع'");
-    dbExecute("UPDATE roles SET name_ar = 'مندوب استرجاع الكفلاء', name_en = 'Recovery Officer' WHERE code = 'administration'");
-    $depts = [
-        ['الإدارة العامة', 'General Management'],
-        ['شؤون الأمهات', 'Mothers Affairs'],
-        ['استرجاع الكفلاء السابقين', 'Lost & Found'],
-        ['العلاقات العامة والإعلام', 'Social Media'],
-        ['شؤون الكفلاء', 'Sponsor Affairs'],
-        ['المالية والمحاسبة', 'Accounting & Finance'],
-    ];
-    foreach ($depts as $d) {
-        dbExecute("INSERT INTO departments (name_ar, name_en) SELECT ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM departments WHERE name_en = ?)", [$d[0], $d[1], $d[1]]);
-    }
-    dbExecute("UPDATE roles SET name_ar = 'رئيس قسم المحاسبة', name_en = 'Accounting Dept Head' WHERE code = 'accountant'");
-    $newRoles = [
-        ['financial_manager', 'Financial Manager', 'المدير المالي'],
-        ['accountant_staff',  'Accountant', 'محاسب'],
-        ['nanny',             'Nanny / Case Worker', 'أخصائية شؤون الأمهات'],
-        ['administration',    'Recovery Officer', 'مندوب استرجاع الكفلاء'],
-        ['social_media',      'Social Media Staff', 'موظف العلاقات العامة والإعلام'],
-    ];
-    foreach ($newRoles as $r) {
-        dbExecute("INSERT INTO roles (code, name_en, name_ar) SELECT ?, ?, ? FROM DUAL WHERE NOT EXISTS (SELECT 1 FROM roles WHERE code = ?)", [$r[0], $r[1], $r[2], $r[0]]);
-    }
-    dbExecute("ALTER TABLE users ADD COLUMN IF NOT EXISTS department_id INT UNSIGNED NULL");
-    dbExecute("ALTER TABLE users ADD COLUMN IF NOT EXISTS manager_id INT UNSIGNED NULL");
-    dbExecute("ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS gender ENUM('male','female','organization','unknown') DEFAULT 'unknown'");
-    dbExecute("ALTER TABLE families ADD COLUMN IF NOT EXISTS nanny_id INT UNSIGNED NULL");
-    dbExecute("ALTER TABLE supervisor_letters ADD COLUMN IF NOT EXISTS gender ENUM('male','female','both') DEFAULT 'both'");
-    dbExecute("CREATE TABLE IF NOT EXISTS family_documents (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        family_id INT UNSIGNED NOT NULL,
-        document_type VARCHAR(50) NOT NULL,
-        file_path VARCHAR(255) NOT NULL,
-        uploaded_by INT UNSIGNED NOT NULL,
-        uploaded_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY (family_id) REFERENCES families(id) ON DELETE CASCADE,
-        FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    dbExecute("CREATE TABLE IF NOT EXISTS accountant_nanny_assignments (
-        id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        accountant_id INT UNSIGNED NOT NULL,
-        nanny_id INT UNSIGNED NOT NULL,
-        assigned_by INT UNSIGNED NULL,
-        assigned_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-        UNIQUE KEY uq_acct_nanny (accountant_id, nanny_id),
-        FOREIGN KEY (accountant_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (nanny_id) REFERENCES users(id) ON DELETE CASCADE,
-        FOREIGN KEY (assigned_by) REFERENCES users(id) ON DELETE SET NULL
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-} catch (Throwable $e) {
-    error_log('Schema sync: ' . $e->getMessage());
-}
-
+/* Schema and reference data are maintained by database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql. */
 $roles       = dbFetchAll("SELECT id, code, name_ar, name_en FROM roles ORDER BY id");
 $departments = dbFetchAll("SELECT id, name_ar, name_en FROM departments ORDER BY id");
 $managers    = dbFetchAll("SELECT u.id, u.full_name, u.username
