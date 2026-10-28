@@ -80,6 +80,20 @@ Next: verify the sequential PHP workflow; keep browser acceptance open until tes
 **Priority:** Closed.
 
 The current `.github/workflows/mobile-api-auth-integration.yml` sets `MOBILE_API_AUTH_TEST: '1'` and `AHL_DB_NAME: mobile_api_auth_test` at job level, provisions/imports the same disposable database, and invokes `tools/test_mobile_admin_users_action_service.php`. The harness guard matches the current job configuration. `.github/workflows/php-syntax-check.yml` merely includes the file in its syntax-check list; that is not an execution. No production-code change or test rerun is needed for this item.
+### PHP-08 — User-management page performs schema DDL at runtime
+**Status:** CONFIRMED SOURCE-LEVEL ARCHITECTURE VIOLATION — remediation requires schema/migration reconciliation before code changes.
+**Priority:** High for schema/deployment reliability.
+
+A source review of the original PHP page `modules/users/index.php` found runtime `CREATE TABLE IF NOT EXISTS` and `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` statements. The page also performs role/department data updates during page load. This conflicts with the project rule that schema changes must be represented by migrations and that application requests must not create/alter schema.
+
+Observed runtime schema operations include:
+- create `departments`;
+- add `users.department_id` and `users.manager_id`;
+- add `sponsors.gender`, `families.nanny_id`, and `supervisor_letters.gender`;
+- create `family_documents` and `accountant_nanny_assignments`.
+
+**Do not simply delete these statements.** The checked-in `database/ahl_el_kheir.sql` must first be inspected for each table/column/index/foreign-key definition, along with the full page's dependent queries and existing schema history. Then create only the justified migration(s), verify them on a disposable database, and remove runtime DDL/data-seeding from page requests while preserving existing behavior. No production source/schema change has been made for PHP-08 yet; do not assume the dump contains every object until inspected.
+
 ### PHP-07 — HR job-description migration CI fixture starts from the post-migration schema
 **Status:** FIX VERIFIED — all jobs in the sequential CI run passed.
 **Priority:** Medium; CI verification blocker, not evidence of a live-data defect.
