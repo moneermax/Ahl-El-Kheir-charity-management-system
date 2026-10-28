@@ -3103,3 +3103,8 @@ Commit: `6550c9bcbed841aa631097ca9d178f7e3ab0906a`.
 ## 2026-10-28 — Current direction: pause Flutter, resume PHP
 
 The user has paused Flutter/native-app feature development and wants to resume work on the existing PHP system. First read the canonical documents and [`docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`](PHP_SYSTEM_REMEDIATION_BACKLOG.md); GitHub tracking issue: [#96](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/issues/96). Triage PHP-04 and PHP-06 from current source, then inventory still-unverified API runtime acceptance. Do not treat native parity gaps as PHP defects, do not infer defects from CI-only evidence, and do not reopen closed PHP acceptance without concrete regression evidence. Work sequentially to avoid overlapping workflows and connection timeouts.
+
+
+## 2026-10-28 — PHP backlog triage update
+
+PHP-04: committed a minimal salary-portal navigation correction (`046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`) so only `financial_manager` sees the incentive-policy link, matching the existing destination guard. Do not broaden authorization; local browser acceptance is still pending. PHP-06: resolved by inspecting current workflow configuration; the mobile API auth job passes the required test flag/database and provisions `mobile_api_auth_test`. Next, continue PHP backlog triage sequentially; use `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md` as the status source and avoid running mutating tests against live `ahl_el_kheir`.
