@@ -131,6 +131,18 @@ The checked-in schema contains all referenced columns/tables. Migration `databas
 
 `modules/accounting/lib_outflows.php` previously created `monthly_disbursements`, `disbursement_items`, and `nanny_family_verifications` during requests; dynamically added columns; and modified status ENUM definitions. The checked-in schema has canonical monthly statuses without `pending`, while the old runtime table definition included it. Source evidence confirms `ak_out_approve()` accepts both `pending` and `pending_approval`, while the web/API create/transition paths use `pending_approval`; the checked-in dump has no monthly batch with `pending`. Migration `database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql` now creates/reconciles the tables and columns, ensures the group index/FK, maps legacy `pending` to the canonical `pending_approval` state, and restores the canonical ENUM. The schema-sync function and DDL helper were removed while read-only enum introspection remains. GitHub Actions run [#40644551812](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40644551812) passed all five jobs. The full-schema job applied the migration twice. A separate disposable legacy fixture verified restoration of missing group/return columns and the group foreign key/index, normalized `pending` to `pending_approval`, and restored the canonical ENUM. Local outflow workflow acceptance remains pending.
 
+### PHP-13 — Public sponsor application conflicts with the canonical request schema/workflow
+**Status:** CONFIRMED SOURCE/SCHEMA MISMATCH — source remediation requires one workflow decision; no source changes made.
+**Priority:** High because the public sponsor application path is inconsistent with the checked-in schema and admin queue.
+
+Evidence from `database/ahl_el_kheir.sql`, `apply.php`, `database/migrations/2026-09-14_sponsor_workflow_runtime_ddl_cleanup.sql`, `modules/sponsors/requests.php`, and `api/v1/sponsor_requests/index.php`:
+- `apply.php` attempts to create `sponsor_requests` with a `full_name` column and statuses `pending/contacted/confirmed/rejected`, then inserts into `full_name` with status `pending`.
+- The checked-in schema and the admin/API request queue use `sponsor_name` and statuses `new/contacted/converted/lost`; `full_name` is not a column in the checked-in `sponsor_requests` table, and `pending` is not in its status ENUM.
+- The historical 2026-09-14 migration creates a different, incomplete `sponsor_requests` shape and only adds `created_sponsor_id`, so it does not resolve the mismatch for a fresh database.
+- The public form accepts individual/company/organization sponsor types but does not collect gender. The admin conversion flow requires gender `male` or `female`, while the schema also supports organization sponsors. Aligning only the column name and status would therefore leave a conversion workflow gap.
+
+Do not patch only the DDL or silently invent gender/organization behavior. Clarify whether public applications are meant to enter the same admin request queue and how individual versus company/organization requests should be converted. Source/schema mismatch is confirmed; live request submission has not been runtime-tested.
+
 ### PHP-07 — HR job-description migration CI fixture starts from the post-migration schema
 **Status:** FIX VERIFIED — all jobs in the sequential CI run passed.
 **Priority:** Medium; CI verification blocker, not evidence of a live-data defect.
@@ -236,3 +248,5 @@ This is a test-discovery result, **not** proof that these routes are untested by
 - 2026-10-28: PHP-12 outflow schema cleanup committed with canonical table/column definitions, legacy `pending` → `pending_approval` normalization grounded in the current source, and a disposable legacy-status CI fixture. Awaiting CI result.
 
 - 2026-10-28: PHP-12 outflow migration CI passed in workflow #40644551812: all five jobs succeeded, including legacy-schema and status-normalization verification. Local outflow workflow acceptance remains pending.
+
+- 2026-10-28: PHP-13 public sponsor application schema/workflow mismatch confirmed from source and the uploaded schema. Logged without changing code because individual gender versus company/organization conversion behavior needs confirmation.
