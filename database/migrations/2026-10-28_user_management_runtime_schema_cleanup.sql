@@ -23,6 +23,23 @@ ALTER TABLE families
 ALTER TABLE supervisor_letters
     ADD COLUMN IF NOT EXISTS gender ENUM('male','female','both') DEFAULT 'both';
 
+-- The checked-in schema includes this uniqueness rule; restore it on older schemas too.
+SET @ahl_has_supervisor_letter_gender_index := (
+    SELECT COUNT(*)
+    FROM information_schema.statistics
+    WHERE table_schema = DATABASE()
+      AND table_name = 'supervisor_letters'
+      AND index_name = 'uq_supervisor_letter_gender'
+);
+SET @ahl_supervisor_letter_gender_index_sql := IF(
+    @ahl_has_supervisor_letter_gender_index = 0,
+    'ALTER TABLE supervisor_letters ADD UNIQUE KEY uq_supervisor_letter_gender (letter_id, gender)',
+    'SELECT 1'
+);
+PREPARE ahl_supervisor_letter_gender_index_stmt FROM @ahl_supervisor_letter_gender_index_sql;
+EXECUTE ahl_supervisor_letter_gender_index_stmt;
+DEALLOCATE PREPARE ahl_supervisor_letter_gender_index_stmt;
+
 CREATE TABLE IF NOT EXISTS family_documents (
     id INT UNSIGNED NOT NULL AUTO_INCREMENT,
     family_id INT UNSIGNED NOT NULL,
