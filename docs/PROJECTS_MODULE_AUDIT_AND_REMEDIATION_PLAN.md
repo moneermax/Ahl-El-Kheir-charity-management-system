@@ -1027,3 +1027,8 @@ Source audit of mobile project APIs found that project detail defaulted absent a
 ## 2026-10-28 — Project-team mutation route alignment
 
 Source inspection confirmed `modules/projects/form.php` owns team assignment/unassignment on the edit page, and the project profile had no rendered forms for its legacy `assign_team_member` / `unassign_team_member` POST branches. Those duplicate handlers were removed from `modules/projects/view.php` in commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`, leaving the edit page as the supported mutation route. This is a source-level consistency correction, not browser acceptance. The sequential PHP workflow is pending; local PHP/browser acceptance remains required. Do not mutate live project membership just to test UI.
+
+
+## 2026-10-28 — Project-team route cleanup verification
+
+Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs after commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`. The stale project-profile team mutation handlers are removed; `modules/projects/form.php` remains the supported route. Local PHP/browser acceptance for initial team selection, add/duplicate rejection, unassignment/history retention, edit-page display, and success feedback remains pending. Do not mutate live project membership solely to test UI.
