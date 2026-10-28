@@ -97,6 +97,21 @@ Next:
 - Inspect the current workflow YAML and harness guard.
 - If current configuration is correct, mark this item resolved with evidence; do not change production code or rerun unrelated suites.
 
+### PHP-07 — HR job-description migration CI fixture starts from the post-migration schema
+**Status:** FIX COMMITTED — awaiting the current sequential CI run.
+**Priority:** Medium; CI verification blocker, not evidence of a live-data defect.
+
+Workflow run [#40632821897](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40632821897) failed in job `hr-job-description-migrations` with:
+
+`ERROR 1091 (42000) at line 4: Can't DROP INDEX `uq_hr_job_description_position`; check that it exists`
+
+Root cause from the checked-in schema and migration source:
+- `database/ahl_el_kheir.sql` already contains `system_role_code` and the post-migration unique key `uq_hr_job_description_position_role`.
+- The CI job imported that post-migration schema, then `CREATE TABLE IF NOT EXISTS` in `2026-10-20_hr_job_description_catalogue.sql` left the existing table unchanged.
+- The subsequent `2026-10-20_hr_job_description_system_roles.sql` expects the legacy title-only index and fails when it tries to drop it.
+
+Fix committed in `daa821f1d607aa74d5efd90227e47567043c5ec1`: the workflow now drops and recreates only `hr_job_description_templates` in its disposable CI database using the catalogue migration before applying the historical migration sequence. Schema inspection found no foreign-key references to this table in the checked-in dump. This is CI fixture setup only; it does not modify production schema or application data. Await run [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) before closing the item.
+
 ## Explicitly paused or excluded
 
 - **Flutter/native feature parity is paused.** Remaining mobile-only work (such as native opening-balance management, contract builder, payroll reversal, project create/edit, and other not-ready role tools) is not a PHP defect merely because a native screen is missing. Preserve the mobile continuation document for when app work resumes.
@@ -117,3 +132,4 @@ Next:
 
 - 2026-10-28: Created at the user's request to pause Flutter work and log PHP/backend findings for future remediation. Tracking issue: #96.
 - 2026-10-28: PHP-04 navigation mismatch corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`; real-browser acceptance remains pending. PHP-06 re-triaged and closed after confirming the current auth integration workflow sets the required test flag and database.
+- 2026-10-28: PHP-07 added after workflow #40632821897 exposed a stale migration fixture; CI-only fixture correction committed as `daa821f1d607aa74d5efd90227e47567043c5ec1`, awaiting workflow #40633086558.
