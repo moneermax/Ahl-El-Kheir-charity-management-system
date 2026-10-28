@@ -3188,3 +3188,8 @@ The API lint coverage expansion is verified. Commit `c4c212980d1a1677729db94d2b6
 
 
 While returning to the original PHP system (not Flutter UI files), source inspection found that `modules/users/index.php` runs `CREATE TABLE IF NOT EXISTS` / `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` during page requests and also performs data-seeding updates. Logged as PHP-08 in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. No code was changed yet: inspect `database/ahl_el_kheir.sql` object definitions and dependent behavior before creating migration(s) and removing runtime DDL. Do not delete statements blindly.
+
+
+## PHP system remediation checkpoint — 2026-10-28
+
+Flutter/native development remains paused. The original PHP website is active scope. PHP-08 source remediation is committed on `main`: `modules/users/index.php` no longer creates/alters schema or seeds/updates role and department reference data during page requests. Those operations are in `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql`. The uploaded checked-in schema was inspected before editing and confirmed the existing objects/columns, including the extra `family_documents` fields. CI verification is pending; do not treat the item as closed until the migration test passes.
