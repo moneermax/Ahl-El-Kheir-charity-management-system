@@ -3128,3 +3128,7 @@ Removed stale, unrendered project-team mutation handlers from `modules/projects/
 ## 2026-10-28 — Current PHP CI state
 
 Latest workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633600907) passed all five jobs. The PHP lint job explicitly checked the changed salary portal and project team route files with no syntax errors; HR migration and full-schema jobs also passed. Continue from `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. PHP-04 browser acceptance and PHP-05 project/incentive browser acceptance are not closed by CI alone.
+
+## 2026-10-28 — PHP API lint coverage checkpoint
+
+PHP remediation backlog: `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`, tracked by issue #96. Inventory found 111 API PHP files, with only 74 explicitly listed in `.github/workflows/php-syntax-check.yml`. Commit `c4c212980d1a1677729db94d2b6815a07aba0289` adds all 37 omitted files. Workflow [#40634508587](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40634508587) was queued at last check; confirm the actual result before claiming success. PHP-01 remains a local runtime verification gap. Do not run mutating integration tests against `ahl_el_kheir`; Flutter/native development remains paused.
