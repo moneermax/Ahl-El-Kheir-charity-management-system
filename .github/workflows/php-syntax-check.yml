@@ -381,6 +381,28 @@ jobs:
           php tools/test_mobile_sponsor_assignment_service.php
           php tools/test_mobile_supervisor_status_service.php
 
+      - name: Verify user-management migration restores legacy schema shape
+        env:
+          MYSQL_PWD: root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test)
+          # Simulate the pre-cleanup shape only after the full-schema regression harnesses have finished.
+          "${mysql[@]}" -e "ALTER TABLE supervisor_letters DROP INDEX uq_supervisor_letter_gender, DROP COLUMN gender"
+          "${mysql[@]}" -e "ALTER TABLE users DROP COLUMN department_id, DROP COLUMN manager_id"
+          "${mysql[@]}" -e "ALTER TABLE sponsors DROP COLUMN gender"
+          "${mysql[@]}" -e "ALTER TABLE families DROP COLUMN nanny_id"
+          "${mysql[@]}" -e "DROP TABLE family_documents, accountant_nanny_assignments"
+          "${mysql[@]}" < database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql
+          "${mysql[@]}" < database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql
+          legacy_columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'users' AND column_name IN ('department_id','manager_id')) OR (table_name = 'sponsors' AND column_name = 'gender') OR (table_name = 'families' AND column_name = 'nanny_id') OR (table_name = 'supervisor_letters' AND column_name = 'gender') OR (table_name = 'family_documents' AND column_name IN ('file_name','file_size','notes','doc_type')))")
+          restored_tables=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('departments','family_documents','accountant_nanny_assignments')")
+          restored_index=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'supervisor_letters' AND index_name = 'uq_supervisor_letter_gender'")
+          test "$legacy_columns" = "9"
+          test "$restored_tables" = "3"
+          test "$restored_index" = "1"
+
   hr-job-description-migrations:
     runs-on: ubuntu-latest
     services:
