@@ -3118,3 +3118,8 @@ A PHP workflow failed in `hr-job-description-migrations` because the test import
 ## 2026-10-28 — PHP-07 CI fixture verified
 
 Workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) passed all five jobs, including the HR job-description migration sequence and PHP lint. Mark PHP-07 closed as a CI fixture issue in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`. Local HR catalogue/contract browser and PDF behavior remain separate acceptance gaps; do not run local DDL merely because the CI fixture was corrected.
+
+
+## 2026-10-28 — PHP-05 source cleanup verified
+
+Removed stale, unrendered project-team mutation handlers from `modules/projects/view.php` in commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`; the edit page remains the supported team-management route. Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs. Keep PHP-05 open for real-browser team assignment and incentive-notification acceptance. Do not use live `ahl_el_kheir` for mutating tests.
