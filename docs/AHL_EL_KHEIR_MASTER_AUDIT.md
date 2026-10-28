@@ -5675,3 +5675,8 @@ Run [#40632821897](https://github.com/moneermax/Ahl-El-Kheir-charity-management-
 ## 2026-10-28 — HR migration CI fixture closure
 
 Follow-up workflow [#40633086558](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633086558) passed all five jobs: `php-lint`, `hr-job-description-migrations`, `migration-mariadb-10-4`, `rescheduling-service-tests`, and `migration-full-schema`. The disposable-database fixture now starts from the legacy catalogue schema and successfully applies the historical migration sequence. PHP-07 is closed as a CI setup defect. This does not establish local browser/PDF acceptance or authorize live database DDL.
+
+
+## 2026-10-28 — Project-team mutation route consistency
+
+A source audit found the project profile retained legacy `assign_team_member`/`unassign_team_member` POST handlers without any corresponding forms. These duplicate routes were removed in commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`, leaving `modules/projects/form.php` as the supported team mutation path. Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs, including PHP lint. This is CI-verified source cleanup only; project-team browser acceptance and incentive notification browser acceptance remain pending.
