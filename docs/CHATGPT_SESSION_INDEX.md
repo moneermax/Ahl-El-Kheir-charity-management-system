@@ -3203,3 +3203,8 @@ PHP-08 user-management runtime DDL cleanup is source- and CI-verified on `main`.
 ## 2026-10-28 — Follow-up PHP runtime-DDL audit
 
 PHP-08 user-management remediation is verified by GitHub Actions run [#40641855323](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40641855323): all five jobs passed, including the legacy-shape migration test. A read-only scan of all 206 PHP files under `modules/` found further confirmed runtime DDL in the family workflows (PHP-09), accounting libraries (PHP-10), and profile/import/sync/receipt/payroll-reversal pages (PHP-11). These are logged in `docs/PHP_SYSTEM_REMEDIATION_BACKLOG.md`; they are separate open items and must be reconciled against the checked-in schema before changes. Continue on the original PHP website; Flutter/native work remains paused.
+
+
+## 2026-10-28 — Family schema cleanup in progress
+
+PHP-09 remediation is committed on `main` as `599ad25302df14af3e7d0fb034fa3ddc35214c41`: schema additions used by family creation/editing, orphan forms and document uploads now live in `database/migrations/2026-10-28_family_runtime_schema_cleanup.sql`, and the four pages no longer perform request-time DDL. CI now lints the pages and tests migration repeatability from a disposable legacy-shaped schema. CI is pending; do not claim runtime acceptance until verified. PHP-10 and PHP-11 remain open findings.
