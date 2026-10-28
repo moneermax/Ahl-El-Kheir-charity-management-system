@@ -5450,3 +5450,8 @@ PHP-11 source cleanup is CI-verified by GitHub Actions run [#40643694231](https:
 ## 2026-10-28 — Accounting outflow schema cleanup in progress
 
 PHP-12 is committed on `main`: `modules/accounting/lib_outflows.php` no longer creates/changes schema during requests. Migration `database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql` restores the canonical tables, missing group/return columns, group foreign key/index, and status ENUMs. The legacy `pending` batch status is normalized to `pending_approval` because the source explicitly treats those states as equivalent for approval, and the web/API transitions use `pending_approval`; CI tests this with a disposable legacy fixture. CI verification is pending. PHP-08 through PHP-11 have passed their source/migration CI checks; local browser acceptance remains outstanding.
+
+
+## 2026-10-28 — PHP-12 outflow migration CI verified
+
+PHP-12 is source- and CI-verified by GitHub Actions run [#40644551812](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40644551812): all five jobs passed. The full-schema job applied the migration twice; a separate disposable legacy fixture confirmed restoration of missing group/return columns, group FK/index, and `pending` → `pending_approval` status normalization before restoring the canonical ENUM. PHP-08 through PHP-12 now have source/migration CI evidence. Local browser acceptance for these original PHP workflows remains outstanding, and the next audit step is a focused scan of any remaining request-time DDL outside these tracked files.
