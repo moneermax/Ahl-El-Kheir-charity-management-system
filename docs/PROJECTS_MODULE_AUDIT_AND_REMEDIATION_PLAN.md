@@ -1032,3 +1032,8 @@ Source inspection confirmed `modules/projects/form.php` owns team assignment/una
 ## 2026-10-28 — Project-team route cleanup verification
 
 Workflow [#40633372107](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633372107) passed all five jobs after commit `0e67f8f63682d8370453f1dc35f135b6784ea3a9`. The stale project-profile team mutation handlers are removed; `modules/projects/form.php` remains the supported route. Local PHP/browser acceptance for initial team selection, add/duplicate rejection, unassignment/history retention, edit-page display, and success feedback remains pending. Do not mutate live project membership solely to test UI.
+
+
+## 2026-10-28 — Follow-up PHP lint result
+
+Workflow [#40633600907](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40633600907) passed all five jobs. PHP lint explicitly checked `modules/projects/form.php` and `modules/projects/view.php` after the team-route cleanup; both reported no syntax errors. This remains source/CI verification only; real-browser team UI acceptance is still pending.
