@@ -3146,3 +3146,8 @@ Flutter/native feature work remains paused. Source inspection of the original PH
 ## Latest PHP website checkpoint — 2026-10-28
 
 Flutter/native work is paused. The current PHP website task PHP-08 is in remediation/CI verification: `modules/users/index.php` no longer performs request-time schema DDL or role/department data seeding. The new migration is `database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql`. The uploaded checked-in schema was inspected before editing. CI applies the migration twice on a disposable full-schema database and asserts the expected columns/reference data. Do not mark complete until CI passes; continue only from current `main` and the PHP remediation backlog.
+
+
+## PHP website checkpoint — 2026-10-28
+
+PHP-08 user-management runtime DDL cleanup is source- and CI-verified on `main`. The new migration was applied twice against the checked-in full schema in GitHub Actions run [#40640508040](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40640508040); all five jobs passed, including PHP lint and the full-schema migration/regression job. This does not replace browser acceptance on the user's actual local XAMPP instance. Next step is a targeted User Management browser smoke test after pulling the commits, then continue the original PHP backlog without resuming Flutter work.
