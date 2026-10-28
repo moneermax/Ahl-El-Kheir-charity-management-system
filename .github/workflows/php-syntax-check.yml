@@ -223,6 +223,10 @@ jobs:
           for file in "${files[@]}"; do
             php -l "$file"
           done
+          if grep -nE 'CREATE[[:space:]]+TABLE|ALTER[[:space:]]+TABLE' modules/accounting/lib.php modules/accounting/lib_admin_fee_policy.php; then
+            echo "Runtime schema DDL found in accounting core libraries" >&2
+            exit 1
+          fi
           php tools/test_mobile_api_role_normalization.php
 
   migration-mariadb-10-4:
@@ -339,12 +343,18 @@ jobs:
           # Move User Management schema/reference-data setup out of page requests; verify repeatability on the full checked-in schema.
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql
           user_management_columns=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'users' AND column_name IN ('department_id','manager_id')) OR (table_name = 'sponsors' AND column_name = 'gender') OR (table_name = 'families' AND column_name = 'nanny_id') OR (table_name = 'supervisor_letters' AND column_name = 'gender') OR (table_name = 'family_documents' AND column_name IN ('file_name','file_size','notes','doc_type')))")
           user_management_departments=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM departments WHERE name_en IN ('General Management','Mothers Affairs','Lost & Found','Social Media','Sponsor Affairs','Accounting & Finance')")
           user_management_roles=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM roles WHERE code IN ('financial_manager','accountant_staff','nanny','administration','social_media')")
           test "$user_management_columns" = "9"
           test "$user_management_departments" = "6"
           test "$user_management_roles" = "5"
+          accounting_core_tables=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('accounts','journal_entries','journal_lines','vouchers','project_beneficiaries','accounting_admin_fee_policies')")
+          accounting_core_columns=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'other_projects' AND column_name IN ('revenue_account_id','expense_account_id')) OR (table_name = 'transactions' AND column_name IN ('admin_fee_method','admin_fee_value','admin_fee_policy_id')) OR (table_name = 'sponsor_payments' AND column_name = 'payment_method'))")
+          test "$accounting_core_tables" = "6"
+          test "$accounting_core_columns" = "6"
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-20_hr_fm_payroll_transfer_workflow.sql
           # Exercise the mobile bearer-session migration on the disposable full schema.
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-24_mobile_api_sessions.sql
@@ -424,6 +434,22 @@ jobs:
           test "$family_columns" = "16"
           test "$family_tables" = "2"
           test "$family_index" = "1"
+
+      - name: Verify accounting core migration creates missing schema
+        env:
+          MYSQL_PWD: root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root)
+          "${mysql[@]}" -e "CREATE DATABASE accounting_core_migration_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+          "${mysql[@]}" --database=accounting_core_migration_test -e "CREATE TABLE other_projects (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB; CREATE TABLE transactions (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB; CREATE TABLE sponsor_payments (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY) ENGINE=InnoDB"
+          "${mysql[@]}" --database=accounting_core_migration_test < database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql
+          "${mysql[@]}" --database=accounting_core_migration_test < database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql
+          accounting_tables=$("${mysql[@]}" --database=accounting_core_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('accounts','journal_entries','journal_lines','vouchers','project_beneficiaries','accounting_admin_fee_policies')")
+          accounting_columns=$("${mysql[@]}" --database=accounting_core_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND ((table_name = 'other_projects' AND column_name IN ('revenue_account_id','expense_account_id')) OR (table_name = 'transactions' AND column_name IN ('admin_fee_method','admin_fee_value','admin_fee_policy_id')) OR (table_name = 'sponsor_payments' AND column_name = 'payment_method'))")
+          test "$accounting_tables" = "6"
+          test "$accounting_columns" = "6"
 
   hr-job-description-migrations:
     runs-on: ubuntu-latest

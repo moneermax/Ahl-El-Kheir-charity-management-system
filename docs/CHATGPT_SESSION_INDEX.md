@@ -3213,3 +3213,8 @@ PHP-09 remediation is committed on `main` as `599ad25302df14af3e7d0fb034fa3ddc35
 ## 2026-10-28 — Family schema migration CI verified
 
 PHP-09 source cleanup is CI-verified by GitHub Actions run [#40642297829](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40642297829): all five jobs passed. The full-schema job applied the family migration twice and then simulated missing family/child columns and the two family tables in the disposable database; migration restoration and the unique form-serial index passed. This is not local browser acceptance. PHP-10 (accounting libraries) and PHP-11 (other pages) remain open.
+
+
+## 2026-10-28 — Accounting core schema cleanup in progress
+
+PHP-10 is committed on `main`: `modules/accounting/lib.php` and `modules/accounting/lib_admin_fee_policy.php` no longer perform request-time DDL; `database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql` owns the schema. CI applies it twice against the checked-in schema and tests table creation in a separate disposable database with only prerequisite base tables. The existing `ak_seed_accounts()` accounting data initialization was deliberately left unchanged. PHP-12 tracks the more complex outflow schema sync separately; its ENUM/data semantics must be reconciled before editing. CI for PHP-10 is pending.

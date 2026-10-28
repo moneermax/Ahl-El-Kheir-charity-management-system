@@ -8,32 +8,8 @@
 if (!function_exists('ak_ensure_admin_fee_policy_table')) {
     function ak_ensure_admin_fee_policy_table(): void
     {
-        static $done = false;
-        if ($done) return;
-        $done = true;
-
-        dbExecute("CREATE TABLE IF NOT EXISTS accounting_admin_fee_policies (
-            id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-            policy_name VARCHAR(150) NOT NULL DEFAULT 'سياسة الرسوم الإدارية',
-            method ENUM('none','fixed','percentage') NOT NULL DEFAULT 'none',
-            value DECIMAL(14,2) NOT NULL DEFAULT 0.00,
-            currency_code CHAR(3) NOT NULL DEFAULT 'SDG',
-            effective_from DATE NOT NULL,
-            status ENUM('draft','active','superseded') NOT NULL DEFAULT 'draft',
-            opening_balance_entry_id INT UNSIGNED NULL,
-            published_at DATETIME NULL,
-            created_by INT UNSIGNED NULL,
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            KEY idx_afp_status_effective (status, effective_from),
-            KEY idx_afp_opening_balance (opening_balance_entry_id)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-
-        // Keep the existing schema compatible while adding immutable policy snapshots.
-        dbExecute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS admin_fee_method VARCHAR(20) NOT NULL DEFAULT 'none'");
-        dbExecute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS admin_fee_value DECIMAL(14,2) NOT NULL DEFAULT 0.00");
-        dbExecute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS admin_fee_policy_id INT UNSIGNED NULL");
-        dbExecute("ALTER TABLE sponsor_payments ADD COLUMN IF NOT EXISTS payment_method VARCHAR(30) NOT NULL DEFAULT 'cash'");
+        // Schema is maintained by database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql.
+        // Keep this wrapper for existing callers; do not perform DDL during requests.
     }
 }
 

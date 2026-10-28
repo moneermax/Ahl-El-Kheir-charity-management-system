@@ -4,21 +4,14 @@ require_once __DIR__ . '/lib_admin_fee_policy.php';
 
 if (!function_exists('ak_ensure_tables')) {
 function ak_ensure_tables(): void {
-    static $done = false; if ($done) return; $done = true;
-    dbExecute("CREATE TABLE IF NOT EXISTS accounts (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, code VARCHAR(20) NOT NULL, name_ar VARCHAR(150) NOT NULL, name_en VARCHAR(150) DEFAULT NULL, account_type ENUM('asset','liability','equity','revenue','expense') NOT NULL, parent_id INT UNSIGNED NULL, is_active TINYINT(1) NOT NULL DEFAULT 1, description VARCHAR(255) DEFAULT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, UNIQUE KEY uq_accounts_code (code), KEY idx_accounts_type (account_type)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    dbExecute("CREATE TABLE IF NOT EXISTS journal_entries (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, entry_code VARCHAR(50) NOT NULL, entry_date DATE NOT NULL, description VARCHAR(255) DEFAULT NULL, reference_type VARCHAR(50) DEFAULT NULL, reference_id INT UNSIGNED NULL, status ENUM('posted','voided') NOT NULL DEFAULT 'posted', voided_at DATETIME NULL, voided_by INT UNSIGNED NULL, void_reason VARCHAR(255) NULL, created_by INT UNSIGNED NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE KEY uq_je_code (entry_code), KEY idx_je_date (entry_date), KEY idx_je_status (status)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    dbExecute("CREATE TABLE IF NOT EXISTS journal_lines (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, entry_id INT UNSIGNED NOT NULL, account_id INT UNSIGNED NOT NULL, debit DECIMAL(14,2) NOT NULL DEFAULT 0.00, credit DECIMAL(14,2) NOT NULL DEFAULT 0.00, description VARCHAR(255) DEFAULT NULL, KEY idx_jl_entry (entry_id), KEY idx_jl_account (account_id), CONSTRAINT fk_jl_entry FOREIGN KEY (entry_id) REFERENCES journal_entries(id) ON DELETE CASCADE, CONSTRAINT fk_jl_account FOREIGN KEY (account_id) REFERENCES accounts(id) ON UPDATE CASCADE) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    dbExecute("CREATE TABLE IF NOT EXISTS vouchers (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, voucher_type ENUM('receipt','payment') NOT NULL, voucher_no VARCHAR(50) NOT NULL, voucher_date DATE NOT NULL, party_name VARCHAR(150) DEFAULT NULL, amount DECIMAL(14,2) NOT NULL, cash_account_id INT UNSIGNED NOT NULL, other_account_id INT UNSIGNED NOT NULL, description VARCHAR(255) DEFAULT NULL, reference_number VARCHAR(100) DEFAULT NULL, entry_id INT UNSIGNED NULL, status ENUM('posted','voided') NOT NULL DEFAULT 'posted', created_by INT UNSIGNED NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, UNIQUE KEY uq_vouchers_no (voucher_no), KEY idx_vouchers_type (voucher_type), KEY idx_vouchers_date (voucher_date)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-    ak_ensure_admin_fee_policy_table();
+    // Schema is maintained by database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql.
+    // Keep this wrapper for existing callers; do not perform DDL during requests.
 }
 }
 
 if (!function_exists('ak_ensure_project_tables')) {
 function ak_ensure_project_tables(): void {
-    static $done = false; if ($done) return; $done = true;
-    dbExecute("ALTER TABLE other_projects ADD COLUMN IF NOT EXISTS revenue_account_id INT UNSIGNED NULL");
-    dbExecute("ALTER TABLE other_projects ADD COLUMN IF NOT EXISTS expense_account_id INT UNSIGNED NULL");
-    dbExecute("CREATE TABLE IF NOT EXISTS project_beneficiaries (id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY, project_id INT UNSIGNED NOT NULL, beneficiary_name VARCHAR(150) NOT NULL, details VARCHAR(255) DEFAULT NULL, amount DECIMAL(12,2) DEFAULT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, KEY idx_pb_project (project_id)) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    // Project account columns and beneficiary table are maintained by the accounting schema migration.
 }
 }
 
