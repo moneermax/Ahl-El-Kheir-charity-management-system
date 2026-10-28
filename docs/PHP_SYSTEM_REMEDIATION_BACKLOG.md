@@ -123,7 +123,7 @@ Source hits found in:
 - `modules/transactions/receipt_file.php` — adds receipt-path columns to `transactions`.
 - `modules/hr/payroll_reversal.php` — creates `hr_payroll_reversals`.
 
-The checked-in schema contains all referenced columns/tables. Migration `database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql` now owns them. The five listed pages no longer run schema DDL during requests. The migration is applied twice against the full checked-in schema in CI and a disposable legacy-shape test removes/restores the seven columns and two tables after existing regression harnesses finish. Commit is pending CI verification; local profile/import/sponsor-sync/receipt/payroll-reversal acceptance remains separate.
+The checked-in schema contains all referenced columns/tables. Migration `database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql` now owns them. The five listed pages no longer run schema DDL during requests. GitHub Actions run [#40643694231](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40643694231) passed all five jobs. The full-schema job applied the migration twice and simulated the missing columns/tables in the disposable database before confirming restoration. Local profile/import/sponsor-sync/receipt/payroll-reversal acceptance remains separate.
 
 ### PHP-12 — Accounting outflow library performs runtime schema synchronization
 **Status:** CONFIRMED SOURCE-LEVEL ARCHITECTURE VIOLATION — migration/data reconciliation required; not yet remediated.
@@ -230,3 +230,5 @@ This is a test-discovery result, **not** proof that these routes are untested by
 - 2026-10-28: PHP-10 accounting core runtime DDL cleanup committed with migration and CI coverage; source no longer performs DDL. CI pending. PHP-12 split outflow schema synchronization into a separate open item due to enum/data semantics.
 
 - 2026-10-28: PHP-10 accounting core migration CI passed in workflow #40643161875: all five jobs passed, including the blank-database creation test. PHP-11 source cleanup and migration committed with legacy-shape CI coverage; awaiting the triggered workflow result.
+
+- 2026-10-28: PHP-11 migration CI passed in workflow #40643694231: all five jobs succeeded, including the legacy-shape migration test. Local workflow acceptance remains pending.
