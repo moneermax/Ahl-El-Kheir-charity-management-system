@@ -107,13 +107,13 @@ Source inspection found request-time schema setup in:
 The uploaded checked-in schema confirms `family_bank_accounts`, `orphan_documents`, `family_documents`, and the referenced family/child columns already exist. The checked-in `family_children.form_serial` is `VARCHAR(20)` with a unique index; source has historically attempted `VARCHAR(30)` in one path and `VARCHAR(20)` in others. Migration `database/migrations/2026-10-28_family_runtime_schema_cleanup.sql` now owns these schema additions, including the family-bank-account/orphan-document tables and the family/child columns. The four family pages no longer run schema DDL on requests. Commit `599ad25302df14af3e7d0fb034fa3ddc35214c41` also adds those pages to PHP lint and adds a disposable legacy-shape migration test. The migration adds `form_serial` as `VARCHAR(20)` when absent and restores its unique index; it does not shrink an already-existing wider column, avoiding potential data truncation. GitHub Actions run [#40642297829](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40642297829) passed all five jobs. The full-schema job applied this migration twice, simulated the missing family/child columns and family tables in the disposable database, restored them, and verified the unique form-serial index. Local browser acceptance of family creation/editing/orphan form/document upload remains pending.
 
 ### PHP-10 — Accounting core helpers perform runtime schema DDL
-**Status:** SOURCE FIX COMMITTED — disposable MariaDB verification pending.
+**Status:** SOURCE FIX + CI VERIFIED — local accounting workflow acceptance pending.
 **Priority:** High because these helpers are shared by accounting operations.
 
-Source review confirmed request-time DDL in `modules/accounting/lib.php` and `modules/accounting/lib_admin_fee_policy.php`: creation of `accounts`, `journal_entries`, `journal_lines`, `vouchers`, `project_beneficiaries`, and `accounting_admin_fee_policies`, plus additions to `other_projects`, `transactions`, and `sponsor_payments`. The uploaded schema dump contains all referenced objects and columns. Migration `database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql` now owns these definitions; compatibility wrapper functions remain but perform no DDL. The existing runtime chart-of-accounts seed behavior in `ak_seed_accounts()` is intentionally unchanged in this item because it is accounting data initialization, not schema DDL.
+Source review confirmed request-time DDL in `modules/accounting/lib.php` and `modules/accounting/lib_admin_fee_policy.php`: creation of `accounts`, `journal_entries`, `journal_lines`, `vouchers`, `project_beneficiaries`, and `accounting_admin_fee_policies`, plus additions to `other_projects`, `transactions`, and `sponsor_payments`. The uploaded schema dump contains all referenced objects and columns. Migration `database/migrations/2026-10-28_accounting_core_runtime_schema_cleanup.sql` now owns these definitions; compatibility wrapper functions remain but perform no DDL. The existing runtime chart-of-accounts seed behavior in `ak_seed_accounts()` is intentionally unchanged in this item because it is accounting data initialization, not schema DDL. GitHub Actions run [#40643161875](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40643161875) passed all five jobs. The full-schema job applied the migration twice, and a separate disposable database verified that all six accounting core tables can be created from missing schema. Local accounting workflow acceptance remains pending.
 
 ### PHP-11 — Additional original PHP pages perform runtime schema changes
-**Status:** CONFIRMED SOURCE-LEVEL ARCHITECTURE VIOLATION — grouped source audit finding; remediation pending.
+**Status:** SOURCE CLEANUP COMMITTED — disposable legacy-schema CI verification pending.
 **Priority:** Medium to high depending on the endpoint's call frequency.
 
 Source hits found in:
@@ -123,7 +123,7 @@ Source hits found in:
 - `modules/transactions/receipt_file.php` — adds receipt-path columns to `transactions`.
 - `modules/hr/payroll_reversal.php` — creates `hr_payroll_reversals`.
 
-The checked-in schema contains the referenced columns/tables. Each location still needs its own migration-history check and narrow cleanup; these are source-level violations, not evidence that the underlying workflows currently fail. No PHP-11 source changes have been made yet.
+The checked-in schema contains all referenced columns/tables. Migration `database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql` now owns them. The five listed pages no longer run schema DDL during requests. The migration is applied twice against the full checked-in schema in CI and a disposable legacy-shape test removes/restores the seven columns and two tables after existing regression harnesses finish. Commit is pending CI verification; local profile/import/sponsor-sync/receipt/payroll-reversal acceptance remains separate.
 
 ### PHP-12 — Accounting outflow library performs runtime schema synchronization
 **Status:** CONFIRMED SOURCE-LEVEL ARCHITECTURE VIOLATION — migration/data reconciliation required; not yet remediated.
@@ -156,8 +156,8 @@ Fix committed in `daa821f1d607aa74d5efd90227e47567043c5ec1`: the workflow now dr
 
 ## Recommended order
 
-1. Continue confirmed original-PHP runtime-DDL cleanup: PHP-12 (outflow helper) and PHP-11 (profile/import/sync/receipt/payroll-reversal pages), with schema reconciliation before edits.
-2. Run local browser acceptance for PHP-08 User Management and PHP-09 family workflows after pulling the verified commits.
+1. Finish CI verification for PHP-11, then reconcile PHP-12 outflow table/ENUM semantics before any source changes.
+2. Run local browser acceptance for PHP-08 User Management, PHP-09 family workflows, and the accounting/profile/import/receipt pages after pulling verified commits.
 3. Re-triage PHP-04/PHP-06 and continue PHP-05 only from current source and module continuation docs.
 4. Define the minimal local API runtime acceptance matrix for PHP-01; review PHP-02/PHP-03 before public deployment.
 5. Preserve all previously closed modules unless concrete regression evidence appears.
@@ -228,3 +228,5 @@ This is a test-discovery result, **not** proof that these routes are untested by
 - 2026-10-28: PHP-09 migration CI passed in workflow #40642297829: all five jobs succeeded, including the legacy-shape migration test. Local family workflow acceptance remains pending.
 
 - 2026-10-28: PHP-10 accounting core runtime DDL cleanup committed with migration and CI coverage; source no longer performs DDL. CI pending. PHP-12 split outflow schema synchronization into a separate open item due to enum/data semantics.
+
+- 2026-10-28: PHP-10 accounting core migration CI passed in workflow #40643161875: all five jobs passed, including the blank-database creation test. PHP-11 source cleanup and migration committed with legacy-shape CI coverage; awaiting the triggered workflow result.

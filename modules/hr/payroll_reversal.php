@@ -11,17 +11,8 @@ $userRole = Session::getUserRole();
 if (!Session::isLoggedIn() || !in_array($userRole, ['hr_manager', 'admin'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pdo = db(); $message = ''; $msgType = 'success';
 
-dbExecute("CREATE TABLE IF NOT EXISTS hr_payroll_reversals (
- id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
- payroll_id INT UNSIGNED NOT NULL,
- original_entry_id INT UNSIGNED NOT NULL,
- reversal_entry_id INT UNSIGNED NOT NULL,
- reason VARCHAR(255) NOT NULL,
- reversed_by INT UNSIGNED NULL,
- reversed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
- UNIQUE KEY uq_hr_payroll_reversal_payroll (payroll_id),
- KEY idx_hr_payroll_reversal_entry (reversal_entry_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+// Reversal audit storage is maintained by database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql.
+
 
 function hrReversePaidPayroll(int $payrollId, int $userId, string $reason): int
 {

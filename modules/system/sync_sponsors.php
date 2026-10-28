@@ -9,7 +9,7 @@ if (!Session::isLoggedIn() || Session::getUserRole() !== 'admin') { http_respons
 $pageTitle = 'مزامنة الكفلاء';
 $active = 'sponsors';
 
-dbExecute("ALTER TABLE sponsors ADD COLUMN IF NOT EXISTS is_manual_override TINYINT(1) NOT NULL DEFAULT 0");
+// Sponsor schema is maintained by database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql.
 
 /* ---------- Arabic name canonicalizer + gender heuristic ---------- */
 if (!function_exists('ak_canon_name')) {

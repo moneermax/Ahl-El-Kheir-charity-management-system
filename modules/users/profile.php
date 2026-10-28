@@ -43,40 +43,7 @@ $pageTitle = 'ملفي الشخصي';
 $active = 'profile';
 
 
-/*
-|--------------------------------------------------------------------------
-| Ensure profile columns exist
-|--------------------------------------------------------------------------
-*/
-
-try {
-
-    dbExecute(
-        "ALTER TABLE users
-         ADD COLUMN IF NOT EXISTS avatar_path VARCHAR(255) NULL"
-    );
-
-    dbExecute(
-        "ALTER TABLE users
-         ADD COLUMN IF NOT EXISTS address VARCHAR(255) NULL"
-    );
-
-    dbExecute(
-        "ALTER TABLE users
-         ADD COLUMN IF NOT EXISTS birth_date DATE NULL"
-    );
-
-    dbExecute(
-        "ALTER TABLE users
-         ADD COLUMN IF NOT EXISTS gender VARCHAR(20) NULL"
-    );
-
-} catch (Throwable $e) {
-
-    /*
-     * Ignore errors on older database engines.
-     */
-}
+// Profile schema is maintained by database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql.
 
 
 /*

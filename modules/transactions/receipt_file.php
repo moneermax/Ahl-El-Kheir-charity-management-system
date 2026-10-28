@@ -12,8 +12,7 @@ $role = Session::getUserRole();
 $allowed = ['admin', 'vice_general_manager', 'general_manager', 'supervisor', 'accountant', 'accountant_staff', 'financial_manager'];
 if (!in_array($role, $allowed, true)) { http_response_code(403); exit('Forbidden'); }
 
-dbExecute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS receipt_path VARCHAR(255) NULL");
-dbExecute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS unified_receipt_path VARCHAR(255) NULL");
+// Receipt-path columns are maintained by database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql.
 
 $kind = (($_GET['kind'] ?? 'own') === 'unified') ? 'unified' : 'own';
 $id = (int)($_GET['id'] ?? 0);

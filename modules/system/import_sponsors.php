@@ -195,15 +195,8 @@ $commit         = ($_SERVER['REQUEST_METHOD'] === 'POST') && isset($_POST['confi
 $dryRun         = ($_SERVER['REQUEST_METHOD'] === 'POST') && isset($_POST['dry_run']);
 $planFamilies   = isset($_POST['create_families']);
 
-dbExecute("CREATE TABLE IF NOT EXISTS sponsor_import_exceptions (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    batch_id VARCHAR(50) DEFAULT NULL,
-    sheet_row INT DEFAULT NULL,
-    mother_name VARCHAR(255) DEFAULT NULL,
-    sponsor_entry VARCHAR(500) DEFAULT NULL,
-    reason VARCHAR(255) DEFAULT NULL,
-    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+// Import exception storage is maintained by database/migrations/2026-10-28_other_php_runtime_schema_cleanup.sql.
+
 
 /* ================= reference data ================= */
 
