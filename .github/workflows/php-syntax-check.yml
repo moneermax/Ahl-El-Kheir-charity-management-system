@@ -170,6 +170,10 @@ jobs:
             api/v1/search/documents.php
             api/v1/search/sponsors.php
             api/v1/transactions/query_service.php
+            apply.php
+            modules/notifications/mark_read.php
+            modules/sponsors/my_request.php
+            modules/sponsors/requests.php
             modules/users/index.php
             modules/users/profile.php
             modules/system/import_sponsors.php
