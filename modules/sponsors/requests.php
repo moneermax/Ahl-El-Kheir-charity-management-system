@@ -129,6 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             exit();
         }
     }
+}
 $statusFilter = $forcedStatusFilter !== '' ? $forcedStatusFilter : trim((string)($_GET['status'] ?? ''));
 if (!in_array($statusFilter, $allowedStatusFilters, true)) {
     $statusFilter = '';
