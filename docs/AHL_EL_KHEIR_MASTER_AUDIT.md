@@ -5780,3 +5780,8 @@ The `apply.php` organization contact row now uses a single non-wrapping horizont
 ### 2026-10-29 — Public application confirmation emphasis
 
 The assigned supervisor name in `apply.php`'s successful-submission dialog is visually emphasized with magenta text, a contrasting border and pale background. This is a presentation-only source change; local browser verification remains pending.
+
+
+### 2026-10-29 — Notification redirect safety follow-up
+
+Source review found the scoped supervisor notification path could incorrectly prefix an already-absolute same-app URL. `modules/notifications/mark_read.php` now preserves same-app absolute URLs, rejects external/protocol-relative URLs, and normalizes relative paths without double-prefixing. Commit `cefd47eea8504da35e541d75eb961af73795eed6`. No database/schema changes. PHP lint and browser acceptance remain pending.
