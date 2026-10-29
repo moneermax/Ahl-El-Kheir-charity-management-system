@@ -21,8 +21,10 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId): int
     $pdo->beginTransaction();
 
     try {
-        $stmt = $pdo->prepare('SELECT * FROM sponsor_requests WHERE id = ? FOR UPDATE');
-        $stmt->execute([$requestId]);
+        // Re-check ownership under the row lock; the page-level scope check alone
+        // is vulnerable to reassignment between the page read and this transaction.
+        $stmt = $pdo->prepare('SELECT * FROM sponsor_requests WHERE id = ? AND assigned_supervisor_id = ? FOR UPDATE');
+        $stmt->execute([$requestId, $actorId]);
         $req = $stmt->fetch();
 
         if (!$req) {
