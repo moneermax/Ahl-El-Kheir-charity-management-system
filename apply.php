@@ -1,12 +1,10 @@
 <?php
 // Root: apply.php - Public sponsor application form (no login required)
-ini_set('display_errors', '1');
-error_reporting(E_ALL);
-
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/database.php';
 require_once __DIR__ . '/config/functions.php';
 require_once __DIR__ . '/config/session.php';
+require_once __DIR__ . '/config/sponsor_assignments.php';
 if (is_file(__DIR__ . '/config/lang.php')) require_once __DIR__ . '/config/lang.php';
 Session::start();
 
@@ -14,69 +12,40 @@ if (!defined('AK_LANG')) define('AK_LANG', 'ar');
 if (!defined('AK_DIR'))  define('AK_DIR', 'rtl');
 if (!function_exists('t')) { function t(string $s): string { return function_exists('ak_t') ? ak_t($s) : $s; } }
 
-dbExecute("CREATE TABLE IF NOT EXISTS sponsor_requests (
-    id INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-    full_name VARCHAR(150) NOT NULL, phone VARCHAR(30) DEFAULT NULL, email VARCHAR(190) DEFAULT NULL,
-    address VARCHAR(255) DEFAULT NULL,
-    sponsor_type ENUM('individual','company','organization') NOT NULL DEFAULT 'individual',
-    preferred_payment_method ENUM('cash','bank_transfer','credit_card','mobile','other') NOT NULL DEFAULT 'cash',
-    proposed_amount DECIMAL(12,2) DEFAULT NULL, notes TEXT DEFAULT NULL,
-    first_letter_raw VARCHAR(10) DEFAULT NULL, first_letter_id TINYINT UNSIGNED DEFAULT NULL,
-    assigned_supervisor_id INT UNSIGNED DEFAULT NULL,
-    status ENUM('pending','contacted','confirmed','rejected') NOT NULL DEFAULT 'pending',
-    contact_notes TEXT DEFAULT NULL, created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    confirmed_at DATETIME NULL, confirmed_by INT UNSIGNED NULL, created_sponsor_id INT UNSIGNED NULL,
-    KEY idx_sr_status (status), KEY idx_sr_supervisor (assigned_supervisor_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
-foreach ([
-  "ALTER TABLE sponsor_requests ADD COLUMN IF NOT EXISTS phone_purpose VARCHAR(20) NOT NULL DEFAULT 'both'",
-  "ALTER TABLE sponsor_requests ADD COLUMN IF NOT EXISTS alt_phone VARCHAR(30) NULL",
-  "ALTER TABLE sponsor_requests ADD COLUMN IF NOT EXISTS alt_phone_purpose VARCHAR(20) NOT NULL DEFAULT 'both'",
-  "ALTER TABLE sponsor_requests ADD COLUMN IF NOT EXISTS desired_orphans SMALLINT UNSIGNED NULL",
-] as $ddl) dbExecute($ddl);
-
 $purposes = ['call' => 'للاتصال', 'whatsapp' => 'واتساب', 'both' => 'للاتصال وواتساب'];
 
 $done = false; $errors = [];
+$form = ['full_name'=>'','phone'=>'','phone_purpose'=>'both','alt_phone'=>'','alt_phone_purpose'=>'both','email'=>'','address'=>'','sponsor_type'=>'individual','gender'=>'','preferred_payment_method'=>'cash','desired_orphans'=>'','proposed_amount'=>'','notes'=>''];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $name  = trim($_POST['full_name'] ?? '');
-    $phone = trim($_POST['phone'] ?? '');
-    if ($name === '')  $errors[] = 'الاسم الكامل مطلوب.';
+    foreach ($form as $key => $default) if (isset($_POST[$key]) && is_scalar($_POST[$key])) $form[$key] = trim((string)$_POST[$key]);
+    if (!verify_csrf()) $errors[] = 'انتهت صلاحية النموذج أو أن الطلب غير صالح. حدّث الصفحة وحاول مرة أخرى.';
+    $name = $form['full_name']; $phone = $form['phone'];
+    $type = in_array($form['sponsor_type'], ['individual','company','organization'], true) ? $form['sponsor_type'] : 'individual';
+    $gender = $type === 'individual' ? strtolower($form['gender']) : 'organization';
+    $phonePurpose = in_array($form['phone_purpose'], ['call','whatsapp','both'], true) ? $form['phone_purpose'] : 'both';
+    $altPhonePurpose = in_array($form['alt_phone_purpose'], ['call','whatsapp','both'], true) ? $form['alt_phone_purpose'] : 'both';
+    $payment = in_array($form['preferred_payment_method'], ['cash','bank_transfer','credit_card','mobile','other'], true) ? $form['preferred_payment_method'] : 'cash';
+    $desiredOrphans = $form['desired_orphans'] !== '' && ctype_digit($form['desired_orphans']) ? (int)$form['desired_orphans'] : null;
+    $proposedAmount = $form['proposed_amount'] !== '' && is_numeric($form['proposed_amount']) && (float)$form['proposed_amount'] >= 0 ? (float)$form['proposed_amount'] : null;
+    if ($name === '') $errors[] = 'الاسم الكامل مطلوب.';
     if ($phone === '') $errors[] = 'الهاتف مطلوب.';
+    if ($type === 'individual' && !in_array($gender, ['male','female'], true)) $errors[] = 'يرجى تحديد الجنس للأفراد.';
+    if ($form['desired_orphans'] !== '' && ($desiredOrphans === null || $desiredOrphans < 1 || $desiredOrphans > 50)) $errors[] = 'عدد الأيتام يجب أن يكون بين 1 و50.';
+    if ($form['proposed_amount'] !== '' && $proposedAmount === null) $errors[] = 'المبلغ المقترح غير صالح.';
     if (!$errors) {
         [$raw, $norm] = first_letter_of($name);
-        $letter = dbFetchOne("SELECT id FROM letters WHERE code = ?", [$norm]);
+        $letter = dbFetchOne("SELECT id FROM letters WHERE is_active = 1 AND code = ? LIMIT 1", [$norm]);
         $letterId = $letter ? (int)$letter['id'] : null;
-        $supId = null;
-        if ($letterId) {
-            $s = dbFetchOne("SELECT supervisor_id FROM supervisor_letters WHERE letter_id = ?", [$letterId]);
-            $supId = $s ? (int)$s['supervisor_id'] : null;
-        }
-        dbExecute("INSERT INTO sponsor_requests
-            (full_name, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address, sponsor_type,
-             preferred_payment_method, proposed_amount, desired_orphans, notes, first_letter_raw, first_letter_id, assigned_supervisor_id, status)
-            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,'pending')",
-            [$name, $phone,
-             in_array($_POST['phone_purpose'] ?? '', ['call','whatsapp','both'], true) ? $_POST['phone_purpose'] : 'both',
-             trim($_POST['alt_phone'] ?? '') ?: null,
-             in_array($_POST['alt_phone_purpose'] ?? '', ['call','whatsapp','both'], true) ? $_POST['alt_phone_purpose'] : 'both',
-             trim($_POST['email'] ?? '') ?: null, trim($_POST['address'] ?? '') ?: null,
-             in_array($_POST['sponsor_type'] ?? '', ['individual','company','organization'], true) ? $_POST['sponsor_type'] : 'individual',
-             in_array($_POST['preferred_payment_method'] ?? '', ['cash','bank_transfer','credit_card','mobile','other'], true) ? $_POST['preferred_payment_method'] : 'cash',
-             trim($_POST['proposed_amount'] ?? '') !== '' ? (float)$_POST['proposed_amount'] : null,
-             trim($_POST['desired_orphans'] ?? '') !== '' ? (int)$_POST['desired_orphans'] : null,
-             trim($_POST['notes'] ?? '') ?: null, $raw, $letterId, $supId]);
+        $supId = $type === 'individual' ? resolveSponsorSupervisorId($name, $gender) : null;
+        dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address, sponsor_type, gender, preferred_payment_method, proposed_amount, desired_orphans, notes, first_letter_raw, first_letter_id, assigned_supervisor_id, source, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'public_form', 'new')",
+            [$name, $phone, $phonePurpose, $form['alt_phone'] !== '' ? $form['alt_phone'] : null, $altPhonePurpose, $form['email'] !== '' ? $form['email'] : null, $form['address'] !== '' ? $form['address'] : null, $type, $gender, $payment, $proposedAmount, $desiredOrphans, $form['notes'] !== '' ? $form['notes'] : null, $raw, $letterId, $supId]);
         $reqId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
         try {
             $targets = [];
             if ($supId) $targets[] = $supId;
-            foreach (dbFetchAll("SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ('admin','vice_general_manager') AND u.is_active = 1") as $u)
-                $targets[] = (int)$u['id'];
-            foreach (array_unique($targets) as $tid) {
-                dbExecute("INSERT INTO notifications (recipient_user_id, type, title, body, link) VALUES (?, 'sponsor_request', ?, ?, 'modules/sponsors/requests.php')",
-                    [$tid, 'طلب كفيل جديد', $name . ' — ' . $phone]);
-            }
-        } catch (Throwable $e) {}
+            foreach (dbFetchAll("SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ('admin','vice_general_manager') AND u.is_active = 1") as $u) $targets[] = (int)$u['id'];
+            foreach (array_unique($targets) as $tid) dbExecute("INSERT INTO notifications (recipient_user_id, type, title, body, link) VALUES (?, 'sponsor_request', ?, ?, 'modules/sponsors/requests.php')", [$tid, 'طلب كفيل جديد', $name . ' — ' . $phone]);
+        } catch (Throwable $e) { error_log('Public sponsor request notification failed for request ' . $reqId . ': ' . $e->getMessage()); }
         $done = true;
     }
 }
@@ -128,7 +97,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
         <?php else: ?>
             <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
             <p class="text-muted"><?php echo t('سجّل بياناتك وسيتواصل معك المشرف المختص'); ?></p>
-            <form method="post">
+            <form method="post">\n                <?php echo csrf_field(); ?>
                 <!-- الاسم الكامل -->
                 <div class="f-row">
                     <label><?php echo t('الاسم الكامل'); ?> *</label>
@@ -160,11 +129,19 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 <!-- النوع + طريقة الدفع -->
                 <div class="f-row">
                     <label><?php echo t('النوع'); ?></label>
-                    <select name="sponsor_type" class="form-select" style="max-width:200px">
+                    <select name="sponsor_type" id="sponsorType" class="form-select" style="max-width:200px">
                         <option value="individual"><?php echo t('فرد'); ?></option>
                         <option value="company"><?php echo t('شركة'); ?></option>
                         <option value="organization"><?php echo t('منظمة'); ?></option>
                     </select>
+                    <div class="f-row" id="genderRow">
+                        <label for="applicantGender"><?php echo t('الجنس'); ?> *</label>
+                        <select name="gender" id="applicantGender" class="form-select" style="max-width:200px">
+                            <option value="">— <?php echo t('اختر الجنس'); ?> —</option>
+                            <option value="male"><?php echo t('ذكر'); ?></option>
+                            <option value="female"><?php echo t('أنثى'); ?></option>
+                        </select>
+                    </div>
                     <label class="gap-label"><?php echo t('طريقة الدفع المفضلة'); ?></label>
                     <select name="preferred_payment_method" class="form-select" style="max-width:200px">
                         <option value="cash"><?php echo t('نقدي'); ?></option>
@@ -197,5 +174,21 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
         <?php endif; ?>
     </div>
 </div>
+<script>
+(function () {
+    const type = document.getElementById('sponsorType');
+    const row = document.getElementById('genderRow');
+    const gender = document.getElementById('applicantGender');
+    if (!type || !row || !gender) return;
+    function syncGenderRequirement() {
+        const individual = type.value === 'individual';
+        row.hidden = !individual;
+        gender.required = individual;
+        if (!individual) gender.value = '';
+    }
+    type.addEventListener('change', syncGenderRequirement);
+    syncGenderRequirement();
+})();
+</script>
 </body>
 </html>
