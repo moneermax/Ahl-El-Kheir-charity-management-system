@@ -171,3 +171,5 @@ This is a presentation-only change: no database schema changes, request-state ch
 ## 10.2 Public sponsor application — organization letterhead (2026-10-29)
 
 The public `apply.php` header now displays the organization logo first, followed by the organization name and then available contact information (address, support phone, and support email). These values are read from the existing `settings` table keys `site_logo`, `org_name_ar`, `org_name_en`, `org_address`, `support_phone`, and `support_email`; no contact details are fabricated. The sponsorship form title appears beneath the organization details. If a contact setting is empty, that item is omitted. Source committed on `main`; local PHP lint and browser verification remain pending.
+
+Follow-up layout refinement (2026-10-29): organization contact items are kept on a single horizontal line using compact spacing; narrow screens may scroll horizontally rather than stacking the items. Source committed on `main`; local browser verification remains pending.
