@@ -4,6 +4,8 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
+require_once __DIR__ . '/lib_sponsor_request_conversion.php';
 Session::start();
 
 if (!Session::isLoggedIn()) {
@@ -29,7 +31,7 @@ if (!$requestId || $requestId < 1) {
 $request = dbFetchOne(
     "SELECT id, sponsor_name, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address,
             sponsor_type, gender, preferred_payment_method, proposed_amount, desired_orphans,
-            notes, source, status, created_at
+            notes, source, status, created_at, created_sponsor_id
      FROM sponsor_requests
      WHERE id = ? AND assigned_supervisor_id = ?
      LIMIT 1",
@@ -60,8 +62,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = trim((string)($_POST['action'] ?? ''));
     $newStatus = trim((string)($_POST['status'] ?? ''));
 
-    if (!$postedId || $postedId !== (int)$request['id'] || $action !== 'set_status') {
+    if (!$postedId || $postedId !== (int)$request['id'] || !in_array($action, ['set_status', 'convert'], true)) {
         flash('error', 'تعذر التحقق من إجراء الطلب.');
+    } elseif ($action === 'convert') {
+        try {
+            $sponsorId = convertSponsorRequestToSponsor($requestId, (int)Session::getUserId());
+            flash('success', 'تم تحويل الطلب إلى كفيل بنجاح. يمكنك الآن متابعة تسجيل الأيتام وتحديد تفاصيل الكفالة من صفحة الكفيل.');
+            header('Location: ' . APP_URL . 'modules/sponsors/view.php?id=' . $sponsorId);
+            exit();
+        } catch (Throwable $e) {
+            flash('error', $e instanceof InvalidArgumentException ? $e->getMessage() : 'تعذر تحويل الطلب إلى كفيل. ربما تم تحويله مسبقاً أو حدث خطأ أثناء الحفظ.');
+        }
     } elseif (!in_array($newStatus, ['contacted', 'lost'], true)) {
         flash('error', 'حالة الطلب غير صالحة.');
     } else {
@@ -153,6 +164,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <button type="submit" class="btn btn-outline-info"><i class="fas fa-phone me-1"></i>تم التواصل</button>
         </form>
         <?php endif; ?>
+        <form method="post" class="d-inline" onsubmit="return confirm('تأكيد تحويل هذا الطلب إلى سجل كفيل نشط؟ سيتم إنشاء سجل الكفيل ثم فتح صفحته لمتابعة إجراءات الكفالة.');">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="action" value="convert">
+            <input type="hidden" name="id" value="<?php echo (int)$request['id']; ?>">
+            <button type="submit" class="btn btn-success"><i class="fas fa-user-check me-1"></i>تحويل إلى كفيل ومتابعة</button>
+        </form>
         <form method="post" class="d-inline" onsubmit="return confirm('تأكيد إغلاق الطلب بوصفه غير مكتمل؟');">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="set_status">
@@ -164,7 +181,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <?php elseif ((string)$request['status'] === 'lost'): ?>
     <div class="alert alert-secondary mt-3 mb-0">هذا الطلب مغلق. إعادة فتح الطلب أو تحويله إلى سجل كفيل تتم من خلال مسار الإدارة المخوّل.</div>
     <?php elseif ((string)$request['status'] === 'converted'): ?>
-    <div class="alert alert-success mt-3 mb-0">تم تحويل هذا الطلب إلى سجل كفيل. لا تتوفر إجراءات إضافية من صفحة المشرف.</div>
+    <div class="alert alert-success mt-3 mb-0">تم تحويل هذا الطلب إلى سجل كفيل.</div>
+    <?php if (!empty($request['created_sponsor_id'])): ?>
+    <a class="btn btn-success mt-2" href="<?php echo e(APP_URL . 'modules/sponsors/view.php?id=' . (int)$request['created_sponsor_id']); ?>"><i class="fas fa-arrow-up-right-from-square me-1"></i>فتح سجل الكفيل ومتابعة الكفالة</a>
+    <?php endif; ?>
     <?php endif; ?>
     <div class="mt-3">
         <a class="btn btn-outline-secondary" href="<?php echo e(APP_URL . 'modules/sponsors/index.php'); ?>">العودة إلى سجل الكفلاء</a>
