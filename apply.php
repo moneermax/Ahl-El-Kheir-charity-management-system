@@ -110,6 +110,7 @@ body{background:linear-gradient(135deg,#0a1f44 0%,#1b4d8f 100%);font-family:'Cai
 .terms-dialog::backdrop{background:rgba(4,16,38,.68)}
 .terms-dialog-header{background:#1b4d8f;color:#fff;padding:1rem 1.25rem}
 .terms-dialog-body{padding:1.25rem;line-height:1.9}
+.assigned-supervisor-name{display:inline-block;color:#b4238a;background:#fff0fa;border:2px solid #f0a6d9;border-radius:8px;padding:.12rem .6rem;font-size:1.12em;font-weight:800;box-shadow:0 2px 8px rgba(180,35,138,.16)}
 /* Hide number input spinners (up/down arrows) */
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,
@@ -140,7 +141,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 <div class="terms-dialog-body text-center">
                     <p class="mb-3"><?php echo AK_LANG === 'en' ? 'Thank you. The organization has received your request, and the responsible supervisor will contact you to confirm the details and guide you through the next steps.' : 'شكراً لكم. استلمت المنظمة طلبكم، وسيتواصل معكم المشرف المختص لتأكيد التفاصيل ومساعدتكم في استكمال الخطوات التالية.'; ?></p>
                     <?php if ($assignedSupervisorName): ?>
-                        <p class="mb-3"><?php echo AK_LANG === 'en' ? 'Your assigned supervisor is:' : 'المشرف المختص بمتابعة طلبكم هو:'; ?> <strong><?php echo e($assignedSupervisorName); ?></strong></p>
+                        <p class="mb-3"><?php echo AK_LANG === 'en' ? 'Your assigned supervisor is:' : 'المشرف المختص بمتابعة طلبكم هو:'; ?> <strong class="assigned-supervisor-name"><?php echo e($assignedSupervisorName); ?></strong></p>
                     <?php else: ?>
                         <p class="mb-3"><?php echo AK_LANG === 'en' ? 'The organization will arrange the appropriate follow-up contact.' : 'سترتب إدارة المنظمة التواصل معكم من خلال المسؤول المختص.'; ?></p>
                     <?php endif; ?>
