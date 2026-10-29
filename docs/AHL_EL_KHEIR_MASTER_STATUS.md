@@ -5460,3 +5460,22 @@ PHP-12 is source- and CI-verified by GitHub Actions run [#40644551812](https://g
 ## 2026-10-28 — PHP-13 public sponsor application mismatch
 
 A focused scan outside `modules/` found a confirmed mismatch between `apply.php`, the checked-in `sponsor_requests` schema, and the admin/API request queue. The public page uses `full_name`/`pending`, while the canonical table and queue use `sponsor_name` and `new/contacted/converted/lost`; the old 2026-09-14 migration also creates an incomplete variant. The public form supports individual/company/organization requests but omits gender, while the admin conversion flow currently requires male/female. This is logged as PHP-13; no source change was made because the intended handling of individual versus organization applications must be clarified rather than guessed. PHP-08 through PHP-12 have source/migration CI evidence; local browser acceptance remains pending.
+
+
+## 2026-10-29 — Linux Mint development environment restored
+
+The user has moved the development workstation from Windows to Linux Mint and confirmed that the existing PHP application opens and accepts login locally.
+
+- OS: Linux Mint.
+- XAMPP installation: `/opt/lampp` (XAMPP for Linux 8.2.12-0).
+- Apache document root / project path: `/opt/lampp/htdocs/AhlElKheir/`.
+- Local application URL confirmed by the user: `http://localhost/AhlElKheir/`.
+- VS Code is installed and connected to that exact project folder, so edits there are served by the local Apache instance.
+- XAMPP Apache and MariaDB were started successfully during setup.
+- The recovered database imports available in the fresh XAMPP MariaDB include `ahl_el_kheir`, `ahl_el_kheir-development db`, `ahlelkheir_fina_current_20260916`, `ahl_el_kheir_production_test`, and `pharmacy_management_dev`.
+- The preserved recovery snapshot is `/opt/lampp/recovery/data_snapshot`; the working recovery copy is `/opt/lampp/recovery/work_oct28`; exports are preserved under `/opt/lampp/recovery/exports_oct28`. Do not delete these recovery copies as part of routine project work.
+- The old Windows partition is mounted read-only at `/mnt/windows_recovery`; preserve it as a recovery source.
+- The old `school_db_production` export was only 1028 bytes and did not contain the database schema/data; a separate backup exists and is intentionally set aside for later. Do not claim that database is restored.
+- This environment checkpoint records setup, not full database row-by-row equivalence or application-wide runtime acceptance. The user confirmed only that the project URL opens and login succeeds.
+
+Continue on the existing repository and database; do not create a replacement project. Before code changes, read the canonical project documents and the current PHP remediation backlog from `main`. Keep Flutter/native development paused.
