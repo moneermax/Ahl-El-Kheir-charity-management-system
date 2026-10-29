@@ -11,20 +11,41 @@ require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
  * submissions cannot create multiple sponsor records for the same request.
  * Field mapping and supervisor resolution mirror the established staff flow.
  */
-function convertSponsorRequestToSponsor(int $requestId, int $actorId): int
+function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $authorizationScope = 'supervisor'): int
 {
     if ($requestId < 1 || $actorId < 1) {
         throw new InvalidArgumentException('بيانات تحويل الطلب غير صالحة.');
+    }
+
+    require_once dirname(__DIR__, 2) . '/config/session.php';
+
+    if (!Session::isLoggedIn() || (int)Session::getUserId() !== $actorId) {
+        throw new RuntimeException('لا تملك صلاحية تحويل هذا الطلب.');
+    }
+
+    if ($authorizationScope === 'supervisor') {
+        if (Session::getUserRole() !== 'supervisor') {
+            throw new RuntimeException('لا تملك صلاحية تحويل هذا الطلب.');
+        }
+    } elseif ($authorizationScope === 'management_queue') {
+        if (!in_array(Session::getUserRole(), ['admin', 'vice_general_manager', 'general_manager', 'administration', 'staff', 'social_media'], true)) {
+            throw new RuntimeException('لا تملك صلاحية تحويل هذا الطلب.');
+        }
+    } else {
+        throw new InvalidArgumentException('نطاق صلاحية تحويل الطلب غير صالح.');
     }
 
     $pdo = db();
     $pdo->beginTransaction();
 
     try {
-        // Re-check ownership under the row lock; the page-level scope check alone
-        // is vulnerable to reassignment between the page read and this transaction.
-        $stmt = $pdo->prepare('SELECT * FROM sponsor_requests WHERE id = ? AND assigned_supervisor_id = ? FOR UPDATE');
-        $stmt->execute([$requestId, $actorId]);
+        // Keep the supervisor ownership check inside the row lock to prevent
+        // conversion after reassignment between the page read and this transaction.
+        $lookupSql = $authorizationScope === 'supervisor'
+            ? 'SELECT * FROM sponsor_requests WHERE id = ? AND assigned_supervisor_id = ? FOR UPDATE'
+            : 'SELECT * FROM sponsor_requests WHERE id = ? FOR UPDATE';
+        $stmt = $pdo->prepare($lookupSql);
+        $stmt->execute($authorizationScope === 'supervisor' ? [$requestId, $actorId] : [$requestId]);
         $req = $stmt->fetch();
 
         if (!$req) {
