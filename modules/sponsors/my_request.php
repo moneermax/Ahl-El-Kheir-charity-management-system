@@ -67,7 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($action === 'convert') {
         try {
             $sponsorId = convertSponsorRequestToSponsor($requestId, (int)Session::getUserId());
-            flash('success', 'تم تحويل الطلب إلى كفيل بنجاح. يمكنك الآن متابعة تسجيل الأيتام وتحديد تفاصيل الكفالة من صفحة الكفيل.');
+            flash('success_long', 'تم تحويل الطلب إلى كفيل بنجاح. يمكنك الآن متابعة تسجيل الأيتام وتحديد تفاصيل الكفالة من صفحة الكفيل.');
             header('Location: ' . APP_URL . 'modules/sponsors/view.php?id=' . $sponsorId);
             exit();
         } catch (Throwable $e) {
