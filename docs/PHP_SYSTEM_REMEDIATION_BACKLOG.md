@@ -166,13 +166,13 @@ Fix committed in `daa821f1d607aa74d5efd90227e47567043c5ec1`: the workflow now dr
 - Do not reopen the previously closed attendance same-page POST issue unless new regression evidence appears.
 - Older system-wide UI consistency observations (mixed localization/date formatting, role-label/action conventions) must be checked against current source and later closure evidence before adding them back as open work.
 
-## Recommended order
+## Recommended order — refreshed 2026-10-29
 
-1. Finish CI verification for PHP-11, then reconcile PHP-12 outflow table/ENUM semantics before any source changes.
-2. Run local browser acceptance for PHP-08 User Management, PHP-09 family workflows, and the accounting/profile/import/receipt pages after pulling verified commits.
-3. Re-triage PHP-04/PHP-06 and continue PHP-05 only from current source and module continuation docs.
-4. Define the minimal local API runtime acceptance matrix for PHP-01; review PHP-02/PHP-03 before public deployment.
-5. Preserve all previously closed modules unless concrete regression evidence appears.
+1. **PHP-13 public sponsor application mismatch:** begin with a focused workflow decision. Confirm whether public applications should enter the existing admin/API request queue and define how individual versus company/organization applications are converted, given the current gender requirement. Do not edit the source until this behavior is confirmed.
+2. **Local PHP browser acceptance:** after syncing the current `main` revision, verify PHP-08 User Management, PHP-09 family workflows, PHP-10 accounting core, PHP-11 profile/import/sync/receipt/payroll-reversal pages, and PHP-12 accounting outflows in the local browser. CI/migration checks do not prove local acceptance; use safe read-only or controlled test data and avoid unapproved mutations to live charity records.
+3. **PHP-04/PHP-05:** perform the pending real-browser acceptance for the salary portal role link, project-team assignment, and incentive/project notifications; do not infer success from CI alone.
+4. **PHP-01:** design a minimal route-level local API runtime/authorization acceptance matrix from current source and existing harness coverage. Do not run destructive integration tests against `ahl_el_kheir`.
+5. Keep PHP-02/PHP-03 as pre-public-deployment reviews. Keep Flutter/native development paused and preserve closed PHP acceptance unless concrete regression evidence appears.
 
 ## PHP-01 inventory checkpoint — 2026-10-28
 
@@ -250,3 +250,22 @@ This is a test-discovery result, **not** proof that these routes are untested by
 - 2026-10-28: PHP-12 outflow migration CI passed in workflow #40644551812: all five jobs succeeded, including legacy-schema and status-normalization verification. Local outflow workflow acceptance remains pending.
 
 - 2026-10-28: PHP-13 public sponsor application schema/workflow mismatch confirmed from source and the uploaded schema. Logged without changing code because individual gender versus company/organization conversion behavior needs confirmation.
+
+
+## 2026-10-29 — Linux Mint development environment restored
+
+The user has moved the development workstation from Windows to Linux Mint and confirmed that the existing PHP application opens and accepts login locally.
+
+- OS: Linux Mint.
+- XAMPP installation: `/opt/lampp` (XAMPP for Linux 8.2.12-0).
+- Apache document root / project path: `/opt/lampp/htdocs/AhlElKheir/`.
+- Local application URL confirmed by the user: `http://localhost/AhlElKheir/`.
+- VS Code is installed and connected to that exact project folder, so edits there are served by the local Apache instance.
+- XAMPP Apache and MariaDB were started successfully during setup.
+- The recovered database imports available in the fresh XAMPP MariaDB include `ahl_el_kheir`, `ahl_el_kheir-development db`, `ahlelkheir_fina_current_20260916`, `ahl_el_kheir_production_test`, and `pharmacy_management_dev`.
+- The preserved recovery snapshot is `/opt/lampp/recovery/data_snapshot`; the working recovery copy is `/opt/lampp/recovery/work_oct28`; exports are preserved under `/opt/lampp/recovery/exports_oct28`. Do not delete these recovery copies as part of routine project work.
+- The old Windows partition is mounted read-only at `/mnt/windows_recovery`; preserve it as a recovery source.
+- The old `school_db_production` export was only 1028 bytes and did not contain the database schema/data; a separate backup exists and is intentionally set aside for later. Do not claim that database is restored.
+- This environment checkpoint records setup, not full database row-by-row equivalence or application-wide runtime acceptance. The user confirmed only that the project URL opens and login succeeds.
+
+Continue on the existing repository and database; do not create a replacement project. Before code changes, read the canonical project documents and the current PHP remediation backlog from `main`. Keep Flutter/native development paused.
