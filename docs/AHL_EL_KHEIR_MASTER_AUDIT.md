@@ -5834,7 +5834,7 @@ The user locally confirmed that **تم التواصل** changes the request stat
 
 A follow-up UX fix is committed on `main`: the conversion success flash uses an opt-in 8-second toast duration; all ordinary flash messages retain the existing default duration. Commits: `ed1f4c75b55cb133b43a93ecc663df89665c878d`, `426697fac7aa16d0bbb0729b886f3fc301ff7fe9`, `04f45fa72ccc0c461f04a3fd2fd376f2b278f862`.
 
-**Verification boundary:** the extended toast behavior is source-committed but still needs local verification after pulling `main`. Duplicate-conversion and reassignment-race acceptance checks have not been reported as tested; do not claim them passed.
+**Verification boundary:** the extended toast behavior is source-committed but still needs local verification after pulling `main`. At the time of this entry, the disposable runtime harness had not yet run. Duplicate-conversion rejection and unauthorized ownership isolation were subsequently verified; a true concurrent reassignment race remains unverified.
 
 
 ## 2026-10-29 — Sponsor conversion toast duration root cause
@@ -5863,3 +5863,10 @@ Added `tools/test_sponsor_request_conversion_authorization_contract.php` and wir
 ## 2026-10-29 — Isolated sponsor conversion runtime harness
 
 Added `tools/run_sponsor_request_conversion_runtime_test.php`. It creates a uniquely named disposable database, clones only the required table definitions and minimal reference rows from the configured source database, runs the actual conversion helper against a male Alef fixture assigned to supervisor 19, checks sponsor/request/assignment/audit results, checks duplicate rejection and supervisor ownership isolation, and drops only the generated test database on completion. It never directs application writes to the source database. The PHP syntax workflow now lints this harness; CI does not execute it because it requires a source database. Local runtime execution and browser toast acceptance remain pending. Run with `/opt/lampp/bin/php tools/run_sponsor_request_conversion_runtime_test.php` from `/opt/lampp/htdocs/AhlElKheir`. Do not call the sponsor conversion flow runtime-verified until the harness has passed locally.
+
+
+## 2026-10-29 — Sponsor conversion runtime verification update
+
+The user ran `/opt/lampp/bin/php tools/run_sponsor_request_conversion_runtime_test.php` locally. PHP syntax validation passed, and the disposable-database runtime harness reported all 13 checks passing, including conversion creation/linkage, assignment-history and audit writes, duplicate-conversion rejection, and rejection of a supervisor acting on another supervisor's request. The generated test database was removed after the run; the production sponsor records were not used as test fixtures or modified by this harness. The toast source-contract test (7 checks) and authorization-contract test (10 checks) also passed. GitHub Actions run [#40880584416](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40880584416) passed all six jobs.
+
+**Remaining boundary:** the toast's actual appearance and approximately 8-second duration have not been verified in a real browser session. The runtime harness does not prove a true two-process concurrent reassignment race. Do not claim either result as proven.
