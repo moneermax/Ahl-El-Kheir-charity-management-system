@@ -3282,3 +3282,7 @@ The successful `apply.php` confirmation now styles the assigned supervisor name 
 ### 2026-10-29 — Supervisor notification redirect hardening
 
 Updated `modules/notifications/mark_read.php` so supervisor request links preserve a trusted absolute URL only when it belongs to the current application, reject external or protocol-relative legacy links, and prefix only relative paths. Commit `cefd47eea8504da35e541d75eb961af73795eed6`. This is source-reviewed; PHP lint and Linux Mint browser acceptance remain pending.
+
+### 2026-10-29 — PHP-13 syntax-check coverage
+
+Expanded the existing PHP syntax workflow to lint `apply.php`, `modules/notifications/mark_read.php`, `modules/sponsors/my_request.php`, and `modules/sponsors/requests.php`, which were absent from its explicit file list. Commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`; workflow result pending, local browser acceptance still required.
