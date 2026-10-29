@@ -5835,3 +5835,10 @@ The user locally confirmed that **تم التواصل** changes the request stat
 A follow-up UX fix is committed on `main`: the conversion success flash uses an opt-in 8-second toast duration; all ordinary flash messages retain the existing default duration. Commits: `ed1f4c75b55cb133b43a93ecc663df89665c878d`, `426697fac7aa16d0bbb0729b886f3fc301ff7fe9`, `04f45fa72ccc0c461f04a3fd2fd376f2b278f862`.
 
 **Verification boundary:** the extended toast behavior is source-committed but still needs local verification after pulling `main`. Duplicate-conversion and reassignment-race acceptance checks have not been reported as tested; do not claim them passed.
+
+
+## 2026-10-29 — Sponsor conversion toast duration root cause
+
+User reported that the conversion success toast remained too brief despite the prior duration-specific implementation. Source inspection established the precise cause in `assets/js/app.js`: the same-page response handler copied flash type/message but omitted `data-ak-duration`, then invoked `AKNotify.toast` with only two arguments. Commit `cfb828cdb2db68a364512e5ac30c7ef3a6dacceb` now carries the duration through that handler. This is source-committed but not yet browser-verified locally.
+
+The user identified sponsor SP-002860 / أمير علي طه as the last available inactive sponsor test fixture, currently active with zero sponsored orphans. The local DB reset remains pending: first identify its linked `sponsor_requests` record and inspect any operational references; preserve audit records and do not delete or alter related data based on assumptions.
