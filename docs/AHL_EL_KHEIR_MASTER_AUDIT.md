@@ -5776,3 +5776,7 @@ Source review note: `apply.php` now uses existing `settings` values for logo, lo
 ### 2026-10-29 — Public application header contact alignment
 
 The `apply.php` organization contact row now uses a single non-wrapping horizontal line with compact spacing; narrow layouts can scroll horizontally rather than stacking each contact item. Source-only; Linux Mint browser verification remains pending.
+
+### 2026-10-29 — Public application confirmation emphasis
+
+The assigned supervisor name in `apply.php`'s successful-submission dialog is visually emphasized with magenta text, a contrasting border and pale background. This is a presentation-only source change; local browser verification remains pending.
