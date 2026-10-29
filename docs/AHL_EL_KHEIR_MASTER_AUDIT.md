@@ -5772,3 +5772,7 @@ Continue on the existing repository and database; do not create a replacement pr
 ## 2026-10-29 — Public sponsor form header branding
 
 Source review note: `apply.php` now uses existing `settings` values for logo, localized organization name, address, support phone, and support email. Render order is logo → organization name → available contact details → form title. Missing contact values are omitted; fallback organization name/logo are provided without adding database fields. This is source-reviewed only; Linux Mint PHP lint and browser display verification remain pending.
+
+### 2026-10-29 — Public application header contact alignment
+
+The `apply.php` organization contact row now uses a single non-wrapping horizontal line with compact spacing; narrow layouts can scroll horizontally rather than stacking each contact item. Source-only; Linux Mint browser verification remains pending.
