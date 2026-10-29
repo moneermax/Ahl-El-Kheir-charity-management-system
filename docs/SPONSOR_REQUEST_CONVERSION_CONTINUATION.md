@@ -2,7 +2,7 @@
 
 **Baseline:** 2026-10-29  
 **Branch:** `main`  
-**Status:** Source implementation committed; local runtime verification pending.
+**Status:** Core conversion flow locally verified; targeted success-toast duration fix committed and awaiting local verification.
 
 ## Agreed workflow
 
@@ -33,4 +33,6 @@ Repository source has been inspected. The local browser workflow has **not** bee
 7. Confirm a supervisor cannot convert a request assigned to another supervisor, including if assignment changes between page load and POST.
 8. Run PHP syntax checks for the changed PHP files and record the actual output.
 
-No local runtime test is represented as passed here.
+User-reported local acceptance on 2026-10-29: contacted status, conversion redirect to sponsor 2859, converted request status/link, and access to the existing sponsorship workflow all passed. PHP 8.2.12 syntax checks passed for the request detail, conversion helper, and sponsor detail files. Duplicate-conversion and reassignment-race tests remain unreported.
+
+The success flash after conversion now requests an 8-second toast; ordinary flash messages keep their existing default duration. This is source-committed but awaits local verification after pulling `main`. Commits: `ed1f4c75b55cb133b43a93ecc663df89665c878d`, `426697fac7aa16d0bbb0729b886f3fc301ff7fe9`, `04f45fa72ccc0c461f04a3fd2fd376f2b278f862`.
