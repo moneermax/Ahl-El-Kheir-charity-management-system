@@ -158,3 +158,14 @@ The HR job-description catalogue may now hold separate drafts for the same emplo
 ## 2026-10-23 — VGM orphan-group and nanny assignment workflow
 
 The VGM manages orphan groups through `modules/deputy_gm/groups.php`: create a group, add eligible active children from active families with active sponsorship, assign a nanny to the group, then activate the group when ready. The application assigns the nanny to a group, not directly to a family. Membership changes are blocked after a disbursement exists for the current month, and historical membership/assignment records are preserved. These are VGM-only actions; other roles must use their authorized views and must not be given instructions implying they can perform this workflow.
+
+## 10.1 Public sponsor application — terms and supervisor handoff (2026-10-29)
+
+The public `apply.php` form now offers a bilingual, in-page terms/instructions dialog explaining the request lifecycle: submission is an initial request, the supervisor follows up, the applicant and organization discuss the proposed amount/payment method/desired number of children, authorized staff review suitable available children, and normal registration and sponsorship steps must be completed before a sponsorship is established. The text deliberately does not promise immediate child assignment or invent unapproved payment/contract terms.
+
+For individual applicants, the form can display the assigned supervisor's name using the existing authoritative sponsor first-letter + gender responsibility matrix. The public read-only lookup endpoint `apply_supervisor.php` returns only the active assigned supervisor's display name; it does not expose the assignment matrix or other supervisor details. The successful submission confirmation repeats the assigned supervisor's name when one is available.
+
+Company/organization applicants are not automatically assigned through the individual letter+gender matrix in the existing workflow. The form therefore explains that the organization will arrange the responsible follow-up contact rather than displaying a guessed supervisor.
+
+This is a presentation and read-only lookup change only: no database schema changes, request-state changes, sponsorship creation, orphan assignment, or permission changes were made. The management request queue and supervisor-scoped request detail page retain their existing authorization boundaries. Runtime/browser verification remains pending.
+
