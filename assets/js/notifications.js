@@ -13,7 +13,7 @@
 (function (window, document) {
     'use strict';
 
-    function fallbackToast(message) {
+    function fallbackToast(message, duration) {
         var node = document.createElement('div');
         node.textContent = message || '';
         node.style.cssText = [
@@ -25,7 +25,7 @@
         document.body.appendChild(node);
         window.setTimeout(function () {
             if (node.parentNode) node.parentNode.removeChild(node);
-        }, 3000);
+        }, Number(duration) > 0 ? Number(duration) : 3000);
     }
 
     var notificationToast = window.AKNotify && typeof window.AKNotify.notificationToast === 'function'
@@ -34,7 +34,9 @@
 
     if (!window.Swal) {
         window.AKNotify = {
-            toast: fallbackToast,
+            toast: function (type, message, duration) {
+                fallbackToast(message, duration);
+            },
             notificationToast: notificationToast,
             confirm: function () {
                 fallbackToast('تعذر فتح نافذة التأكيد الخاصة بالنظام.');
@@ -60,10 +62,14 @@
 
     window.AKNotify = {
         notificationToast: notificationToast,
-        toast: function (type, message) {
+        toast: function (type, message, duration) {
             var icon = type === 'danger' || type === 'error' ? 'error' : type;
             if (!['success', 'error', 'warning', 'info', 'question'].includes(icon)) icon = 'info';
-            return Toast.fire({ icon: icon, title: message || '' });
+            var toastOptions = { icon: icon, title: message || '' };
+            if (Number.isFinite(Number(duration)) && Number(duration) > 0) {
+                toastOptions.timer = Number(duration);
+            }
+            return Toast.fire(toastOptions);
         },
         modal: function (options) {
             options = options || {};
@@ -380,7 +386,8 @@
         document.querySelectorAll('[data-ak-flash]').forEach(function (node) {
             var type = node.getAttribute('data-ak-flash') || 'info';
             var message = node.getAttribute('data-ak-message') || node.textContent || '';
-            window.AKNotify.toast(type, message.trim());
+            var duration = Number(node.getAttribute('data-ak-duration') || 0);
+            window.AKNotify.toast(type, message.trim(), duration);
             node.remove();
         });
     });
