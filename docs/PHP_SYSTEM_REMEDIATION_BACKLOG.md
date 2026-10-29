@@ -132,16 +132,24 @@ The checked-in schema contains all referenced columns/tables. Migration `databas
 `modules/accounting/lib_outflows.php` previously created `monthly_disbursements`, `disbursement_items`, and `nanny_family_verifications` during requests; dynamically added columns; and modified status ENUM definitions. The checked-in schema has canonical monthly statuses without `pending`, while the old runtime table definition included it. Source evidence confirms `ak_out_approve()` accepts both `pending` and `pending_approval`, while the web/API create/transition paths use `pending_approval`; the checked-in dump has no monthly batch with `pending`. Migration `database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql` now creates/reconciles the tables and columns, ensures the group index/FK, maps legacy `pending` to the canonical `pending_approval` state, and restores the canonical ENUM. The schema-sync function and DDL helper were removed while read-only enum introspection remains. GitHub Actions run [#40644551812](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40644551812) passed all five jobs. The full-schema job applied the migration twice. A separate disposable legacy fixture verified restoration of missing group/return columns and the group foreign key/index, normalized `pending` to `pending_approval`, and restored the canonical ENUM. Local outflow workflow acceptance remains pending.
 
 ### PHP-13 — Public sponsor application conflicts with the canonical request schema/workflow
-**Status:** CONFIRMED SOURCE/SCHEMA MISMATCH — source remediation requires one workflow decision; no source changes made.
-**Priority:** High because the public sponsor application path is inconsistent with the checked-in schema and admin queue.
+**Status:** IMPLEMENTED; CI migration verification pending. Local browser acceptance is still required before closure.
+**Priority:** High; the public form previously wrote to a schema/status contract incompatible with the canonical staff/API queue.
 
-Evidence from `database/ahl_el_kheir.sql`, `apply.php`, `database/migrations/2026-09-14_sponsor_workflow_runtime_ddl_cleanup.sql`, `modules/sponsors/requests.php`, and `api/v1/sponsor_requests/index.php`:
-- `apply.php` attempts to create `sponsor_requests` with a `full_name` column and statuses `pending/contacted/confirmed/rejected`, then inserts into `full_name` with status `pending`.
-- The checked-in schema and the admin/API request queue use `sponsor_name` and statuses `new/contacted/converted/lost`; `full_name` is not a column in the checked-in `sponsor_requests` table, and `pending` is not in its status ENUM.
-- The historical 2026-09-14 migration creates a different, incomplete `sponsor_requests` shape and only adds `created_sponsor_id`, so it does not resolve the mismatch for a fresh database.
-- The public form accepts individual/company/organization sponsor types but does not collect gender. The admin conversion flow requires gender `male` or `female`, while the schema also supports organization sponsors. Aligning only the column name and status would therefore leave a conversion workflow gap.
+**Business decision confirmed 2026-10-29:** Public self-registration is an optional future intake path. Staff continue creating sponsors through the existing authenticated sponsor workflow. Public submissions are applications and must enter the shared request queue for staff review; they must not create active sponsors automatically. The form may accept individual, company, and organization applicants.
 
-Do not patch only the DDL or silently invent gender/organization behavior. Clarify whether public applications are meant to enter the same admin request queue and how individual versus company/organization requests should be converted. Source/schema mismatch is confirmed; live request submission has not been runtime-tested.
+**Implemented on `main`:**
+- Removed runtime `CREATE TABLE`/`ALTER TABLE` from `apply.php`; public submission now uses canonical `sponsor_name` and `new` status.
+- Added CSRF validation to public submissions, server-side validation for sponsor type, individual gender, proposed amount, and desired orphan count, and type-aware supervisor assignment.
+- Public company/organization applications store the canonical `organization` gender value and do not receive individual-gender supervisor assignment.
+- Staff conversion now preserves request sponsor type, gender semantics, contact details, payment preference, notes, desired orphan count, source, and brought-by information. Individual conversion still requires a valid male/female value; company/organization conversion uses the sponsor schema's organization value and does not assign an individual supervisor.
+- Added `database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql` to reconcile legacy `full_name` and status values, restore queue/form fields, and widen request gender to support `organization`. Migration must be applied before deploying the updated PHP files to any existing database.
+
+**Verification boundary:**
+- Source/schema mismatch was confirmed from the checked-in schema and source before edits.
+- A CI step now applies the migration twice against the canonical schema and a legacy runtime-created fixture, then checks column and status reconciliation. Await that workflow result before claiming migration verification.
+- No live public submission or staff conversion has been tested against the user's local database. Do not test by inserting dummy records into the live charity database; use disposable/controlled data.
+- Public application and individual/company/organization conversion require local browser acceptance after the user pulls the change.
+
 
 ### PHP-07 — HR job-description migration CI fixture starts from the post-migration schema
 **Status:** FIX VERIFIED — all jobs in the sequential CI run passed.
@@ -168,7 +176,7 @@ Fix committed in `daa821f1d607aa74d5efd90227e47567043c5ec1`: the workflow now dr
 
 ## Recommended order — refreshed 2026-10-29
 
-1. **PHP-13 public sponsor application mismatch:** begin with a focused workflow decision. Confirm whether public applications should enter the existing admin/API request queue and define how individual versus company/organization applications are converted, given the current gender requirement. Do not edit the source until this behavior is confirmed.
+1. **PHP-13 public sponsor application mismatch:** implementation is on `main`; verify the dedicated migration CI step and then perform controlled local browser acceptance before closure.
 2. **Local PHP browser acceptance:** after syncing the current `main` revision, verify PHP-08 User Management, PHP-09 family workflows, PHP-10 accounting core, PHP-11 profile/import/sync/receipt/payroll-reversal pages, and PHP-12 accounting outflows in the local browser. CI/migration checks do not prove local acceptance; use safe read-only or controlled test data and avoid unapproved mutations to live charity records.
 3. **PHP-04/PHP-05:** perform the pending real-browser acceptance for the salary portal role link, project-team assignment, and incentive/project notifications; do not infer success from CI alone.
 4. **PHP-01:** design a minimal route-level local API runtime/authorization acceptance matrix from current source and existing harness coverage. Do not run destructive integration tests against `ahl_el_kheir`.
