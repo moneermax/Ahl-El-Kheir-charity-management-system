@@ -3215,3 +3215,8 @@ The user has moved the development workstation from Windows to Linux Mint and co
 - This environment checkpoint records setup, not full database row-by-row equivalence or application-wide runtime acceptance. The user confirmed only that the project URL opens and login succeeds.
 
 Continue on the existing repository and database; do not create a replacement project. Before code changes, read the canonical project documents and the current PHP remediation backlog from `main`. Keep Flutter/native development paused.
+
+
+### 2026-10-29 — PHP-13 syntax coverage follow-up
+
+The PHP syntax workflow now explicitly includes `apply.php`, `modules/notifications/mark_read.php`, `modules/sponsors/my_request.php`, and `modules/sponsors/requests.php` (commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`). Verify the workflow result and retain the pending Linux Mint local browser acceptance; do not infer runtime success from source edits.
