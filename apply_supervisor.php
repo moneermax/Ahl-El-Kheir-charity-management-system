@@ -17,7 +17,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'GET') {
 
 $name = trim((string)($_GET['name'] ?? ''));
 $gender = strtolower(trim((string)($_GET['gender'] ?? '')));
-if ($name === '' || mb_strlen($name, 'UTF-8') > 255 || !in_array($gender, ['male', 'female'], true)) {
+if ($name === '' || (function_exists('mb_strlen') ? mb_strlen($name, 'UTF-8') : strlen($name)) > 1020 || !in_array($gender, ['male', 'female'], true)) {
     echo json_encode(['assigned' => false], JSON_UNESCAPED_UNICODE);
     exit;
 }
