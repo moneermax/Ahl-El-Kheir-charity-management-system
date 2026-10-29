@@ -5768,3 +5768,7 @@ The user has moved the development workstation from Windows to Linux Mint and co
 - This environment checkpoint records setup, not full database row-by-row equivalence or application-wide runtime acceptance. The user confirmed only that the project URL opens and login succeeds.
 
 Continue on the existing repository and database; do not create a replacement project. Before code changes, read the canonical project documents and the current PHP remediation backlog from `main`. Keep Flutter/native development paused.
+
+## 2026-10-29 — Public sponsor form header branding
+
+Source review note: `apply.php` now uses existing `settings` values for logo, localized organization name, address, support phone, and support email. Render order is logo → organization name → available contact details → form title. Missing contact values are omitted; fallback organization name/logo are provided without adding database fields. This is source-reviewed only; Linux Mint PHP lint and browser display verification remain pending.
