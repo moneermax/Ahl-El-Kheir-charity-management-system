@@ -81,7 +81,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     if ($action === 'convert' && !empty($_POST['id'])) {
         $id = (int)$_POST['id'];
         try {
-            $newId = convertSponsorRequestToSponsor($id, (int)Session::getUserId());
+            $newId = convertSponsorRequestToSponsor($id, (int)Session::getUserId(), 'management_queue');
             flash('success', t('sponsors.request_converted_success'));
             header('Location: ' . APP_URL . 'modules/sponsors/view.php?id=' . $newId);
             exit();
