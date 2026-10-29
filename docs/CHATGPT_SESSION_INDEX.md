@@ -3266,3 +3266,7 @@ Continue on the existing repository and database; do not create a replacement pr
 ### 2026-10-29 — Public sponsor confirmation dialog refinement
 
 The applicant-facing supervisor note has been removed from the pre-submission form. `apply.php` now shows the assigned active supervisor only in an automatically opened success dialog after a valid application is saved. The terms/instructions dialog remains. The unused `apply_supervisor.php` endpoint was removed. Local PHP lint and browser runtime verification are pending; do not mark runtime-verified until tested on Linux Mint XAMPP.
+
+### 2026-10-29 — Public sponsor form organization header
+
+`apply.php` header now displays the organization logo at the top, then the configured Arabic/English organization name, then only the contact details populated in existing settings (address, support phone, support email), followed by the form title. No schema or contact data changes. Local PHP lint/browser verification remain pending.
