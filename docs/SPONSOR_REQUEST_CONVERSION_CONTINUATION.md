@@ -36,3 +36,12 @@ The user has locally verified the core conversion path (contact status, successf
 User-reported local acceptance on 2026-10-29: contacted status, conversion redirect to sponsor 2859, converted request status/link, and access to the existing sponsorship workflow all passed. PHP 8.2.12 syntax checks passed for the request detail, conversion helper, and sponsor detail files. Duplicate-conversion and reassignment-race tests remain unreported.
 
 The success flash after conversion now requests an 8-second toast; ordinary flash messages keep their existing default duration. This is source-committed but awaits local verification after pulling `main`. Commits: `ed1f4c75b55cb133b43a93ecc663df89665c878d`, `426697fac7aa16d0bbb0729b886f3fc301ff7fe9`, `04f45fa72ccc0c461f04a3fd2fd376f2b278f862`.
+
+
+## 2026-10-29 — Toast-duration root cause and correction
+
+The user reported that the conversion success toast still disappeared too quickly. Source inspection identified the exact cause: the same-page response handler in `assets/js/app.js` extracted `data-ak-flash` and `data-ak-message` but discarded `data-ak-duration`, then called `AKNotify.toast` without a duration. This bypassed the existing 8-second opt-in setting even though `includes/alerts.php` and `assets/js/notifications.js` supported it.
+
+Correction committed to `main`: `cfb828cdb2db68a364512e5ac30c7ef3a6dacceb` — preserve `data-ak-duration` in the extracted flash object and pass it to `AKNotify.toast`.
+
+**Verification boundary:** local browser acceptance is still pending; do not mark the toast fix runtime-verified until the user pulls this commit and retries a conversion. Sponsor SP-002860 / أمير علي طه is reported active with zero currently sponsored orphans and is the user's last suitable inactive test sponsor. Its prior state has not been reset by this remote repository session because the local MariaDB database is not accessible here. Before reset, inspect the linked `sponsor_requests` row and all existing references to the sponsor; preserve audit history and unrelated records. The intended reset is to remove only the conversion-created sponsor record if it has no dependent operational data, and return its original request to its pre-conversion actionable state with its conversion linkage/timestamps cleared. Do not run a guessed destructive SQL statement.
