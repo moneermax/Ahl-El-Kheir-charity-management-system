@@ -670,7 +670,7 @@ jobs:
               AND system_role_code = '';
           ")
           test "$approved_guard" = "1"
-- name: Verify sponsor request migration on canonical and legacy schemas
+      - name: Verify sponsor request migration on canonical and legacy schemas
         env:
           MYSQL_PWD: root
         shell: bash
