@@ -63,6 +63,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $done = true;
     }
 }
+$orgSettings = [];
+foreach (dbFetchAll("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('site_logo', 'org_name_ar', 'org_name_en', 'org_address', 'support_phone', 'support_email')") as $setting) {
+    $orgSettings[(string)$setting['setting_key']] = trim((string)($setting['setting_value'] ?? ''));
+}
+$orgName = AK_LANG === 'en'
+    ? ($orgSettings['org_name_en'] ?: "Ahl El Kheir Women's Organization")
+    : ($orgSettings['org_name_ar'] ?: 'منظمة أهل الخير النسوية لكفالة الأيتام');
+$orgLogoPath = $orgSettings['site_logo'] ?: 'assets/img/logo.png';
+if (!is_file(__DIR__ . '/' . ltrim($orgLogoPath, '/'))) $orgLogoPath = 'assets/img/logo.png';
+$orgLogoUrl = APP_URL . ltrim($orgLogoPath, '/');
+$orgContactDetails = [];
+if ($orgSettings['org_address'] !== '') $orgContactDetails[] = ['icon' => 'fa-location-dot', 'value' => $orgSettings['org_address']];
+if ($orgSettings['support_phone'] !== '') $orgContactDetails[] = ['icon' => 'fa-phone', 'value' => $orgSettings['support_phone']];
+if ($orgSettings['support_email'] !== '') $orgContactDetails[] = ['icon' => 'fa-envelope', 'value' => $orgSettings['support_email']];
 $uri = (string)($_SERVER['REQUEST_URI'] ?? '');
 $langSwitchUrl = e($uri . (strpos($uri, '?') !== false ? '&' : '?') . 'lang=' . (AK_LANG === 'ar' ? 'en' : 'ar'));
 ?>
@@ -79,8 +93,13 @@ $langSwitchUrl = e($uri . (strpos($uri, '?') !== false ? '&' : '?') . 'lang=' . 
 body{background:linear-gradient(135deg,#0a1f44 0%,#1b4d8f 100%);font-family:'Cairo',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;margin:0;padding:2rem 0}
 /* Card sized to hug the content -> no dead white space on either side */
 .apply-card{background:#fff;border-radius:15px;box-shadow:0 10px 30px rgba(0,0,0,.25);max-width:780px;width:96%}
-.apply-header{background:#1b4d8f;color:#fff;padding:1.6rem;text-align:center;border-radius:15px 15px 0 0}
-.apply-header i{font-size:2.8rem;margin-bottom:.4rem}
+.apply-header{background:#fff;color:#142b4f;padding:1.35rem 1.6rem 1.15rem;text-align:center;border-radius:15px 15px 0 0;border-bottom:4px solid #c6a45b}
+.apply-header-logo{display:block;width:112px;height:112px;object-fit:contain;margin:0 auto .8rem}
+.apply-header h3{font-size:1.45rem;font-weight:700;line-height:1.5;margin:0 0 .4rem}
+.apply-org-info{display:flex;justify-content:center;align-items:center;gap:.45rem 1.1rem;flex-wrap:wrap;color:#526174;font-size:.88rem;margin-top:.65rem}
+.apply-org-info span{display:inline-flex;align-items:center;gap:.35rem;overflow-wrap:anywhere}
+.apply-org-info i{color:#1b4d8f}
+.apply-header .apply-form-title{display:inline-block;background:#1b4d8f;color:#fff;border-radius:8px;padding:.45rem 1.1rem;margin:.95rem 0 0;font-size:1rem}
 .apply-body{padding:1.8rem}
 .btn-primary{background:#1b4d8f;border-color:#1b4d8f;font-weight:600}
 .btn-primary:hover{background:#0a1f44;border-color:#0a1f44}
@@ -101,9 +120,16 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 <div style="position:fixed;top:12px;inset-inline-end:12px"><a href="<?php echo $langSwitchUrl; ?>" class="btn btn-sm btn-light"><i class="fas fa-globe me-1"></i><?php echo AK_LANG === 'ar' ? 'EN' : 'عربي'; ?></a></div>
 <div class="apply-card">
     <div class="apply-header">
-        <i class="fas fa-hand-holding-heart"></i>
-        <h3 class="mt-2"><?php echo t('منظمة أهل الخير'); ?></h3>
-        <p class="mb-0"><?php echo t('استمارة كفيل جديدة'); ?></p>
+        <img class="apply-header-logo" src="<?php echo e($orgLogoUrl); ?>" alt="<?php echo e($orgName); ?> logo" onerror="this.onerror=null;this.src='<?php echo e(APP_URL . 'assets/img/placeholder-logo.png'); ?>';">
+        <h3><?php echo e($orgName); ?></h3>
+        <?php if ($orgContactDetails): ?>
+            <div class="apply-org-info" aria-label="<?php echo AK_LANG === 'en' ? 'Organization contact information' : 'معلومات التواصل مع المنظمة'; ?>">
+                <?php foreach ($orgContactDetails as $detail): ?>
+                    <span><i class="fas <?php echo e($detail['icon']); ?>" aria-hidden="true"></i><?php echo e($detail['value']); ?></span>
+                <?php endforeach; ?>
+            </div>
+        <?php endif; ?>
+        <p class="apply-form-title mb-0"><?php echo t('استمارة كفيل جديدة'); ?></p>
     </div>
     <div class="apply-body">
         <?php if ($done): ?>
