@@ -3286,3 +3286,8 @@ Updated `modules/notifications/mark_read.php` so supervisor request links preser
 ### 2026-10-29 — PHP-13 syntax-check coverage
 
 Expanded the existing PHP syntax workflow to lint `apply.php`, `modules/notifications/mark_read.php`, `modules/sponsors/my_request.php`, and `modules/sponsors/requests.php`, which were absent from its explicit file list. Commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`; workflow result pending, local browser acceptance still required.
+
+
+### 2026-10-29 — PHP-13 reconciliation follow-up
+
+The initial PHP-13 mismatch finding is superseded by current source: `apply.php` now inserts `sponsor_name` with status `new`, captures individual gender, and supports company/organization applicants; the staff conversion path supports those applicant types. The canonical migration `database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql` reconciles legacy column/status variants. Commit `5471ff7b7d0fdcd56300518bd822587dda7613bf` removes its temporary stored procedure in favor of prepared dynamic SQL, preserving the no-stored-procedure project rule. PHP syntax workflow run `40827969459` passed for commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`. User locally verified request 8 submission confirmation and the assigned supervisor detail route. Do not reopen that route absent regression; next verify migration compatibility against controlled legacy-schema fixtures and complete company/organization conversion acceptance. Migration execution against the user's current local DB has not been performed.

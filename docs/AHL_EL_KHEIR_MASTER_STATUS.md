@@ -5518,3 +5518,8 @@ Hardened the supervisor sponsor-request notification redirect path: same-applica
 ### 2026-10-29 — PHP-13 lint coverage expansion
 
 Added the public application, supervisor request-detail page, sponsor management queue, and notification redirect handler to the explicit PHP syntax-check list. Commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`. CI result is pending; local PHP/browser acceptance is not implied.
+
+
+## 2026-10-29 — PHP-13 public sponsor application checkpoint
+
+The earlier PHP-13 mismatch description is superseded by current source review. The public form now saves canonical `sponsor_name`/ `new` values, captures gender for individual applicants, and accepts individual/company/organization applicant types. The staff conversion handler supports those types. The canonical migration is `database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql`; commit `5471ff7b7d0fdcd56300518bd822587dda7613bf` removed its temporary stored procedure and uses prepared dynamic SQL instead. PHP syntax workflow run `40827969459` passed for the prior PHP-path coverage commit. User verified the request 8 success confirmation and assigned supervisor detail route locally. The exact route is verified for that case; broader applicant-type conversion and legacy migration compatibility remain unverified. Do not run the revised migration on the user's current database without a specific controlled verification plan.

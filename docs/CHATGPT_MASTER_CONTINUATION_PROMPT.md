@@ -3220,3 +3220,8 @@ Continue on the existing repository and database; do not create a replacement pr
 ### 2026-10-29 — PHP-13 syntax coverage follow-up
 
 The PHP syntax workflow now explicitly includes `apply.php`, `modules/notifications/mark_read.php`, `modules/sponsors/my_request.php`, and `modules/sponsors/requests.php` (commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`). Verify the workflow result and retain the pending Linux Mint local browser acceptance; do not infer runtime success from source edits.
+
+
+### 2026-10-29 — PHP-13 current evidence and next gate
+
+The earlier PHP-13 description of a current `full_name`/`pending` mismatch is stale relative to current source and is superseded by the latest reconciliation: `apply.php` writes `sponsor_name`/ `new`, individual gender is captured and validated, and `modules/sponsors/requests.php` supports conversion for individual/company/organization applicants. Migration `database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql` handles legacy name/status variants and restores fields. Its temporary stored procedure was removed in commit `5471ff7b7d0fdcd56300518bd822587dda7613bf`, replaced with prepared dynamic SQL to respect the no-procedure rule. PHP syntax workflow run `40827969459` passed for commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`. The user confirmed that request 8's success dialog named supervisor فاطمة سليمان and the notification opened the scoped detail page for supervisor account `sv1`. Do not change that route without regression evidence. Next: test migration idempotence/data preservation against controlled legacy schema variants and finish the company/organization conversion acceptance. No migration was executed against the user's current local DB during this checkpoint.

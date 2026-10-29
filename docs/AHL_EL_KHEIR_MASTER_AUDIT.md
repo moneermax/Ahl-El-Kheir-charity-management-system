@@ -5790,3 +5790,17 @@ Source review found the scoped supervisor notification path could incorrectly pr
 ### 2026-10-29 — PHP-13 workflow lint gap
 
 The PHP syntax workflow did not explicitly lint the four active PHP-13 paths (`apply.php`, `modules/notifications/mark_read.php`, `modules/sponsors/my_request.php`, `modules/sponsors/requests.php`). Added them in commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`. This improves verification coverage and does not itself prove the workflow passed or local runtime behavior is correct.
+
+
+## 2026-10-29 — PHP-13 reconciliation follow-up
+
+This note supersedes the initial PHP-13 finding above where it conflicts with current source on `main`.
+
+- Current `apply.php` inserts `sponsor_name` and status `new`; the public form captures gender for individual applicants and supports individual, company, and organization types.
+- Current `modules/sponsors/requests.php` converts those three types, requiring male/female gender only for individuals. The old mismatch is therefore no longer present in the current source reviewed on 2026-10-29.
+- The canonical migration is `database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql`; it reconciles the earlier `full_name` column and legacy statuses while restoring fields used by the public form and staff/API queue.
+- Source and migration review found that this migration temporarily created a stored procedure, contrary to the project rule forbidding stored procedures/functions/events. Commit `5471ff7b7d0fdcd56300518bd822587dda7613bf` replaces that section with prepared dynamic SQL; it does not create a stored procedure or change application runtime code.
+- GitHub PHP syntax workflow run `40827969459` for commit `6a8f66e05ae17a92ad5772d1122d831835b413c4` completed successfully.
+- Local browser acceptance: user confirmed that public request 8 displayed the assigned supervisor and that supervisor `sv1` opened request 8 in `modules/sponsors/my_request.php`; the detail page showed the assigned request and its fields. This verifies that specific submission/notification/detail route, not every applicant type or conversion scenario.
+- Remaining verification: apply/re-run the revised migration only in a controlled test database that represents the legacy variants, then verify no data loss and confirm the resulting columns/status enum. Do not rerun or alter the user's live local database merely because the migration source changed; its current runtime schema already served request 8 successfully.
+- No source changes are needed for the already-tested notification route unless regression evidence appears. Continue with controlled migration compatibility verification and remaining end-to-end acceptance for company/organization conversion, without inventing business rules or adding runtime DDL.
