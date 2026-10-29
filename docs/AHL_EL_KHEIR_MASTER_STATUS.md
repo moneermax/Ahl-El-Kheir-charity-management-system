@@ -5479,3 +5479,15 @@ The user has moved the development workstation from Windows to Linux Mint and co
 - This environment checkpoint records setup, not full database row-by-row equivalence or application-wide runtime acceptance. The user confirmed only that the project URL opens and login succeeds.
 
 Continue on the existing repository and database; do not create a replacement project. Before code changes, read the canonical project documents and the current PHP remediation backlog from `main`. Keep Flutter/native development paused.
+
+## 2026-10-29 — Public sponsor application terms and supervisor handoff
+
+Implemented on `main`:
+- `apply.php`: bilingual terms/next-steps dialog, live assigned-supervisor display for individual applicants, and supervisor name on successful submission when available.
+- `apply_supervisor.php`: public read-only lookup returning only the active assigned supervisor's name, resolved using the existing letter + gender responsibility matrix.
+- `docs/AHL_EL_KHEIR_ROLES_AND_WORKFLOWS.md`: documented the applicant-facing lifecycle and its boundaries.
+
+No schema migration or new database table was introduced. The applicant-facing text explicitly distinguishes an initial application from a completed sponsorship and does not guarantee immediate orphan assignment. Company/organization applicants are told that the organization will arrange the responsible follow-up contact because the current assignment matrix only automatically resolves individual sponsors.
+
+**Verification boundary:** source changes are committed; local PHP lint and browser/runtime verification have not yet been performed. Continue with a targeted diff/source review and local verification; do not claim runtime completion yet.
+
