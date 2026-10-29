@@ -99,6 +99,4 @@ UPDATE sponsor_requests
  WHERE status IN ('pending','confirmed','rejected');
 ALTER TABLE sponsor_requests
     MODIFY COLUMN status ENUM('new','contacted','converted','lost') NOT NULL DEFAULT 'new';
-
--- Add missing indexes without replacing or dropping existing indexes.
-CREATE INDEX idx_sr_status ON sponsor_requests (status);
+\n
