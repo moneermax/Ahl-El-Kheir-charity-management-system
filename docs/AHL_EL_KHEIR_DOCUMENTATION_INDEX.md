@@ -169,3 +169,8 @@ See `CHATGPT_AI_ASSISTANT_CONTINUATION.md` for the gold launcher, persistent per
 ## 2026-10-23 — Systematic document archive design opened
 
 The new independent task is a systematic archive for receipts and uploaded documents. Read `docs/DOCUMENT_ARCHIVE_CONTINUATION.md` before implementation. The current checkpoint is discovery/design only: no application code, database schema, stored files, or business records were changed. Source inspection found multiple storage roots and module-specific serving routes, plus runtime DDL in `modules/families/documents.php` and `modules/transactions/receipt_file.php`; preserve these as explicit audit findings and do not use runtime DDL. Recommended approach is a central searchable catalogue/version/audit layer, preserving domain authorization and business records, registering historical files in place first, and migrating physical files only after schema and host behavior are verified. Next: finish upload/serving/schema inventory, inspect the actual local `ahl_el_kheir` schema and hosting constraints, then finalize a migration design before implementation.
+
+
+## 2026-10-29 — Sponsor request conversion workflow
+
+Read `SPONSOR_REQUEST_CONVERSION_CONTINUATION.md` before continuing the sponsor application conversion workflow. The assigned-supervisor action now explicitly converts an actionable request to an active sponsor and redirects to the sponsor detail page. A follow-up source fix rechecks request ownership under the row lock to close a reassignment race. Local browser/runtime verification remains pending; do not describe the complete workflow as runtime-verified until the documented acceptance checks pass.
