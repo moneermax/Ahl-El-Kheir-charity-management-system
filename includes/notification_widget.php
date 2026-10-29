@@ -155,7 +155,7 @@ if (Session::isLoggedIn()) {
                  formData.append('csrf_token',csrfToken);
                  formData.append('notification_id',String(notificationId));
                  formData.append('redirect',String(resolvedLink));
-                 fetch(markReadUrl,{method:'POST',credentials:'same-origin',body:formData,headers:{'Accept':'text/html'}}).then(navigate).catch(navigate);
+                 fetch(markReadUrl,{method:'POST',credentials:'same-origin',body:formData,headers:{'Accept':'text/html'}}).then(function(response){if(response && response.url && response.url.indexOf(window.location.origin+'/')===0){window.location.href=response.url;}else{navigate();}}).catch(navigate);
              } else {
                  navigate();
              }
