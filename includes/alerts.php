@@ -3,6 +3,12 @@ $flashes = flash_all();
 
 foreach ($flashes as $flash) {
     $type = $flash['type'] ?? 'info';
+    $duration = 0;
+
+    if ($type === 'success_long') {
+        $type = 'success';
+        $duration = 8000;
+    }
 
     if ($type === 'error') {
         $type = 'danger';
@@ -18,6 +24,7 @@ foreach ($flashes as $flash) {
         class="ak-flash-message d-none"
         data-ak-flash="<?php echo e($type); ?>"
         data-ak-message="<?php echo e($message); ?>"
+        data-ak-duration="<?php echo (int)$duration; ?>"
         aria-live="polite"
     ><?php echo e($message); ?></div>
 <?php
