@@ -5508,3 +5508,8 @@ Updated the `apply.php` contact-info row to stay horizontal using compact spacin
 ### 2026-10-29 — Sponsor confirmation supervisor emphasis
 
 `apply.php` now highlights the assigned supervisor's name in the success dialog using high-contrast magenta text, a border and a pale background. This is presentation-only; no assignment or notification behavior changed. Local browser verification remains pending.
+
+
+### 2026-10-29 — Supervisor notification redirect normalization
+
+Hardened the supervisor sponsor-request notification redirect path: same-application absolute links remain unchanged, external/protocol-relative links are rejected, and relative links receive the application base only once. Commit `cefd47eea8504da35e541d75eb961af73795eed6`. Local PHP lint and click-through/runtime checks are pending.
