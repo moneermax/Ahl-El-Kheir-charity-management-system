@@ -164,7 +164,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <button type="submit" class="btn btn-outline-info"><i class="fas fa-phone me-1"></i>تم التواصل</button>
         </form>
         <?php endif; ?>
-        <form method="post" class="d-inline" onsubmit="return confirm('تأكيد تحويل هذا الطلب إلى سجل كفيل نشط؟ سيتم إنشاء سجل الكفيل ثم فتح صفحته لمتابعة إجراءات الكفالة.');">
+        <form method="post" class="d-inline" data-ak-native-post="1" onsubmit="return confirm('تأكيد تحويل هذا الطلب إلى سجل كفيل نشط؟ سيتم إنشاء سجل الكفيل ثم فتح صفحته لمتابعة إجراءات الكفالة.');">
             <?php echo csrf_field(); ?>
             <input type="hidden" name="action" value="convert">
             <input type="hidden" name="id" value="<?php echo (int)$request['id']; ?>">
