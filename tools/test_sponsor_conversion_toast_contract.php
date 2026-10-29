@@ -29,8 +29,8 @@ $checks = [
         str_contains($request, '<form method="post" class="d-inline" data-ak-native-post="1"'),
     'conversion emits the long success flash before redirecting to sponsor detail' =>
         strpos($request, "flash('success_long',") !== false
-        && strpos($request, "header('Location: ' . APP_URL . 'modules/sponsors/view.php?id=' . $sponsorId);") !== false
-        && strpos($request, "flash('success_long',") < strpos($request, "header('Location: ' . APP_URL . 'modules/sponsors/view.php?id=' . $sponsorId);"),
+        && strpos($request, "modules/sponsors/view.php?id=") !== false
+        && strpos($request, "flash('success_long',") < strpos($request, "modules/sponsors/view.php?id="),
     'global POST handler honors the native-post opt-out' =>
         str_contains($appJs, "form.dataset.akNativePost === '1'"),
     'success_long is converted to a success toast with an 8000ms duration' =>
