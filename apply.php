@@ -40,6 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if ($supId) {
             $assignedSupervisor = dbFetchOne("SELECT u.full_name FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND u.is_active = 1 AND r.code = 'supervisor' LIMIT 1", [$supId]);
             $assignedSupervisorName = trim((string)($assignedSupervisor['full_name'] ?? '')) ?: null;
+            if ($assignedSupervisorName === null) $supId = null;
         }
         dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address, sponsor_type, gender, preferred_payment_method, proposed_amount, desired_orphans, notes, first_letter_raw, first_letter_id, assigned_supervisor_id, source, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'public_form', 'new')",
             [$name, $phone, $phonePurpose, $form['alt_phone'] !== '' ? $form['alt_phone'] : null, $altPhonePurpose, $form['email'] !== '' ? $form['email'] : null, $form['address'] !== '' ? $form['address'] : null, $type, $gender, $payment, $proposedAmount, $desiredOrphans, $form['notes'] !== '' ? $form['notes'] : null, $raw, $letterId, $supId]);
