@@ -14,7 +14,7 @@ if (!function_exists('t')) { function t(string $s): string { return function_exi
 
 $purposes = ['call' => 'للاتصال', 'whatsapp' => 'واتساب', 'both' => 'للاتصال وواتساب'];
 
-$done = false; $errors = [];
+$done = false; $errors = []; $assignedSupervisorName = null;
 $form = ['full_name'=>'','phone'=>'','phone_purpose'=>'both','alt_phone'=>'','alt_phone_purpose'=>'both','email'=>'','address'=>'','sponsor_type'=>'individual','gender'=>'','preferred_payment_method'=>'cash','desired_orphans'=>'','proposed_amount'=>'','notes'=>''];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($form as $key => $default) if (isset($_POST[$key]) && is_scalar($_POST[$key])) $form[$key] = trim((string)$_POST[$key]);
@@ -37,6 +37,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $letter = dbFetchOne("SELECT id FROM letters WHERE is_active = 1 AND code = ? LIMIT 1", [$norm]);
         $letterId = $letter ? (int)$letter['id'] : null;
         $supId = $type === 'individual' ? resolveSponsorSupervisorId($name, $gender) : null;
+        if ($supId) {
+            $assignedSupervisor = dbFetchOne("SELECT u.full_name FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND u.is_active = 1 AND r.code = 'supervisor' LIMIT 1", [$supId]);
+            $assignedSupervisorName = trim((string)($assignedSupervisor['full_name'] ?? '')) ?: null;
+        }
         dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address, sponsor_type, gender, preferred_payment_method, proposed_amount, desired_orphans, notes, first_letter_raw, first_letter_id, assigned_supervisor_id, source, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'public_form', 'new')",
             [$name, $phone, $phonePurpose, $form['alt_phone'] !== '' ? $form['alt_phone'] : null, $altPhonePurpose, $form['email'] !== '' ? $form['email'] : null, $form['address'] !== '' ? $form['address'] : null, $type, $gender, $payment, $proposedAmount, $desiredOrphans, $form['notes'] !== '' ? $form['notes'] : null, $raw, $letterId, $supId]);
         $reqId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
@@ -82,6 +86,11 @@ body{background:linear-gradient(135deg,#0a1f44 0%,#1b4d8f 100%);font-family:'Cai
 .f-row{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;margin-bottom:.9rem}
 .f-row label{font-weight:700;white-space:nowrap;margin:0}
 .f-row .gap-label{margin-inline-start:1.4rem}
+.terms-dialog{width:min(720px,calc(100% - 2rem));max-height:85vh;overflow:auto;border:0;border-radius:16px;padding:0;box-shadow:0 18px 55px rgba(0,0,0,.35)}
+.terms-dialog::backdrop{background:rgba(4,16,38,.68)}
+.terms-dialog-header{background:#1b4d8f;color:#fff;padding:1rem 1.25rem}
+.terms-dialog-body{padding:1.25rem;line-height:1.9}
+.supervisor-panel{border:1px solid #b6d4fe;border-radius:10px;background:#eef6ff;padding:.9rem 1rem;margin:1rem 0}
 /* Hide number input spinners (up/down arrows) */
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,
@@ -105,7 +114,59 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
             </div>
         <?php else: ?>
             <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
-            <p class="text-muted"><?php echo t('سجّل بياناتك وسيتواصل معك المشرف المختص'); ?></p>
+            <p class="text-muted"><?php echo AK_LANG === 'en' ? 'Submit your details and the organization will follow up with you.' : 'سجّل بياناتك وستتابع المنظمة طلبك.'; ?></p>
+            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+                <button type="button" class="btn btn-outline-primary" id="openTerms"><i class="fas fa-book-open me-1"></i><?php echo AK_LANG === 'en' ? 'Read sponsorship terms and next steps' : 'اقرأ شروط الكفالة والتعليمات والخطوات التالية'; ?></button>
+                <span class="small text-muted"><?php echo AK_LANG === 'en' ? 'Please review the process before submitting.' : 'يرجى الاطلاع على آلية العمل قبل إرسال الطلب.'; ?></span>
+            </div>
+            <div class="supervisor-panel" id="assignedSupervisorPanel" aria-live="polite">
+                <div class="fw-bold mb-1"><i class="fas fa-user-tie me-1"></i><?php echo AK_LANG === 'en' ? 'Your follow-up supervisor' : 'المشرف المختص بمتابعة طلبك'; ?></div>
+                <div id="assignedSupervisorMessage"><?php echo AK_LANG === 'en' ? 'Enter your full name and select your gender to check the assigned supervisor.' : 'أدخل الاسم الكامل وحدد الجنس لعرض اسم المشرف المختص.'; ?></div>
+            </div>
+            <dialog class="terms-dialog" id="sponsorshipTermsDialog" aria-labelledby="termsDialogTitle">
+                <div class="terms-dialog-header d-flex align-items-center justify-content-between gap-3">
+                    <h5 class="mb-0" id="termsDialogTitle"><?php echo AK_LANG === 'en' ? 'Sponsorship terms and what happens next' : 'شروط الكفالة وما بعد تقديم الطلب'; ?></h5>
+                    <button type="button" class="btn btn-sm btn-light" id="closeTerms" aria-label="<?php echo AK_LANG === 'en' ? 'Close' : 'إغلاق'; ?>"><i class="fas fa-times"></i></button>
+                </div>
+                <div class="terms-dialog-body">
+                    <?php if (AK_LANG === 'en'): ?>
+                        <p>Thank you for your interest in supporting children through Ahl El Kheir Women's Organization. Submitting this form is an initial request, not a completed sponsorship agreement.</p>
+                        <h6>What happens after you apply?</h6>
+                        <ol>
+                            <li>Your request is received by the organization and routed according to its current supervisor-assignment rules.</li>
+                            <li>The assigned supervisor will contact you using the details you provide, confirm your interest, answer questions, and explain the applicable terms and steps.</li>
+                            <li>You can discuss the number of children you hope to sponsor, your proposed monthly amount, and your preferred payment method.</li>
+                            <li>If you decide to proceed, authorized staff will review suitable available children and the proposed sponsorship details with you. Matching depends on eligibility, availability, and organizational procedures.</li>
+                            <li>The sponsorship begins only after the required details are confirmed and the organization completes its normal registration and sponsorship steps. Applying does not guarantee that a particular child is immediately assigned.</li>
+                        </ol>
+                        <h6>Important notes</h6>
+                        <ul>
+                            <li>Please provide accurate contact details and respond to the supervisor's follow-up.</li>
+                            <li>The proposed amount, number of children, and payment method are preferences for discussion; they are not final until confirmed with the organization.</li>
+                            <li>The supervisor will explain the applicable sponsorship commitment, payment arrangements, and any further requirements before the sponsorship is finalized.</li>
+                            <li>Your submitted contact details will be used to follow up on this application.</li>
+                        </ul>
+                    <?php else: ?>
+                        <p>نشكركم على رغبتكم في دعم الأطفال عبر منظمة أهل الخير النسوية. إرسال هذه الاستمارة هو طلب مبدئي، ولا يعني اكتمال اتفاق الكفالة.</p>
+                        <h6>ماذا يحدث بعد إرسال الطلب؟</h6>
+                        <ol>
+                            <li>تستلم المنظمة الطلب وتوجهه وفق قواعد توزيع المشرفين المعتمدة لديها.</li>
+                            <li>يتواصل معكم المشرف المختص باستخدام بيانات الاتصال المقدمة، ويتأكد من رغبتكم، ويجيب عن أسئلتكم، ويوضح الشروط والخطوات المعمول بها.</li>
+                            <li>يمكنكم مناقشة عدد الأطفال المراد كفالتهم، والمبلغ الشهري المقترح، وطريقة الدفع المفضلة.</li>
+                            <li>عند الرغبة في المتابعة، يراجع الموظفون المخولون الأطفال المناسبين والمتاحين وتفاصيل الكفالة معكم. وتعتمد المطابقة على الأهلية والتوفر وإجراءات المنظمة.</li>
+                            <li>تبدأ الكفالة بعد تأكيد التفاصيل المطلوبة وإكمال إجراءات تسجيل الكفيل والكفالة المعتادة. إرسال الطلب لا يضمن تخصيص طفل بعينه فوراً.</li>
+                        </ol>
+                        <h6>ملاحظات مهمة</h6>
+                        <ul>
+                            <li>يرجى تقديم بيانات اتصال صحيحة والتجاوب مع متابعة المشرف المختص.</li>
+                            <li>المبلغ المقترح وعدد الأطفال وطريقة الدفع تفضيلات للمناقشة، ولا تصبح نهائية إلا بعد تأكيدها مع المنظمة.</li>
+                            <li>يوضح المشرف الالتزامات المعمول بها وترتيبات الدفع وأي متطلبات إضافية قبل إكمال الكفالة.</li>
+                            <li>تُستخدم بيانات الاتصال المقدمة لمتابعة هذا الطلب.</li>
+                        </ul>
+                    <?php endif; ?>
+                    <div class="text-end mt-3"><button type="button" class="btn btn-primary" id="closeTermsBottom"><?php echo AK_LANG === 'en' ? 'Close and return to form' : 'إغلاق والعودة إلى الاستمارة'; ?></button></div>
+                </div>
+            </dialog>
             <form method="post">
                 <?php echo csrf_field(); ?>
                 <!-- الاسم الكامل -->
@@ -188,6 +249,19 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 </div>
 <script>
 (function () {
+    const termsDialog = document.getElementById('sponsorshipTermsDialog');
+    const openTerms = document.getElementById('openTerms');
+    const closeTerms = [document.getElementById('closeTerms'), document.getElementById('closeTermsBottom')];
+    if (termsDialog && openTerms && typeof termsDialog.showModal === 'function') {
+        openTerms.addEventListener('click', () => termsDialog.showModal());
+        closeTerms.forEach(button => button && button.addEventListener('click', () => termsDialog.close()));
+        termsDialog.addEventListener('click', event => { if (event.target === termsDialog) termsDialog.close(); });
+    } else if (openTerms) {
+        openTerms.addEventListener('click', () => { if (termsDialog) termsDialog.setAttribute('open', 'open'); });
+        closeTerms.forEach(button => button && button.addEventListener('click', () => termsDialog && termsDialog.removeAttribute('open')));
+    }
+})();
+(function () {
     const type = document.getElementById('sponsorType');
     const row = document.getElementById('genderRow');
     const gender = document.getElementById('applicantGender');
@@ -200,6 +274,61 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     }
     type.addEventListener('change', syncGenderRequirement);
     syncGenderRequirement();
+})();
+(function () {
+    const type = document.getElementById('sponsorType');
+    const name = document.querySelector('input[name="full_name"]');
+    const gender = document.getElementById('applicantGender');
+    const message = document.getElementById('assignedSupervisorMessage');
+    if (!type || !name || !gender || !message) return;
+    const english = <?php echo AK_LANG === 'en' ? 'true' : 'false'; ?>;
+    const lookupUrl = <?php echo json_encode(APP_URL . 'apply_supervisor.php', JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
+    let lookupTimer = null;
+    let lookupSequence = 0;
+    function setMessage(value) { message.textContent = value; }
+    async function refreshSupervisor() {
+        const sequence = ++lookupSequence;
+        if (type.value !== 'individual') {
+            setMessage(english
+                ? 'For companies and organizations, the responsible contact is assigned by the organization; an individual supervisor is not auto-assigned on this form.'
+                : 'بالنسبة للشركات والمنظمات، تحدد إدارة المنظمة المسؤول عن المتابعة؛ ولا يتم إسناد مشرف فردي تلقائياً عبر هذه الاستمارة.');
+            return;
+        }
+        const fullName = name.value.trim();
+        if (!fullName || !['male', 'female'].includes(gender.value)) {
+            setMessage(english
+                ? 'Enter your full name and select your gender to check the assigned supervisor.'
+                : 'أدخل الاسم الكامل وحدد الجنس لعرض اسم المشرف المختص.');
+            return;
+        }
+        setMessage(english ? 'Checking the assigned supervisor…' : 'جارٍ تحديد المشرف المختص…');
+        try {
+            const params = new URLSearchParams({name: fullName, gender: gender.value});
+            const response = await fetch(lookupUrl + '?' + params.toString(), {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
+            const result = await response.json();
+            if (sequence !== lookupSequence) return;
+            if (response.ok && result.assigned && result.supervisor_name) {
+                setMessage((english ? 'Your assigned supervisor is: ' : 'المشرف المختص بمتابعة طلبك هو: ') + result.supervisor_name);
+            } else {
+                setMessage(english
+                    ? 'A supervisor could not be identified automatically for these details. The organization will arrange follow-up.'
+                    : 'تعذر تحديد المشرف تلقائياً لهذه البيانات؛ وسترتب إدارة المنظمة متابعة الطلب.');
+            }
+        } catch (error) {
+            if (sequence !== lookupSequence) return;
+            setMessage(english
+                ? 'The supervisor could not be checked right now. The organization will arrange follow-up after submission.'
+                : 'تعذر التحقق من اسم المشرف حالياً؛ وسترتب المنظمة المتابعة بعد إرسال الطلب.');
+        }
+    }
+    function scheduleLookup() {
+        if (lookupTimer !== null) clearTimeout(lookupTimer);
+        lookupTimer = setTimeout(refreshSupervisor, 350);
+    }
+    name.addEventListener('input', scheduleLookup);
+    gender.addEventListener('change', refreshSupervisor);
+    type.addEventListener('change', refreshSupervisor);
+    refreshSupervisor();
 })();
 </script>
 </body>
