@@ -5500,3 +5500,7 @@ The now-unused `apply_supervisor.php` lookup endpoint was removed. No schema, as
 ## 2026-10-29 — Public sponsor form organization header
 
 Updated `apply.php` to render the existing organization logo first, the configured organization name second, and available organization contact details third (address, support phone, support email), followed by the sponsorship form title. It reads the existing `settings` keys and omits blank contact fields; it does not invent contact information or change the schema. Source and workflow documentation are committed to `main`. Local PHP lint and browser verification are pending.
+
+### 2026-10-29 — Sponsor application contact-line refinement
+
+Updated the `apply.php` contact-info row to stay horizontal using compact spacing and horizontal overflow on narrow screens, preventing the organization address/phone/email items from stacking. Source-only change; local browser verification remains pending.
