@@ -45,6 +45,60 @@ if (!$request) {
     exit();
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!verify_csrf()) {
+        http_response_code(403);
+        $pageTitle = 'طلب كفيل';
+        $active = 'sponsors';
+        include dirname(__DIR__, 2) . '/includes/header.php';
+        echo '<div class="alert alert-danger m-3">انتهت صلاحية النموذج أو تعذر التحقق من الطلب. حدّث الصفحة ثم حاول مجدداً.</div>';
+        include dirname(__DIR__, 2) . '/includes/footer.php';
+        exit();
+    }
+
+    $postedId = filter_input(INPUT_POST, 'id', FILTER_VALIDATE_INT);
+    $action = trim((string)($_POST['action'] ?? ''));
+    $newStatus = trim((string)($_POST['status'] ?? ''));
+
+    if (!$postedId || $postedId !== (int)$request['id'] || $action !== 'set_status') {
+        flash('error', 'تعذر التحقق من إجراء الطلب.');
+    } elseif (!in_array($newStatus, ['contacted', 'lost'], true)) {
+        flash('error', 'حالة الطلب غير صالحة.');
+    } else {
+        $currentStatus = (string)$request['status'];
+        $allowedCurrentStatuses = $newStatus === 'contacted' ? ['new'] : ['new', 'contacted'];
+
+        if (!in_array($currentStatus, $allowedCurrentStatuses, true)) {
+            flash('error', 'لا يمكن تغيير حالة الطلب في وضعه الحالي.');
+        } else {
+            $updated = $newStatus === 'contacted'
+                ? dbExecute(
+                    "UPDATE sponsor_requests SET status = 'contacted' WHERE id = ? AND assigned_supervisor_id = ? AND status = 'new'",
+                    [$requestId, Session::getUserId()]
+                )
+                : dbExecute(
+                    "UPDATE sponsor_requests SET status = 'lost' WHERE id = ? AND assigned_supervisor_id = ? AND status IN ('new', 'contacted')",
+                    [$requestId, Session::getUserId()]
+                );
+
+            $current = dbFetchOne(
+                "SELECT status FROM sponsor_requests WHERE id = ? AND assigned_supervisor_id = ? LIMIT 1",
+                [$requestId, Session::getUserId()]
+            );
+            if ($current && (string)$current['status'] === $newStatus) {
+                flash('success', $newStatus === 'contacted' ? 'تم تحديث الطلب إلى «تم التواصل».' : 'تم إغلاق الطلب بوصفه غير مكتمل.');
+            } elseif (!$updated || !$current) {
+                flash('error', 'تعذر تحديث الطلب؛ ربما تغيرت حالته أو لم يعد ضمن الطلبات المسندة إليك.');
+            } else {
+                flash('error', 'لم تتغير حالة الطلب. حدّث الصفحة وتحقق من الحالة الحالية.');
+            }
+        }
+    }
+
+    header('Location: ' . APP_URL . 'modules/sponsors/my_request.php?id=' . $requestId);
+    exit();
+}
+
 $pageTitle = 'تفاصيل طلب كفيل';
 $active = 'sponsors';
 $statusLabels = ['new' => 'جديد', 'contacted' => 'تم التواصل', 'converted' => 'تم التحويل إلى كفيل', 'lost' => 'مغلق / لم يكتمل'];
@@ -87,6 +141,33 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <?php endforeach; ?>
         </tbody>
     </table></div>
-    <a class="btn btn-outline-secondary" href="<?php echo e(APP_URL . 'modules/sponsors/index.php'); ?>">العودة إلى سجل الكفلاء</a>
+    <?php if (in_array((string)$request['status'], ['new', 'contacted'], true)): ?>
+    <hr>
+    <div class="d-flex flex-wrap gap-2 align-items-center" aria-label="إجراءات طلب الكفيل">
+        <?php if ((string)$request['status'] === 'new'): ?>
+        <form method="post" class="d-inline" onsubmit="return confirm('تأكيد تسجيل أنه تم التواصل مع مقدم الطلب؟');">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="action" value="set_status">
+            <input type="hidden" name="status" value="contacted">
+            <input type="hidden" name="id" value="<?php echo (int)$request['id']; ?>">
+            <button type="submit" class="btn btn-outline-info"><i class="fas fa-phone me-1"></i>تم التواصل</button>
+        </form>
+        <?php endif; ?>
+        <form method="post" class="d-inline" onsubmit="return confirm('تأكيد إغلاق الطلب بوصفه غير مكتمل؟');">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="action" value="set_status">
+            <input type="hidden" name="status" value="lost">
+            <input type="hidden" name="id" value="<?php echo (int)$request['id']; ?>">
+            <button type="submit" class="btn btn-outline-secondary"><i class="fas fa-xmark me-1"></i>إغلاق / لم يكتمل</button>
+        </form>
+    </div>
+    <?php elseif ((string)$request['status'] === 'lost'): ?>
+    <div class="alert alert-secondary mt-3 mb-0">هذا الطلب مغلق. إعادة فتح الطلب أو تحويله إلى سجل كفيل تتم من خلال مسار الإدارة المخوّل.</div>
+    <?php elseif ((string)$request['status'] === 'converted'): ?>
+    <div class="alert alert-success mt-3 mb-0">تم تحويل هذا الطلب إلى سجل كفيل. لا تتوفر إجراءات إضافية من صفحة المشرف.</div>
+    <?php endif; ?>
+    <div class="mt-3">
+        <a class="btn btn-outline-secondary" href="<?php echo e(APP_URL . 'modules/sponsors/index.php'); ?>">العودة إلى سجل الكفلاء</a>
+    </div>
 </div></div>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>

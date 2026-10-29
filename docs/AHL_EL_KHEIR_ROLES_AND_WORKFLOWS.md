@@ -178,3 +178,10 @@ Follow-up confirmation styling (2026-10-29): the assigned supervisor's name in t
 
 
 Notification redirect follow-up (2026-10-29): supervisor sponsor-request notification handling now preserves only same-application absolute URLs, rejects external/protocol-relative legacy URLs, and prefixes relative paths exactly once. The assigned-supervisor ID check on the detail page remains the authorization boundary. Source committed to `main`; local lint and browser verification remain pending.
+
+
+## 2026-10-29 — PHP-13 assigned supervisor request actions
+
+The assigned-supervisor request detail page now supports two bounded operational transitions for requests assigned to the logged-in supervisor: `new -> contacted` and `new/contacted -> lost`. Both actions are exposed only while the request is actionable and use CSRF-protected POST forms. The handler verifies that the posted request ID matches the displayed request, rechecks assignment to the current supervisor, validates the source state, and applies a conditional status update. Reopening a lost request and converting a request into a sponsor remain outside the supervisor detail page and under the existing authorized management queue. No schema or migration was needed.
+
+Verification boundary: source was reviewed against the current main-branch request handler and supervisor scope rule. PHP syntax and local browser/runtime behavior still require verification in the user's Linux/XAMPP environment; do not call this runtime-verified until tested there.
