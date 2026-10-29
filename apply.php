@@ -91,7 +91,6 @@ body{background:linear-gradient(135deg,#0a1f44 0%,#1b4d8f 100%);font-family:'Cai
 .terms-dialog::backdrop{background:rgba(4,16,38,.68)}
 .terms-dialog-header{background:#1b4d8f;color:#fff;padding:1rem 1.25rem}
 .terms-dialog-body{padding:1.25rem;line-height:1.9}
-.supervisor-panel{border:1px solid #b6d4fe;border-radius:10px;background:#eef6ff;padding:.9rem 1rem;margin:1rem 0}
 /* Hide number input spinners (up/down arrows) */
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,
@@ -108,22 +107,26 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     </div>
     <div class="apply-body">
         <?php if ($done): ?>
-            <div class="alert alert-success text-center">
-                <h5><?php echo t('تم استلام طلبك بنجاح'); ?></h5>
-                <p class="mb-2"><?php echo t('سيتواصل معك المشرف المختص قريباً.'); ?></p>
-                <?php if ($assignedSupervisorName): ?><p class="mb-2"><?php echo AK_LANG === 'en' ? 'Your assigned supervisor:' : 'المشرف المختص بمتابعة طلبك:'; ?> <strong><?php echo e($assignedSupervisorName); ?></strong></p><?php endif; ?>
-                <a href="<?php echo APP_URL; ?>apply.php" class="btn btn-primary btn-sm"><?php echo t('إرسال طلب آخر'); ?></a>
-            </div>
+            <dialog class="terms-dialog" id="submissionConfirmationDialog" aria-labelledby="submissionConfirmationTitle">
+                <div class="terms-dialog-header">
+                    <h5 class="mb-0" id="submissionConfirmationTitle"><?php echo AK_LANG === 'en' ? 'Application received successfully' : 'تم استلام طلبك بنجاح'; ?></h5>
+                </div>
+                <div class="terms-dialog-body text-center">
+                    <p class="mb-3"><?php echo AK_LANG === 'en' ? 'Thank you. The organization has received your request, and the responsible supervisor will contact you to confirm the details and guide you through the next steps.' : 'شكراً لكم. استلمت المنظمة طلبكم، وسيتواصل معكم المشرف المختص لتأكيد التفاصيل ومساعدتكم في استكمال الخطوات التالية.'; ?></p>
+                    <?php if ($assignedSupervisorName): ?>
+                        <p class="mb-3"><?php echo AK_LANG === 'en' ? 'Your assigned supervisor is:' : 'المشرف المختص بمتابعة طلبكم هو:'; ?> <strong><?php echo e($assignedSupervisorName); ?></strong></p>
+                    <?php else: ?>
+                        <p class="mb-3"><?php echo AK_LANG === 'en' ? 'The organization will arrange the appropriate follow-up contact.' : 'سترتب إدارة المنظمة التواصل معكم من خلال المسؤول المختص.'; ?></p>
+                    <?php endif; ?>
+                    <a href="<?php echo APP_URL; ?>apply.php" class="btn btn-primary"><?php echo AK_LANG === 'en' ? 'Submit another application' : 'إرسال طلب آخر'; ?></a>
+                </div>
+            </dialog>
         <?php else: ?>
             <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
             <p class="text-muted"><?php echo AK_LANG === 'en' ? 'Submit your details and the organization will follow up with you.' : 'سجّل بياناتك وستتابع المنظمة طلبك.'; ?></p>
             <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
                 <button type="button" class="btn btn-outline-primary" id="openTerms"><i class="fas fa-book-open me-1"></i><?php echo AK_LANG === 'en' ? 'Read sponsorship terms and next steps' : 'اقرأ شروط الكفالة والتعليمات والخطوات التالية'; ?></button>
                 <span class="small text-muted"><?php echo AK_LANG === 'en' ? 'Please review the process before submitting.' : 'يرجى الاطلاع على آلية العمل قبل إرسال الطلب.'; ?></span>
-            </div>
-            <div class="supervisor-panel" id="assignedSupervisorPanel" aria-live="polite">
-                <div class="fw-bold mb-1"><i class="fas fa-user-tie me-1"></i><?php echo AK_LANG === 'en' ? 'Your follow-up supervisor' : 'المشرف المختص بمتابعة طلبك'; ?></div>
-                <div id="assignedSupervisorMessage"><?php echo AK_LANG === 'en' ? 'Enter your full name and select your gender to check the assigned supervisor.' : 'أدخل الاسم الكامل وحدد الجنس لعرض اسم المشرف المختص.'; ?></div>
             </div>
             <dialog class="terms-dialog" id="sponsorshipTermsDialog" aria-labelledby="termsDialogTitle">
                 <div class="terms-dialog-header d-flex align-items-center justify-content-between gap-3">
@@ -278,59 +281,13 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     syncGenderRequirement();
 })();
 (function () {
-    const type = document.getElementById('sponsorType');
-    const name = document.querySelector('input[name="full_name"]');
-    const gender = document.getElementById('applicantGender');
-    const message = document.getElementById('assignedSupervisorMessage');
-    if (!type || !name || !gender || !message) return;
-    const english = <?php echo AK_LANG === 'en' ? 'true' : 'false'; ?>;
-    const lookupUrl = <?php echo json_encode(APP_URL . 'apply_supervisor.php', JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE); ?>;
-    let lookupTimer = null;
-    let lookupSequence = 0;
-    function setMessage(value) { message.textContent = value; }
-    async function refreshSupervisor() {
-        const sequence = ++lookupSequence;
-        if (type.value !== 'individual') {
-            setMessage(english
-                ? 'For companies and organizations, the responsible contact is assigned by the organization; an individual supervisor is not auto-assigned on this form.'
-                : 'بالنسبة للشركات والمنظمات، تحدد إدارة المنظمة المسؤول عن المتابعة؛ ولا يتم إسناد مشرف فردي تلقائياً عبر هذه الاستمارة.');
-            return;
-        }
-        const fullName = name.value.trim();
-        if (!fullName || !['male', 'female'].includes(gender.value)) {
-            setMessage(english
-                ? 'Enter your full name and select your gender to check the assigned supervisor.'
-                : 'أدخل الاسم الكامل وحدد الجنس لعرض اسم المشرف المختص.');
-            return;
-        }
-        setMessage(english ? 'Checking the assigned supervisor…' : 'جارٍ تحديد المشرف المختص…');
-        try {
-            const params = new URLSearchParams({name: fullName, gender: gender.value});
-            const response = await fetch(lookupUrl + '?' + params.toString(), {headers: {'Accept': 'application/json'}, credentials: 'same-origin'});
-            const result = await response.json();
-            if (sequence !== lookupSequence) return;
-            if (response.ok && result.assigned && result.supervisor_name) {
-                setMessage((english ? 'Your assigned supervisor is: ' : 'المشرف المختص بمتابعة طلبك هو: ') + result.supervisor_name);
-            } else {
-                setMessage(english
-                    ? 'A supervisor could not be identified automatically for these details. The organization will arrange follow-up.'
-                    : 'تعذر تحديد المشرف تلقائياً لهذه البيانات؛ وسترتب إدارة المنظمة متابعة الطلب.');
-            }
-        } catch (error) {
-            if (sequence !== lookupSequence) return;
-            setMessage(english
-                ? 'The supervisor could not be checked right now. The organization will arrange follow-up after submission.'
-                : 'تعذر التحقق من اسم المشرف حالياً؛ وسترتب المنظمة المتابعة بعد إرسال الطلب.');
-        }
+    const confirmation = document.getElementById('submissionConfirmationDialog');
+    if (!confirmation) return;
+    if (typeof confirmation.showModal === 'function') {
+        confirmation.showModal();
+    } else {
+        confirmation.setAttribute('open', 'open');
     }
-    function scheduleLookup() {
-        if (lookupTimer !== null) clearTimeout(lookupTimer);
-        lookupTimer = setTimeout(refreshSupervisor, 350);
-    }
-    name.addEventListener('input', scheduleLookup);
-    gender.addEventListener('change', refreshSupervisor);
-    type.addEventListener('change', refreshSupervisor);
-    refreshSupervisor();
 })();
 </script>
 </body>
