@@ -321,7 +321,8 @@
         ).map(function(node){
             return {
                 type: node.getAttribute('data-ak-flash') || 'info',
-                message: String(node.getAttribute('data-ak-message') || node.textContent || '').trim()
+                message: String(node.getAttribute('data-ak-message') || node.textContent || '').trim(),
+                duration: Number(node.getAttribute('data-ak-duration') || 0)
             };
         });
         incoming.querySelectorAll('[data-ak-flash]').forEach(function(node){
@@ -518,7 +519,7 @@
         responseFlashes.forEach(function(flash){
             if (!flash.message) return;
             if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
-                window.AKNotify.toast(flash.type, flash.message);
+                window.AKNotify.toast(flash.type, flash.message, flash.duration);
             }
         });
 
