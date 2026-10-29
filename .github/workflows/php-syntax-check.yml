@@ -578,6 +578,54 @@ jobs:
           [[ "$outflow_status_enum" == *"'pending_approval'"* ]]
           [[ "$outflow_status_enum" != *"'pending',"* ]]
 
+      - name: Verify sponsor request migration on canonical and legacy schemas
+        env:
+          MYSQL_PWD: root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root)
+          # Canonical schema: the migration must be safe to apply twice.
+          "${mysql[@]}" --database=salary_advance_migration_test < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
+          "${mysql[@]}" --database=salary_advance_migration_test < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
+          canonical_gender_type=$("${mysql[@]}" --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'gender'")
+          canonical_status_type=$("${mysql[@]}" --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'status'")
+          [[ "$canonical_gender_type" == "varchar(20)" ]]
+          [[ "$canonical_status_type" == *"'new'"* && "$canonical_status_type" == *"'contacted'"* && "$canonical_status_type" == *"'converted'"* && "$canonical_status_type" == *"'lost'"* ]]
+          # Legacy runtime-created schema: preserve rows, rename full_name, and map statuses.
+          "${mysql[@]}" -e "CREATE DATABASE sponsor_request_legacy_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+          "${mysql[@]}" --database=sponsor_request_legacy_test <<'SQL'
+          CREATE TABLE sponsor_requests (
+              id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+              full_name VARCHAR(150) NOT NULL,
+              phone VARCHAR(30) DEFAULT NULL,
+              sponsor_type ENUM('individual','company','organization') NOT NULL DEFAULT 'individual',
+              preferred_payment_method ENUM('cash','bank_transfer','credit_card','mobile','other') NOT NULL DEFAULT 'cash',
+              proposed_amount DECIMAL(12,2) DEFAULT NULL,
+              notes TEXT DEFAULT NULL,
+              first_letter_raw VARCHAR(10) DEFAULT NULL,
+              first_letter_id TINYINT UNSIGNED DEFAULT NULL,
+              assigned_supervisor_id INT UNSIGNED DEFAULT NULL,
+              status ENUM('pending','contacted','confirmed','rejected') NOT NULL DEFAULT 'pending',
+              contact_notes TEXT DEFAULT NULL,
+              created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              confirmed_at DATETIME DEFAULT NULL,
+              confirmed_by INT UNSIGNED DEFAULT NULL,
+              created_sponsor_id INT UNSIGNED DEFAULT NULL,
+              INDEX idx_sr_status (status),
+              INDEX idx_sr_supervisor (assigned_supervisor_id)
+          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+          INSERT INTO sponsor_requests (full_name, status) VALUES ('Legacy Pending', 'pending'), ('Legacy Confirmed', 'confirmed'), ('Legacy Rejected', 'rejected');
+          SQL
+          "${mysql[@]}" --database=sponsor_request_legacy_test < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
+          "${mysql[@]}" --database=sponsor_request_legacy_test < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
+          legacy_names=$("${mysql[@]}" --database=sponsor_request_legacy_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'sponsor_name'")
+          legacy_old_names=$("${mysql[@]}" --database=sponsor_request_legacy_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'full_name'")
+          legacy_statuses=$("${mysql[@]}" --database=sponsor_request_legacy_test --batch --skip-column-names -e "SELECT SUM(status='new') + SUM(status='converted') + SUM(status='lost') FROM sponsor_requests")
+          test "$legacy_names" = "1"
+          test "$legacy_old_names" = "0"
+          test "$legacy_statuses" = "3"
+
   hr-job-description-migrations:
     runs-on: ubuntu-latest
     services:
@@ -670,50 +718,3 @@ jobs:
               AND system_role_code = '';
           ")
           test "$approved_guard" = "1"
-      - name: Verify sponsor request migration on canonical and legacy schemas
-        env:
-          MYSQL_PWD: root
-        shell: bash
-        run: |
-          set -euo pipefail
-          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root)
-          # Canonical schema: the migration must be safe to apply twice.
-          "${mysql[@]}" --database=salary_advance_migration_test < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
-          "${mysql[@]}" --database=salary_advance_migration_test < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
-          canonical_gender_type=$("${mysql[@]}" --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'gender'")
-          canonical_status_type=$("${mysql[@]}" --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'status'")
-          [[ "$canonical_gender_type" == "varchar(20)" ]]
-          [[ "$canonical_status_type" == *"'new'"* && "$canonical_status_type" == *"'contacted'"* && "$canonical_status_type" == *"'converted'"* && "$canonical_status_type" == *"'lost'"* ]]
-          # Legacy runtime-created schema: preserve rows, rename full_name, and map statuses.
-          "${mysql[@]}" -e "CREATE DATABASE sponsor_request_legacy_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-          "${mysql[@]}" --database=sponsor_request_legacy_test <<'SQL'
-          CREATE TABLE sponsor_requests (
-              id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-              full_name VARCHAR(150) NOT NULL,
-              phone VARCHAR(30) DEFAULT NULL,
-              sponsor_type ENUM('individual','company','organization') NOT NULL DEFAULT 'individual',
-              preferred_payment_method ENUM('cash','bank_transfer','credit_card','mobile','other') NOT NULL DEFAULT 'cash',
-              proposed_amount DECIMAL(12,2) DEFAULT NULL,
-              notes TEXT DEFAULT NULL,
-              first_letter_raw VARCHAR(10) DEFAULT NULL,
-              first_letter_id TINYINT UNSIGNED DEFAULT NULL,
-              assigned_supervisor_id INT UNSIGNED DEFAULT NULL,
-              status ENUM('pending','contacted','confirmed','rejected') NOT NULL DEFAULT 'pending',
-              contact_notes TEXT DEFAULT NULL,
-              created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-              confirmed_at DATETIME DEFAULT NULL,
-              confirmed_by INT UNSIGNED DEFAULT NULL,
-              created_sponsor_id INT UNSIGNED DEFAULT NULL,
-              INDEX idx_sr_status (status),
-              INDEX idx_sr_supervisor (assigned_supervisor_id)
-          ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-          INSERT INTO sponsor_requests (full_name, status) VALUES ('Legacy Pending', 'pending'), ('Legacy Confirmed', 'confirmed'), ('Legacy Rejected', 'rejected');
-          SQL
-          "${mysql[@]}" --database=sponsor_request_legacy_test < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
-          "${mysql[@]}" --database=sponsor_request_legacy_test < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
-          legacy_names=$("${mysql[@]}" --database=sponsor_request_legacy_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'sponsor_name'")
-          legacy_old_names=$("${mysql[@]}" --database=sponsor_request_legacy_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'full_name'")
-          legacy_statuses=$("${mysql[@]}" --database=sponsor_request_legacy_test --batch --skip-column-names -e "SELECT SUM(status='new') + SUM(status='converted') + SUM(status='lost') FROM sponsor_requests")
-          test "$legacy_names" = "1"
-          test "$legacy_old_names" = "0"
-          test "$legacy_statuses" = "3"
