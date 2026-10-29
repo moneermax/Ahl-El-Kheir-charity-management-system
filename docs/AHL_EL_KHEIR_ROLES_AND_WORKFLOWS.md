@@ -175,3 +175,6 @@ The public `apply.php` header now displays the organization logo first, followed
 Follow-up layout refinement (2026-10-29): organization contact items are kept on a single horizontal line using compact spacing; narrow screens may scroll horizontally rather than stacking the items. Source committed on `main`; local browser verification remains pending.
 
 Follow-up confirmation styling (2026-10-29): the assigned supervisor's name in the successful-submission dialog is highlighted with a high-contrast magenta text/border and pale background so it is clearly distinguishable from the surrounding message. No workflow or data behavior changed; browser verification remains pending.
+
+
+Notification redirect follow-up (2026-10-29): supervisor sponsor-request notification handling now preserves only same-application absolute URLs, rejects external/protocol-relative legacy URLs, and prefixes relative paths exactly once. The assigned-supervisor ID check on the detail page remains the authorization boundary. Source committed to `main`; local lint and browser verification remain pending.
