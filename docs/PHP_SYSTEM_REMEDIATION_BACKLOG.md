@@ -232,6 +232,8 @@ This is a test-discovery result, **not** proof that these routes are untested by
 
 ## Change log
 
+- 2026-10-29: Sponsor request notification follow-up: the public form already assigns individual requests through the authoritative first-letter + gender matrix and notifies the assigned supervisor, but the notification previously linked to the management-only full queue. Added `modules/sponsors/my_request.php`, a supervisor-only read-only detail page that requires the request ID and `assigned_supervisor_id = Session::getUserId()`; updated `apply.php` so the assigned supervisor receives that scoped detail link while management recipients retain the general queue link. This deliberately does not grant supervisors access to the full queue or its conversion/delete actions. Commits: `d6719a97bd039562838a8902fe67d2f0161a5ff5` and `89ecf6d8de7ef1b602871e34faf829e8e084dcc4`. Local PHP lint and runtime access tests are still required; confirm an assigned supervisor can view their own request and receives 404 for another supervisor's request.
+
 - 2026-10-29: Local PHP-13 browser acceptance exposed an unclosed POST-handler block in `modules/sponsors/requests.php`, causing a PHP parse error and HTTP 500 when opening the sponsor request queue. Fixed narrowly in commit `916d7c44c53aa8b31e0fd38b3fb9b7f7e0b30ba3` by closing the POST guard before queue rendering. Local PHP lint and browser retest remain pending; do not mark PHP-13 runtime acceptance closed yet.
 
 - 2026-10-28: Created at the user's request to pause Flutter work and log PHP/backend findings for future remediation. Tracking issue: #96.
