@@ -3256,3 +3256,10 @@ The user locally confirmed that **تم التواصل** changes the request stat
 A follow-up UX fix is committed on `main`: the conversion success flash uses an opt-in 8-second toast duration; all ordinary flash messages retain the existing default duration. Commits: `ed1f4c75b55cb133b43a93ecc663df89665c878d`, `426697fac7aa16d0bbb0729b886f3fc301ff7fe9`, `04f45fa72ccc0c461f04a3fd2fd376f2b278f862`.
 
 **Verification boundary:** the extended toast behavior is source-committed but still needs local verification after pulling `main`. Duplicate-conversion and reassignment-race acceptance checks have not been reported as tested; do not claim them passed.
+
+
+## 2026-10-29 — Immediate continuation: sponsor conversion toast and test fixture
+
+Current source correction on `main`: `cfb828cdb2db68a364512e5ac30c7ef3a6dacceb`. Exact toast root cause: `assets/js/app.js`'s same-page response handler dropped `data-ak-duration`, so the conversion success toast ignored the 8-second duration. User must pull and browser-test before the fix can be called verified.
+
+User requests restoring sponsor SP-002860 / أمير علي طه to its pre-conversion state for another test. Current local DB is not accessible from this remote session. Before changing data, run read-only queries against the actual local MariaDB to identify the sponsor ID, linked `sponsor_requests` ID/status, and any operational references. Only restore the request/sponsor state after confirming the sponsor was created by that conversion and has no dependent operational data; retain audit history. Do not invent IDs or run a broad delete.
