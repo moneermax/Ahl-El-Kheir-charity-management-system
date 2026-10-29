@@ -3278,3 +3278,7 @@ The applicant-facing supervisor note has been removed from the pre-submission fo
 ### 2026-10-29 — Public application supervisor-name emphasis
 
 The successful `apply.php` confirmation now styles the assigned supervisor name with a high-contrast magenta highlight and pale background. Source committed to `main`; local browser verification remains pending.
+
+### 2026-10-29 — Supervisor notification redirect hardening
+
+Updated `modules/notifications/mark_read.php` so supervisor request links preserve a trusted absolute URL only when it belongs to the current application, reject external or protocol-relative legacy links, and prefix only relative paths. Commit `cefd47eea8504da35e541d75eb961af73795eed6`. This is source-reviewed; PHP lint and Linux Mint browser acceptance remain pending.
