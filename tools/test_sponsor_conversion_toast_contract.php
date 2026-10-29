@@ -34,9 +34,7 @@ $checks = [
     'global POST handler honors the native-post opt-out' =>
         str_contains($appJs, "form.dataset.akNativePost === '1'"),
     'success_long is converted to a success toast with an 8000ms duration' =>
-        str_contains($alerts, "if ($type === 'success_long')") === false
-        && str_contains($alerts, "if ($type === 'success_long')") === false
-        && str_contains($alerts, "$type === 'success_long'")
+        str_contains($alerts, "if (\$type === 'success_long')")
         && str_contains($alerts, '$duration = 8000;')
         && str_contains($alerts, 'data-ak-duration="<?php echo (int)$duration; ?>"'),
     'normal page load reads and forwards the server-supplied toast duration' =>
