@@ -5496,3 +5496,7 @@ No schema migration or new database table was introduced. The applicant-facing t
 The public sponsor application no longer displays or fetches the assigned supervisor while the applicant is filling out the form. After a valid request is saved, `apply.php` automatically opens a bilingual confirmation dialog. It names the assigned active supervisor when the existing letter + gender assignment rules resolve one; otherwise it explains that the organization will arrange follow-up. The pre-submission terms/instructions dialog remains available.
 
 The now-unused `apply_supervisor.php` lookup endpoint was removed. No schema, assignment rules, request lifecycle, or permissions changed. Source and documentation commits are on `main`; local PHP lint and browser runtime verification remain pending.
+
+## 2026-10-29 — Public sponsor form organization header
+
+Updated `apply.php` to render the existing organization logo first, the configured organization name second, and available organization contact details third (address, support phone, support email), followed by the sponsorship form title. It reads the existing `settings` keys and omits blank contact fields; it does not invent contact information or change the schema. Source and workflow documentation are committed to `main`. Local PHP lint and browser verification are pending.
