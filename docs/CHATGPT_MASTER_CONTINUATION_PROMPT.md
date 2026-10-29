@@ -3247,3 +3247,12 @@ Verification boundary: source was reviewed against the current main-branch reque
 The assigned supervisor can explicitly convert their own assigned request in `modules/sponsors/my_request.php` using **تحويل إلى كفيل ومتابعة**. Conversion remains separate from **تم التواصل**: contact only changes request status; conversion creates the active sponsor and redirects to `modules/sponsors/view.php?id=…` so the supervisor can continue in the existing sponsor workflow. Only requests still in `new` or `contacted` can be converted. The detail page is scoped to the current supervisor's assigned request; conversion uses a row lock, transaction, conditional status update, assignment-history behavior, and audit record. The existing staff management queue now calls the same helper so both entry points share one conversion implementation. VGM retains sponsor assignment/reassignment authority. This action does not automatically assign orphans or set a sponsorship amount.
 
 Verification boundary: source review is complete; GitHub PHP lint and local Linux/XAMPP browser/database verification are required before runtime acceptance.
+
+
+## 2026-10-29 — Sponsor conversion success feedback duration
+
+The user locally confirmed that **تم التواصل** changes the request status without activating a sponsor; **تحويل إلى كفيل ومتابعة** creates and opens sponsor record 2859; the original request shows the converted status; and the existing sponsorship workflow is available. PHP 8.2.12 syntax checks passed for `modules/sponsors/my_request.php`, `modules/sponsors/lib_sponsor_request_conversion.php`, and `modules/sponsors/view.php`.
+
+A follow-up UX fix is committed on `main`: the conversion success flash uses an opt-in 8-second toast duration; all ordinary flash messages retain the existing default duration. Commits: `ed1f4c75b55cb133b43a93ecc663df89665c878d`, `426697fac7aa16d0bbb0729b886f3fc301ff7fe9`, `04f45fa72ccc0c461f04a3fd2fd376f2b278f862`.
+
+**Verification boundary:** the extended toast behavior is source-committed but still needs local verification after pulling `main`. Duplicate-conversion and reassignment-race acceptance checks have not been reported as tested; do not claim them passed.
