@@ -50,3 +50,17 @@ Correction committed to `main`: `cfb828cdb2db68a364512e5ac30c7ef3a6dacceb` — p
 ## 2026-10-29 — Sponsor conversion toast redirect lifecycle correction
 
 The conversion POST form now opts out of the global same-page `fetch()` POST handler with `data-ak-native-post="1"`. Source tracing showed that the handler follows the conversion's cross-page redirect during `fetch`; the redirected sponsor-detail response renders and consumes the one-time session flash, then JavaScript navigates the browser to that URL a second time. This makes the flash lifecycle depend on the intermediate fetch response rather than the actual document navigation. Native POST/redirect/GET lets the sponsor-detail page render the `success_long` flash once and use its configured 8000 ms duration. Change committed to `main` as `6b398049b530e50d32ef364647eeaed10e02aeb5`. Browser verification and PHP syntax check are pending; do not mark runtime-verified until confirmed locally.
+
+
+## 2026-10-29 — Sponsor conversion toast regression guard
+
+The conversion feedback path was reviewed end-to-end across `modules/sponsors/my_request.php`, `includes/alerts.php`, `assets/js/notifications.js`, and `assets/js/app.js`.
+
+Verified source contract:
+- Conversion emits `success_long` and redirects to the created sponsor detail page.
+- The conversion form opts out of the global same-page `fetch()` handler so the one-time session flash is rendered by the real redirected document, not consumed by an intermediate fetch response.
+- `includes/alerts.php` maps only `success_long` to an 8000 ms toast duration.
+- The normal page-load toast handler reads and forwards that duration; the shared in-place response handler also preserves it for other pages.
+- SweetAlert2's toast timer receives the positive supplied duration instead of relying on its 3200 ms default.
+
+Added database-free regression test: `php tools/test_sponsor_conversion_toast_contract.php`, wired into the PHP syntax workflow. This guards source wiring, not real-browser timing. Local browser acceptance remains pending; do not claim runtime verification until the deployed local app is exercised.

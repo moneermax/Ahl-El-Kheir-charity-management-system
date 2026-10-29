@@ -3332,3 +3332,8 @@ A second source-level correction was committed to `main`: `cfb828cdb2db68a364512
 ## 2026-10-29 — Sponsor conversion toast redirect lifecycle correction
 
 The conversion POST form now opts out of the global same-page `fetch()` POST handler with `data-ak-native-post="1"`. Source tracing showed that the handler follows the conversion's cross-page redirect during `fetch`; the redirected sponsor-detail response renders and consumes the one-time session flash, then JavaScript navigates the browser to that URL a second time. This makes the flash lifecycle depend on the intermediate fetch response rather than the actual document navigation. Native POST/redirect/GET lets the sponsor-detail page render the `success_long` flash once and use its configured 8000 ms duration. Change committed to `main` as `6b398049b530e50d32ef364647eeaed10e02aeb5`. Browser verification and PHP syntax check are pending; do not mark runtime-verified until confirmed locally.
+
+
+## 2026-10-29 — Sponsor conversion toast: regression coverage
+
+The sponsor conversion toast source path has been traced across conversion POST/redirect, session flash rendering, toast initialization, and global same-page POST interception. The conversion form uses native POST/redirect/GET to prevent the intermediate `fetch()` response from consuming the one-time flash; the 8000 ms duration is preserved and forwarded to the toast implementation. A database-free source-contract regression test, `tools/test_sponsor_conversion_toast_contract.php`, is wired into the PHP syntax workflow. Local browser acceptance remains a separate gate.
