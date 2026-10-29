@@ -314,6 +314,66 @@ jobs:
           php tools/test_salary_advance_rescheduling_service.php
           php tools/test_salary_advance_rescheduling_lock_order.php
 
+
+  sponsor-request-migration:
+    runs-on: ubuntu-latest
+    services:
+      mariadb:
+        image: mariadb:10.4.32
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: sponsor_request_migration_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Install MariaDB client
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y mariadb-client
+
+      - name: Verify clean install and repeatability
+        env:
+          MYSQL_PWD: root
+        run: |
+          set -euo pipefail
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root --database=sponsor_request_migration_test)
+          "${mysql[@]}" < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
+          "${mysql[@]}" < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
+          columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name IN ('sponsor_name','sponsor_type','preferred_payment_method','assigned_supervisor_id','status','gender','desired_orphans','source')")
+          test "$columns" = "8"
+          status_enum=$("${mysql[@]}" --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'status'")
+          [[ "$status_enum" == *"'new'"* && "$status_enum" == *"'contacted'"* && "$status_enum" == *"'converted'"* && "$status_enum" == *"'lost'"* ]]
+          routines=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema = DATABASE() AND routine_name LIKE 'ak_reconcile_sponsor_request%'")
+          test "$routines" = "0"
+
+      - name: Verify legacy full_name and statuses are preserved and normalized
+        env:
+          MYSQL_PWD: root
+        run: |
+          set -euo pipefail
+          mysql --host=127.0.0.1 --port=3306 --user=root -e "CREATE DATABASE sponsor_request_legacy_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root --database=sponsor_request_legacy_test)
+          "${mysql[@]}" -e "CREATE TABLE sponsor_requests (id INT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY, full_name VARCHAR(255) NOT NULL, phone VARCHAR(30) DEFAULT NULL, status ENUM('pending','confirmed','rejected') NOT NULL DEFAULT 'pending', created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci"
+          "${mysql[@]}" -e "INSERT INTO sponsor_requests (full_name, phone, status) VALUES ('Legacy Pending','0912345678','pending'),('Legacy Confirmed','0912345679','confirmed'),('Legacy Rejected','0912345680','rejected')"
+          "${mysql[@]}" < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
+          "${mysql[@]}" < database/migrations/2026-10-29_sponsor_requests_canonical_workflow.sql
+          rows=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM sponsor_requests")
+          test "$rows" = "3"
+          preserved=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM sponsor_requests WHERE (sponsor_name = 'Legacy Pending' AND status = 'new') OR (sponsor_name = 'Legacy Confirmed' AND status = 'converted') OR (sponsor_name = 'Legacy Rejected' AND status = 'lost')")
+          test "$preserved" = "3"
+          old_column=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'full_name'")
+          test "$old_column" = "0"
+          routines=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.routines WHERE routine_schema = DATABASE()")
+          test "$routines" = "0"
+
   migration-full-schema:
     runs-on: ubuntu-latest
     services:
