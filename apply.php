@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $done = true;
     }
 }
-$orgSettings = [];
+$orgSettings = ['site_logo' => '', 'org_name_ar' => '', 'org_name_en' => '', 'org_address' => '', 'support_phone' => '', 'support_email' => ''];
 foreach (dbFetchAll("SELECT setting_key, setting_value FROM settings WHERE setting_key IN ('site_logo', 'org_name_ar', 'org_name_en', 'org_address', 'support_phone', 'support_email')") as $setting) {
     $orgSettings[(string)$setting['setting_key']] = trim((string)($setting['setting_value'] ?? ''));
 }
