@@ -96,8 +96,8 @@ body{background:linear-gradient(135deg,#0a1f44 0%,#1b4d8f 100%);font-family:'Cai
 .apply-header{background:#fff;color:#142b4f;padding:1.35rem 1.6rem 1.15rem;text-align:center;border-radius:15px 15px 0 0;border-bottom:4px solid #c6a45b}
 .apply-header-logo{display:block;width:112px;height:112px;object-fit:contain;margin:0 auto .8rem}
 .apply-header h3{font-size:1.45rem;font-weight:700;line-height:1.5;margin:0 0 .4rem}
-.apply-org-info{display:flex;justify-content:center;align-items:center;gap:.45rem 1.1rem;flex-wrap:wrap;color:#526174;font-size:.88rem;margin-top:.65rem}
-.apply-org-info span{display:inline-flex;align-items:center;gap:.35rem;overflow-wrap:anywhere}
+.apply-org-info{display:flex;justify-content:center;align-items:center;gap:.45rem .85rem;flex-wrap:nowrap;overflow-x:auto;white-space:nowrap;color:#526174;font-size:.78rem;margin-top:.65rem;max-width:100%;padding-bottom:.15rem}
+.apply-org-info span{display:inline-flex;align-items:center;gap:.3rem;white-space:nowrap;flex:0 0 auto}
 .apply-org-info i{color:#1b4d8f}
 .apply-header .apply-form-title{display:inline-block;background:#1b4d8f;color:#fff;border-radius:8px;padding:.45rem 1.1rem;margin:.95rem 0 0;font-size:1rem}
 .apply-body{padding:1.8rem}
