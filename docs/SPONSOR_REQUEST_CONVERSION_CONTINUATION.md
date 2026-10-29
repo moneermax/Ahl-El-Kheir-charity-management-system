@@ -20,7 +20,7 @@ Commits:
 
 ## Verification boundary
 
-Repository source has been inspected. The local browser workflow has **not** been runtime-verified by this checkpoint. Do not claim end-to-end success until tested against the real local application/database.
+The user has locally verified the core conversion path (contact status, successful conversion/redirect, converted request link, and access to the existing sponsorship workflow). The targeted 8-second success-toast behavior awaits local verification after pulling `main`. Duplicate-conversion and reassignment-race checks remain unverified.
 
 ## Required local acceptance
 
