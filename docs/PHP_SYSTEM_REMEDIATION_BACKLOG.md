@@ -146,6 +146,9 @@ The checked-in schema contains all referenced columns/tables. Migration `databas
 
 **Verification boundary:**
 - Source/schema mismatch was confirmed from the checked-in schema and source before edits.
+- On 2026-10-29, a source-level authorization-scope defect was identified in the shared conversion helper: management-queue actors were constrained by the assigned-supervisor ownership predicate. The helper now has explicit supervisor and management-queue scopes, session/actor binding, and per-scope role checks; the supervisor row-lock ownership predicate is retained.
+- Added database-free regression coverage at `tools/test_sponsor_request_conversion_authorization_contract.php` and wired it into the PHP syntax workflow. CI must pass before this correction is considered CI-verified.
+- Local Linux/XAMPP runtime acceptance remains pending.
 - GitHub Actions run [#40818372238](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40818372238) passed all five jobs. The sponsor migration test applied the migration twice against both the canonical schema and a legacy runtime-created fixture, confirming name-column reconciliation, legacy status mapping, and repeatability.
 - No live public submission or staff conversion has been tested against the user's local database. Do not test by inserting dummy records into the live charity database; use disposable/controlled data.
 - Public application and individual/company/organization conversion require local browser acceptance after the user pulls the change.
