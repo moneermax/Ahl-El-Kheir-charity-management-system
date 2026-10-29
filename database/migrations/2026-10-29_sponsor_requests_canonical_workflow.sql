@@ -35,32 +35,32 @@ CREATE TABLE IF NOT EXISTS sponsor_requests (
     INDEX idx_sr_created (created_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- The first public-form implementation used full_name. Rename it when present,
--- preserving all rows. The procedure handles canonical schemas where it is absent.
-DROP PROCEDURE IF EXISTS ak_reconcile_sponsor_request_name;
-DELIMITER //
-CREATE PROCEDURE ak_reconcile_sponsor_request_name()
-BEGIN
-    DECLARE has_old_name INT DEFAULT 0;
-    DECLARE has_new_name INT DEFAULT 0;
-    SELECT COUNT(*) INTO has_old_name
-      FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sponsor_requests' AND COLUMN_NAME = 'full_name';
-    SELECT COUNT(*) INTO has_new_name
-      FROM information_schema.COLUMNS
-     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'sponsor_requests' AND COLUMN_NAME = 'sponsor_name';
-    IF has_old_name = 1 AND has_new_name = 0 THEN
-        ALTER TABLE sponsor_requests CHANGE COLUMN full_name sponsor_name VARCHAR(255) NOT NULL;
-    ELSEIF has_old_name = 1 AND has_new_name = 1 THEN
-        UPDATE sponsor_requests SET sponsor_name = full_name
-         WHERE (sponsor_name IS NULL OR sponsor_name = '') AND full_name IS NOT NULL AND full_name <> '';
-    ELSEIF has_new_name = 0 THEN
-        ALTER TABLE sponsor_requests ADD COLUMN sponsor_name VARCHAR(255) NOT NULL DEFAULT '';
-    END IF;
-END//
-DELIMITER ;
-CALL ak_reconcile_sponsor_request_name();
-DROP PROCEDURE ak_reconcile_sponsor_request_name;
+-- The first public-form implementation used full_name. Reconcile it without
+-- creating a stored procedure/function, even temporarily.
+SET @ak_has_old_name := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'sponsor_requests'
+      AND COLUMN_NAME = 'full_name'
+);
+SET @ak_has_new_name := (
+    SELECT COUNT(*) FROM information_schema.COLUMNS
+    WHERE TABLE_SCHEMA = DATABASE()
+      AND TABLE_NAME = 'sponsor_requests'
+      AND COLUMN_NAME = 'sponsor_name'
+);
+SET @ak_reconcile_name_sql := CASE
+    WHEN @ak_has_old_name = 1 AND @ak_has_new_name = 0
+        THEN 'ALTER TABLE sponsor_requests CHANGE COLUMN full_name sponsor_name VARCHAR(255) NOT NULL'
+    WHEN @ak_has_old_name = 1 AND @ak_has_new_name = 1
+        THEN 'UPDATE sponsor_requests SET sponsor_name = full_name WHERE (sponsor_name IS NULL OR LENGTH(sponsor_name) = 0) AND full_name IS NOT NULL AND LENGTH(full_name) > 0'
+    WHEN @ak_has_new_name = 0
+        THEN CONCAT('ALTER TABLE sponsor_requests ADD COLUMN sponsor_name VARCHAR(255) NOT NULL DEFAULT ', CHAR(39), CHAR(39))
+    ELSE 'SELECT 1'
+END;
+PREPARE ak_reconcile_name_stmt FROM @ak_reconcile_name_sql;
+EXECUTE ak_reconcile_name_stmt;
+DEALLOCATE PREPARE ak_reconcile_name_stmt;
 
 -- Restore fields used by the shared staff/API queue and public form on older
 -- tables created by the previous runtime DDL.
