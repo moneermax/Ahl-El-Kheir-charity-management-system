@@ -110,6 +110,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
             <div class="alert alert-success text-center">
                 <h5><?php echo t('تم استلام طلبك بنجاح'); ?></h5>
                 <p class="mb-2"><?php echo t('سيتواصل معك المشرف المختص قريباً.'); ?></p>
+                <?php if ($assignedSupervisorName): ?><p class="mb-2"><?php echo AK_LANG === 'en' ? 'Your assigned supervisor:' : 'المشرف المختص بمتابعة طلبك:'; ?> <strong><?php echo e($assignedSupervisorName); ?></strong></p><?php endif; ?>
                 <a href="<?php echo APP_URL; ?>apply.php" class="btn btn-primary btn-sm"><?php echo t('إرسال طلب آخر'); ?></a>
             </div>
         <?php else: ?>
