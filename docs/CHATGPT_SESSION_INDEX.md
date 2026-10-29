@@ -3337,3 +3337,10 @@ The conversion POST form now opts out of the global same-page `fetch()` POST han
 ## 2026-10-29 — Sponsor conversion toast: regression coverage
 
 The sponsor conversion toast source path has been traced across conversion POST/redirect, session flash rendering, toast initialization, and global same-page POST interception. The conversion form uses native POST/redirect/GET to prevent the intermediate `fetch()` response from consuming the one-time flash; the 8000 ms duration is preserved and forwarded to the toast implementation. A database-free source-contract regression test, `tools/test_sponsor_conversion_toast_contract.php`, is wired into the PHP syntax workflow. Local browser acceptance remains a separate gate.
+
+
+## 2026-10-29 — Sponsor conversion authorization-scope correction
+
+Source review found that the shared conversion helper always constrained its locked request lookup to `assigned_supervisor_id = actorId`, even when called by the existing authorized management queue. The helper now accepts explicit `supervisor` (default) or `management_queue` scope, validates that the actor matches the active session, enforces the corresponding existing role allowlist, and retains the assigned-supervisor predicate under `FOR UPDATE` for the supervisor path. The management queue explicitly requests the management scope. Conversion state validation, conditional status update, transaction rollback, assignment-history behavior, and audit insert remain in the shared helper.
+
+Added `tools/test_sponsor_request_conversion_authorization_contract.php` and wired it into `.github/workflows/php-syntax-check.yml`. This is a database-free source-contract regression guard; it does not prove database/runtime behavior. Local Linux/XAMPP browser/database acceptance remains pending. Do not claim duplicate-conversion race or reassignment-race runtime coverage from this test.
