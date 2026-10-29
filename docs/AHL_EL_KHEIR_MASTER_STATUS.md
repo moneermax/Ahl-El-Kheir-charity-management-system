@@ -5513,3 +5513,8 @@ Updated the `apply.php` contact-info row to stay horizontal using compact spacin
 ### 2026-10-29 — Supervisor notification redirect normalization
 
 Hardened the supervisor sponsor-request notification redirect path: same-application absolute links remain unchanged, external/protocol-relative links are rejected, and relative links receive the application base only once. Commit `cefd47eea8504da35e541d75eb961af73795eed6`. Local PHP lint and click-through/runtime checks are pending.
+
+
+### 2026-10-29 — PHP-13 lint coverage expansion
+
+Added the public application, supervisor request-detail page, sponsor management queue, and notification redirect handler to the explicit PHP syntax-check list. Commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`. CI result is pending; local PHP/browser acceptance is not implied.
