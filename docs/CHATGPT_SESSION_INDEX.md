@@ -3327,3 +3327,8 @@ A follow-up UX fix is committed on `main`: the conversion success flash uses an 
 ## 2026-10-29 — Sponsor conversion toast follow-up
 
 A second source-level correction was committed to `main`: `cfb828cdb2db68a364512e5ac30c7ef3a6dacceb`. Root cause: `assets/js/app.js`'s same-page response handler discarded the flash node's `data-ak-duration` and called `AKNotify.toast` without it, so the 8-second conversion success toast fell back to the default duration. Browser verification is pending. The user's test sponsor SP-002860 / أمير علي طه has not been reset; local database access is required to inspect the linked request and dependent records safely before restoring its pre-conversion state.
+
+
+## 2026-10-29 — Sponsor conversion toast redirect lifecycle correction
+
+The conversion POST form now opts out of the global same-page `fetch()` POST handler with `data-ak-native-post="1"`. Source tracing showed that the handler follows the conversion's cross-page redirect during `fetch`; the redirected sponsor-detail response renders and consumes the one-time session flash, then JavaScript navigates the browser to that URL a second time. This makes the flash lifecycle depend on the intermediate fetch response rather than the actual document navigation. Native POST/redirect/GET lets the sponsor-detail page render the `success_long` flash once and use its configured 8000 ms duration. Change committed to `main` as `6b398049b530e50d32ef364647eeaed10e02aeb5`. Browser verification and PHP syntax check are pending; do not mark runtime-verified until confirmed locally.
