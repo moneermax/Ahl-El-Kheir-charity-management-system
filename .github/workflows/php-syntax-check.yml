@@ -239,6 +239,7 @@ jobs:
           fi
           php tools/test_mobile_api_role_normalization.php
           php tools/test_sponsor_conversion_toast_contract.php
+          php tools/test_sponsor_request_conversion_authorization_contract.php
 
   migration-mariadb-10-4:
     runs-on: ubuntu-latest
