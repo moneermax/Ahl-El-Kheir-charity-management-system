@@ -5785,3 +5785,8 @@ The assigned supervisor name in `apply.php`'s successful-submission dialog is vi
 ### 2026-10-29 — Notification redirect safety follow-up
 
 Source review found the scoped supervisor notification path could incorrectly prefix an already-absolute same-app URL. `modules/notifications/mark_read.php` now preserves same-app absolute URLs, rejects external/protocol-relative URLs, and normalizes relative paths without double-prefixing. Commit `cefd47eea8504da35e541d75eb961af73795eed6`. No database/schema changes. PHP lint and browser acceptance remain pending.
+
+
+### 2026-10-29 — PHP-13 workflow lint gap
+
+The PHP syntax workflow did not explicitly lint the four active PHP-13 paths (`apply.php`, `modules/notifications/mark_read.php`, `modules/sponsors/my_request.php`, `modules/sponsors/requests.php`). Added them in commit `6a8f66e05ae17a92ad5772d1122d831835b413c4`. This improves verification coverage and does not itself prove the workflow passed or local runtime behavior is correct.
