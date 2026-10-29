@@ -20,7 +20,7 @@ Commits:
 
 ## Verification boundary
 
-The user has locally verified the core conversion path (contact status, successful conversion/redirect, converted request link, and access to the existing sponsorship workflow). The targeted 8-second success-toast behavior awaits local verification after pulling `main`. Duplicate-conversion and reassignment-race checks remain unverified.
+The user has locally verified the core conversion path (contact status, successful conversion/redirect, converted request link, and access to the existing sponsorship workflow). The targeted 8-second success-toast behavior awaits local verification after pulling `main`. Duplicate-conversion rejection and unauthorized ownership isolation were subsequently verified by the disposable runtime harness. A true concurrent reassignment race remains unverified.
 
 ## Required local acceptance
 
@@ -64,3 +64,10 @@ Verified source contract:
 - SweetAlert2's toast timer receives the positive supplied duration instead of relying on its 3200 ms default.
 
 Added database-free regression test: `php tools/test_sponsor_conversion_toast_contract.php`, wired into the PHP syntax workflow. This guards source wiring, not real-browser timing. Local browser acceptance remains pending; do not claim runtime verification until the deployed local app is exercised.
+
+
+## 2026-10-29 — Sponsor conversion runtime verification update
+
+The user ran `/opt/lampp/bin/php tools/run_sponsor_request_conversion_runtime_test.php` locally. PHP syntax validation passed, and the disposable-database runtime harness reported all 13 checks passing, including conversion creation/linkage, assignment-history and audit writes, duplicate-conversion rejection, and rejection of a supervisor acting on another supervisor's request. The generated test database was removed after the run; the production sponsor records were not used as test fixtures or modified by this harness. The toast source-contract test (7 checks) and authorization-contract test (10 checks) also passed. GitHub Actions run [#40880584416](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40880584416) passed all six jobs.
+
+**Remaining boundary:** the toast's actual appearance and approximately 8-second duration have not been verified in a real browser session. The runtime harness does not prove a true two-process concurrent reassignment race. Do not claim either result as proven.
