@@ -58,7 +58,16 @@ if ($notificationId > 0 && Session::getUserRole() === 'supervisor') {
                     $redirect = $notificationPageUrl;
                 }
             } else {
-                $redirect = APP_URL . ltrim($storedLink, '/');
+                // Accept only an application-relative path or this application's
+                // own absolute URL. Never prefix an absolute URL or trust a
+                // protocol-relative/external legacy link.
+                if (strpos($storedLink, APP_URL) === 0) {
+                    $redirect = $storedLink;
+                } elseif (parse_url($storedLink, PHP_URL_SCHEME) !== null || str_starts_with($storedLink, '//')) {
+                    $redirect = $notificationPageUrl;
+                } else {
+                    $redirect = APP_URL . ltrim($storedLink, '/');
+                }
             }
         }
     } catch (Throwable $e) {
