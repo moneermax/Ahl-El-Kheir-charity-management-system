@@ -3274,3 +3274,7 @@ The applicant-facing supervisor note has been removed from the pre-submission fo
 ### 2026-10-29 — Sponsor application header alignment
 
 `apply.php` organization contact details now remain on one horizontal line with compact spacing; on narrow screens the line can scroll horizontally instead of stacking. Local browser verification remains pending.
+
+### 2026-10-29 — Public application supervisor-name emphasis
+
+The successful `apply.php` confirmation now styles the assigned supervisor name with a high-contrast magenta highlight and pale background. Source committed to `main`; local browser verification remains pending.
