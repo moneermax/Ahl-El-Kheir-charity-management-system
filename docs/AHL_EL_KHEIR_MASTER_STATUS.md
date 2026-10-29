@@ -5559,3 +5559,8 @@ A follow-up UX fix is committed on `main`: the conversion success flash uses an 
 ## 2026-10-29 — Sponsor conversion toast duration follow-up
 
 Source root cause identified and corrected on `main` in commit `cfb828cdb2db68a364512e5ac30c7ef3a6dacceb`: `assets/js/app.js` was discarding `data-ak-duration` when extracting server-side flashes for same-page responses, causing the sponsor conversion toast to use the default duration instead of the configured 8 seconds. Local browser verification remains pending. The user's sponsor SP-002860 / أمير علي طه has not yet been reset; do not modify its database state until the linked request and all operational references are inspected on the local MariaDB instance.
+
+
+## 2026-10-29 — Sponsor conversion toast redirect lifecycle correction
+
+The conversion POST form now opts out of the global same-page `fetch()` POST handler with `data-ak-native-post="1"`. Source tracing showed that the handler follows the conversion's cross-page redirect during `fetch`; the redirected sponsor-detail response renders and consumes the one-time session flash, then JavaScript navigates the browser to that URL a second time. This makes the flash lifecycle depend on the intermediate fetch response rather than the actual document navigation. Native POST/redirect/GET lets the sponsor-detail page render the `success_long` flash once and use its configured 8000 ms duration. Change committed to `main` as `6b398049b530e50d32ef364647eeaed10e02aeb5`. Browser verification and PHP syntax check are pending; do not mark runtime-verified until confirmed locally.
