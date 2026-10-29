@@ -232,6 +232,8 @@ This is a test-discovery result, **not** proof that these routes are untested by
 
 ## Change log
 
+- 2026-10-29: Local PHP-13 browser acceptance exposed an unclosed POST-handler block in `modules/sponsors/requests.php`, causing a PHP parse error and HTTP 500 when opening the sponsor request queue. Fixed narrowly in commit `916d7c44c53aa8b31e0fd38b3fb9b7f7e0b30ba3` by closing the POST guard before queue rendering. Local PHP lint and browser retest remain pending; do not mark PHP-13 runtime acceptance closed yet.
+
 - 2026-10-28: Created at the user's request to pause Flutter work and log PHP/backend findings for future remediation. Tracking issue: #96.
 - 2026-10-28: PHP-04 navigation mismatch corrected in commit `046c2a604749f0bb2b4bcaa5488ce6f6c68261d9`; real-browser acceptance remains pending. PHP-06 re-triaged and closed after confirming the current auth integration workflow sets the required test flag and database.
 - 2026-10-28: PHP-07 added after workflow #40632821897 exposed a stale migration fixture; CI-only fixture correction committed as `daa821f1d607aa74d5efd90227e47567043c5ec1`, verified by workflow #40633086558: all five jobs passed.
