@@ -5504,3 +5504,7 @@ Updated `apply.php` to render the existing organization logo first, the configur
 ### 2026-10-29 — Sponsor application contact-line refinement
 
 Updated the `apply.php` contact-info row to stay horizontal using compact spacing and horizontal overflow on narrow screens, preventing the organization address/phone/email items from stacking. Source-only change; local browser verification remains pending.
+
+### 2026-10-29 — Sponsor confirmation supervisor emphasis
+
+`apply.php` now highlights the assigned supervisor's name in the success dialog using high-contrast magenta text, a border and a pale background. This is presentation-only; no assignment or notification behavior changed. Local browser verification remains pending.
