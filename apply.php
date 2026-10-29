@@ -44,7 +44,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $targets = [];
             if ($supId) $targets[] = $supId;
             foreach (dbFetchAll("SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ('admin','vice_general_manager') AND u.is_active = 1") as $u) $targets[] = (int)$u['id'];
-            foreach (array_unique($targets) as $tid) dbExecute("INSERT INTO notifications (recipient_user_id, type, title, body, link) VALUES (?, 'sponsor_request', ?, ?, 'modules/sponsors/requests.php')", [$tid, 'طلب كفيل جديد', $name . ' — ' . $phone]);
+            foreach (array_unique($targets) as $tid) {
+                // Supervisors receive a scoped detail link; management retains the full queue.
+                $targetLink = ($supId && (int)$tid === (int)$supId)
+                    ? 'modules/sponsors/my_request.php?id=' . $reqId
+                    : 'modules/sponsors/requests.php';
+                dbExecute(
+                    "INSERT INTO notifications (recipient_user_id, type, title, body, link) VALUES (?, 'sponsor_request', ?, ?, ?)",
+                    [$tid, 'طلب كفيل جديد', $name . ' — ' . $phone, $targetLink]
+                );
+            }
         } catch (Throwable $e) { error_log('Public sponsor request notification failed for request ' . $reqId . ': ' . $e->getMessage()); }
         $done = true;
     }
