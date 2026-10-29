@@ -132,7 +132,7 @@ The checked-in schema contains all referenced columns/tables. Migration `databas
 `modules/accounting/lib_outflows.php` previously created `monthly_disbursements`, `disbursement_items`, and `nanny_family_verifications` during requests; dynamically added columns; and modified status ENUM definitions. The checked-in schema has canonical monthly statuses without `pending`, while the old runtime table definition included it. Source evidence confirms `ak_out_approve()` accepts both `pending` and `pending_approval`, while the web/API create/transition paths use `pending_approval`; the checked-in dump has no monthly batch with `pending`. Migration `database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql` now creates/reconciles the tables and columns, ensures the group index/FK, maps legacy `pending` to the canonical `pending_approval` state, and restores the canonical ENUM. The schema-sync function and DDL helper were removed while read-only enum introspection remains. GitHub Actions run [#40644551812](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40644551812) passed all five jobs. The full-schema job applied the migration twice. A separate disposable legacy fixture verified restoration of missing group/return columns and the group foreign key/index, normalized `pending` to `pending_approval`, and restored the canonical ENUM. Local outflow workflow acceptance remains pending.
 
 ### PHP-13 — Public sponsor application conflicts with the canonical request schema/workflow
-**Status:** IMPLEMENTED; CI migration verification pending. Local browser acceptance is still required before closure.
+**Status:** IMPLEMENTED; MIGRATION CI VERIFIED. Local browser acceptance is still required before closure.
 **Priority:** High; the public form previously wrote to a schema/status contract incompatible with the canonical staff/API queue.
 
 **Business decision confirmed 2026-10-29:** Public self-registration is an optional future intake path. Staff continue creating sponsors through the existing authenticated sponsor workflow. Public submissions are applications and must enter the shared request queue for staff review; they must not create active sponsors automatically. The form may accept individual, company, and organization applicants.
@@ -146,7 +146,7 @@ The checked-in schema contains all referenced columns/tables. Migration `databas
 
 **Verification boundary:**
 - Source/schema mismatch was confirmed from the checked-in schema and source before edits.
-- A CI step now applies the migration twice against the canonical schema and a legacy runtime-created fixture, then checks column and status reconciliation. Await that workflow result before claiming migration verification.
+- GitHub Actions run [#40818372238](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40818372238) passed all five jobs. The sponsor migration test applied the migration twice against both the canonical schema and a legacy runtime-created fixture, confirming name-column reconciliation, legacy status mapping, and repeatability.
 - No live public submission or staff conversion has been tested against the user's local database. Do not test by inserting dummy records into the live charity database; use disposable/controlled data.
 - Public application and individual/company/organization conversion require local browser acceptance after the user pulls the change.
 
