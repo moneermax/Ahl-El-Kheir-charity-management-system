@@ -30,6 +30,14 @@ if (Session::isLoggedIn()) {
     $akNotifIndividualReadUrl = APP_URL . 'modules/notifications/mark_read.php';
     $akNotifPollUrl = APP_URL . 'modules/notifications/poll.php';
     $akNotifRedirect = (string)($_SERVER['REQUEST_URI'] ?? $akNotifPageUrl);
+    // Notification links stored by modules are commonly app-relative (e.g. modules/sponsors/requests.php).
+    // Resolve them against APP_URL here so they do not become relative to /dashboard/ or another nested page.
+    $akNotifResolveLink = static function (string $link) use ($akNotifPageUrl): string {
+        $link = trim($link);
+        if ($link === '') return $akNotifPageUrl;
+        if (preg_match('~^(?:[a-z][a-z0-9+.-]*:)?//|^/~i', $link)) return $link;
+        return APP_URL . ltrim($link, '/');
+    };
 ?>
 <style>
 #akNotificationBell{position:relative;z-index:1061;display:inline-flex;align-items:center;flex-shrink:0}
@@ -67,7 +75,7 @@ if (Session::isLoggedIn()) {
 @media(max-width:991px){#akNotificationBell .ak-notif-panel{inset-inline-end:-90px}}
 @media(max-width:576px){#akNotificationBell .ak-notif-panel{position:fixed;top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}#akNotificationToastContainer{top:62px;inset-inline-end:10px;width:calc(100vw - 20px)}}
 </style>
-<div id="akNotificationBell" data-poll-url="<?php echo e($akNotifPollUrl); ?>" data-mark-read-url="<?php echo e($akNotifIndividualReadUrl); ?>" data-current-url="<?php echo e($akNotifRedirect); ?>" data-notification-page-url="<?php echo e($akNotifPageUrl); ?>" data-csrf-token="<?php echo e(csrf_token()); ?>">
+<div id="akNotificationBell" data-poll-url="<?php echo e($akNotifPollUrl); ?>" data-mark-read-url="<?php echo e($akNotifIndividualReadUrl); ?>" data-current-url="<?php echo e($akNotifRedirect); ?>" data-notification-page-url="<?php echo e($akNotifPageUrl); ?>" data-app-url="<?php echo e(APP_URL); ?>" data-csrf-token="<?php echo e(csrf_token()); ?>">
  <button type="button" class="ak-notif-toggle" aria-label="الإشعارات" title="الإشعارات" onclick="document.getElementById('akNotificationBell').classList.toggle('open')">
   <i class="fas fa-bell"></i>
   <?php if ($akNotifUnread > 0): ?><span class="ak-notif-badge"><?php echo $akNotifUnread > 99 ? '99+' : $akNotifUnread; ?></span><?php endif; ?>
@@ -96,7 +104,7 @@ if (Session::isLoggedIn()) {
     <?php
     $notifId = (int)($ni['id'] ?? 0);
     $notifLink = trim((string)($ni['link'] ?? ''));
-    $notifRedirect = $notifLink !== '' ? $notifLink : $akNotifPageUrl;
+    $notifRedirect = $akNotifResolveLink($notifLink);
     $notifUnread = (int)($ni['is_read'] ?? 0) === 0;
     ?>
     <?php if ($notifId > 0): ?>
@@ -141,12 +149,12 @@ if (Session::isLoggedIn()) {
          toast.addEventListener('click',function(){
              const statementLink=String(link).indexOf('modules/hr/payroll_statement.php')!==-1;
              const statementTab=statementLink?window.open('about:blank','_blank'):null;
-             const navigate=function(){if(statementTab){statementTab.location.href=link;}else{window.location.href=link;}};
+             const resolvedLink=resolveNotificationLink(link); const navigate=function(){if(statementTab){statementTab.location.href=resolvedLink;}else{window.location.href=resolvedLink;}};
              if(notificationId && markReadUrl){
                  const formData=new FormData();
                  formData.append('csrf_token',csrfToken);
                  formData.append('notification_id',String(notificationId));
-                 formData.append('redirect',String(link));
+                 formData.append('redirect',String(resolvedLink));
                  fetch(markReadUrl,{method:'POST',credentials:'same-origin',body:formData,headers:{'Accept':'text/html'}}).then(navigate).catch(navigate);
              } else {
                  navigate();
@@ -163,7 +171,14 @@ if (Session::isLoggedIn()) {
  const markReadUrl=root.getAttribute('data-mark-read-url');
  const csrfToken=root.getAttribute('data-csrf-token') || '';
  const notificationPageUrl=root.getAttribute('data-notification-page-url') || '';
+ const appUrl=root.getAttribute('data-app-url') || '/';
  const currentUrl=root.getAttribute('data-current-url') || notificationPageUrl || window.location.href;
+ function resolveNotificationLink(value){
+     const link=String(value||'').trim();
+     if(!link) return notificationPageUrl || currentUrl;
+     if(/^(?:[a-z][a-z0-9+.-]*:)?\/\//i.test(link) || link.charAt(0)==='/') return link;
+     return appUrl + link.replace(/^\/+/, '');
+ }
  const panelBody=root.querySelector('.ak-notif-panel-body');
  const toggle=root.querySelector('.ak-notif-toggle');
  const clearMenuBtn=root.querySelector('#akNotifClearMenu');
@@ -189,7 +204,7 @@ if (Session::isLoggedIn()) {
      const items=Array.isArray(data.items) ? data.items : [];
      if(!items.length){panelBody.innerHTML='<div class="ak-notif-empty">لا توجد إشعارات.</div>';return;}
      panelBody.innerHTML=items.map(function(item){
-         const id=Number(item.id||0); let link=String(item.link||'').trim() || notificationPageUrl || currentUrl; const unread=Number(item.is_read||0)===0; const unreadClass=unread?' ak-notif-unread':''; const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
+         const id=Number(item.id||0); let link=resolveNotificationLink(item.link); const unread=Number(item.is_read||0)===0; const unreadClass=unread?' ak-notif-unread':''; const newBadge=unread?'<span class="ak-notif-new">جديد</span>':'';
          if(!id) return '<div class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></div>';
          const targetAttr=link.indexOf('modules/hr/payroll_statement.php')!==-1?' target="_blank"':' target="_self"'; return '<form method="post" action="'+esc(markReadUrl)+'" class="ak-notif-read-form"'+targetAttr+'><input type="hidden" name="csrf_token" value="'+esc(csrfToken)+'"><input type="hidden" name="notification_id" value="'+id+'"><input type="hidden" name="redirect" value="'+esc(link)+'"><button type="submit" class="ak-notif-item'+unreadClass+'"><strong>'+esc(item.title)+newBadge+'</strong><div class="ak-notif-body">'+esc(item.body)+'</div><small>'+esc(item.created_at)+'</small></button></form>';
      }).join('');
@@ -199,7 +214,7 @@ if (Session::isLoggedIn()) {
      items.slice().reverse().forEach(function(item){
          const id=Number(item.id||0);
          if(id>0 && Number(item.is_read||0)===0){
-             notificationToast('info',item.title||'إشعار جديد',item.body||'',String(item.link||'').trim() || notificationPageUrl || currentUrl,id);
+             notificationToast('info',item.title||'إشعار جديد',item.body||'',resolveNotificationLink(item.link),id);
          }
      });
  }
