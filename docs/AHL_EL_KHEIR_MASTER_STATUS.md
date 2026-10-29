@@ -5491,3 +5491,8 @@ No schema migration or new database table was introduced. The applicant-facing t
 
 **Verification boundary:** source changes are committed; local PHP lint and browser/runtime verification have not yet been performed. Continue with a targeted diff/source review and local verification; do not claim runtime completion yet.
 
+## 2026-10-29 — Public sponsor application confirmation UX refinement
+
+The public sponsor application no longer displays or fetches the assigned supervisor while the applicant is filling out the form. After a valid request is saved, `apply.php` automatically opens a bilingual confirmation dialog. It names the assigned active supervisor when the existing letter + gender assignment rules resolve one; otherwise it explains that the organization will arrange follow-up. The pre-submission terms/instructions dialog remains available.
+
+The now-unused `apply_supervisor.php` lookup endpoint was removed. No schema, assignment rules, request lifecycle, or permissions changed. Source and documentation commits are on `main`; local PHP lint and browser runtime verification remain pending.
