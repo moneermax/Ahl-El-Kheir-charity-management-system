@@ -97,11 +97,12 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
         <?php else: ?>
             <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
             <p class="text-muted"><?php echo t('سجّل بياناتك وسيتواصل معك المشرف المختص'); ?></p>
-            <form method="post">\n                <?php echo csrf_field(); ?>
+            <form method="post">
+                <?php echo csrf_field(); ?>
                 <!-- الاسم الكامل -->
                 <div class="f-row">
                     <label><?php echo t('الاسم الكامل'); ?> *</label>
-                    <input type="text" name="full_name" class="form-control" style="max-width:560px" required>
+                    <input type="text" name="full_name" class="form-control" style="max-width:560px" maxlength="255" value="<?php echo e($form['full_name']); ?>" required>
                 </div>
                 <!-- الهاتف + الغرض -->
                 <div class="f-row">
@@ -124,48 +125,50 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 <!-- البريد الإلكتروني -->
                 <div class="f-row">
                     <label><?php echo t('البريد الإلكتروني'); ?></label>
-                    <input type="email" name="email" class="form-control" style="max-width:360px" dir="ltr">
+                    <input type="email" name="email" class="form-control" style="max-width:360px" dir="ltr" value="<?php echo e($form['email']); ?>">
                 </div>
-                <!-- النوع + طريقة الدفع -->
+                <!-- نوع مقدم الطلب -->
                 <div class="f-row">
-                    <label><?php echo t('النوع'); ?></label>
+                    <label for="sponsorType"><?php echo t('النوع'); ?></label>
                     <select name="sponsor_type" id="sponsorType" class="form-select" style="max-width:200px">
-                        <option value="individual"><?php echo t('فرد'); ?></option>
-                        <option value="company"><?php echo t('شركة'); ?></option>
-                        <option value="organization"><?php echo t('منظمة'); ?></option>
+                        <option value="individual" <?php echo $form['sponsor_type'] === 'individual' ? 'selected' : ''; ?>><?php echo t('فرد'); ?></option>
+                        <option value="company" <?php echo $form['sponsor_type'] === 'company' ? 'selected' : ''; ?>><?php echo t('شركة'); ?></option>
+                        <option value="organization" <?php echo $form['sponsor_type'] === 'organization' ? 'selected' : ''; ?>><?php echo t('منظمة'); ?></option>
                     </select>
-                    <div class="f-row" id="genderRow">
-                        <label for="applicantGender"><?php echo t('الجنس'); ?> *</label>
-                        <select name="gender" id="applicantGender" class="form-select" style="max-width:200px">
-                            <option value="">— <?php echo t('اختر الجنس'); ?> —</option>
-                            <option value="male"><?php echo t('ذكر'); ?></option>
-                            <option value="female"><?php echo t('أنثى'); ?></option>
-                        </select>
-                    </div>
-                    <label class="gap-label"><?php echo t('طريقة الدفع المفضلة'); ?></label>
+                </div>
+                <div class="f-row" id="genderRow">
+                    <label for="applicantGender"><?php echo t('الجنس'); ?> *</label>
+                    <select name="gender" id="applicantGender" class="form-select" style="max-width:200px">
+                        <option value="">— <?php echo t('اختر الجنس'); ?> —</option>
+                        <option value="male" <?php echo $form['gender'] === 'male' ? 'selected' : ''; ?>><?php echo t('ذكر'); ?></option>
+                        <option value="female" <?php echo $form['gender'] === 'female' ? 'selected' : ''; ?>><?php echo t('أنثى'); ?></option>
+                    </select>
+                </div>
+                <div class="f-row">
+                    <label><?php echo t('طريقة الدفع المفضلة'); ?></label>
                     <select name="preferred_payment_method" class="form-select" style="max-width:200px">
-                        <option value="cash"><?php echo t('نقدي'); ?></option>
-                        <option value="bank_transfer"><?php echo t('تحويل بنكي'); ?></option>
-                        <option value="mobile"><?php echo t('محفظة إلكترونية'); ?></option>
-                        <option value="other"><?php echo t('أخرى'); ?></option>
+                        <option value="cash" <?php echo $form['preferred_payment_method'] === 'cash' ? 'selected' : ''; ?>><?php echo t('نقدي'); ?></option>
+                        <option value="bank_transfer" <?php echo $form['preferred_payment_method'] === 'bank_transfer' ? 'selected' : ''; ?>><?php echo t('تحويل بنكي'); ?></option>
+                        <option value="mobile" <?php echo $form['preferred_payment_method'] === 'mobile' ? 'selected' : ''; ?>><?php echo t('محفظة إلكترونية'); ?></option>
+                        <option value="other" <?php echo $form['preferred_payment_method'] === 'other' ? 'selected' : ''; ?>><?php echo t('أخرى'); ?></option>
                     </select>
                 </div>
                 <!-- العنوان -->
                 <div class="f-row">
                     <label><?php echo t('العنوان'); ?></label>
-                    <input type="text" name="address" class="form-control" style="max-width:560px">
+                    <input type="text" name="address" class="form-control" style="max-width:560px" value="<?php echo e($form['address']); ?>">
                 </div>
                 <!-- عدد الأيتام + المبلغ المقترح -->
                 <div class="f-row">
                     <label><?php echo t('عدد الأيتام المطلوب كفالتهم'); ?></label>
-                    <input type="number" min="1" max="50" name="desired_orphans" class="form-control" style="max-width:120px" dir="ltr">
+                    <input type="number" min="1" max="50" name="desired_orphans" class="form-control" style="max-width:120px" dir="ltr" value="<?php echo e($form['desired_orphans']); ?>">
                     <label class="gap-label"><?php echo t('المبلغ الشهري المقترح'); ?></label>
-                    <input type="number" min="0" step="500" name="proposed_amount" class="form-control" style="max-width:160px" dir="ltr">
+                    <input type="number" min="0" step="500" name="proposed_amount" class="form-control" style="max-width:160px" dir="ltr" value="<?php echo e($form['proposed_amount']); ?>">
                 </div>
                 <!-- ملاحظات -->
                 <div class="f-row" style="align-items:flex-start">
                     <label><?php echo t('ملاحظات'); ?></label>
-                    <textarea name="notes" rows="2" class="form-control" style="max-width:560px"></textarea>
+                    <textarea name="notes" rows="2" class="form-control" style="max-width:560px"><?php echo e($form['notes']); ?></textarea>
                 </div>
                 <div class="mt-4 text-center">
                     <button class="btn btn-primary px-5"><i class="fas fa-paper-plane me-1"></i> <?php echo t('إرسال الطلب'); ?></button>
