@@ -252,6 +252,33 @@ try {
             $entityAudit && $entityAudit['action'] === 'CONVERT',
             $entityType . ' conversion writes its audit record'
         );
+
+        // Exercise the same assignment-history transition and persisted identity
+        // fields used by the sponsor edit POST path. A legal entity must remain
+        // unassigned and keep its canonical gender after an edit round-trip.
+        recordSponsorAssignment($entitySponsorId, null, 19, 'sponsor_letter_gender_reassignment');
+        dbExecute(
+            'UPDATE sponsors SET sponsor_type = ?, gender = ?, supervisor_id = ? WHERE id = ?',
+            [$entityType, 'organization', null, $entitySponsorId]
+        );
+        $afterEdit = dbFetchOne(
+            'SELECT sponsor_type, gender, supervisor_id FROM sponsors WHERE id = ?',
+            [$entitySponsorId]
+        );
+        $assignmentsAfterEdit = (int)dbFetchOne(
+            'SELECT COUNT(*) AS c FROM sponsor_supervisor_assignments WHERE sponsor_id = ?',
+            [$entitySponsorId]
+        )['c'];
+        runtimeTest(
+            $afterEdit && $afterEdit['sponsor_type'] === $entityType
+                && $afterEdit['gender'] === 'organization'
+                && $afterEdit['supervisor_id'] === null,
+            $entityType . ' edit round-trip preserves legal-entity identity and null supervisor'
+        );
+        runtimeTest(
+            $assignmentsAfterEdit === 0,
+            $entityType . ' edit round-trip creates no individual assignment history'
+        );
     }
 
 } catch (Throwable $e) {
