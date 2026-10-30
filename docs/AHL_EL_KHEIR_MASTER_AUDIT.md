@@ -5887,3 +5887,18 @@ Remaining evidence gap: no database-backed non-individual conversion/edit round-
 The disposable MariaDB runtime harness now creates both `company` and `organization` sponsor requests and converts them through the production conversion helper. Both cases passed checks for converted request linkage, canonical sponsor type, `gender='organization'`, null `supervisor_id`, no supervisor-assignment history, and conversion audit. The same isolated records then passed the edit-path assignment helper and identity/supervisor persistence round-trip without creating individual assignment history. Temporary database cleanup was confirmed. GitHub Actions run [#41012254620](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41012254620) passed all six jobs.
 
 Evidence boundary: the database-backed helper and persistence round-trip are proven in CI; the actual authenticated browser POST path and full public application-to-detail acceptance remain unverified.
+
+
+## 2026-10-30 — Legal-entity sponsor access after conversion
+
+A follow-up authorization defect was found after company/organization conversion: legal entities intentionally have `gender='organization'` and `supervisor_id=NULL`, so the individual first-letter/gender supervisor matrix denied the converting supervisor access to the sponsor detail and edit pages.
+
+Correction committed on `main`:
+- `config/sponsor_assignments.php`: `supervisorCanAccessSponsor()` now grants access to a company/organization only when its `created_by` matches the requesting supervisor. It does not assign an individual supervisor or create assignment-history rows.
+- `modules/sponsors/edit.php`: supervisor edit authorization now delegates to the same canonical helper used by the detail page, eliminating the divergent page-specific matrix check.
+- Runtime regression coverage now checks that the converting supervisor can access the company/organization, another supervisor is denied, `created_by` records the processor, and `brought_by_user_id` remains NULL when no acquisition attribution was supplied.
+- The edit contract test guards the shared authorization path and creator-only legal-entity scope; CI lints the authorization helper.
+
+Acquisition incentive policy is unchanged: the processor identity in `created_by` is audit/record ownership only. Incentive attribution remains separate in `brought_by_user_id`; no incentive or accounting records are changed by this access fix.
+
+**Verification boundary:** CI runtime execution of the expanded disposable-database harness is pending. This does not yet prove authenticated browser access. No live sponsor record or production database was modified.
