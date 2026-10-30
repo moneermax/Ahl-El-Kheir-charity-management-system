@@ -71,3 +71,10 @@ Added database-free regression test: `php tools/test_sponsor_conversion_toast_co
 The user ran `/opt/lampp/bin/php tools/run_sponsor_request_conversion_runtime_test.php` locally. PHP syntax validation passed, and the disposable-database runtime harness reported all 13 checks passing, including conversion creation/linkage, assignment-history and audit writes, duplicate-conversion rejection, and rejection of a supervisor acting on another supervisor's request. The generated test database was removed after the run; the production sponsor records were not used as test fixtures or modified by this harness. The toast source-contract test (7 checks) and authorization-contract test (10 checks) also passed. GitHub Actions run [#40880584416](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40880584416) passed all six jobs.
 
 **Remaining boundary:** the toast's actual appearance and approximately 8-second duration have not been verified in a real browser session. The runtime harness does not prove a true two-process concurrent reassignment race. Do not claim either result as proven.
+
+
+## 2026-10-30 — Non-individual sponsor edit follow-up
+
+The company/organization conversion source audit found that `modules/sponsors/edit.php` previously required male/female gender for all sponsors and always ran individual supervisor resolution. The committed correction (`e2468966f5667a3b90c6d201f0b006e37ea49e96`) preserves `gender='organization'` for company/organization records, limits gender validation and supervisor resolution to individuals, and adds the legal-entity form option. Regression contract commits: `bcf388aac68e89f029d9c6579ae49fab5041902d`, `f1e3dc9ae2f841ea07175a9b832b5ec1f2ea84e4`; CI wiring: `0a69318d555ba0bce08643144643a0ea66f4533e`.
+
+CI, PHP lint, runtime edit round-trip, and public company/organization browser acceptance remain pending. No active database migration or live sponsor mutation was performed. Next: verify CI, then isolated runtime and browser acceptance; do not repeat the already-verified individual request 8 flow.
