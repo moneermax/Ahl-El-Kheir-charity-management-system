@@ -698,6 +698,17 @@ jobs:
           test "$legacy_old_names" = "0"
           test "$legacy_statuses" = "3"
 
+
+      - name: Verify individual and non-individual sponsor conversion in disposable database
+        env:
+          AHL_ENV: development
+          AHL_TEST_SOURCE_DB: salary_advance_migration_test
+          AHL_DB_HOST: 127.0.0.1
+          AHL_DB_PORT: '3306'
+          AHL_DB_USER: root
+          AHL_DB_PASS: root
+        run: php tools/run_sponsor_request_conversion_runtime_test.php
+
   hr-job-description-migrations:
     runs-on: ubuntu-latest
     services:
