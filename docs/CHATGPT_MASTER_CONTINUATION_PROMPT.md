@@ -3302,3 +3302,18 @@ GitHub Actions run [#41010987431](https://github.com/moneermax/Ahl-El-Kheir-char
 Do not claim database-backed company/organization conversion/edit round-trip or public browser acceptance; both remain unverified. Next: create safe isolated runtime coverage for non-individual conversion/edit preservation, then complete the public application-to-staff-conversion browser path. Do not apply migrations to the active database or disturb existing sponsor records.
 
 Sponsor company/organization follow-up (2026-10-30): `tools/run_sponsor_request_conversion_runtime_test.php` now covers company and organization conversion plus edit-path assignment/persistence round-trip inside a disposable MariaDB database. Both types preserve sponsor_type, `gender='organization'`, and null supervisor; neither creates individual supervisor assignment history; conversion audit records are written; temporary DB cleanup passes. GitHub Actions run [#41012254620](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41012254620) passed all six jobs. Do not overstate this as browser POST verification. Remaining acceptance: public application → staff queue → conversion → sponsor detail → authenticated edit submission, then verify the displayed record and database state. No active local database migration or live sponsor mutation was performed.
+
+
+## 2026-10-30 — Legal-entity sponsor access after conversion
+
+A follow-up authorization defect was found after company/organization conversion: legal entities intentionally have `gender='organization'` and `supervisor_id=NULL`, so the individual first-letter/gender supervisor matrix denied the converting supervisor access to the sponsor detail and edit pages.
+
+Correction committed on `main`:
+- `config/sponsor_assignments.php`: `supervisorCanAccessSponsor()` now grants access to a company/organization only when its `created_by` matches the requesting supervisor. It does not assign an individual supervisor or create assignment-history rows.
+- `modules/sponsors/edit.php`: supervisor edit authorization now delegates to the same canonical helper used by the detail page, eliminating the divergent page-specific matrix check.
+- Runtime regression coverage now checks that the converting supervisor can access the company/organization, another supervisor is denied, `created_by` records the processor, and `brought_by_user_id` remains NULL when no acquisition attribution was supplied.
+- The edit contract test guards the shared authorization path and creator-only legal-entity scope; CI lints the authorization helper.
+
+Acquisition incentive policy is unchanged: the processor identity in `created_by` is audit/record ownership only. Incentive attribution remains separate in `brought_by_user_id`; no incentive or accounting records are changed by this access fix.
+
+**Verification boundary:** CI runtime execution of the expanded disposable-database harness is pending. This does not yet prove authenticated browser access. No live sponsor record or production database was modified.
