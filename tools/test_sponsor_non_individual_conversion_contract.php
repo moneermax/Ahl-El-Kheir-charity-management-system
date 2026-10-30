@@ -23,18 +23,34 @@ $checks = [
     'public form accepts all canonical sponsor types' =>
         str_contains($application, "['individual','company','organization']"),
     'public form normalizes non-individual gender to organization' =>
-        str_contains($application, "$gender = $type === 'individual' ? strtolower($form['gender']) : 'organization';"),
+        str_contains($application, <<<'SOURCE'
+$gender = $type === 'individual' ? strtolower($form['gender']) : 'organization';
+SOURCE
+        ),
     'public form resolves a supervisor only for individual applicants' =>
-        str_contains($application, "$supId = $type === 'individual' ? resolveSponsorSupervisorId($name, $gender) : null;"),
+        str_contains($application, <<<'SOURCE'
+$supId = $type === 'individual' ? resolveSponsorSupervisorId($name, $gender) : null;
+SOURCE
+        ),
     'public request persists type, gender and supervisor scope' =>
         str_contains($application, 'sponsor_type, gender, preferred_payment_method')
         && str_contains($application, 'assigned_supervisor_id'),
     'conversion preserves company and organization request types' =>
         str_contains($conversion, "['individual', 'company', 'organization']"),
     'conversion normalizes non-individual gender to organization' =>
-        str_contains($conversion, "$type === 'individual'\n            ? strtolower(trim((string)($req['gender'] ?? '')))\n            : 'organization';"),
+        str_contains($conversion, <<<'SOURCE'
+$gender = $type === 'individual'
+            ? strtolower(trim((string)($req['gender'] ?? '')))
+            : 'organization';
+SOURCE
+        ),
     'conversion resolves supervisor only for individuals' =>
-        str_contains($conversion, "$type === 'individual'\n            ? resolveSponsorSupervisorId($name, $gender)\n            : null;"),
+        str_contains($conversion, <<<'SOURCE'
+$supervisorId = $type === 'individual'
+            ? resolveSponsorSupervisorId($name, $gender)
+            : null;
+SOURCE
+        ),
     'conversion records assignment history only when a supervisor exists' =>
         str_contains($conversion, 'if ($supervisorId) {')
         && str_contains($conversion, 'ensureActiveSponsorAssignmentHistory($newId, $supervisorId, $actorId);'),
