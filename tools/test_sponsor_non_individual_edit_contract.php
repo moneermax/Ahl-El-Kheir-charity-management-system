@@ -15,15 +15,15 @@ if ($source === false) {
 
 $checks = [
     'non-individual types normalize gender to organization' =>
-        str_contains($source, "$input['sponsor_type']==='individual'?")
+        str_contains($source, '$input[\'sponsor_type\']===\'individual\'?')
         && str_contains($source, ":'organization';"),
     'gender validation applies only to individual sponsors' =>
-        str_contains($source, "$input['sponsor_type']==='individual'&&!in_array($input['gender'],['male','female'],true)"),
+        str_contains($source, '$input[\'sponsor_type\']===\'individual\'&&!in_array($input[\'gender\'],[\'male\',\'female\'],true)'),
     'supervisor resolution applies only to individual sponsors' =>
-        str_contains($source, "$input['sponsor_type']==='individual'?resolveSponsorSupervisorId"),
+        str_contains($source, '$input[\'sponsor_type\']===\'individual\'?resolveSponsorSupervisorId'),
     'edit form offers the organization gender value' =>
         str_contains($source, '<option value="organization"')
-        && str_contains($source, "($input['gender']==='organization')"),
+        && str_contains($source, '($input[\'gender\']===\'organization\')'),
 ];
 
 $failed = 0;
