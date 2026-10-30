@@ -42,6 +42,14 @@ function supervisorCanAccessSponsor(int $supervisorId, array $sponsor): bool
 {
     if ($supervisorId <= 0) return false;
 
+    // A supervisor who converted a company/organization request retains access
+    // to that legal-entity record. This is record ownership, not an individual
+    // supervisor assignment and never grants acquisition incentive credit.
+    $sponsorType = strtolower(trim((string)($sponsor['sponsor_type'] ?? 'individual')));
+    if (in_array($sponsorType, ['company', 'organization'], true)) {
+        return (int)($sponsor['created_by'] ?? 0) === $supervisorId;
+    }
+
     $letterId = (int)($sponsor['first_letter_id'] ?? 0);
     if ($letterId <= 0) return false;
 
