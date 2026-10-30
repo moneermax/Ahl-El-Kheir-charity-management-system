@@ -5587,3 +5587,15 @@ Added `tools/run_sponsor_request_conversion_runtime_test.php`. It creates a uniq
 The user ran `/opt/lampp/bin/php tools/run_sponsor_request_conversion_runtime_test.php` locally. PHP syntax validation passed, and the disposable-database runtime harness reported all 13 checks passing, including conversion creation/linkage, assignment-history and audit writes, duplicate-conversion rejection, and rejection of a supervisor acting on another supervisor's request. The generated test database was removed after the run; the production sponsor records were not used as test fixtures or modified by this harness. The toast source-contract test (7 checks) and authorization-contract test (10 checks) also passed. GitHub Actions run [#40880584416](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/40880584416) passed all six jobs.
 
 **Remaining boundary:** the toast's actual appearance and approximately 8-second duration have not been verified in a real browser session. The runtime harness does not prove a true two-process concurrent reassignment race. Do not claim either result as proven.
+
+
+## 2026-10-30 — PHP-13 non-individual sponsor edit correction
+
+Source audit of the open company/organization acceptance path found a concrete follow-on defect in `modules/sponsors/edit.php`: the edit handler accepted only `male/female`, required gender for every sponsor, and always ran individual supervisor-matrix resolution. Company/organization records created by request conversion correctly use `gender='organization'` and no individual supervisor, so the existing edit form could not preserve that valid state.
+
+Committed on `main`:
+- `e2468966f5667a3b90c6d201f0b006e37ea49e96` — non-individual sponsor edits now normalize gender to `organization`, skip individual-only gender validation, and skip individual supervisor resolution; the form exposes the legal-entity value.
+- `bcf388aac68e89f029d9c6579ae49fab5041902d` and `f1e3dc9ae2f841ea07175a9b832b5ec1f2ea84e4` — source-contract regression guard.
+- `0a69318d555ba0bce08643144643a0ea66f4533e` — PHP syntax workflow now lints `modules/sponsors/edit.php` and executes the new contract guard.
+
+Verification boundary: source changes were re-read from `main`; GitHub Actions status has not yet been observed. PHP syntax/runtime behavior and the end-to-end public company/organization submission-to-conversion browser path remain unverified locally. Do not apply the sponsor-request migration to the active database as part of this work. The next gate is CI result, then isolated runtime coverage and the browser acceptance path when the local app is available.
