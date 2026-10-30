@@ -190,6 +190,70 @@ try {
     runtimeTest($ownershipRejected, 'supervisor cannot convert a request assigned to supervisor 19 while acting as user 20');
     runtimeTest((int)dbFetchOne('SELECT COUNT(*) AS c FROM sponsors')['c'] === $sponsorCountBeforeDuplicate, 'unauthorized ownership attempt creates no sponsor');
 
+
+    // Non-individual conversions: run both legal-entity types through the real
+    // conversion helper inside this same disposable database. The request is
+    // assigned to supervisor 19 so the existing supervisor authorization path
+    // is exercised without creating any individual assignment.
+    $_SESSION = [
+        'user_id' => 19,
+        'user_role' => 'supervisor',
+        'user_name' => 'Runtime test supervisor',
+    ];
+
+    foreach ([
+        ['company', 'شركة اختبار التحويل'],
+        ['organization', 'منظمة اختبار التحويل'],
+    ] as [$entityType, $entityName]) {
+        $entityFixture = $admin->prepare(
+            'INSERT INTO ' . quoteIdentifier($testDb) .
+            '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
+            'VALUES (?, ?, \'organization\', \'cash\', \'runtime_test\', 19, \'new\')'
+        );
+        $entityFixture->execute([$entityName, $entityType]);
+        $entityRequestId = (int)$admin->lastInsertId();
+
+        $entitySponsorId = convertSponsorRequestToSponsor($entityRequestId, 19);
+        $entityRequest = dbFetchOne(
+            'SELECT status, created_sponsor_id FROM sponsor_requests WHERE id = ?',
+            [$entityRequestId]
+        );
+        $entitySponsor = dbFetchOne(
+            'SELECT id, full_name, sponsor_type, gender, status, supervisor_id FROM sponsors WHERE id = ?',
+            [$entitySponsorId]
+        );
+        $entityAssignments = (int)dbFetchOne(
+            'SELECT COUNT(*) AS c FROM sponsor_supervisor_assignments WHERE sponsor_id = ?',
+            [$entitySponsorId]
+        )['c'];
+        $entityAudit = dbFetchOne(
+            "SELECT action FROM audit_log WHERE entity_type = 'sponsor_request' AND entity_id = ? AND action = 'CONVERT' ORDER BY id DESC LIMIT 1",
+            [$entityRequestId]
+        );
+
+        runtimeTest(
+            $entityRequest && $entityRequest['status'] === 'converted'
+                && (int)$entityRequest['created_sponsor_id'] === $entitySponsorId,
+            $entityType . ' request is converted and linked'
+        );
+        runtimeTest(
+            $entitySponsor && $entitySponsor['full_name'] === $entityName
+                && $entitySponsor['sponsor_type'] === $entityType
+                && $entitySponsor['gender'] === 'organization'
+                && $entitySponsor['status'] === 'active'
+                && $entitySponsor['supervisor_id'] === null,
+            $entityType . ' sponsor preserves legal-entity type and has no individual supervisor'
+        );
+        runtimeTest(
+            $entityAssignments === 0,
+            $entityType . ' conversion creates no individual supervisor assignment history'
+        );
+        runtimeTest(
+            $entityAudit && $entityAudit['action'] === 'CONVERT',
+            $entityType . ' conversion writes its audit record'
+        );
+    }
+
 } catch (Throwable $e) {
     fwrite(STDERR, 'ERROR | ' . $e->getMessage() . PHP_EOL);
     $failures++;
