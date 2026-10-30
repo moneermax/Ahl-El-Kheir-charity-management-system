@@ -5881,3 +5881,9 @@ Committed on `main`: `e2468966f5667a3b90c6d201f0b006e37ea49e96` (production fix)
 Verification: GitHub Actions run [#41010987431](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41010987431) passed all six jobs, including PHP 8.2 lint/source-contract checks, MariaDB 10.4, sponsor-request migration on canonical and legacy schemas, full-schema migration, HR migration, and rescheduling safeguards. The initial CI attempt failed on one incorrect test-string expectation; the assertion was corrected in `7e330fbbf2f87372232bf23140297247240d81c8`, and the complete rerun passed.
 
 Remaining evidence gap: no database-backed non-individual conversion/edit round-trip or public browser acceptance has been performed. No active database migration or live sponsor mutation was performed. Continue with isolated runtime coverage before requesting local browser acceptance.
+
+## Sponsor company/organization conversion and edit persistence — runtime evidence
+
+The disposable MariaDB runtime harness now creates both `company` and `organization` sponsor requests and converts them through the production conversion helper. Both cases passed checks for converted request linkage, canonical sponsor type, `gender='organization'`, null `supervisor_id`, no supervisor-assignment history, and conversion audit. The same isolated records then passed the edit-path assignment helper and identity/supervisor persistence round-trip without creating individual assignment history. Temporary database cleanup was confirmed. GitHub Actions run [#41012254620](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41012254620) passed all six jobs.
+
+Evidence boundary: the database-backed helper and persistence round-trip are proven in CI; the actual authenticated browser POST path and full public application-to-detail acceptance remain unverified.
