@@ -219,7 +219,7 @@ try {
             [$entityRequestId]
         );
         $entitySponsor = dbFetchOne(
-            'SELECT id, full_name, sponsor_type, gender, status, supervisor_id FROM sponsors WHERE id = ?',
+            'SELECT id, full_name, sponsor_type, gender, status, supervisor_id, created_by, brought_by_user_id FROM sponsors WHERE id = ?',
             [$entitySponsorId]
         );
         $entityAssignments = (int)dbFetchOne(
@@ -243,6 +243,19 @@ try {
                 && $entitySponsor['status'] === 'active'
                 && $entitySponsor['supervisor_id'] === null,
             $entityType . ' sponsor preserves legal-entity type and has no individual supervisor'
+        );
+        runtimeTest(
+            $entitySponsor && (int)$entitySponsor['created_by'] === 19
+                && $entitySponsor['brought_by_user_id'] === null,
+            $entityType . ' conversion records processor ownership without acquisition attribution'
+        );
+        runtimeTest(
+            $entitySponsor && supervisorCanAccessSponsor(19, $entitySponsor),
+            $entityType . ' converting supervisor can access the created legal-entity sponsor'
+        );
+        runtimeTest(
+            $entitySponsor && !supervisorCanAccessSponsor(20, $entitySponsor),
+            $entityType . ' legal-entity access is denied to another supervisor'
         );
         runtimeTest(
             $entityAssignments === 0,
