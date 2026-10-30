@@ -8,8 +8,9 @@ declare(strict_types=1);
  */
 $path = dirname(__DIR__) . '/modules/sponsors/edit.php';
 $source = file_get_contents($path);
-if ($source === false) {
-    fwrite(STDERR, "FAIL | cannot read modules/sponsors/edit.php" . PHP_EOL);
+$assignmentSource = file_get_contents(dirname(__DIR__) . '/config/sponsor_assignments.php');
+if ($source === false || $assignmentSource === false) {
+    fwrite(STDERR, "FAIL | cannot read sponsor edit or assignment source" . PHP_EOL);
     exit(1);
 }
 
@@ -24,6 +25,13 @@ $checks = [
     'edit form offers the organization gender value' =>
         str_contains($source, '<option value="organization"')
         && str_contains($source, '$input[\'gender\']===\'organization\''),
+    'edit authorization delegates to the canonical sponsor access helper' =>
+        str_contains($source, "supervisorCanAccessSponsor(Session::getUserId(), $sp)"),
+    'legal-entity access is limited to its converting creator' =>
+        str_contains($assignmentSource, "in_array($sponsorType, ['company', 'organization'], true)")
+        && str_contains($assignmentSource, "(int)($sponsor['created_by'] ?? 0) === $supervisorId"),
+    'legal-entity ownership does not become an individual supervisor assignment' =>
+        str_contains($assignmentSource, "$sponsorType = strtolower(trim((string)($sponsor['sponsor_type'] ?? 'individual')));"),
 ];
 
 $failed = 0;
