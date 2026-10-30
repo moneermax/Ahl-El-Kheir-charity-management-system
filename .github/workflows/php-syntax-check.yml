@@ -243,6 +243,8 @@ jobs:
           php tools/test_sponsor_request_conversion_authorization_contract.php
           php tools/test_sponsor_non_individual_edit_contract.php
           php -l tools/test_sponsor_non_individual_edit_contract.php
+          php tools/test_sponsor_non_individual_conversion_contract.php
+          php -l tools/test_sponsor_non_individual_conversion_contract.php
           php -l tools/run_sponsor_request_conversion_runtime_test.php
 
   migration-mariadb-10-4:
