@@ -23,7 +23,7 @@ $checks = [
         str_contains($source, '$input[\'sponsor_type\']===\'individual\'?resolveSponsorSupervisorId'),
     'edit form offers the organization gender value' =>
         str_contains($source, '<option value="organization"')
-        && str_contains($source, '($input[\'gender\']===\'organization\')'),
+        && str_contains($source, '$input[\'gender\']===\'organization\''),
 ];
 
 $failed = 0;
