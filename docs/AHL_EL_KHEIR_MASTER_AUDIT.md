@@ -5916,3 +5916,12 @@ The current public form previously collected only the entity name and shared pho
 Implementation adds four nullable fields to both request and sponsor records, with an idempotent MariaDB 10.4 migration. Public submission requires a representative name and a valid preferred contact method for company/organization requests; email preference requires an email address. Conversion copies the fields into the sponsor profile. Existing individual application and assignment behavior is preserved. Entity instructions explicitly separate proposals from final sponsorship commitments.
 
 Source-contract and CI migration checks are committed. Runtime evidence is still pending: migration application on the local database, authenticated public submission, request visibility, conversion, sponsor edit, and persisted profile verification. Do not claim runtime acceptance or alter existing live sponsor data before the local migration and controlled verification.
+
+
+## 2026-10-31 — Legal-entity contact migration and conversion/edit runtime evidence
+
+Local MariaDB schema verification passed after applying `2026-10-31_sponsor_legal_entity_contact_details.sql`: exactly eight expected nullable columns were found across `sponsor_requests` and `sponsors`.
+
+The CI disposable-database harness now uses distinct contact values for company and organization requests and asserts that representative name, position, preferred contact method and preferred contact time survive conversion and the sponsor edit persistence round-trip. GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs, including PHP 8.2 lint, MariaDB 10.4 migration repeatability, source contracts and the expanded conversion runtime harness. The disposable test database was removed. This is database-backed service/persistence evidence, not authenticated browser acceptance.
+
+**Outstanding audit evidence:** public browser submission for both entity types; VGM direct processing; VGM assignment and supervisor notification/follow-up; request queue/detail rendering; conversion; sponsor detail/edit rendering and persisted values. Do not use or mutate live sponsor records as fixtures.
