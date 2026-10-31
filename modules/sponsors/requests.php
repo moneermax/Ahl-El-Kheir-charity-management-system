@@ -46,8 +46,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             } elseif (!in_array((string)$request['status'], ['new', 'contacted'], true)) {
                 flash('error', 'لا يمكن تغيير حالة هذا الطلب بعد إغلاقه أو تحويله.');
             } else {
-                dbExecute("UPDATE sponsor_requests SET status = ? WHERE id = ?", [$newStatus, $id]);
-                flash('success', $newStatus === 'contacted' ? t('sponsors.request_marked_contacted') : t('sponsors.request_marked_lost'));
+                $updated = dbExecute(
+                    "UPDATE sponsor_requests SET status = ? WHERE id = ? AND status IN ('new', 'contacted')
+                     AND (sponsor_type = 'individual' OR (sponsor_type IN ('company', 'organization') AND assigned_supervisor_id IS NULL))",
+                    [$newStatus, $id]
+                );
+                if ($updated === 1) {
+                    flash('success', $newStatus === 'contacted' ? t('sponsors.request_marked_contacted') : t('sponsors.request_marked_lost'));
+                } else {
+                    flash('error', 'تغيرت بيانات الطلب أو أُسند إلى مشرف؛ حدّث الصفحة وتحقق من حالته.');
+                }
             }
         }
         header('Location: ' . APP_URL . ($forcedStatusFilter === 'new' ? 'modules/sponsors/new_requests.php' : ($forcedStatusFilter === 'contacted' ? 'modules/sponsors/contacted_requests.php' : 'modules/sponsors/requests.php')));
@@ -183,7 +191,7 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <?php if ($canManageLead): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_lost_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="lost"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-secondary" title="<?php echo e(t('sponsors.request_mark_lost')); ?>"><i class="fas fa-xmark"></i> <?php echo e(t('sponsors.request_mark_lost')); ?></button></form>
 <button type="button" class="btn btn-sm btn-outline-success" title="<?php echo e(t('sponsors.request_convert_title')); ?>" data-bs-toggle="modal" data-bs-target="#convertLeadModal" data-request-id="<?php echo (int)$lead['id']; ?>"><i class="fas fa-user-check"></i> <?php echo e(t('sponsors.request_convert')); ?></button><?php endif; ?>
 <?php if (!$canManageLead): ?><small class="d-block text-muted mt-1"><?php echo $isLegalEntity && !empty($lead['assigned_supervisor_id']) ? 'المتابعة والتحويل من اختصاص المشرف المسند إليه.' : 'بانتظار قرار نائب المدير العام.'; ?></small><?php endif; ?>
-<?php elseif ($lead['status'] === 'lost'): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_reopen_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="reopen"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-primary" title="<?php echo e(t('sponsors.request_reopen')); ?>"><i class="fas fa-rotate-left"></i> <?php echo e(t('sponsors.request_reopen')); ?></button></form>
+<?php elseif ($lead['status'] === 'lost'): ?><?php if (!$isLegalEntity || $role === 'vice_general_manager'): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_reopen_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="reopen"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-primary" title="<?php echo e(t('sponsors.request_reopen')); ?>"><i class="fas fa-rotate-left"></i> <?php echo e(t('sponsors.request_reopen')); ?></button></form><?php endif; ?>
 <?php else: ?><span class="badge bg-light text-muted"><i class="fas fa-check-circle"></i> <?php echo e(t('sponsors.request_complete')); ?></span><?php endif; ?>
 </td></tr><?php endforeach; endif; ?></tbody></table></div></div></div>
 <div class="modal fade" id="addLeadModal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><form method="post"><?php echo csrf_field(); ?><input type="hidden" name="action" value="add"><div class="modal-header" style="background:#1b4d8f;color:#fff"><h5 class="modal-title"><i class="fas fa-plus-circle me-2"></i><?php echo e(t('sponsors.request_add_title')); ?></h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
