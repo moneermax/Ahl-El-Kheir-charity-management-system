@@ -175,6 +175,8 @@ jobs:
             modules/sponsors/my_request.php
             modules/sponsors/lib_sponsor_request_conversion.php
             modules/sponsors/edit.php
+            modules/sponsors/view.php
+            tools/test_sponsor_legal_entity_contact_contract.php
             config/sponsor_assignments.php
             modules/sponsors/requests.php
             modules/users/index.php
@@ -246,6 +248,8 @@ jobs:
           php tools/test_sponsor_non_individual_edit_contract.php
           php -l tools/test_sponsor_non_individual_edit_contract.php
           php tools/test_sponsor_non_individual_conversion_contract.php
+          php tools/test_sponsor_legal_entity_contact_contract.php
+          php -l tools/test_sponsor_legal_entity_contact_contract.php
           php -l tools/test_sponsor_non_individual_conversion_contract.php
           php -l tools/run_sponsor_request_conversion_runtime_test.php
 
@@ -666,6 +670,11 @@ jobs:
           canonical_status_type=$("${mysql[@]}" --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsor_requests' AND column_name = 'status'")
           [[ "$canonical_gender_type" == "varchar(20)" ]]
           [[ "$canonical_status_type" == *"'new'"* && "$canonical_status_type" == *"'contacted'"* && "$canonical_status_type" == *"'converted'"* && "$canonical_status_type" == *"'lost'"* ]]
+          # Legal-entity representative fields must be repeatable on both canonical tables.
+          "${mysql[@]}" --database=salary_advance_migration_test < database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql
+          "${mysql[@]}" --database=salary_advance_migration_test < database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql
+          entity_contact_columns=$("${mysql[@]}" --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name IN ('sponsor_requests','sponsors') AND column_name IN ('contact_person_name','contact_person_position','preferred_contact_method','preferred_contact_time')")
+          test "$entity_contact_columns" = "8"
           # Legacy runtime-created schema: preserve rows, rename full_name, and map statuses.
           "${mysql[@]}" -e "CREATE DATABASE sponsor_request_legacy_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
           "${mysql[@]}" --database=sponsor_request_legacy_test <<'SQL'
