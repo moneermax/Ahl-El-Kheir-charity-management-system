@@ -102,17 +102,22 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
         dbExecute(
             "INSERT INTO sponsors
                 (full_name, first_letter_raw, first_letter_id, phone, phone_purpose, alt_phone, alt_phone_purpose,
-                 email, address, sponsor_code, status, sponsor_type, gender, preferred_payment_method, notes,
-                 desired_orphans, acquisition_source, brought_by_user_id, brought_by_name, created_by,
-                 supervisor_id, assigned_by, assigned_at, is_manual_override)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)",
+                 email, address, sponsor_code, status, sponsor_type, gender, contact_person_name,
+                 contact_person_position, preferred_contact_method, preferred_contact_time,
+                 preferred_payment_method, notes, desired_orphans, acquisition_source,
+                 brought_by_user_id, brought_by_name, created_by, supervisor_id, assigned_by,
+                 assigned_at, is_manual_override)
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)",
             [
                 $name, $rawLetter, $letterId, $req['phone'] ?? null,
                 $req['phone_purpose'] ?? 'both', $req['alt_phone'] ?? null,
                 $req['alt_phone_purpose'] ?? 'both', $req['email'] ?? null, $req['address'] ?? null,
-                $code, $type, $gender, $payment, $req['notes'] ?? null,
-                isset($req['desired_orphans']) && $req['desired_orphans'] !== '' ? (int)$req['desired_orphans'] : null,
-                $req['source'] ?? 'public_form', $broughtByUserId,
+$code, $type, $gender, $req['contact_person_name'] ?? null,
+                $req['contact_person_position'] ?? null,
+                in_array((string)($req['preferred_contact_method'] ?? ''), ['call', 'whatsapp', 'email', 'any'], true)
+                    ? (string)$req['preferred_contact_method'] : null,
+                $req['preferred_contact_time'] ?? null,
+                $payment, $req['notes'] ?? null,                $req['source'] ?? 'public_form', $broughtByUserId,
                 $req['brought_by_name'] ?? null, $actorId, $supervisorId, $actorId
             ]
         );
