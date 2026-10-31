@@ -119,9 +119,16 @@ The accepted workflow is now implemented on `main`:
 
 Implementation commits on `main` include the VGM assignment service, management queue routing controls, server-side processing restrictions, and regression coverage. No schema migration was required because `sponsor_requests.assigned_supervisor_id` already exists.
 
-**Verification boundary:** database-free source-contract coverage and a disposable-database runtime harness have been added. GitHub Actions for the latest implementation are still running; do not claim runtime success until the final run result is confirmed. Authenticated local browser acceptance remains outstanding. No production sponsor/request records were changed by the disposable harness design; it creates and drops a uniquely named test database.
+**Verification — CI + disposable runtime: PASS**
 
-Next acceptance after CI passes: pull `main`, verify a VGM can process one unassigned legal-entity request, verify a VGM can assign another to an active supervisor, verify that supervisor receives and opens the notification/request, completes conversion and can open/edit the created sponsor, and verify another supervisor cannot access it. Also verify a non-VGM management user cannot assign or directly convert legal-entity requests. Do not repeat the already-verified individual request conversion flow.
+GitHub Actions run [#41185490815](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41185490815) passed all six jobs on commit `9aef240d938f3e2040ed61cec52184e242f413f4`:
+- PHP 8.2 lint and all sponsor request source-contract assertions, including the real native POST conversion form.
+- MariaDB 10.4.32 migration checks, sponsor-request migration checks, full-schema migration checks and the remaining workflow jobs.
+- The disposable-database sponsor request runtime harness passed VGM assignment, audit event, post-commit notification/link, duplicate assignment rejection, management-queue conversion blocking after assignment, assigned-supervisor conversion, creator-only legal-entity access, VGM direct processing while unassigned, and denial of supervisor use of the VGM-only assignment operation. The uniquely named test database was removed.
+
+No production sponsor/request records or live database were modified by this CI runtime harness. No migration was required.
+
+**Remaining acceptance boundary:** authenticated local browser acceptance is still outstanding. Pull `main`, then verify one VGM direct-processing case and one VGM assignment → supervisor notification → follow-up/conversion → sponsor view/edit case. Verify another supervisor is denied and a non-VGM management user cannot assign or directly convert legal-entity requests. Do not repeat the already-verified individual request conversion flow.
 
 A final queue review also found that the old management conversion button targeted `#convertLeadModal`, but no such modal existed in the page. It has been replaced with a CSRF-protected native POST form that performs the authorized conversion and follows the sponsor-detail redirect. The regression contract now guards this real action path; the supervisor detail copy was also made neutral so it accurately covers both matrix-routed individuals and VGM-assigned legal entities.
 
