@@ -48,13 +48,13 @@ $checks = [
     'manual assignment locks the request and validates an active supervisor account' =>
         str_contains($helper, 'FROM sponsor_requests WHERE id = ? FOR UPDATE')
         && str_contains($helper, "r.code = 'supervisor' AND u.is_active = 1")
-        && str_contains($helper, "supervisor_status') !== 'active'"),
+        && str_contains($helper, "supervisor_status'] !== 'active'"),
     'manual assignment writes a distinct audit event' =>
         str_contains($helper, "'ASSIGN_SUPERVISOR', 'sponsor_request'"),
     'assigned supervisor receives an in-app request link after commit' =>
         str_contains($helper, 'modules/sponsors/my_request.php?id='),
     'only VGM sees the manual assignment control in the management queue' =>
-        str_contains($queue, "$role === 'vice_general_manager'")
+        str_contains($queue, "\\$role === 'vice_general_manager'")
         && str_contains($queue, 'assignLegalEntitySponsorRequestToSupervisor'),
     'management queue keeps the existing direct-processing conversion option' =>
         str_contains($queue, "convertSponsorRequestToSponsor(\$id, (int)Session::getUserId(), 'management_queue')"),
