@@ -28,8 +28,14 @@ $checks = [
     'edit authorization delegates to the canonical sponsor access helper' =>
         str_contains($source, 'supervisorCanAccessSponsor(Session::getUserId(), $sp)'),
     'legal-entity access is limited to its converting creator' =>
-        str_contains($assignmentSource, "in_array($sponsorType, ['company', 'organization'], true)")
-        && str_contains($assignmentSource, "(int)($sponsor['created_by'] ?? 0) === $supervisorId"),
+        str_contains($assignmentSource, <<<'SOURCE'
+in_array($sponsorType, ['company', 'organization'], true)
+SOURCE
+        )
+        && str_contains($assignmentSource, <<<'SOURCE'
+(int)($sponsor['created_by'] ?? 0) === $supervisorId
+SOURCE
+        ),
     'legal-entity ownership does not become an individual supervisor assignment' =>
         str_contains($assignmentSource, <<<'SOURCE'
 $sponsorType = strtolower(trim((string)($sponsor['sponsor_type'] ?? 'individual')));
