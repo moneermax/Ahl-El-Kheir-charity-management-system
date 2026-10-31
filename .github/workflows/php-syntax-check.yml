@@ -173,6 +173,7 @@ jobs:
             apply.php
             modules/notifications/mark_read.php
             modules/sponsors/my_request.php
+            modules/sponsors/lib_sponsor_request_conversion.php
             modules/sponsors/edit.php
             config/sponsor_assignments.php
             modules/sponsors/requests.php
