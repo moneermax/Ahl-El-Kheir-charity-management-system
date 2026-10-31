@@ -3407,3 +3407,10 @@ The local Linux Mint migration was applied and verified directly against MariaDB
 GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs on commit `ec514bf5b65aeed66636acde6eb4e796ca236725`. This includes PHP 8.2 lint/source contracts, MariaDB 10.4 migration checks, and the disposable-database sponsor conversion runtime harness. The harness now supplies and asserts representative name, position, preferred contact method and time for both company and organization through conversion and the sponsor edit persistence round-trip. Its temporary database is removed after the run; no live sponsor/request records are used.
 
 **Remaining acceptance:** authenticated local browser acceptance only: public company and organization submissions, VGM direct processing and VGM assignment to a supervisor, request detail/queue display, conversion, sponsor detail/edit display and persisted values. Local migration is already applied. Do not repeat individual conversion or closed unrelated tests.
+
+
+## 2026-10-31 — Legal-entity queue contact-preference display correction
+
+A focused source review after the local sync found that the VGM management queue displayed the legal-entity representative name, position and preferred contact time, but omitted the submitted preferred contact method. The queue now renders the saved method using the same four supported labels (phone, WhatsApp, email, any method), independently of whether optional representative/time fields are populated. The legal-entity contact source contract now explicitly guards queue rendering of representative name, preferred method and preferred time.
+
+This is a presentation-only correction: no schema, routing, assignment, conversion, permission, or accounting behavior changed. Browser acceptance remains outstanding; CI must pass before the queue correction is treated as verified. The local database migration remains applied and must not be rerun.
