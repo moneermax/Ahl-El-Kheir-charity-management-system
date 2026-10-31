@@ -37,6 +37,28 @@ $checks = [
         str_contains($helper, "WHERE id = ? AND status IN ('new', 'contacted')"),
     'conversion still writes an audit record' =>
         str_contains($helper, "'CONVERT', 'sponsor_request'"),
+    'legal-entity request assignment is an explicit VGM-only operation' =>
+        str_contains($helper, 'function assignLegalEntitySponsorRequestToSupervisor')
+        && str_contains($helper, "Session::getUserRole() !== 'vice_general_manager'"),
+    'manual request assignment is restricted to company and organization types' =>
+        str_contains($helper, "['company', 'organization']"),
+    'manual request assignment only accepts actionable states' =>
+        str_contains($helper, "['new', 'contacted']")
+        && str_contains($helper, 'assigned_supervisor_id'),
+    'manual assignment locks the request and validates an active supervisor account' =>
+        str_contains($helper, 'FROM sponsor_requests WHERE id = ? FOR UPDATE')
+        && str_contains($helper, "r.code = 'supervisor' AND u.is_active = 1")
+        && str_contains($helper, "supervisor_status') !== 'active'"),
+    'manual assignment writes a distinct audit event' =>
+        str_contains($helper, "'ASSIGN_SUPERVISOR', 'sponsor_request'"),
+    'assigned supervisor receives an in-app request link after commit' =>
+        str_contains($helper, 'modules/sponsors/my_request.php?id='),
+    'only VGM sees the manual assignment control in the management queue' =>
+        str_contains($queue, "$role === 'vice_general_manager'")
+        && str_contains($queue, 'assignLegalEntitySponsorRequestToSupervisor'),
+    'management queue keeps the existing direct-processing conversion option' =>
+        str_contains($queue, "convertSponsorRequestToSponsor(\$id, (int)Session::getUserId(), 'management_queue')"),
+
 ];
 
 $failed = 0;
