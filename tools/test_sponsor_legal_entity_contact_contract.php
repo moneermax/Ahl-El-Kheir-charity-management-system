@@ -9,6 +9,7 @@ $paths = [
     'application' => $root . '/apply.php',
     'conversion' => $root . '/modules/sponsors/lib_sponsor_request_conversion.php',
     'request detail' => $root . '/modules/sponsors/my_request.php',
+    'management queue' => $root . '/modules/sponsors/requests.php',
     'sponsor edit' => $root . '/modules/sponsors/edit.php',
     'sponsor view' => $root . '/modules/sponsors/view.php',
     'migration' => $root . '/database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql',
@@ -48,6 +49,12 @@ $checks = [
     'supervisor request detail displays entity representative details' =>
         str_contains($sources['request detail'], 'contact_person_name')
         && str_contains($sources['request detail'], 'الوقت المناسب للتواصل'),
+    'management queue displays legal-entity representative and all contact preferences' =>
+        str_contains($sources['management queue'], "\$lead['contact_person_name']")
+        && str_contains($sources['management queue'], "\$lead['preferred_contact_method']")
+        && str_contains($sources['management queue'], "\$lead['preferred_contact_time']")
+        && str_contains($sources['management queue'], '$contactMethodLabels')
+        && str_contains($sources['management queue'], 'طريقة التواصل:'),
     'sponsor edit persists contact details' =>
         str_contains($sources['sponsor edit'], 'contact_person_name=?')
         && str_contains($sources['sponsor edit'], 'preferred_contact_time=?'),
