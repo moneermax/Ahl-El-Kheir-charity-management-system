@@ -5636,3 +5636,12 @@ Added a conditional company/organization section to the public sponsor applicati
 Migration `database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql` adds the four new columns to `sponsor_requests` and `sponsors` using idempotent MariaDB 10.4 syntax. The conversion helper copies request values into the sponsor profile. Supervisor request details, management queue, sponsor edit, and sponsor view are updated.
 
 A source-contract test and CI migration-repeatability check are wired. **Not yet verified:** GitHub Actions result for the latest commit, applying the migration to the user's Linux Mint database, public browser submission, and database-backed conversion/edit round-trip. No live local database or sponsor record has been modified. Keep the feature open until CI and local runtime acceptance pass.
+
+
+## 2026-10-31 — Legal-entity contact fields: CI + migration verified
+
+The Linux Mint `ahl_el_kheir` database migration `2026-10-31_sponsor_legal_entity_contact_details.sql` was applied. Direct `information_schema.COLUMNS` verification returned exactly eight expected nullable columns: `contact_person_name`, `contact_person_position`, `preferred_contact_method`, and `preferred_contact_time` on both `sponsor_requests` and `sponsors`.
+
+The disposable runtime harness was extended to seed and verify all four values for both company and organization requests through conversion into `sponsors`, then through the edit persistence path. GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs on commit `ec514bf5b65aeed66636acde6eb4e796ca236725`: PHP 8.2 lint/contracts, MariaDB 10.4 migration, sponsor-request migration, full-schema runtime (including the contact-value conversion/edit assertions), HR catalogue migration and rescheduling tests.
+
+**Remaining:** authenticated browser acceptance on the local application for company and organization public submission, VGM direct and assignment routes, supervisor request detail, conversion, sponsor detail and edit display/persistence. No live sponsor or request data has been used as a test fixture. Feature remains open until browser acceptance is recorded.
