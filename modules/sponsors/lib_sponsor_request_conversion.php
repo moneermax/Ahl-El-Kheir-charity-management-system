@@ -173,6 +173,9 @@ function assignLegalEntitySponsorRequestToSupervisor(int $requestId, int $superv
         if (!in_array((string)$request['status'], ['new', 'contacted'], true)) {
             throw new InvalidArgumentException('لا يمكن إسناد طلب مغلق أو تم تحويله.');
         }
+        if (!empty($request['assigned_supervisor_id'])) {
+            throw new InvalidArgumentException('هذا الطلب مسند بالفعل إلى مشرف.');
+        }
 
         $supervisor = dbFetchOne(
             "SELECT u.id, u.full_name,
