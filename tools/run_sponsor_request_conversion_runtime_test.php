@@ -67,6 +67,14 @@ try {
     $createdDb = true;
     echo 'INFO | disposable database created: ' . $testDb . PHP_EOL;
 
+    $vgmRoleId = (int)$admin->query("SELECT id FROM " . quoteIdentifier($sourceDb) . ".roles WHERE code = 'vice_general_manager' LIMIT 1")->fetchColumn();
+    $vgmUserStmt = $admin->prepare("SELECT id FROM " . quoteIdentifier($sourceDb) . ".users WHERE role_id = ? AND is_active = 1 ORDER BY id LIMIT 1");
+    $vgmUserStmt->execute([$vgmRoleId]);
+    $vgmUserId = (int)$vgmUserStmt->fetchColumn();
+    if ($vgmRoleId < 1 || $vgmUserId < 1 || $vgmUserId === 19) {
+        throw new RuntimeException('An active VGM role/account is required for the assignment fixture.');
+    }
+
     $tables = [
         'roles',
         'users',
@@ -76,6 +84,7 @@ try {
         'sponsors',
         'sponsor_supervisor_assignments',
         'audit_log',
+        'notifications',
     ];
 
     foreach ($tables as $table) {
@@ -89,7 +98,9 @@ try {
     // role 4, Alef letter 2, and that supervisor's male/Alef assignment.
     $copies = [
         ['roles', 'id = 4'],
+        ['roles', 'id = ' . $vgmRoleId],
         ['users', 'id = 19'],
+        ['users', 'id = ' . $vgmUserId],
         ['letters', 'id = 2 AND is_active = 1'],
         ['supervisor_letters', 'supervisor_id = 19 AND letter_id = 2 AND gender = \'male\''],
     ];
@@ -293,6 +304,146 @@ try {
             $entityType . ' edit round-trip creates no individual assignment history'
         );
     }
+
+    // VGM legal-entity routing: unassigned applications can be processed by
+    // the VGM or assigned once to an active supervisor. Once assigned, the
+    // management queue cannot convert the request; the selected supervisor can.
+    $assignedFixture = $admin->prepare(
+        'INSERT INTO ' . quoteIdentifier($testDb) .
+        '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
+        'VALUES (?, \'company\', \'organization\', \'cash\', \'runtime_test\', NULL, \'new\')'
+    );
+    $assignedFixture->execute(['شركة اختبار الإسناد']);
+    $assignedRequestId = (int)$admin->lastInsertId();
+
+    $_SESSION = [
+        'user_id' => $vgmUserId,
+        'user_role' => 'vice_general_manager',
+        'user_name' => 'Runtime test VGM',
+    ];
+    $assignedName = assignLegalEntitySponsorRequestToSupervisor($assignedRequestId, 19, $vgmUserId);
+    $assignedRequest = dbFetchOne(
+        'SELECT sponsor_type, status, assigned_supervisor_id FROM sponsor_requests WHERE id = ?',
+        [$assignedRequestId]
+    );
+    $assignmentAudit = dbFetchOne(
+        "SELECT user_id, action FROM audit_log WHERE entity_type = 'sponsor_request' AND entity_id = ? AND action = 'ASSIGN_SUPERVISOR' ORDER BY id DESC LIMIT 1",
+        [$assignedRequestId]
+    );
+    $assignmentNotification = dbFetchOne(
+        "SELECT recipient_user_id, link FROM notifications WHERE recipient_user_id = ? AND link = ? ORDER BY id DESC LIMIT 1",
+        [19, 'modules/sponsors/my_request.php?id=' . $assignedRequestId]
+    );
+    runtimeTest(
+        $assignedName !== '' && $assignedRequest
+            && $assignedRequest['sponsor_type'] === 'company'
+            && $assignedRequest['status'] === 'new'
+            && (int)$assignedRequest['assigned_supervisor_id'] === 19,
+        'VGM assigns an unassigned company request to the selected active supervisor without changing its status'
+    );
+    runtimeTest(
+        $assignmentAudit && (int)$assignmentAudit['user_id'] === $vgmUserId
+            && $assignmentAudit['action'] === 'ASSIGN_SUPERVISOR',
+        'VGM request assignment writes its audit event'
+    );
+    runtimeTest(
+        $assignmentNotification && (int)$assignmentNotification['recipient_user_id'] === 19,
+        'assigned supervisor receives an in-app notification with the scoped request link'
+    );
+
+    $duplicateAssignmentRejected = false;
+    try {
+        assignLegalEntitySponsorRequestToSupervisor($assignedRequestId, 19, $vgmUserId);
+    } catch (InvalidArgumentException $e) {
+        $duplicateAssignmentRejected = true;
+    }
+    runtimeTest($duplicateAssignmentRejected, 'a second manual assignment is rejected without duplicating notifications');
+
+    $sponsorCountBeforeBlockedManagementConversion = (int)dbFetchOne('SELECT COUNT(*) AS c FROM sponsors')['c'];
+    $blockedManagementConversion = false;
+    try {
+        convertSponsorRequestToSponsor($assignedRequestId, $vgmUserId, 'management_queue');
+    } catch (RuntimeException $e) {
+        $blockedManagementConversion = true;
+    }
+    runtimeTest(
+        $blockedManagementConversion
+            && (int)dbFetchOne('SELECT COUNT(*) AS c FROM sponsors')['c'] === $sponsorCountBeforeBlockedManagementConversion,
+        'management queue cannot convert a legal-entity request after it is assigned to a supervisor'
+    );
+
+    $_SESSION = [
+        'user_id' => 19,
+        'user_role' => 'supervisor',
+        'user_name' => 'Runtime test supervisor',
+    ];
+    $assignedSponsorId = convertSponsorRequestToSponsor($assignedRequestId, 19);
+    $assignedSponsor = dbFetchOne(
+        'SELECT sponsor_type, gender, supervisor_id, created_by FROM sponsors WHERE id = ?',
+        [$assignedSponsorId]
+    );
+    runtimeTest(
+        $assignedSponsor && $assignedSponsor['sponsor_type'] === 'company'
+            && $assignedSponsor['gender'] === 'organization'
+            && $assignedSponsor['supervisor_id'] === null
+            && (int)$assignedSponsor['created_by'] === 19,
+        'assigned supervisor converts the legal entity while preserving null individual supervisor assignment'
+    );
+    runtimeTest(
+        $assignedSponsor && supervisorCanAccessSponsor(19, $assignedSponsor)
+            && !supervisorCanAccessSponsor(20, $assignedSponsor),
+        'only the converting supervisor receives legal-entity sponsor access'
+    );
+
+    $vgmProcessingFixture = $admin->prepare(
+        'INSERT INTO ' . quoteIdentifier($testDb) .
+        '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
+        'VALUES (?, \'organization\', \'organization\', \'cash\', \'runtime_test\', NULL, \'new\')'
+    );
+    $vgmProcessingFixture->execute(['منظمة يعالجها نائب المدير العام']);
+    $vgmProcessingRequestId = (int)$admin->lastInsertId();
+    $_SESSION = [
+        'user_id' => $vgmUserId,
+        'user_role' => 'vice_general_manager',
+        'user_name' => 'Runtime test VGM',
+    ];
+    $vgmSponsorId = convertSponsorRequestToSponsor($vgmProcessingRequestId, $vgmUserId, 'management_queue');
+    $vgmSponsor = dbFetchOne(
+        'SELECT sponsor_type, gender, supervisor_id, created_by FROM sponsors WHERE id = ?',
+        [$vgmSponsorId]
+    );
+    runtimeTest(
+        $vgmSponsor && $vgmSponsor['sponsor_type'] === 'organization'
+            && $vgmSponsor['gender'] === 'organization'
+            && $vgmSponsor['supervisor_id'] === null
+            && (int)$vgmSponsor['created_by'] === $vgmUserId,
+        'VGM can process an unassigned organization request directly without creating an individual supervisor assignment'
+    );
+
+    $unauthorizedFixture = $admin->prepare(
+        'INSERT INTO ' . quoteIdentifier($testDb) .
+        '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
+        'VALUES (?, \'company\', \'organization\', \'cash\', \'runtime_test\', NULL, \'new\')'
+    );
+    $unauthorizedFixture->execute(['شركة رفض الإسناد غير المخول']);
+    $unauthorizedRequestId = (int)$admin->lastInsertId();
+    $_SESSION = [
+        'user_id' => 19,
+        'user_role' => 'supervisor',
+        'user_name' => 'Runtime test supervisor',
+    ];
+    $unauthorizedAssignmentRejected = false;
+    try {
+        assignLegalEntitySponsorRequestToSupervisor($unauthorizedRequestId, 19, 19);
+    } catch (RuntimeException $e) {
+        $unauthorizedAssignmentRejected = true;
+    }
+    runtimeTest(
+        $unauthorizedAssignmentRejected
+            && dbFetchOne('SELECT assigned_supervisor_id FROM sponsor_requests WHERE id = ?', [$unauthorizedRequestId])['assigned_supervisor_id'] === null,
+        'supervisor cannot use the VGM-only legal-entity assignment operation'
+    );
+
 
 } catch (Throwable $e) {
     fwrite(STDERR, 'ERROR | ' . $e->getMessage() . PHP_EOL);
