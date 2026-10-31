@@ -3336,3 +3336,10 @@ Migration: `database/migrations/2026-10-31_sponsor_legal_entity_contact_details.
 The local migration is applied and verified: eight expected nullable contact columns exist across `sponsor_requests` and `sponsors`. GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs on commit `ec514bf5b65aeed66636acde6eb4e796ca236725`. The disposable MariaDB harness now verifies representative name, position, preferred method and preferred time for both company and organization through conversion and edit persistence. PHP 8.2 lint, source contracts, migration checks and runtime harness passed.
 
 **Next and only open acceptance gate:** pull the latest `main` safely, then perform authenticated local browser acceptance for both public legal-entity form types and the VGM direct/assignment paths through request display, conversion, sponsor detail and edit. Verify persisted contact values. Do not repeat individual conversion tests, modify live sponsor records for fixtures, or reopen unrelated closed modules. Keep the feature open until browser acceptance is evidenced.
+
+
+## 2026-10-31 — Legal-entity queue contact-preference display correction
+
+A focused source review after the local sync found that the VGM management queue displayed the legal-entity representative name, position and preferred contact time, but omitted the submitted preferred contact method. The queue now renders the saved method using the same four supported labels (phone, WhatsApp, email, any method), independently of whether optional representative/time fields are populated. The legal-entity contact source contract now explicitly guards queue rendering of representative name, preferred method and preferred time.
+
+This is a presentation-only correction: no schema, routing, assignment, conversion, permission, or accounting behavior changed. Browser acceptance remains outstanding; CI must pass before the queue correction is treated as verified. The local database migration remains applied and must not be rerun.
