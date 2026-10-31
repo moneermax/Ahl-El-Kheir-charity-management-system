@@ -5909,3 +5909,10 @@ A public company/organization sponsor request must not be auto-routed through th
 
 Implementation is present on `main`. GitHub Actions run [#41185490815](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41185490815) passed all six jobs. The disposable MariaDB runtime harness passed the VGM routing and supervisor handoff assertions and removed its test database. Authenticated browser acceptance remains the only outstanding acceptance gate. See `docs/SPONSOR_REQUEST_CONVERSION_CONTINUATION.md`.
 
+## 2026-10-31 — Legal-entity sponsor application contact-data audit
+
+The current public form previously collected only the entity name and shared phone/email/address channels. It had no authorized representative name/position or preferred contact method/time. The request-to-sponsor conversion therefore could not preserve those professional contact details.
+
+Implementation adds four nullable fields to both request and sponsor records, with an idempotent MariaDB 10.4 migration. Public submission requires a representative name and a valid preferred contact method for company/organization requests; email preference requires an email address. Conversion copies the fields into the sponsor profile. Existing individual application and assignment behavior is preserved. Entity instructions explicitly separate proposals from final sponsorship commitments.
+
+Source-contract and CI migration checks are committed. Runtime evidence is still pending: migration application on the local database, authenticated public submission, request visibility, conversion, sponsor edit, and persisted profile verification. Do not claim runtime acceptance or alter existing live sponsor data before the local migration and controlled verification.
