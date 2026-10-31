@@ -3393,3 +3393,5 @@ Acquisition incentive policy is unchanged: the processor identity in `created_by
 
 Current active sponsor-request work: VGM-controlled routing for public company/organization applications. Individual requests retain automatic first-letter + gender supervisor assignment. Legal-entity requests remain unassigned until the VGM either processes them directly or assigns an active supervisor. See `docs/SPONSOR_REQUEST_CONVERSION_CONTINUATION.md` for implementation, verification boundaries and exact acceptance steps. Do not reopen the completed individual conversion path.
 
+**Verification update — 2026-10-31:** VGM legal-entity routing source-contract and disposable-database runtime checks passed in GitHub Actions run [#41185490815](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41185490815). Only authenticated local browser acceptance remains.
+
