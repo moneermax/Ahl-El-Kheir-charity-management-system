@@ -5645,3 +5645,10 @@ The Linux Mint `ahl_el_kheir` database migration `2026-10-31_sponsor_legal_entit
 The disposable runtime harness was extended to seed and verify all four values for both company and organization requests through conversion into `sponsors`, then through the edit persistence path. GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs on commit `ec514bf5b65aeed66636acde6eb4e796ca236725`: PHP 8.2 lint/contracts, MariaDB 10.4 migration, sponsor-request migration, full-schema runtime (including the contact-value conversion/edit assertions), HR catalogue migration and rescheduling tests.
 
 **Remaining:** authenticated browser acceptance on the local application for company and organization public submission, VGM direct and assignment routes, supervisor request detail, conversion, sponsor detail and edit display/persistence. No live sponsor or request data has been used as a test fixture. Feature remains open until browser acceptance is recorded.
+
+
+## 2026-10-31 — Legal-entity queue contact-preference display correction
+
+A focused source review after the local sync found that the VGM management queue displayed the legal-entity representative name, position and preferred contact time, but omitted the submitted preferred contact method. The queue now renders the saved method using the same four supported labels (phone, WhatsApp, email, any method), independently of whether optional representative/time fields are populated. The legal-entity contact source contract now explicitly guards queue rendering of representative name, preferred method and preferred time.
+
+This is a presentation-only correction: no schema, routing, assignment, conversion, permission, or accounting behavior changed. Browser acceptance remains outstanding; CI must pass before the queue correction is treated as verified. The local database migration remains applied and must not be rerun.
