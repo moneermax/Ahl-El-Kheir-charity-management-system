@@ -3329,3 +3329,10 @@ The active feature is improving the public company/organization sponsor applicat
 Migration: `database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql` adds the fields to `sponsor_requests` and `sponsors`. Conversion copies them to the sponsor profile. Request detail, management queue, sponsor edit and sponsor view are updated. Source contract and CI migration-repeatability checks are wired.
 
 **Do not call this complete yet.** Confirm the latest CI run, then apply the migration on the Linux Mint local DB and run PHP lint, public browser submission for both company and organization, VGM direct/assignment paths as applicable, supervisor detail, conversion, sponsor view/edit, and DB persistence checks. Do not touch unrelated or previously closed sponsor workflow tests. Do not modify any live sponsor/request data for fixtures.
+
+
+## 2026-10-31 — Legal-entity application details: current continuation
+
+The local migration is applied and verified: eight expected nullable contact columns exist across `sponsor_requests` and `sponsors`. GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs on commit `ec514bf5b65aeed66636acde6eb4e796ca236725`. The disposable MariaDB harness now verifies representative name, position, preferred method and preferred time for both company and organization through conversion and edit persistence. PHP 8.2 lint, source contracts, migration checks and runtime harness passed.
+
+**Next and only open acceptance gate:** pull the latest `main` safely, then perform authenticated local browser acceptance for both public legal-entity form types and the VGM direct/assignment paths through request display, conversion, sponsor detail and edit. Verify persisted contact values. Do not repeat individual conversion tests, modify live sponsor records for fixtures, or reopen unrelated closed modules. Keep the feature open until browser acceptance is evidenced.
