@@ -60,7 +60,7 @@ $checks = [
         str_contains($queue, "convertSponsorRequestToSponsor(\$id, (int)Session::getUserId(), 'management_queue')"),
     'management conversion of legal entities is VGM-only and only while unassigned' =>
         str_contains($helper, "Session::getUserRole() !== 'vice_general_manager'")
-        && str_contains($helper, "if (!empty($req['assigned_supervisor_id']))")
+        && str_contains($helper, 'if (!empty($req[\'assigned_supervisor_id\']))')
         && str_contains($helper, "requestType, ['company', 'organization']"),
     'legal-entity queue status transitions stop once assigned' =>
         str_contains($queue, "assigned_supervisor_id IS NULL")
