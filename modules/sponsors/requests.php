@@ -37,9 +37,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         if (!in_array($newStatus, ['contacted', 'lost'], true)) {
             flash('error', 'حالة الطلب غير صالحة.');
         } else {
-            $request = dbFetchOne("SELECT id, status FROM sponsor_requests WHERE id = ?", [$id]);
+            $request = dbFetchOne("SELECT id, status, sponsor_type, assigned_supervisor_id FROM sponsor_requests WHERE id = ?", [$id]);
             if (!$request) {
                 flash('error', 'طلب الرعاية غير موجود.');
+            } elseif (in_array((string)($request['sponsor_type'] ?? 'individual'), ['company', 'organization'], true)
+                && ($role !== 'vice_general_manager' || !empty($request['assigned_supervisor_id']))) {
+                flash('error', 'هذا الطلب يخضع لمتابعة المشرف المسند إليه أو قرار نائب المدير العام.');
             } elseif (!in_array((string)$request['status'], ['new', 'contacted'], true)) {
                 flash('error', 'لا يمكن تغيير حالة هذا الطلب بعد إغلاقه أو تحويله.');
             } else {
@@ -52,9 +55,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     }
     if ($action === 'reopen' && !empty($_POST['id'])) {
         $id = (int)$_POST['id'];
-        $request = dbFetchOne("SELECT id, status FROM sponsor_requests WHERE id = ?", [$id]);
+        $request = dbFetchOne("SELECT id, status, sponsor_type FROM sponsor_requests WHERE id = ?", [$id]);
         if (!$request) {
             flash('error', 'طلب الرعاية غير موجود.');
+        } elseif (in_array((string)($request['sponsor_type'] ?? 'individual'), ['company', 'organization'], true) && $role !== 'vice_general_manager') {
+            flash('error', 'إعادة فتح طلبات الشركات والمنظمات من صلاحيات نائب المدير العام فقط.');
         } elseif ((string)$request['status'] !== 'lost') {
             flash('error', 'يمكن إعادة فتح الطلبات المغلقة فقط.');
         } else {
@@ -66,10 +71,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     }
     if ($action === 'delete' && !empty($_POST['id'])) {
         $id = (int)$_POST['id'];
-        $request = dbFetchOne("SELECT id, status, assigned_supervisor_id FROM sponsor_requests WHERE id = ?", [$id]);
+        $request = dbFetchOne("SELECT id, status, assigned_supervisor_id, sponsor_type FROM sponsor_requests WHERE id = ?", [$id]);
         if (!$request) {
             flash('error', 'طلب الرعاية غير موجود.');
-        } elseif ((string)$request['status'] !== 'new' || !empty($request['assigned_supervisor_id'])) {
+        } elseif ((string)$request['status'] !== 'new' || !empty($request['assigned_supervisor_id'])
+            || (in_array((string)($request['sponsor_type'] ?? 'individual'), ['company', 'organization'], true) && $role !== 'vice_general_manager')) {
             flash('error', 'لا يمكن حذف هذا الطلب بعد بدء التواصل أو تحويله إلى المشرف المختص.');
         } else {
             dbExecute("DELETE FROM sponsor_requests WHERE id = ? AND status = 'new' AND assigned_supervisor_id IS NULL", [$id]);
@@ -145,7 +151,7 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <div class="card mb-4 fade-in"><div class="card-body p-2"><div class="table-responsive"><table class="table table-hover align-middle bg-white mb-0"><thead><tr>
 <th><?php echo e(t('sponsors.request_date')); ?></th><th><?php echo e(t('sponsors.request_sponsor_name')); ?></th><th><?php echo e(t('sponsors.request_phone')); ?></th><th><?php echo e(t('sponsors.request_source')); ?></th><th><?php echo e(t('sponsors.request_brought_by')); ?></th><th><?php echo e(t('sponsors.request_status')); ?></th><th>المشرف المسؤول</th><th><?php echo e(t('sponsors.request_notes')); ?></th><th class="text-center"><?php echo e(t('sponsors.request_actions')); ?></th>
 </tr></thead><tbody>
-<?php if (!$leads): ?><tr><td colspan="9" class="text-center text-muted py-4"><?php echo e(t('sponsors.request_no_results')); ?></td></tr><?php else: foreach ($leads as $lead): $badges=['new'=>'bg-info','contacted'=>'bg-warning text-dark','converted'=>'bg-success','lost'=>'bg-secondary']; $byDisplay=trim((string)($lead['brought_by_name']??''))!==''?$lead['brought_by_name']:($lead['brought_by_user']??'—'); $sourceMeta=$sourceOptions[$lead['source']]??['icon'=>'fas fa-question-circle text-muted','key'=>'sponsors.request_source_other']; ?>
+<?php if (!$leads): ?><tr><td colspan="9" class="text-center text-muted py-4"><?php echo e(t('sponsors.request_no_results')); ?></td></tr><?php else: foreach ($leads as $lead): $badges=['new'=>'bg-info','contacted'=>'bg-warning text-dark','converted'=>'bg-success','lost'=>'bg-secondary']; $byDisplay=trim((string)($lead['brought_by_name']??''))!==''?$lead['brought_by_name']:($lead['brought_by_user']??'—'); $sourceMeta=$sourceOptions[$lead['source']]??['icon'=>'fas fa-question-circle text-muted','key'=>'sponsors.request_source_other']; $isLegalEntity=in_array((string)($lead['sponsor_type']??'individual'),['company','organization'],true); $canManageLead=!$isLegalEntity || ($role==='vice_general_manager' && empty($lead['assigned_supervisor_id'])); ?>
 <tr><td><?php echo date('Y-m-d',strtotime($lead['created_at'])); ?></td><td><?php echo e($lead['sponsor_name']); ?></td><td dir="ltr"><?php echo e($lead['phone']??'-'); ?></td><td><i class="<?php echo e($sourceMeta['icon']); ?> me-1"></i><?php echo e(t($sourceMeta['key'])); ?></td><td><?php echo e($byDisplay); ?></td><td><span class="badge <?php echo $badges[$lead['status']]??'bg-secondary'; ?>"><?php echo e(t($statusKeys[$lead['status']]??'sponsors.request_lost')); ?></span></td><td>
 <?php if (in_array((string)($lead['sponsor_type'] ?? 'individual'), ['company', 'organization'], true)): ?>
     <?php if (!empty($lead['assigned_supervisor_id'])): ?>
@@ -172,10 +178,11 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <?php endif; ?>
 </td><td class="small text-muted"><?php echo e($lead['notes']??''); ?></td><td class="text-center">
 <?php if ($lead['status'] === 'new' || $lead['status'] === 'contacted'): ?>
-<?php if ($lead['status'] === 'new' && empty($lead['assigned_supervisor_id'])): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_delete_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-danger" title="<?php echo e(t('sponsors.request_delete')); ?>"><i class="fas fa-trash"></i> <?php echo e(t('sponsors.request_delete')); ?></button></form><?php endif; ?>
-<?php if ($lead['status'] === 'new'): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_contacted_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="contacted"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-info" title="<?php echo e(t('sponsors.request_mark_contacted')); ?>"><i class="fas fa-phone"></i> <?php echo e(t('sponsors.request_mark_contacted')); ?></button></form><?php endif; ?>
-<form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_lost_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="lost"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-secondary" title="<?php echo e(t('sponsors.request_mark_lost')); ?>"><i class="fas fa-xmark"></i> <?php echo e(t('sponsors.request_mark_lost')); ?></button></form>
-<button type="button" class="btn btn-sm btn-outline-success" title="<?php echo e(t('sponsors.request_convert_title')); ?>" data-bs-toggle="modal" data-bs-target="#convertLeadModal" data-request-id="<?php echo (int)$lead['id']; ?>"><i class="fas fa-user-check"></i> <?php echo e(t('sponsors.request_convert')); ?></button>
+<?php if ($lead['status'] === 'new' && empty($lead['assigned_supervisor_id']) && $canManageLead): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_delete_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="delete"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-danger" title="<?php echo e(t('sponsors.request_delete')); ?>"><i class="fas fa-trash"></i> <?php echo e(t('sponsors.request_delete')); ?></button></form><?php endif; ?>
+<?php if ($lead['status'] === 'new' && $canManageLead): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_contacted_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="contacted"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-info" title="<?php echo e(t('sponsors.request_mark_contacted')); ?>"><i class="fas fa-phone"></i> <?php echo e(t('sponsors.request_mark_contacted')); ?></button></form><?php endif; ?>
+<?php if ($canManageLead): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_lost_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_status"><input type="hidden" name="status" value="lost"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-secondary" title="<?php echo e(t('sponsors.request_mark_lost')); ?>"><i class="fas fa-xmark"></i> <?php echo e(t('sponsors.request_mark_lost')); ?></button></form>
+<button type="button" class="btn btn-sm btn-outline-success" title="<?php echo e(t('sponsors.request_convert_title')); ?>" data-bs-toggle="modal" data-bs-target="#convertLeadModal" data-request-id="<?php echo (int)$lead['id']; ?>"><i class="fas fa-user-check"></i> <?php echo e(t('sponsors.request_convert')); ?></button><?php endif; ?>
+<?php if (!$canManageLead): ?><small class="d-block text-muted mt-1"><?php echo $isLegalEntity && !empty($lead['assigned_supervisor_id']) ? 'المتابعة والتحويل من اختصاص المشرف المسند إليه.' : 'بانتظار قرار نائب المدير العام.'; ?></small><?php endif; ?>
 <?php elseif ($lead['status'] === 'lost'): ?><form method="post" class="d-inline" onsubmit="return confirm(<?php echo e(json_encode(t('sponsors.request_reopen_confirm'), JSON_UNESCAPED_UNICODE)); ?>);"><?php echo csrf_field(); ?><input type="hidden" name="action" value="reopen"><input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>"><button type="submit" class="btn btn-sm btn-outline-primary" title="<?php echo e(t('sponsors.request_reopen')); ?>"><i class="fas fa-rotate-left"></i> <?php echo e(t('sponsors.request_reopen')); ?></button></form>
 <?php else: ?><span class="badge bg-light text-muted"><i class="fas fa-check-circle"></i> <?php echo e(t('sponsors.request_complete')); ?></span><?php endif; ?>
 </td></tr><?php endforeach; endif; ?></tbody></table></div></div></div>
