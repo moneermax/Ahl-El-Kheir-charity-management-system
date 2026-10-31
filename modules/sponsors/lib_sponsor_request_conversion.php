@@ -54,6 +54,16 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
         if (!in_array((string)$req['status'], ['new', 'contacted'], true)) {
             throw new InvalidArgumentException('لا يمكن تحويل هذا الطلب في حالته الحالية؛ ربما تم تحويله مسبقاً.');
         }
+        $requestType = (string)($req['sponsor_type'] ?? 'individual');
+        if ($authorizationScope === 'management_queue'
+            && in_array($requestType, ['company', 'organization'], true)) {
+            if (Session::getUserRole() !== 'vice_general_manager') {
+                throw new RuntimeException('معالجة طلبات الشركات والمنظمات غير المسندة من صلاحيات نائب المدير العام فقط.');
+            }
+            if (!empty($req['assigned_supervisor_id'])) {
+                throw new RuntimeException('هذا الطلب مسند إلى مشرف مختص؛ يجب على المشرف متابعة التحويل من صفحة الطلب المسند إليه.');
+            }
+        }
 
         $name = trim((string)$req['sponsor_name']);
         $type = (string)($req['sponsor_type'] ?? 'individual');
