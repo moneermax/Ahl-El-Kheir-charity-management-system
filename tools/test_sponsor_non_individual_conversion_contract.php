@@ -33,7 +33,8 @@ $supId = $type === 'individual' ? resolveSponsorSupervisorId($name, $gender) : n
 SOURCE
         ),
     'public request persists type, gender and supervisor scope' =>
-        str_contains($application, 'sponsor_type, gender, preferred_payment_method')
+        str_contains($application, 'sponsor_type, contact_person_name')
+        && str_contains($application, 'gender, preferred_payment_method')
         && str_contains($application, 'assigned_supervisor_id'),
     'conversion preserves company and organization request types' =>
         str_contains($conversion, "['individual', 'company', 'organization']"),
@@ -55,7 +56,8 @@ SOURCE
         str_contains($conversion, 'if ($supervisorId) {')
         && str_contains($conversion, 'ensureActiveSponsorAssignmentHistory($newId, $supervisorId, $actorId);'),
     'sponsor insert persists the canonical type, gender and supervisor fields' =>
-        str_contains($conversion, 'status, sponsor_type, gender, preferred_payment_method')
+        str_contains($conversion, 'status, sponsor_type, gender, contact_person_name')
+        && str_contains($conversion, 'preferred_contact_time, preferred_payment_method')
         && str_contains($conversion, 'supervisor_id, assigned_by, assigned_at'),
 ];
 
