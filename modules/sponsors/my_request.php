@@ -1,5 +1,5 @@
 <?php
-// Supervisor-only detail view for a sponsor request assigned by the authoritative letter + gender matrix.
+// Supervisor-only detail view for a sponsor request assigned through the individual matrix or VGM legal-entity routing.
 require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
@@ -120,7 +120,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <div class="welcome-section fade-in">
     <h2><i class="fas fa-hand-holding-heart me-2"></i>تفاصيل طلب كفيل</h2>
-    <p>هذا الطلب مسند إليك وفقاً لتوزيع المشرفين المعتمد. يمكنك الاطلاع على بياناته هنا.</p>
+    <p>هذا الطلب مسند إليك لمتابعة التواصل واستكمال إجراءات تحويله إلى كفيل عند الاتفاق.</p>
 </div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 <div class="card mb-4"><div class="card-body">
