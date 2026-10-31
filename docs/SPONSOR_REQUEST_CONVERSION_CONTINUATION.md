@@ -132,3 +132,12 @@ No production sponsor/request records or live database were modified by this CI 
 
 A final queue review also found that the old management conversion button targeted `#convertLeadModal`, but no such modal existed in the page. It has been replaced with a CSRF-protected native POST form that performs the authorized conversion and follows the sponsor-detail redirect. The regression contract now guards this real action path; the supervisor detail copy was also made neutral so it accurately covers both matrix-routed individuals and VGM-assigned legal entities.
 
+## 2026-10-31 — Company/organization application contact details
+
+The public sponsor application now has a conditional legal-entity section for an authorized representative, position, preferred contact method, and preferred contact time. The entity name remains the existing sponsor name; official phone/email and address remain the existing fields. Individual applications retain their previous fields and gender/supervisor routing.
+
+Legal-entity instructions distinguish an initial expression of interest from an activated sponsorship. The entity may propose one or more children and an overall monthly budget; final child count, monthly commitment, payment schedule, and documentation are agreed with the organization before activation. These proposal fields do not create an immediate financial commitment.
+
+Migration: `database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql` adds the four contact fields idempotently to `sponsor_requests` and `sponsors`. Conversion copies the values into the sponsor profile. The assigned-supervisor request detail, management queue, sponsor edit form, and sponsor profile expose the information.
+
+Source-contract coverage and MariaDB migration-repeatability CI wiring were added. **Verification boundary:** local migration application, public browser submission, conversion/edit round-trip against the Linux Mint database, and the resulting browser presentation remain pending. Do not treat the feature as runtime-verified until those checks pass. No live database or sponsor record was modified by this source work.
