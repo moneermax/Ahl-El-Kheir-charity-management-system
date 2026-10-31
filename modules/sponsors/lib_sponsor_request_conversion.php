@@ -112,12 +112,14 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
                 $name, $rawLetter, $letterId, $req['phone'] ?? null,
                 $req['phone_purpose'] ?? 'both', $req['alt_phone'] ?? null,
                 $req['alt_phone_purpose'] ?? 'both', $req['email'] ?? null, $req['address'] ?? null,
-$code, $type, $gender, $req['contact_person_name'] ?? null,
+                $code, $type, $gender, $req['contact_person_name'] ?? null,
                 $req['contact_person_position'] ?? null,
                 in_array((string)($req['preferred_contact_method'] ?? ''), ['call', 'whatsapp', 'email', 'any'], true)
-                    ? (string)$req['preferred_contact_method'] : null,
+                    ? (strring)$req['preferred_contact_method'] : null,
                 $req['preferred_contact_time'] ?? null,
-                $payment, $req['notes'] ?? null,                $req['source'] ?? 'public_form', $broughtByUserId,
+                $payment, $req['notes'] ?? null,
+                isset($req['desired_orphans']) && $req['desired_orphans'] !== '' ? (int)$req['desired_orphans'] : null,
+$req['source'] ?? 'public_form', $broughtByUserId,
                 $req['brought_by_name'] ?? null, $actorId, $supervisorId, $actorId
             ]
         );
