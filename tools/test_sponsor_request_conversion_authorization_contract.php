@@ -64,7 +64,7 @@ $checks = [
         && str_contains($helper, "requestType, ['company', 'organization']"),
     'legal-entity queue status transitions stop once assigned' =>
         str_contains($queue, "assigned_supervisor_id IS NULL")
-        && str_contains($queue, "supervisor المسند إليه"),
+        && str_contains($queue, "المشرف المسند إليه"),
     'authorized management conversion is a real native POST form, not a missing modal trigger' =>
         str_contains($queue, 'data-ak-native-post="1"')
         && str_contains($queue, 'name="action" value="convert"')
