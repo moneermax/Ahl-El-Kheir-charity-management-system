@@ -19,6 +19,7 @@ foreach ($sources as $label => $source) {
 }
 
 [$application, $conversion] = array_values($sources);
+$normalizedConversion = preg_replace('/\\s+/', ' ', $conversion);
 $checks = [
     'public form accepts all canonical sponsor types' =>
         str_contains($application, "['individual','company','organization']"),
@@ -56,9 +57,9 @@ SOURCE
         str_contains($conversion, 'if ($supervisorId) {')
         && str_contains($conversion, 'ensureActiveSponsorAssignmentHistory($newId, $supervisorId, $actorId);'),
     'sponsor insert persists the canonical type, gender and supervisor fields' =>
-        str_contains($conversion, 'status, sponsor_type, gender, contact_person_name')
-        && str_contains($conversion, 'preferred_contact_time, preferred_payment_method')
-        && str_contains($conversion, 'supervisor_id, assigned_by, assigned_at'),
+        str_contains($normalizedConversion, 'status, sponsor_type, gender, contact_person_name')
+        && str_contains($normalizedConversion, 'preferred_contact_time, preferred_payment_method')
+        && str_contains($normalizedConversion, 'supervisor_id, assigned_by, assigned_at'),
 ];
 
 $failed = 0;
