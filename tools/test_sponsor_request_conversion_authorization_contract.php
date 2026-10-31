@@ -54,7 +54,7 @@ $checks = [
     'assigned supervisor receives an in-app request link after commit' =>
         str_contains($helper, 'modules/sponsors/my_request.php?id='),
     'only VGM sees the manual assignment control in the management queue' =>
-        str_contains($queue, "\\$role === 'vice_general_manager'")
+        str_contains($queue, '$role === \'vice_general_manager\'')
         && str_contains($queue, 'assignLegalEntitySponsorRequestToSupervisor'),
     'management queue keeps the existing direct-processing conversion option' =>
         str_contains($queue, "convertSponsorRequestToSponsor(\$id, (int)Session::getUserId(), 'management_queue')"),
