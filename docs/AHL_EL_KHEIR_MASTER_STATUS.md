@@ -5629,3 +5629,10 @@ The sponsor request workflow now has a VGM-controlled decision point for public 
 
 Implementation, source-contract tests and disposable-database runtime verification are committed on `main` and PASS. GitHub Actions run [#41185490815](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41185490815) passed all six jobs, including VGM assignment, audit, notification, duplicate protection, assigned-supervisor conversion/access and VGM direct processing. Authenticated browser acceptance is not yet verified. No schema migration was required. Detailed continuation: `docs/SPONSOR_REQUEST_CONVERSION_CONTINUATION.md`.
 
+## 2026-10-31 — Legal-entity sponsor application contact details (implementation; runtime pending)
+
+Added a conditional company/organization section to the public sponsor application for the authorized contact person's name and position, preferred contact method, and preferred contact time. Existing phone, email, address, proposed child count, proposed monthly amount, and preferred payment method are reused rather than duplicated. Entity-specific instructions state that the entity may propose one or more children and an overall monthly budget; final child count, monthly commitment, payment schedule, and documentation are agreed before activation. Individual form behavior and supervisor matrix routing remain unchanged.
+
+Migration `database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql` adds the four new columns to `sponsor_requests` and `sponsors` using idempotent MariaDB 10.4 syntax. The conversion helper copies request values into the sponsor profile. Supervisor request details, management queue, sponsor edit, and sponsor view are updated.
+
+A source-contract test and CI migration-repeatability check are wired. **Not yet verified:** GitHub Actions result for the latest commit, applying the migration to the user's Linux Mint database, public browser submission, and database-backed conversion/edit round-trip. No live local database or sponsor record has been modified. Keep the feature open until CI and local runtime acceptance pass.
