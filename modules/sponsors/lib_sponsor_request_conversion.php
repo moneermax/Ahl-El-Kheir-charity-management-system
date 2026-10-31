@@ -140,3 +140,85 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
         throw $e;
     }
 }
+
+/**
+ * Assign an unassigned company/organization application to an active supervisor.
+ * This is a VGM-only routing decision; it does not create a sponsor or alter
+ * the individual first-letter + gender assignment matrix.
+ */
+function assignLegalEntitySponsorRequestToSupervisor(int $requestId, int $supervisorId, int $actorId): string
+{
+    require_once dirname(__DIR__, 2) . '/config/session.php';
+
+    if ($requestId < 1 || $supervisorId < 1 || $actorId < 1
+        || !Session::isLoggedIn()
+        || (int)Session::getUserId() !== $actorId
+        || Session::getUserRole() !== 'vice_general_manager') {
+        throw new RuntimeException('لا تملك صلاحية إسناد طلب الكفالة.');
+    }
+
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $request = dbFetchOne(
+            'SELECT id, sponsor_type, status, assigned_supervisor_id FROM sponsor_requests WHERE id = ? FOR UPDATE',
+            [$requestId]
+        );
+        if (!$request) {
+            throw new InvalidArgumentException('طلب الكفالة غير موجود.');
+        }
+        if (!in_array((string)$request['sponsor_type'], ['company', 'organization'], true)) {
+            throw new InvalidArgumentException('الإسناد اليدوي متاح لطلبات الشركات والمنظمات فقط.');
+        }
+        if (!in_array((string)$request['status'], ['new', 'contacted'], true)) {
+            throw new InvalidArgumentException('لا يمكن إسناد طلب مغلق أو تم تحويله.');
+        }
+
+        $supervisor = dbFetchOne(
+            "SELECT u.id, u.full_name,
+                    COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) AS supervisor_status
+             FROM users u
+             JOIN roles r ON r.id = u.role_id
+             WHERE u.id = ? AND r.code = 'supervisor' AND u.is_active = 1
+             FOR UPDATE",
+            [$supervisorId]
+        );
+        if (!$supervisor || (string)$supervisor['supervisor_status'] !== 'active') {
+            throw new InvalidArgumentException('المشرف المحدد غير نشط أو غير متاح للإسناد.');
+        }
+
+        dbExecute(
+            'UPDATE sponsor_requests SET assigned_supervisor_id = ? WHERE id = ? AND status IN (\'new\', \'contacted\')',
+            [$supervisorId, $requestId]
+        );
+        if ((int)$pdo->query('SELECT ROW_COUNT()')->fetchColumn() !== 1
+            && (int)($request['assigned_supervisor_id'] ?? 0) !== $supervisorId) {
+            throw new RuntimeException('تعذر حفظ إسناد الطلب؛ حدّث الصفحة وحاول مجدداً.');
+        }
+
+        dbExecute(
+            "INSERT INTO audit_log (user_id, action, entity_type, entity_id, ip_address, user_agent)
+             VALUES (?, 'ASSIGN_SUPERVISOR', 'sponsor_request', ?, ?, ?)",
+            [$actorId, $requestId, $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']
+        );
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) {
+            $pdo->rollBack();
+        }
+        throw $e;
+    }
+
+    try {
+        dbExecute(
+            "INSERT INTO notifications (recipient_user_id, type, title, body, link)
+             VALUES (?, 'sponsor_request', ?, ?, ?)",
+            [$supervisorId, 'طلب كفالة مسند إليك', 'تم إسناد طلب كفالة جديد إليك لمتابعته.', 'modules/sponsors/my_request.php?id=' . $requestId]
+        );
+    } catch (Throwable $e) {
+        error_log('Sponsor request assignment notification failed for request ' . $requestId . ': ' . $e->getMessage());
+    }
+
+    return trim((string)$supervisor['full_name']);
+}
+
