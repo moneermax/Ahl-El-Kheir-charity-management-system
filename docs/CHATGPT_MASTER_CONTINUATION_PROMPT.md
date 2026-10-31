@@ -3317,3 +3317,8 @@ Correction committed on `main`:
 Acquisition incentive policy is unchanged: the processor identity in `created_by` is audit/record ownership only. Incentive attribution remains separate in `brought_by_user_id`; no incentive or accounting records are changed by this access fix.
 
 **Verification:** GitHub Actions run [#41166572961](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41166572961) passed all six jobs: PHP 8.2 lint/source contracts, MariaDB 10.4 migration, sponsor-request migration, full-schema migration (including the expanded disposable-database sponsor conversion harness), HR catalogue migrations, and rescheduling service tests. The runtime harness passed creator-only access for both company and organization, denied another supervisor, confirmed processor `created_by` with NULL acquisition attribution, preserved NULL individual supervisor assignment/history, and removed its disposable database. Authenticated browser access remains unverified. No live sponsor record or production database was modified.
+
+## 2026-10-31 — Current sponsor request routing task
+
+Continue from `docs/SPONSOR_REQUEST_CONVERSION_CONTINUATION.md`. The VGM-controlled company/organization routing workflow is implemented on `main`: legal entities arrive unassigned; VGM can process directly or assign one active supervisor; assigned requests are handled by that supervisor and cannot be converted from the management queue. Individual first-letter + gender auto-assignment is unchanged. Confirm latest CI and disposable runtime harness results before asking for any local browser acceptance. Do not repeat the closed individual conversion path or claim browser acceptance without evidence.
+
