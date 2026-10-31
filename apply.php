@@ -15,7 +15,7 @@ if (!function_exists('t')) { function t(string $s): string { return function_exi
 $purposes = ['call' => 'للاتصال', 'whatsapp' => 'واتساب', 'both' => 'للاتصال وواتساب'];
 
 $done = false; $errors = []; $assignedSupervisorName = null;
-$form = ['full_name'=>'','phone'=>'','phone_purpose'=>'both','alt_phone'=>'','alt_phone_purpose'=>'both','email'=>'','address'=>'','sponsor_type'=>'individual','gender'=>'','preferred_payment_method'=>'cash','desired_orphans'=>'','proposed_amount'=>'','notes'=>''];
+$form = ['full_name'=>'','phone'=>'','phone_purpose'=>'both','alt_phone'=>'','alt_phone_purpose'=>'both','email'=>'','address'=>'','sponsor_type'=>'individual','gender'=>'','contact_person_name'=>'','contact_person_position'=>'','preferred_contact_method'=>'any','preferred_contact_time'=>'','preferred_payment_method'=>'cash','desired_orphans'=>'','proposed_amount'=>'','notes'=>''];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($form as $key => $default) if (isset($_POST[$key]) && is_scalar($_POST[$key])) $form[$key] = trim((string)$_POST[$key]);
     if (!verify_csrf()) $errors[] = 'انتهت صلاحية النموذج أو أن الطلب غير صالح. حدّث الصفحة وحاول مرة أخرى.';
@@ -27,9 +27,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $payment = in_array($form['preferred_payment_method'], ['cash','bank_transfer','credit_card','mobile','other'], true) ? $form['preferred_payment_method'] : 'cash';
     $desiredOrphans = $form['desired_orphans'] !== '' && ctype_digit($form['desired_orphans']) ? (int)$form['desired_orphans'] : null;
     $proposedAmount = $form['proposed_amount'] !== '' && is_numeric($form['proposed_amount']) && (float)$form['proposed_amount'] >= 0 ? (float)$form['proposed_amount'] : null;
+    $contactPersonName = $type !== 'individual' ? trim($form['contact_person_name']) : null;
+    $contactPersonPosition = $type !== 'individual' && $form['contact_person_position'] !== '' ? trim($form['contact_person_position']) : null;
+    $contactMethod = in_array($form['preferred_contact_method'], ['call', 'whatsapp', 'email', 'any'], true) ? $form['preferred_contact_method'] : null;
+    $contactTime = $type !== 'individual' && $form['preferred_contact_time'] !== '' ? trim($form['preferred_contact_time']) : null;
     if ($name === '') $errors[] = 'الاسم الكامل مطلوب.';
     if ($phone === '') $errors[] = 'الهاتف مطلوب.';
     if ($type === 'individual' && !in_array($gender, ['male','female'], true)) $errors[] = 'يرجى تحديد الجنس للأفراد.';
+    if ($type !== 'individual' && $contactPersonName === '') $errors[] = 'اسم الشخص المفوض بالتواصل مطلوب للشركات والمنظمات.';
+    if ($type !== 'individual' && $contactMethod === null) $errors[] = 'يرجى تحديد طريقة التواصل المفضلة للجهة.';
+    if ($type !== 'individual' && $contactMethod === 'email' && $form['email'] === '') $errors[] = 'البريد الإلكتروني مطلوب عند اختيار التواصل عبر البريد.';
     if ($form['desired_orphans'] !== '' && ($desiredOrphans === null || $desiredOrphans < 1 || $desiredOrphans > 50)) $errors[] = 'عدد الأيتام يجب أن يكون بين 1 و50.';
     if ($form['proposed_amount'] !== '' && $proposedAmount === null) $errors[] = 'المبلغ المقترح غير صالح.';
     if (!$errors) {
@@ -42,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $assignedSupervisorName = trim((string)($assignedSupervisor['full_name'] ?? '')) ?: null;
             if ($assignedSupervisorName === null) $supId = null;
         }
-        dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address, sponsor_type, gender, preferred_payment_method, proposed_amount, desired_orphans, notes, first_letter_raw, first_letter_id, assigned_supervisor_id, source, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'public_form', 'new')",
-            [$name, $phone, $phonePurpose, $form['alt_phone'] !== '' ? $form['alt_phone'] : null, $altPhonePurpose, $form['email'] !== '' ? $form['email'] : null, $form['address'] !== '' ? $form['address'] : null, $type, $gender, $payment, $proposedAmount, $desiredOrphans, $form['notes'] !== '' ? $form['notes'] : null, $raw, $letterId, $supId]);
+        dbExecute("INSERT INTO sponsor_requests (sponsor_name, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address, sponsor_type, contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time, gender, preferred_payment_method, proposed_amount, desired_orphans, notes, first_letter_raw, first_letter_id, assigned_supervisor_id, source, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'public_form', 'new')",
+            [$name, $phone, $phonePurpose, $form['alt_phone'] !== '' ? $form['alt_phone'] : null, $altPhonePurpose, $form['email'] !== '' ? $form['email'] : null, $form['address'] !== '' ? $form['address'] : null, $type, $contactPersonName, $contactPersonPosition, $type !== 'individual' ? $contactMethod : null, $contactTime, $gender, $payment, $proposedAmount, $desiredOrphans, $form['notes'] !== '' ? $form['notes'] : null, $raw, $letterId, $supId]);
         $reqId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
         try {
             $targets = [];
@@ -203,12 +210,12 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 <?php echo csrf_field(); ?>
                 <!-- الاسم الكامل -->
                 <div class="f-row">
-                    <label><?php echo t('الاسم الكامل'); ?> *</label>
+                    <label id="applicantNameLabel"><?php echo t('الاسم الكامل'); ?> *</label>
                     <input type="text" name="full_name" class="form-control" style="max-width:560px" maxlength="255" value="<?php echo e($form['full_name']); ?>" required>
                 </div>
                 <!-- الهاتف + الغرض -->
                 <div class="f-row">
-                    <label><?php echo t('الهاتف'); ?> *</label>
+                    <label id="applicantPhoneLabel"><?php echo t('الهاتف'); ?> *</label>
                     <input type="tel" name="phone" class="form-control" style="max-width:240px" dir="ltr" maxlength="15" placeholder="09xxxxxxxx" required>
                     <label class="gap-label"><?php echo t('الغرض'); ?></label>
                     <select name="phone_purpose" class="form-select" style="max-width:180px">
@@ -226,7 +233,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 </div>
                 <!-- البريد الإلكتروني -->
                 <div class="f-row">
-                    <label><?php echo t('البريد الإلكتروني'); ?></label>
+                    <label id="applicantEmailLabel"><?php echo t('البريد الإلكتروني'); ?></label>
                     <input type="email" name="email" class="form-control" style="max-width:360px" dir="ltr" value="<?php echo e($form['email']); ?>">
                 </div>
                 <!-- نوع مقدم الطلب -->
@@ -237,6 +244,14 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                         <option value="company" <?php echo $form['sponsor_type'] === 'company' ? 'selected' : ''; ?>><?php echo t('شركة'); ?></option>
                         <option value="organization" <?php echo $form['sponsor_type'] === 'organization' ? 'selected' : ''; ?>><?php echo t('منظمة'); ?></option>
                     </select>
+                </div>
+                <div id="entityContactFields" class="border rounded-3 p-3 mb-3" <?php echo $form['sponsor_type'] === 'individual' ? 'hidden' : ''; ?>>
+                    <h6 class="fw-bold mb-2"><?php echo AK_LANG === 'en' ? 'Authorized representative and contact preferences' : 'بيانات الشخص المفوض بالتواصل وتفضيلات الاتصال'; ?></h6>
+                    <p class="small text-muted mb-3"><?php echo AK_LANG === 'en' ? 'Use the official representative details. The phone and email above are the organization’s contact channels.' : 'يرجى إدخال بيانات ممثل الجهة المفوض. الهاتف والبريد أعلاه هما قنوات التواصل الرسمية للجهة.'; ?></p>
+                    <div class="f-row"><label for="contactPersonName"><?php echo AK_LANG === 'en' ? 'Representative full name' : 'اسم الشخص المفوض بالتواصل'; ?> *</label><input id="contactPersonName" type="text" name="contact_person_name" class="form-control" style="max-width:420px" maxlength="255" value="<?php echo e($form['contact_person_name']); ?>"></div>
+                    <div class="f-row"><label for="contactPersonPosition"><?php echo AK_LANG === 'en' ? 'Job title / position' : 'المسمى الوظيفي / المنصب'; ?></label><input id="contactPersonPosition" type="text" name="contact_person_position" class="form-control" style="max-width:360px" maxlength="150" value="<?php echo e($form['contact_person_position']); ?>"></div>
+                    <div class="f-row"><label for="preferredContactMethod"><?php echo AK_LANG === 'en' ? 'Preferred contact method' : 'طريقة التواصل المفضلة'; ?> *</label><select id="preferredContactMethod" name="preferred_contact_method" class="form-select" style="max-width:220px"><option value="call" <?php echo $form['preferred_contact_method'] === 'call' ? 'selected' : ''; ?>><?php echo AK_LANG === 'en' ? 'Phone call' : 'اتصال هاتفي'; ?></option><option value="whatsapp" <?php echo $form['preferred_contact_method'] === 'whatsapp' ? 'selected' : ''; ?>>WhatsApp</option><option value="email" <?php echo $form['preferred_contact_method'] === 'email' ? 'selected' : ''; ?>>Email</option><option value="any" <?php echo $form['preferred_contact_method'] === 'any' ? 'selected' : ''; ?>><?php echo AK_LANG === 'en' ? 'Any method' : 'أي وسيلة مناسبة'; ?></option></select></div>
+                    <div class="f-row"><label for="preferredContactTime"><?php echo AK_LANG === 'en' ? 'Preferred contact time' : 'الوقت المناسب للتواصل'; ?></label><input id="preferredContactTime" type="text" name="preferred_contact_time" class="form-control" style="max-width:360px" maxlength="100" placeholder="<?php echo AK_LANG === 'en' ? 'e.g. 10:00 AM–2:00 PM' : 'مثلاً: من 10 صباحاً إلى 2 ظهراً'; ?>" value="<?php echo e($form['preferred_contact_time']); ?>"></div>
                 </div>
                 <div class="f-row" id="genderRow">
                     <label for="applicantGender"><?php echo t('الجنس'); ?> *</label>
@@ -262,9 +277,9 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 </div>
                 <!-- عدد الأيتام + المبلغ المقترح -->
                 <div class="f-row">
-                    <label><?php echo t('عدد الأيتام المطلوب كفالتهم'); ?></label>
+                    <label id="desiredOrphansLabel"><?php echo t('عدد الأيتام المطلوب كفالتهم'); ?></label>
                     <input type="number" min="1" max="50" name="desired_orphans" class="form-control" style="max-width:120px" dir="ltr" value="<?php echo e($form['desired_orphans']); ?>">
-                    <label class="gap-label"><?php echo t('المبلغ الشهري المقترح'); ?></label>
+                    <label class="gap-label" id="proposedAmountLabel"><?php echo t('المبلغ الشهري المقترح'); ?></label>
                     <input type="number" min="0" step="500" name="proposed_amount" class="form-control" style="max-width:160px" dir="ltr" value="<?php echo e($form['proposed_amount']); ?>">
                 </div>
                 <!-- ملاحظات -->
@@ -304,8 +319,28 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
         gender.required = individual;
         if (!individual) gender.value = '';
     }
-    type.addEventListener('change', syncGenderRequirement);
+    const entityFields = document.getElementById('entityContactFields');
+    const contactName = document.getElementById('contactPersonName');
+    const contactMethod = document.getElementById('preferredContactMethod');
+    const nameLabel = document.getElementById('applicantNameLabel');
+    const phoneLabel = document.getElementById('applicantPhoneLabel');
+    const emailLabel = document.getElementById('applicantEmailLabel');
+    const orphanLabel = document.getElementById('desiredOrphansLabel');
+    const amountLabel = document.getElementById('proposedAmountLabel');
+    function syncEntityFields() {
+        const entity = type.value !== 'individual';
+        if (entityFields) entityFields.hidden = !entity;
+        if (contactName) contactName.required = entity;
+        if (contactMethod) contactMethod.required = entity;
+        if (nameLabel) nameLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Company / organization name *' : 'اسم الشركة / المنظمة *') : (document.documentElement.lang === 'en' ? 'Full name *' : 'الاسم الكامل *');
+        if (phoneLabel) phoneLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Official contact phone *' : 'هاتف التواصل الرسمي *') : (document.documentElement.lang === 'en' ? 'Phone *' : 'الهاتف *');
+        if (emailLabel) emailLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Official email' : 'البريد الإلكتروني الرسمي') : (document.documentElement.lang === 'en' ? 'Email' : 'البريد الإلكتروني');
+        if (orphanLabel) orphanLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Initial number of children proposed' : 'العدد المبدئي للأطفال المقترح كفالتهم') : (document.documentElement.lang === 'en' ? 'Number of orphans to sponsor' : 'عدد الأيتام المطلوب كفالتهم');
+        if (amountLabel) amountLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Proposed total monthly budget' : 'الميزانية الشهرية الإجمالية المقترحة') : (document.documentElement.lang === 'en' ? 'Proposed monthly amount' : 'المبلغ الشهري المقترح');
+    }
+    type.addEventListener('change', () => { syncGenderRequirement(); syncEntityFields(); });
     syncGenderRequirement();
+    syncEntityFields();
 })();
 (function () {
     const confirmation = document.getElementById('submissionConfirmationDialog');
