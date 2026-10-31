@@ -103,3 +103,23 @@ Correction committed on `main`:
 Acquisition incentive policy is unchanged: the processor identity in `created_by` is audit/record ownership only. Incentive attribution remains separate in `brought_by_user_id`; no incentive or accounting records are changed by this access fix.
 
 **Verification:** GitHub Actions run [#41166572961](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41166572961) passed all six jobs: PHP 8.2 lint/source contracts, MariaDB 10.4 migration, sponsor-request migration, full-schema migration (including the expanded disposable-database sponsor conversion harness), HR catalogue migrations, and rescheduling service tests. The runtime harness passed creator-only access for both company and organization, denied another supervisor, confirmed processor `created_by` with NULL acquisition attribution, preserved NULL individual supervisor assignment/history, and removed its disposable database. Authenticated browser access remains unverified. No live sponsor record or production database was modified.
+
+## 2026-10-31 — VGM legal-entity request routing
+
+The accepted workflow is now implemented on `main`:
+
+- Public individual applications continue to receive automatic supervisor assignment through the existing first-letter + gender matrix.
+- Public company/organization applications remain unassigned (`assigned_supervisor_id = NULL`) on receipt.
+- The VGM can either process an unassigned legal-entity request directly from the management queue or assign it to one active supervisor.
+- Manual assignment is VGM-only, limited to company/organization requests in `new` or `contacted` state, and only succeeds while the request is unassigned. The request row and selected active supervisor are locked during the transaction.
+- Assignment records an `ASSIGN_SUPERVISOR` audit event. After commit, the selected supervisor receives an in-app notification linking to the supervisor-scoped request page. Notification failure is isolated from the committed assignment.
+- Once assigned, management-queue processing/status actions are hidden and server-side conversion is rejected. The selected supervisor follows up and converts through `my_request.php`.
+- VGM direct conversion is restricted to unassigned company/organization requests. Individual management processing behavior is unchanged.
+- Legal-entity sponsor conversion still leaves `sponsors.supervisor_id` NULL. When a supervisor performs the conversion, `created_by` provides the existing creator-only access to the resulting legal-entity sponsor; no individual assignment history or acquisition incentive attribution is created.
+
+Implementation commits on `main` include the VGM assignment service, management queue routing controls, server-side processing restrictions, and regression coverage. No schema migration was required because `sponsor_requests.assigned_supervisor_id` already exists.
+
+**Verification boundary:** database-free source-contract coverage and a disposable-database runtime harness have been added. GitHub Actions for the latest implementation are still running; do not claim runtime success until the final run result is confirmed. Authenticated local browser acceptance remains outstanding. No production sponsor/request records were changed by the disposable harness design; it creates and drops a uniquely named test database.
+
+Next acceptance after CI passes: pull `main`, verify a VGM can process one unassigned legal-entity request, verify a VGM can assign another to an active supervisor, verify that supervisor receives and opens the notification/request, completes conversion and can open/edit the created sponsor, and verify another supervisor cannot access it. Also verify a non-VGM management user cannot assign or directly convert legal-entity requests. Do not repeat the already-verified individual request conversion flow.
+
