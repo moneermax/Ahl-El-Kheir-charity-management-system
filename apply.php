@@ -178,6 +178,14 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                             <li>If you decide to proceed, authorized staff will review suitable available children and the proposed sponsorship details with you. Matching depends on eligibility, availability, and organizational procedures.</li>
                             <li>The sponsorship begins only after the required details are confirmed and the organization completes its normal registration and sponsorship steps. Applying does not guarantee that a particular child is immediately assigned.</li>
                         </ol>
+                        <div id="entityTerms" hidden>
+                            <h6>For companies and organizations</h6>
+                            <ul>
+                                <li>Your organization may propose sponsoring one or more children and provide an overall proposed monthly budget.</li>
+                                <li>The final number of children, monthly commitment, payment schedule, and required documentation will be agreed with the organization before activation.</li>
+                                <li>This application is an expression of interest only; it does not create a financial obligation or activate sponsorships.</li>
+                            </ul>
+                        </div>
                         <h6>Important notes</h6>
                         <ul>
                             <li>Please provide accurate contact details and respond to the supervisor's follow-up.</li>
@@ -195,6 +203,14 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                             <li>عند الرغبة في المتابعة، يراجع الموظفون المخولون الأطفال المناسبين والمتاحين وتفاصيل الكفالة معكم. وتعتمد المطابقة على الأهلية والتوفر وإجراءات المنظمة.</li>
                             <li>تبدأ الكفالة بعد تأكيد التفاصيل المطلوبة وإكمال إجراءات تسجيل الكفيل والكفالة المعتادة. إرسال الطلب لا يضمن تخصيص طفل بعينه فوراً.</li>
                         </ol>
+                        <div id="entityTermsAr" hidden>
+                            <h6>للشركات والمنظمات</h6>
+                            <ul>
+                                <li>يمكن للجهة اقتراح كفالة طفل واحد أو أكثر وتحديد ميزانية شهرية إجمالية مقترحة.</li>
+                                <li>يتم الاتفاق مع المنظمة قبل التفعيل على العدد النهائي للأطفال والالتزام الشهري وجدول السداد والمستندات المطلوبة.</li>
+                                <li>هذا الطلب إبداء رغبة مبدئية فقط؛ ولا ينشئ التزاماً مالياً ولا يفعّل أي كفالة.</li>
+                            </ul>
+                        </div>
                         <h6>ملاحظات مهمة</h6>
                         <ul>
                             <li>يرجى تقديم بيانات اتصال صحيحة والتجاوب مع متابعة المشرف المختص.</li>
@@ -330,6 +346,10 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     function syncEntityFields() {
         const entity = type.value !== 'individual';
         if (entityFields) entityFields.hidden = !entity;
+        const entityTerms = document.getElementById('entityTerms');
+        const entityTermsAr = document.getElementById('entityTermsAr');
+        if (entityTerms) entityTerms.hidden = !entity || document.documentElement.lang !== 'en';
+        if (entityTermsAr) entityTermsAr.hidden = !entity || document.documentElement.lang === 'en';
         if (contactName) contactName.required = entity;
         if (contactMethod) contactMethod.required = entity;
         if (nameLabel) nameLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Company / organization name *' : 'اسم الشركة / المنظمة *') : (document.documentElement.lang === 'en' ? 'Full name *' : 'الاسم الكامل *');
