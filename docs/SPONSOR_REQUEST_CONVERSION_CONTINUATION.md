@@ -141,3 +141,22 @@ Legal-entity instructions distinguish an initial expression of interest from an 
 Migration: `database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql` adds the four contact fields idempotently to `sponsor_requests` and `sponsors`. Conversion copies the values into the sponsor profile. The assigned-supervisor request detail, management queue, sponsor edit form, and sponsor profile expose the information.
 
 Source-contract coverage and MariaDB migration-repeatability CI wiring were added. **Verification boundary:** local migration application, public browser submission, conversion/edit round-trip against the Linux Mint database, and the resulting browser presentation remain pending. Do not treat the feature as runtime-verified until those checks pass. No live database or sponsor record was modified by this source work.
+
+
+## 2026-10-31 — Legal-entity contact fields: migration and runtime CI PASS
+
+The user applied `database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql` to the Linux Mint `ahl_el_kheir` database. Direct information-schema verification returned exactly eight expected nullable columns: the four representative-contact fields on each of `sponsor_requests` and `sponsors`.
+
+The disposable conversion runtime harness was expanded to seed unique representative names, positions, preferred methods and preferred times for both company and organization fixtures. It verifies all four values are copied into the sponsor row by `convertSponsorRequestToSponsor()`, then verifies they remain persisted through the edit-path update, while preserving legal-entity type, `gender='organization'`, and `supervisor_id IS NULL`.
+
+GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs on commit `ec514bf5b65aeed66636acde6eb4e796ca236725`: PHP 8.2 lint and source contracts, MariaDB 10.4 migration, sponsor-request migration, full-schema migration plus disposable sponsor runtime harness, HR catalogue migration, and rescheduling service tests. The disposable test database was removed. No live sponsor/request records were modified.
+
+**Remaining acceptance boundary:** authenticated local browser acceptance is still required. After pulling `main`, verify:
+1. Public company submission shows and validates the entity contact section; public organization submission does the same.
+2. The VGM sees both requests in the management queue and can process one unassigned request directly.
+3. The VGM can assign the other unassigned request to an active supervisor; the supervisor receives the scoped in-app notification and can open the request.
+4. The assigned supervisor sees the representative details and can convert the request; the management queue cannot convert it after assignment.
+5. The resulting sponsor detail and edit form display the representative name, position, preferred contact method and time; save an edit and verify the values persist.
+6. Individual application fields and first-letter + gender assignment remain unchanged.
+
+Do not create test data in live sponsor/request tables without a reviewed cleanup plan. Do not repeat already-verified individual conversion, VGM service runtime, or unrelated closed module tests. The feature is not browser-accepted until these UI paths are verified.
