@@ -216,12 +216,19 @@ try {
         ['company', 'شركة اختبار التحويل'],
         ['organization', 'منظمة اختبار التحويل'],
     ] as [$entityType, $entityName]) {
+        $contactPersonName = $entityType === 'company' ? 'مسؤول شركة الاختبار' : 'مسؤول المنظمة الاختبارية';
+        $contactPersonPosition = $entityType === 'company' ? 'مدير الشراكات' : 'منسق البرامج';
+        $preferredContactMethod = $entityType === 'company' ? 'whatsapp' : 'email';
+        $preferredContactTime = $entityType === 'company' ? '09:00-12:00' : '13:00-16:00';
         $entityFixture = $admin->prepare(
             'INSERT INTO ' . quoteIdentifier($testDb) .
-            '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
-            'VALUES (?, ?, \'organization\', \'cash\', \'runtime_test\', 19, \'new\')'
+            '.sponsor_requests (sponsor_name, sponsor_type, contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
+            'VALUES (?, ?, ?, ?, ?, ?, \'organization\', \'cash\', \'runtime_test\', 19, \'new\')'
         );
-        $entityFixture->execute([$entityName, $entityType]);
+        $entityFixture->execute([
+            $entityName, $entityType, $contactPersonName, $contactPersonPosition,
+            $preferredContactMethod, $preferredContactTime,
+        ]);
         $entityRequestId = (int)$admin->lastInsertId();
 
         $entitySponsorId = convertSponsorRequestToSponsor($entityRequestId, 19);
@@ -230,7 +237,7 @@ try {
             [$entityRequestId]
         );
         $entitySponsor = dbFetchOne(
-            'SELECT id, full_name, sponsor_type, gender, status, supervisor_id, created_by, brought_by_user_id FROM sponsors WHERE id = ?',
+            'SELECT id, full_name, sponsor_type, gender, status, supervisor_id, created_by, brought_by_user_id, contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time FROM sponsors WHERE id = ?',
             [$entitySponsorId]
         );
         $entityAssignments = (int)dbFetchOne(
@@ -252,7 +259,11 @@ try {
                 && $entitySponsor['sponsor_type'] === $entityType
                 && $entitySponsor['gender'] === 'organization'
                 && $entitySponsor['status'] === 'active'
-                && $entitySponsor['supervisor_id'] === null,
+                && $entitySponsor['supervisor_id'] === null
+                && $entitySponsor['contact_person_name'] === $contactPersonName
+                && $entitySponsor['contact_person_position'] === $contactPersonPosition
+                && $entitySponsor['preferred_contact_method'] === $preferredContactMethod
+                && $entitySponsor['preferred_contact_time'] === $preferredContactTime,
             $entityType . ' sponsor preserves legal-entity type and has no individual supervisor'
         );
         runtimeTest(
@@ -282,11 +293,14 @@ try {
         // unassigned and keep its canonical gender after an edit round-trip.
         recordSponsorAssignment($entitySponsorId, null, 19, 'sponsor_letter_gender_reassignment');
         dbExecute(
-            'UPDATE sponsors SET sponsor_type = ?, gender = ?, supervisor_id = ? WHERE id = ?',
-            [$entityType, 'organization', null, $entitySponsorId]
+            'UPDATE sponsors SET sponsor_type = ?, gender = ?, supervisor_id = ?, contact_person_name = ?, contact_person_position = ?, preferred_contact_method = ?, preferred_contact_time = ? WHERE id = ?',
+            [
+                $entityType, 'organization', null, $contactPersonName, $contactPersonPosition,
+                $preferredContactMethod, $preferredContactTime, $entitySponsorId,
+            ]
         );
         $afterEdit = dbFetchOne(
-            'SELECT sponsor_type, gender, supervisor_id FROM sponsors WHERE id = ?',
+            'SELECT sponsor_type, gender, supervisor_id, contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time FROM sponsors WHERE id = ?',
             [$entitySponsorId]
         );
         $assignmentsAfterEdit = (int)dbFetchOne(
@@ -296,7 +310,11 @@ try {
         runtimeTest(
             $afterEdit && $afterEdit['sponsor_type'] === $entityType
                 && $afterEdit['gender'] === 'organization'
-                && $afterEdit['supervisor_id'] === null,
+                && $afterEdit['supervisor_id'] === null
+                && $afterEdit['contact_person_name'] === $contactPersonName
+                && $afterEdit['contact_person_position'] === $contactPersonPosition
+                && $afterEdit['preferred_contact_method'] === $preferredContactMethod
+                && $afterEdit['preferred_contact_time'] === $preferredContactTime,
             $entityType . ' edit round-trip preserves legal-entity identity and null supervisor'
         );
         runtimeTest(
