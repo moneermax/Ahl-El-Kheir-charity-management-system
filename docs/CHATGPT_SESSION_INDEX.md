@@ -3398,3 +3398,12 @@ Current active sponsor-request work: VGM-controlled routing for public company/o
 ## 2026-10-31 — Legal-entity sponsor application details
 
 New company/organization application work is in progress. The public form conditionally captures the authorized representative, position, preferred contact method and time; the request and sponsor schemas receive these fields through migration `2026-10-31_sponsor_legal_entity_contact_details.sql`. Conversion copies the fields into the sponsor profile. The approved proposal model allows one or more children and an overall proposed monthly budget, with final number, commitment, payment schedule and documentation agreed before activation. Source and CI coverage are committed; local migration/browser/runtime acceptance remains pending. Continue from `docs/SPONSOR_REQUEST_CONVERSION_CONTINUATION.md`. Do not change individual sponsorship routing or accounting behavior.
+
+
+## 2026-10-31 — Legal-entity contact fields: CI and migration verified
+
+The local Linux Mint migration was applied and verified directly against MariaDB: all eight expected nullable columns exist (four each in `sponsor_requests` and `sponsors`), with the expected VARCHAR/ENUM definitions.
+
+GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs on commit `ec514bf5b65aeed66636acde6eb4e796ca236725`. This includes PHP 8.2 lint/source contracts, MariaDB 10.4 migration checks, and the disposable-database sponsor conversion runtime harness. The harness now supplies and asserts representative name, position, preferred contact method and time for both company and organization through conversion and the sponsor edit persistence round-trip. Its temporary database is removed after the run; no live sponsor/request records are used.
+
+**Remaining acceptance:** authenticated local browser acceptance only: public company and organization submissions, VGM direct processing and VGM assignment to a supervisor, request detail/queue display, conversion, sponsor detail/edit display and persisted values. Local migration is already applied. Do not repeat individual conversion or closed unrelated tests.
