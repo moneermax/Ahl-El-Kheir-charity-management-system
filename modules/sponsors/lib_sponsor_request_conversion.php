@@ -201,11 +201,10 @@ function assignLegalEntitySponsorRequestToSupervisor(int $requestId, int $superv
         }
 
         dbExecute(
-            'UPDATE sponsor_requests SET assigned_supervisor_id = ? WHERE id = ? AND status IN (\'new\', \'contacted\')',
+            'UPDATE sponsor_requests SET assigned_supervisor_id = ? WHERE id = ? AND assigned_supervisor_id IS NULL AND status IN (\'new\', \'contacted\')',
             [$supervisorId, $requestId]
         );
-        if ((int)$pdo->query('SELECT ROW_COUNT()')->fetchColumn() !== 1
-            && (int)($request['assigned_supervisor_id'] ?? 0) !== $supervisorId) {
+        if ((int)$pdo->query('SELECT ROW_COUNT()')->fetchColumn() !== 1) {
             throw new RuntimeException('تعذر حفظ إسناد الطلب؛ حدّث الصفحة وحاول مجدداً.');
         }
 
