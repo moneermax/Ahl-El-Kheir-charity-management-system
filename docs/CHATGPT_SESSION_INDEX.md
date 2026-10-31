@@ -3395,3 +3395,6 @@ Current active sponsor-request work: VGM-controlled routing for public company/o
 
 **Verification update — 2026-10-31:** VGM legal-entity routing source-contract and disposable-database runtime checks passed in GitHub Actions run [#41185490815](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41185490815). Only authenticated local browser acceptance remains.
 
+## 2026-10-31 — Legal-entity sponsor application details
+
+New company/organization application work is in progress. The public form conditionally captures the authorized representative, position, preferred contact method and time; the request and sponsor schemas receive these fields through migration `2026-10-31_sponsor_legal_entity_contact_details.sql`. Conversion copies the fields into the sponsor profile. The approved proposal model allows one or more children and an overall proposed monthly budget, with final number, commitment, payment schedule and documentation agreed before activation. Source and CI coverage are committed; local migration/browser/runtime acceptance remains pending. Continue from `docs/SPONSOR_REQUEST_CONVERSION_CONTINUATION.md`. Do not change individual sponsorship routing or accounting behavior.
