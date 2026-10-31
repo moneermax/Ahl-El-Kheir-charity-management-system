@@ -5925,3 +5925,10 @@ Local MariaDB schema verification passed after applying `2026-10-31_sponsor_lega
 The CI disposable-database harness now uses distinct contact values for company and organization requests and asserts that representative name, position, preferred contact method and preferred contact time survive conversion and the sponsor edit persistence round-trip. GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41219094685) passed all six jobs, including PHP 8.2 lint, MariaDB 10.4 migration repeatability, source contracts and the expanded conversion runtime harness. The disposable test database was removed. This is database-backed service/persistence evidence, not authenticated browser acceptance.
 
 **Outstanding audit evidence:** public browser submission for both entity types; VGM direct processing; VGM assignment and supervisor notification/follow-up; request queue/detail rendering; conversion; sponsor detail/edit rendering and persisted values. Do not use or mutate live sponsor records as fixtures.
+
+
+## 2026-10-31 — Legal-entity queue contact-preference display correction
+
+A focused source review after the local sync found that the VGM management queue displayed the legal-entity representative name, position and preferred contact time, but omitted the submitted preferred contact method. The queue now renders the saved method using the same four supported labels (phone, WhatsApp, email, any method), independently of whether optional representative/time fields are populated. The legal-entity contact source contract now explicitly guards queue rendering of representative name, preferred method and preferred time.
+
+This is a presentation-only correction: no schema, routing, assignment, conversion, permission, or accounting behavior changed. Browser acceptance remains outstanding; CI must pass before the queue correction is treated as verified. The local database migration remains applied and must not be rerun.
