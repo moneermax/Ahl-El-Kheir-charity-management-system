@@ -17,10 +17,7 @@ if($returnQuery!==''){$returnParams=[];parse_str(rawurldecode($returnQuery),$par
 $sp=dbFetchOne("SELECT s.*,l.code AS letter,u.full_name AS supervisor_name FROM sponsors s LEFT JOIN letters l ON l.id=s.first_letter_id LEFT JOIN users u ON u.id=s.supervisor_id WHERE s.id=?",[$id]);
 if(!$sp){flash('error',t('sponsors.view_not_found'));redirect('modules/sponsors/index.php');}
 if($role==='supervisor'&&!supervisorCanAccessSponsor(Session::getUserId(),$sp)){flash('error',t('sponsors.view_no_permission'));redirect('modules/sponsors/index.php');}
-$entityApplication = null;
-if (in_array((string)($sp['sponsor_type'] ?? ''), ['company', 'organization'], true)) {
-    $entityApplication = dbFetchOne("SELECT contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time FROM sponsor_requests WHERE created_sponsor_id = ? ORDER BY id DESC LIMIT 1", [$id]);
-}
+$entityApplication = in_array((string)($sp['sponsor_type'] ?? ''), ['company', 'organization'], true) ? $sp : null;
 $contactMethodLabels = ['call' => 'اتصال هاتفي', 'whatsapp' => 'واتساب', 'email' => 'البريد الإلكتروني', 'any' => 'أي وسيلة مناسبة'];
 $ships=dbFetchAll("SELECT sp.id,COALESCE(NULLIF(TRIM(sp.sponsorship_code),''),CONCAT('SH-',LPAD(sp.id,6,'0'))) AS sponsorship_code,sp.monthly_amount,sp.start_date,sp.status,fc.child_name,f.mother_name,f.family_code FROM sponsorships sp JOIN family_children fc ON fc.id=sp.child_id JOIN families f ON f.id=fc.family_id WHERE sp.sponsor_id=? ORDER BY sp.status ASC,sp.id DESC",[$id]);
 $activeOrphanCount=(int)(dbFetchOne("SELECT COUNT(DISTINCT sp.child_id) AS total FROM sponsorships sp WHERE sp.sponsor_id=? AND sp.status='active'",[$id])['total']??0);
