@@ -30,7 +30,8 @@ if (!$requestId || $requestId < 1) {
 
 $request = dbFetchOne(
     "SELECT id, sponsor_name, phone, phone_purpose, alt_phone, alt_phone_purpose, email, address,
-            sponsor_type, gender, preferred_payment_method, proposed_amount, desired_orphans,
+            sponsor_type, gender, contact_person_name, contact_person_position, preferred_contact_method,
+            preferred_contact_time, preferred_payment_method, proposed_amount, desired_orphans,
             notes, source, status, created_at, created_sponsor_id
      FROM sponsor_requests
      WHERE id = ? AND assigned_supervisor_id = ?
@@ -116,6 +117,7 @@ $statusLabels = ['new' => 'جديد', 'contacted' => 'تم التواصل', 'con
 $typeLabels = ['individual' => 'فرد', 'company' => 'شركة', 'organization' => 'منظمة'];
 $purposeLabels = ['call' => 'للاتصال', 'whatsapp' => 'واتساب', 'both' => 'للاتصال وواتساب'];
 $paymentLabels = ['cash' => 'نقدي', 'bank_transfer' => 'تحويل بنكي', 'credit_card' => 'بطاقة ائتمانية', 'mobile' => 'محفظة إلكترونية', 'other' => 'أخرى'];
+$contactMethodLabels = ['call' => 'اتصال هاتفي', 'whatsapp' => 'واتساب', 'email' => 'البريد الإلكتروني', 'any' => 'أي وسيلة مناسبة'];
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <div class="welcome-section fade-in">
@@ -147,6 +149,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             'تاريخ الطلب' => $request['created_at'] ?: '—',
             'ملاحظات' => $request['notes'] ?: '—',
         ];
+        if (in_array((string)($request['sponsor_type'] ?? ''), ['company', 'organization'], true)) {
+            $details = array_merge([
+                'الشخص المفوض بالتواصل' => $request['contact_person_name'] ?: '—',
+                'المسمى الوظيفي / المنصب' => $request['contact_person_position'] ?: '—',
+                'طريقة التواصل المفضلة' => $contactMethodLabels[$request['preferred_contact_method'] ?? ''] ?? '—',
+                'الوقت المناسب للتواصل' => $request['preferred_contact_time'] ?: '—',
+            ], $details);
+        }
         foreach ($details as $label => $value): ?>
             <tr><th style="width:28%"><?php echo e($label); ?></th><td><?php echo e((string)$value); ?></td></tr>
         <?php endforeach; ?>
