@@ -160,3 +160,10 @@ GitHub Actions run [#41219094685](https://github.com/moneermax/Ahl-El-Kheir-char
 6. Individual application fields and first-letter + gender assignment remain unchanged.
 
 Do not create test data in live sponsor/request tables without a reviewed cleanup plan. Do not repeat already-verified individual conversion, VGM service runtime, or unrelated closed module tests. The feature is not browser-accepted until these UI paths are verified.
+
+
+## 2026-10-31 — Legal-entity queue contact-preference display correction
+
+A focused source review after the local sync found that the VGM management queue displayed the legal-entity representative name, position and preferred contact time, but omitted the submitted preferred contact method. The queue now renders the saved method using the same four supported labels (phone, WhatsApp, email, any method), independently of whether optional representative/time fields are populated. The legal-entity contact source contract now explicitly guards queue rendering of representative name, preferred method and preferred time.
+
+This is a presentation-only correction: no schema, routing, assignment, conversion, permission, or accounting behavior changed. Browser acceptance remains outstanding; CI must pass before the queue correction is treated as verified. The local database migration remains applied and must not be rerun.
