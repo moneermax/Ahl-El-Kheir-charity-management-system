@@ -123,3 +123,5 @@ Implementation commits on `main` include the VGM assignment service, management 
 
 Next acceptance after CI passes: pull `main`, verify a VGM can process one unassigned legal-entity request, verify a VGM can assign another to an active supervisor, verify that supervisor receives and opens the notification/request, completes conversion and can open/edit the created sponsor, and verify another supervisor cannot access it. Also verify a non-VGM management user cannot assign or directly convert legal-entity requests. Do not repeat the already-verified individual request conversion flow.
 
+A final queue review also found that the old management conversion button targeted `#convertLeadModal`, but no such modal existed in the page. It has been replaced with a CSRF-protected native POST form that performs the authorized conversion and follows the sponsor-detail redirect. The regression contract now guards this real action path; the supervisor detail copy was also made neutral so it accurately covers both matrix-routed individuals and VGM-assigned legal entities.
+
