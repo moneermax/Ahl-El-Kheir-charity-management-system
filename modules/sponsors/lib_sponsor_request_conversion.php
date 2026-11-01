@@ -169,9 +169,8 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
 }
 
 /**
- * Assign an unassigned company/organization application to an active supervisor.
- * This is a VGM-only routing decision; it does not create a sponsor or alter
- * the individual first-letter + gender assignment matrix.
+ * Assign an eligible unassigned request to an active supervisor.
+ * VGM may assign legal entities and public-form individuals with no matrix match.
  */
 function assignLegalEntitySponsorRequestToSupervisor(int $requestId, int $supervisorId, int $actorId): string
 {
