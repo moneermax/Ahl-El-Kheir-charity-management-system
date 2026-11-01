@@ -42,6 +42,14 @@ function supervisorCanAccessSponsor(int $supervisorId, array $sponsor): bool
 {
     if ($supervisorId <= 0) return false;
 
+    // Explicit administrative reassignment is a scoped exception to the
+    // letter/gender matrix. It grants access only to the supervisor currently
+    // recorded on the sponsor and only while the manual-override flag is set.
+    if ((int)($sponsor['is_manual_override'] ?? 0) === 1
+        && (int)($sponsor['supervisor_id'] ?? 0) === $supervisorId) {
+        return true;
+    }
+
     // A supervisor who converted a company/organization request retains access
     // to that legal-entity record. This is record ownership, not an individual
     // supervisor assignment and never grants acquisition incentive credit.
