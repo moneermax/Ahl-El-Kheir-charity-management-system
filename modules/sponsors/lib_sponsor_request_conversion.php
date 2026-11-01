@@ -97,9 +97,15 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
             [$normalizedLetter]
         );
         $letterId = $letterRow ? (int)$letterRow['id'] : null;
-        $supervisorId = $type === 'individual'
-            ? resolveSponsorSupervisorId($name, $gender)
-            : null;
+        $supervisorId = null;
+        if ($type === 'individual') {
+            $storedOnlineSupervisorId = (string)($req['source'] ?? '') === 'public_form'
+                ? (int)($req['assigned_supervisor_id'] ?? 0)
+                : 0;
+            $supervisorId = $storedOnlineSupervisorId > 0
+                ? $storedOnlineSupervisorId
+                : resolveSponsorSupervisorId($name, $gender);
+        }
         $n = (int)(dbFetchOne('SELECT COUNT(*) c FROM sponsors')['c'] ?? 0) + 1;
         $code = 'SP-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
         $payment = in_array((string)($req['preferred_payment_method'] ?? ''), ['cash', 'bank_transfer', 'credit_card', 'mobile', 'other'], true)
