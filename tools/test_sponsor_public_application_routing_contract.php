@@ -71,7 +71,7 @@ $checks = [
         && str_contains($sources['sponsor list'], 'supervisor_id = ? AND is_manual_override = 1'),
     'online request assignment is preserved as an explicit sponsor override during conversion' =>
         str_contains($sources['conversion'], '$isManualOverride')
-        && str_contains($sources['conversion'], 'NOW(), ?)"),
+        && str_contains($sources['conversion'], 'NOW(), ?)'),
 ];
 
 $failed = 0;
