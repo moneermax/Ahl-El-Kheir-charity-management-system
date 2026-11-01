@@ -57,9 +57,13 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
         $requestType = (string)($req['sponsor_type'] ?? 'individual');
         if ($authorizationScope === 'management_queue'
             && (string)($req['source'] ?? '') === 'public_form'
-            && $requestType === 'individual'
-            && !empty($req['assigned_supervisor_id'])) {
-            throw new RuntimeException('هذا الطلب الإلكتروني مسند مباشرة إلى المشرف المختص؛ يجب تحويله من صفحة طلبات المشرف.');
+            && $requestType === 'individual') {
+            if (!empty($req['assigned_supervisor_id'])) {
+                throw new RuntimeException('هذا الطلب الإلكتروني مسند مباشرة إلى المشرف المختص؛ يجب تحويله من صفحة طلبات المشرف.');
+            }
+            if (Session::getUserRole() !== 'vice_general_manager') {
+                throw new RuntimeException('طلبات الموقع الإلكتروني غير المسندة من صلاحيات نائب المدير العام فقط.');
+            }
         }
         if ($authorizationScope === 'management_queue'
             && in_array($requestType, ['company', 'organization'], true)) {
