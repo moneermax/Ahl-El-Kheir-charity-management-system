@@ -438,6 +438,51 @@ try {
         'VGM can process an unassigned organization request directly without creating an individual supervisor assignment'
     );
 
+    // Public individual applications already assigned by the letter/gender
+    // matrix belong to that supervisor, not the management queue.
+    $onlineIndividualFixture = $admin->prepare(
+        'INSERT INTO ' . quoteIdentifier($testDb) .
+        '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
+        'VALUES (?, \'individual\', \'male\', \'cash\', \'public_form\', 19, \'new\')'
+    );
+    $onlineIndividualFixture->execute(['أحمد طلب إلكتروني مسند للمشرف']);
+    $onlineIndividualRequestId = (int)$admin->lastInsertId();
+    $sponsorCountBeforeOnlineManagementAttempt = (int)dbFetchOne('SELECT COUNT(*) AS c FROM sponsors')['c'];
+    $_SESSION = [
+        'user_id' => $vgmUserId,
+        'user_role' => 'vice_general_manager',
+        'user_name' => 'Runtime test VGM',
+    ];
+    $onlineManagementRejected = false;
+    try {
+        convertSponsorRequestToSponsor($onlineIndividualRequestId, $vgmUserId, 'management_queue');
+    } catch (RuntimeException $e) {
+        $onlineManagementRejected = true;
+    }
+    runtimeTest(
+        $onlineManagementRejected
+            && (int)dbFetchOne('SELECT COUNT(*) AS c FROM sponsors')['c'] === $sponsorCountBeforeOnlineManagementAttempt,
+        'management queue cannot convert an online individual request already assigned to a supervisor'
+    );
+
+    $_SESSION = [
+        'user_id' => 19,
+        'user_role' => 'supervisor',
+        'user_name' => 'Runtime test supervisor',
+    ];
+    $onlineIndividualSponsorId = convertSponsorRequestToSponsor($onlineIndividualRequestId, 19);
+    $onlineIndividualSponsor = dbFetchOne(
+        'SELECT sponsor_type, gender, supervisor_id, created_by FROM sponsors WHERE id = ?',
+        [$onlineIndividualSponsorId]
+    );
+    runtimeTest(
+        $onlineIndividualSponsor && $onlineIndividualSponsor['sponsor_type'] === 'individual'
+            && $onlineIndividualSponsor['gender'] === 'male'
+            && (int)$onlineIndividualSponsor['supervisor_id'] === 19
+            && (int)$onlineIndividualSponsor['created_by'] === 19,
+        'assigned supervisor can convert the online individual request through the supervisor path'
+    );
+
     $unauthorizedFixture = $admin->prepare(
         'INSERT INTO ' . quoteIdentifier($testDb) .
         '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
