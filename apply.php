@@ -130,6 +130,11 @@ body{background:linear-gradient(135deg,#0a1f44 0%,#1b4d8f 100%);font-family:'Cai
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.sponsorship-terms-panel{background:#f7f9fc;border-color:#d9e2ef!important;line-height:1.9}
+.sponsorship-terms-content[hidden]{display:none}
+.sponsorship-terms-content:not([hidden]){animation:sponsorshipTermsIn .22s ease}
+@keyframes sponsorshipTermsIn{from{opacity:0;transform:translateY(-.25rem)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){.sponsorship-terms-content:not([hidden]){animation:none}}
 .entity-contact-fields{overflow:hidden;max-height:900px;opacity:1;transform:translateY(0);transition:max-height .38s ease,opacity .24s ease,transform .24s ease,margin .38s ease,padding .38s ease;will-change:max-height,opacity,transform}
 .entity-contact-fields.is-collapsed{max-height:0;opacity:0;transform:translateY(-.5rem);margin-block:0!important;padding-block:0!important;border-width:0!important;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.entity-contact-fields{transition:none}}
@@ -169,70 +174,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
         <?php else: ?>
             <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $er) echo '<li>' . e($er) . '</li>'; ?></ul></div><?php endif; ?>
             <p class="text-muted"><?php echo AK_LANG === 'en' ? 'Submit your details and the organization will follow up with you.' : 'سجّل بياناتك وستتابع المنظمة طلبك.'; ?></p>
-            <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
-                <button type="button" class="btn btn-outline-primary" id="openTerms"><i class="fas fa-book-open me-1"></i><?php echo AK_LANG === 'en' ? 'Read sponsorship terms and next steps' : 'اقرأ شروط الكفالة والتعليمات والخطوات التالية'; ?></button>
-                <span class="small text-muted"><?php echo AK_LANG === 'en' ? 'Please review the process before submitting.' : 'يرجى الاطلاع على آلية العمل قبل إرسال الطلب.'; ?></span>
-            </div>
-            <dialog class="terms-dialog" id="sponsorshipTermsDialog" aria-labelledby="termsDialogTitle">
-                <div class="terms-dialog-header d-flex align-items-center justify-content-between gap-3">
-                    <h5 class="mb-0" id="termsDialogTitle"><?php echo AK_LANG === 'en' ? 'Sponsorship terms and what happens next' : 'شروط الكفالة وما بعد تقديم الطلب'; ?></h5>
-                    <button type="button" class="btn btn-sm btn-light" id="closeTerms" aria-label="<?php echo AK_LANG === 'en' ? 'Close' : 'إغلاق'; ?>"><i class="fas fa-times"></i></button>
-                </div>
-                <div class="terms-dialog-body">
-                    <?php if (AK_LANG === 'en'): ?>
-                        <p>Thank you for your interest in supporting children through Ahl El Kheir Women's Organization. Submitting this form is an initial request, not a completed sponsorship agreement.</p>
-                        <h6>What happens after you apply?</h6>
-                        <ol>
-                            <li>Your request is received by the organization and routed according to its current supervisor-assignment rules.</li>
-                            <li>The assigned supervisor will contact you using the details you provide, confirm your interest, answer questions, and explain the applicable terms and steps.</li>
-                            <li>You can discuss the number of children you hope to sponsor, your proposed monthly amount, and your preferred payment method.</li>
-                            <li>If you decide to proceed, authorized staff will review suitable available children and the proposed sponsorship details with you. Matching depends on eligibility, availability, and organizational procedures.</li>
-                            <li>The sponsorship begins only after the required details are confirmed and the organization completes its normal registration and sponsorship steps. Applying does not guarantee that a particular child is immediately assigned.</li>
-                        </ol>
-                        <div id="entityTerms" hidden>
-                            <h6>For companies and organizations</h6>
-                            <ul>
-                                <li>Your organization may propose sponsoring one or more children and provide an overall proposed monthly budget.</li>
-                                <li>The final number of children, monthly commitment, payment schedule, and required documentation will be agreed with the organization before activation.</li>
-                                <li>This application is an expression of interest only; it does not create a financial obligation or activate sponsorships.</li>
-                            </ul>
-                        </div>
-                        <h6>Important notes</h6>
-                        <ul>
-                            <li>Please provide accurate contact details and respond to the supervisor's follow-up.</li>
-                            <li>The proposed amount, number of children, and payment method are preferences for discussion; they are not final until confirmed with the organization.</li>
-                            <li>The supervisor will explain the applicable sponsorship commitment, payment arrangements, and any further requirements before the sponsorship is finalized.</li>
-                            <li>Your submitted contact details will be used to follow up on this application.</li>
-                        </ul>
-                    <?php else: ?>
-                        <p>نشكركم على رغبتكم في دعم الأطفال عبر منظمة أهل الخير النسوية. إرسال هذه الاستمارة هو طلب مبدئي، ولا يعني اكتمال اتفاق الكفالة.</p>
-                        <h6>ماذا يحدث بعد إرسال الطلب؟</h6>
-                        <ol>
-                            <li>تستلم المنظمة الطلب وتوجهه وفق قواعد توزيع المشرفين المعتمدة لديها.</li>
-                            <li>يتواصل معكم المشرف المختص باستخدام بيانات الاتصال المقدمة، ويتأكد من رغبتكم، ويجيب عن أسئلتكم، ويوضح الشروط والخطوات المعمول بها.</li>
-                            <li>يمكنكم مناقشة عدد الأطفال المراد كفالتهم، والمبلغ الشهري المقترح، وطريقة الدفع المفضلة.</li>
-                            <li>عند الرغبة في المتابعة، يراجع الموظفون المخولون الأطفال المناسبين والمتاحين وتفاصيل الكفالة معكم. وتعتمد المطابقة على الأهلية والتوفر وإجراءات المنظمة.</li>
-                            <li>تبدأ الكفالة بعد تأكيد التفاصيل المطلوبة وإكمال إجراءات تسجيل الكفيل والكفالة المعتادة. إرسال الطلب لا يضمن تخصيص طفل بعينه فوراً.</li>
-                        </ol>
-                        <div id="entityTermsAr" hidden>
-                            <h6>للشركات والمنظمات</h6>
-                            <ul>
-                                <li>يمكن للجهة اقتراح كفالة طفل واحد أو أكثر وتحديد ميزانية شهرية إجمالية مقترحة.</li>
-                                <li>يتم الاتفاق مع المنظمة قبل التفعيل على العدد النهائي للأطفال والالتزام الشهري وجدول السداد والمستندات المطلوبة.</li>
-                                <li>هذا الطلب إبداء رغبة مبدئية فقط؛ ولا ينشئ التزاماً مالياً ولا يفعّل أي كفالة.</li>
-                            </ul>
-                        </div>
-                        <h6>ملاحظات مهمة</h6>
-                        <ul>
-                            <li>يرجى تقديم بيانات اتصال صحيحة والتجاوب مع متابعة المشرف المختص.</li>
-                            <li>المبلغ المقترح وعدد الأطفال وطريقة الدفع تفضيلات للمناقشة، ولا تصبح نهائية إلا بعد تأكيدها مع المنظمة.</li>
-                            <li>يوضح المشرف الالتزامات المعمول بها وترتيبات الدفع وأي متطلبات إضافية قبل إكمال الكفالة.</li>
-                            <li>تُستخدم بيانات الاتصال المقدمة لمتابعة هذا الطلب.</li>
-                        </ul>
-                    <?php endif; ?>
-                    <div class="text-end mt-3"><button type="button" class="btn btn-primary" id="closeTermsBottom"><?php echo AK_LANG === 'en' ? 'Close and return to form' : 'إغلاق والعودة إلى الاستمارة'; ?></button></div>
-                </div>
-            </dialog>
             <form method="post">
                 <?php echo csrf_field(); ?>
                 <!-- نوع مقدم الطلب -->
@@ -244,6 +185,42 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                         <option value="organization" <?php echo $form['sponsor_type'] === 'organization' ? 'selected' : ''; ?>><?php echo t('منظمة'); ?></option>
                     </select>
                 </div>
+                <section id="sponsorshipTermsPanel" class="sponsorship-terms-panel border rounded-3 p-3 mb-3" aria-live="polite" aria-atomic="true">
+                    <h6 id="sponsorshipTermsTitle" class="fw-bold mb-2"><?php echo AK_LANG === 'en' ? ($form['sponsor_type'] === 'individual' ? 'Individual sponsorship terms' : ($form['sponsor_type'] === 'company' ? 'Company sponsorship terms' : 'Organization sponsorship terms')) : ($form['sponsor_type'] === 'individual' ? 'شروط كفالة الأفراد' : ($form['sponsor_type'] === 'company' ? 'شروط كفالة الشركات' : 'شروط كفالة المنظمات')); ?></h6>
+                    <?php if (AK_LANG === 'en'): ?>
+                        <div id="individualSponsorshipTerms" class="sponsorship-terms-content"<?php echo $form['sponsor_type'] === 'individual' ? '' : ' hidden'; ?>>
+                            <ul class="mb-0">
+                                <li>This application is an initial request; it does not create an active sponsorship or a final financial commitment.</li>
+                                <li>The requested number of children, proposed monthly amount, and preferred payment method are proposals for discussion. They become final only after confirmation with the organization.</li>
+                                <li>Matching depends on eligible children being available and on the organization's procedures. Submitting an application does not guarantee assignment of a specific child.</li>
+                                <li>Sponsorship starts only after the details are confirmed and the organization's normal registration steps are completed.</li>
+                            </ul>
+                        </div>
+                        <div id="entitySponsorshipTerms" class="sponsorship-terms-content"<?php echo $form['sponsor_type'] === 'individual' ? ' hidden' : ''; ?>>
+                            <ul class="mb-0">
+                                <li>The company or organization may propose sponsoring one or more children and provide an overall proposed monthly budget.</li>
+                                <li>The final number of children, monthly commitment, payment schedule, and required documentation will be agreed with the organization before activation.</li>
+                                <li>This application is an expression of interest only; it does not create a financial obligation or activate any sponsorship.</li>
+                            </ul>
+                        </div>
+                    <?php else: ?>
+                        <div id="individualSponsorshipTerms" class="sponsorship-terms-content"<?php echo $form['sponsor_type'] === 'individual' ? '' : ' hidden'; ?>>
+                            <ul class="mb-0">
+                                <li>هذا الطلب مبدئي، ولا ينشئ كفالة قائمة أو التزاماً مالياً نهائياً.</li>
+                                <li>عدد الأيتام والمبلغ الشهري المقترح وطريقة الدفع المفضلة هي مقترحات للمناقشة، ولا تصبح نهائية إلا بعد تأكيدها مع المنظمة.</li>
+                                <li>تعتمد المطابقة على توفر الحالات المستوفية للشروط وإجراءات المنظمة، ولا يضمن تقديم الطلب تخصيص يتيم بعينه.</li>
+                                <li>تبدأ الكفالة بعد تأكيد التفاصيل واستكمال إجراءات التسجيل المعتمدة لدى المنظمة.</li>
+                            </ul>
+                        </div>
+                        <div id="entitySponsorshipTerms" class="sponsorship-terms-content"<?php echo $form['sponsor_type'] === 'individual' ? ' hidden' : ''; ?>>
+                            <ul class="mb-0">
+                                <li>يمكن للشركة أو المنظمة اقتراح كفالة طفل واحد أو أكثر وتحديد ميزانية شهرية إجمالية مقترحة.</li>
+                                <li>يتم الاتفاق مع المنظمة قبل التفعيل على العدد النهائي للأطفال والالتزام الشهري وجدول السداد والمستندات المطلوبة.</li>
+                                <li>هذا الطلب إبداء رغبة مبدئية فقط؛ ولا ينشئ التزاماً مالياً ولا يفعّل أي كفالة.</li>
+                            </ul>
+                        </div>
+                    <?php endif; ?>
+                </section>
                 <!-- الاسم الكامل -->
                 <div class="f-row">
                     <label id="applicantNameLabel"><?php echo t('الاسم الكامل'); ?> *</label>
@@ -326,19 +303,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
 </div>
 <script>
 (function () {
-    const termsDialog = document.getElementById('sponsorshipTermsDialog');
-    const openTerms = document.getElementById('openTerms');
-    const closeTerms = [document.getElementById('closeTerms'), document.getElementById('closeTermsBottom')];
-    if (termsDialog && openTerms && typeof termsDialog.showModal === 'function') {
-        openTerms.addEventListener('click', () => termsDialog.showModal());
-        closeTerms.forEach(button => button && button.addEventListener('click', () => termsDialog.close()));
-        termsDialog.addEventListener('click', event => { if (event.target === termsDialog) termsDialog.close(); });
-    } else if (openTerms) {
-        openTerms.addEventListener('click', () => { if (termsDialog) termsDialog.setAttribute('open', 'open'); });
-        closeTerms.forEach(button => button && button.addEventListener('click', () => termsDialog && termsDialog.removeAttribute('open')));
-    }
-})();
-(function () {
     const type = document.getElementById('sponsorType');
     const row = document.getElementById('genderRow');
     const gender = document.getElementById('applicantGender');
@@ -357,6 +321,23 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     const emailLabel = document.getElementById('applicantEmailLabel');
     const orphanLabel = document.getElementById('desiredOrphansLabel');
     const amountLabel = document.getElementById('proposedAmountLabel');
+    const termsTitle = document.getElementById('sponsorshipTermsTitle');
+    const individualTerms = document.getElementById('individualSponsorshipTerms');
+    const entityTerms = document.getElementById('entitySponsorshipTerms');
+    function syncSponsorshipTerms() {
+        const individual = type.value === 'individual';
+        if (individualTerms) individualTerms.hidden = !individual;
+        if (entityTerms) entityTerms.hidden = individual;
+        if (termsTitle) {
+            const isEnglish = document.documentElement.lang === 'en';
+            const title = type.value === 'company'
+                ? (isEnglish ? 'Company sponsorship terms' : 'شروط كفالة الشركات')
+                : type.value === 'organization'
+                    ? (isEnglish ? 'Organization sponsorship terms' : 'شروط كفالة المنظمات')
+                    : (isEnglish ? 'Individual sponsorship terms' : 'شروط كفالة الأفراد');
+            termsTitle.textContent = title;
+        }
+    }
     function syncEntityFields() {
         const entity = type.value !== 'individual';
         if (entityFields) {
@@ -366,10 +347,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 control.disabled = !entity;
             });
         }
-        const entityTerms = document.getElementById('entityTerms');
-        const entityTermsAr = document.getElementById('entityTermsAr');
-        if (entityTerms) entityTerms.hidden = !entity || document.documentElement.lang !== 'en';
-        if (entityTermsAr) entityTermsAr.hidden = !entity || document.documentElement.lang === 'en';
         if (contactName) contactName.required = entity;
         if (contactMethod) contactMethod.required = entity;
         if (nameLabel) nameLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Company / organization name *' : 'اسم الشركة / المنظمة *') : (document.documentElement.lang === 'en' ? 'Full name *' : 'الاسم الكامل *');
@@ -381,6 +358,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     function syncTypePresentation() {
         syncGenderRequirement();
         syncEntityFields();
+        syncSponsorshipTerms();
     }
     // Update the form in the current document; changing applicant type must
     // never submit or navigate the enclosing form.
