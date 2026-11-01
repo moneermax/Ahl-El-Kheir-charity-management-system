@@ -85,6 +85,7 @@ try {
         'sponsor_supervisor_assignments',
         'audit_log',
         'notifications',
+        'settings',
     ];
 
     foreach ($tables as $table) {
@@ -150,6 +151,97 @@ try {
     require_once $root . '/config/functions.php';
     require_once $root . '/config/session.php';
     require_once $root . '/modules/sponsors/lib_sponsor_request_conversion.php';
+
+    // Exercise the actual public form POST handler against the disposable
+    // database. The requests and notifications created here are isolated from
+    // the source database and are removed with the temporary schema.
+    require_once $root . '/config/session.php';
+    Session::start();
+    $_SERVER['REQUEST_METHOD'] = 'POST';
+    $_SERVER['HTTP_HOST'] = 'localhost';
+    $_SERVER['REQUEST_URI'] = '/apply.php';
+    $_SESSION = ['csrf_token' => str_repeat('a', 64)];
+
+    $submitPublicApplication = static function (array $fields) use ($root): void {
+        $_POST = $fields + ['csrf_token' => str_repeat('a', 64)];
+        ob_start();
+        include $root . '/apply.php';
+        ob_end_clean();
+    };
+
+    $submitPublicApplication([
+        'full_name' => 'أحمد اختبار تقديم الموقع',
+        'phone' => '0912345678',
+        'sponsor_type' => 'individual',
+        'gender' => 'male',
+        'preferred_payment_method' => 'cash',
+    ]);
+    $publicIndividual = dbFetchOne(
+        "SELECT id, sponsor_type, gender, source, assigned_supervisor_id, status
+         FROM sponsor_requests WHERE sponsor_name = ? ORDER BY id DESC LIMIT 1",
+        ['أحمد اختبار تقديم الموقع']
+    );
+    $publicIndividualNotifications = $publicIndividual
+        ? dbFetchAll('SELECT recipient_user_id, link FROM notifications WHERE link = ?', [
+            'modules/sponsors/my_request.php?id=' . (int)$publicIndividual['id'],
+        ])
+        : [];
+    runtimeTest(
+        $publicIndividual && $publicIndividual['sponsor_type'] === 'individual'
+            && $publicIndividual['gender'] === 'male'
+            && $publicIndividual['source'] === 'public_form'
+            && (int)$publicIndividual['assigned_supervisor_id'] === 19
+            && $publicIndividual['status'] === 'new',
+        'actual public form POST assigns a matrix-matched individual to the first-letter/gender supervisor'
+    );
+    runtimeTest(
+        count($publicIndividualNotifications) === 1
+            && (int)$publicIndividualNotifications[0]['recipient_user_id'] === 19
+            && $publicIndividualNotifications[0]['link'] === 'modules/sponsors/my_request.php?id=' . (int)$publicIndividual['id'],
+        'actual public form POST notifies only the assigned supervisor with the scoped request link'
+    );
+
+    foreach ([
+        ['company', 'شركة اختبار تقديم الموقع', 'مسؤول الشركة الاختبارية'],
+        ['organization', 'منظمة اختبار تقديم الموقع', 'مسؤول المنظمة الاختبارية'],
+    ] as [$publicEntityType, $publicEntityName, $publicContactName]) {
+        $submitPublicApplication([
+            'full_name' => $publicEntityName,
+            'phone' => '0912345679',
+            'sponsor_type' => $publicEntityType,
+            'contact_person_name' => $publicContactName,
+            'contact_person_position' => 'مسؤول التواصل',
+            'preferred_contact_method' => 'call',
+            'preferred_payment_method' => 'cash',
+        ]);
+        $publicEntity = dbFetchOne(
+            "SELECT id, sponsor_type, gender, source, assigned_supervisor_id, status
+             FROM sponsor_requests WHERE sponsor_name = ? ORDER BY id DESC LIMIT 1",
+            [$publicEntityName]
+        );
+        $publicEntityNotifications = $publicEntity
+            ? dbFetchAll('SELECT recipient_user_id, link FROM notifications WHERE link = ?', [
+                'modules/sponsors/requests.php',
+            ])
+            : [];
+        runtimeTest(
+            $publicEntity && $publicEntity['sponsor_type'] === $publicEntityType
+                && $publicEntity['gender'] === 'organization'
+                && $publicEntity['source'] === 'public_form'
+                && $publicEntity['assigned_supervisor_id'] === null
+                && $publicEntity['status'] === 'new',
+            'actual public form POST routes an unassigned ' . $publicEntityType . ' application to VGM ownership'
+        );
+        runtimeTest(
+            count($publicEntityNotifications) === 1
+                && (int)$publicEntityNotifications[0]['recipient_user_id'] === $vgmUserId
+                && $publicEntityNotifications[0]['link'] === 'modules/sponsors/requests.php',
+            'actual public form POST notifies the VGM queue for ' . $publicEntityType . ' applications'
+        );
+    }
+
+    $_SERVER['REQUEST_METHOD'] = 'CLI';
+    $_POST = [];
 
     $_SESSION = [
         'user_id' => 19,
