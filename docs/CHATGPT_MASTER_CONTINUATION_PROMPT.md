@@ -3389,3 +3389,12 @@ Scope note: the VGM manual-assignment helper is explicitly limited to company/or
 Following the user's visual acceptance of the in-place company/organization switch and proposed-budget input, the applicant-type selector (فرد / شركة / منظمة) was moved to the first data field immediately after the form's CSRF field. This makes the selection precede the name, contact and other conditional fields whose presentation/requirements depend on applicant type. No field names, POST handling, routing, validation, persistence, schema, or migration behavior changed. The existing legal-entity animation and conditional required/disabled controls remain intact.
 
 Code commits: `f4638a9fd4bc70f7fc527b44c8762d9532e19bb7` (form order) and `9ed2eca35f17662e1f9796a25f2b3684806bffaa` (source-contract guard verifies applicant type precedes the other initial data fields). PHP lint and CI verification are pending. Browser visual verification of the new field order is pending. No application was submitted and no live sponsor/request data or database schema was changed.
+
+
+## 2026-11-01 — Public sponsor application: type-specific terms
+
+Latest source commits: `54da9078b8ba0c1330453db8c7d71f3f9c8045e4` and `cf29d6d31953a8ef3db03f94eb69c4a0c71f8857`. `apply.php` now displays type-specific sponsorship terms inline immediately below the first-field type selector. Individual terms are distinct; company and organization share the existing legal-entity conditions but have separate selected-type headings. The old general modal is removed. Switching terms is in-place and Arabic/English are supported. No acceptance checkbox, database migration, POST, routing or persistence change.
+
+CI run [#41321131917](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41321131917) passed all six jobs, including the public-application source contract and PHP 8.2 lint. Existing sponsor conversion runtime checks passed in the full-schema job.
+
+**Next gate:** safely pull `main`; visually verify فرد / شركة / منظمة term switching in Arabic and English and confirm no page refresh/scroll jump. Do not submit a real application. This is browser acceptance only; do not repeat closed routing or conversion tests. No schema migration is needed.
