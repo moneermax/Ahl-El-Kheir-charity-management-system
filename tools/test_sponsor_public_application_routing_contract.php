@@ -29,7 +29,7 @@ $checks = [
     'matrix-assigned individuals notify only their assigned supervisor' =>
         str_contains($sources['application'], 'if ($supId) {')
         && str_contains($sources['application'], '$targets[] = $supId;')
-        && str_contains($sources['application'], "'modules/sponsors/my_request.php?id=' . $reqId"),
+        && str_contains($sources['application'], "'modules/sponsors/my_request.php?id=' . \$reqId"),
     'legal entities and unresolved individuals route notifications only to the VGM queue' =>
         str_contains($sources['application'], "r.code = 'vice_general_manager' AND u.is_active = 1")
         && !str_contains($sources['application'], "r.code IN ('admin','vice_general_manager')"),
