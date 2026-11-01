@@ -42,6 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             $request = dbFetchOne("SELECT id, status, sponsor_type, source, assigned_supervisor_id FROM sponsor_requests WHERE id = ?", [$id]);
             if (!$request) {
                 flash('error', 'طلب الرعاية غير موجود.');
+            } elseif ((string)($request['source'] ?? '') === 'public_form' && $role !== 'vice_general_manager') {
+                flash('error', 'طلبات الموقع الإلكتروني من اختصاص المشرف المسند أو نائب المدير العام فقط.');
             } elseif ((string)($request['source'] ?? '') === 'public_form'
                 && (string)($request['sponsor_type'] ?? 'individual') === 'individual'
                 && !empty($request['assigned_supervisor_id'])) {
@@ -73,6 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         $request = dbFetchOne("SELECT id, status, sponsor_type, source, assigned_supervisor_id FROM sponsor_requests WHERE id = ?", [$id]);
         if (!$request) {
             flash('error', 'طلب الرعاية غير موجود.');
+        } elseif ((string)($request['source'] ?? '') === 'public_form' && $role !== 'vice_general_manager') {
+            flash('error', 'طلبات الموقع الإلكتروني من اختصاص المشرف المسند أو نائب المدير العام فقط.');
         } elseif ((string)($request['source'] ?? '') === 'public_form'
             && (string)($request['sponsor_type'] ?? 'individual') === 'individual'
             && !empty($request['assigned_supervisor_id'])) {
@@ -90,10 +94,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     }
     if ($action === 'delete' && !empty($_POST['id'])) {
         $id = (int)$_POST['id'];
-        $request = dbFetchOne("SELECT id, status, assigned_supervisor_id, sponsor_type FROM sponsor_requests WHERE id = ?", [$id]);
+        $request = dbFetchOne("SELECT id, status, assigned_supervisor_id, sponsor_type, source FROM sponsor_requests WHERE id = ?", [$id]);
         if (!$request) {
             flash('error', 'طلب الرعاية غير موجود.');
-        } elseif ((string)$request['status'] !== 'new' || !empty($request['assigned_supervisor_id'])
+        } elseif (((string)($request['source'] ?? '') === 'public_form' && $role !== 'vice_general_manager')
+            || (string)$request['status'] !== 'new' || !empty($request['assigned_supervisor_id'])
             || (in_array((string)($request['sponsor_type'] ?? 'individual'), ['company', 'organization'], true) && $role !== 'vice_general_manager')) {
             flash('error', 'لا يمكن حذف هذا الطلب بعد بدء التواصل أو تحويله إلى المشرف المختص.');
         } else {
@@ -149,7 +154,9 @@ $activeSupervisors = $role === 'vice_general_manager'
           AND COALESCE(u.supervisor_status, 'active') = 'active'
         ORDER BY u.full_name")
     : [];
-$managementQueueVisibility = "NOT (r.source = 'public_form' AND r.sponsor_type = 'individual' AND r.assigned_supervisor_id IS NOT NULL AND r.status IN ('new', 'contacted'))";
+$managementQueueVisibility = $role === 'vice_general_manager'
+    ? "NOT (r.source = 'public_form' AND r.sponsor_type = 'individual' AND r.assigned_supervisor_id IS NOT NULL AND r.status IN ('new', 'contacted'))"
+    : "r.source <> 'public_form'";
 if ($statusFilter !== '') {
     $leads = dbFetchAll("SELECT r.*, u.full_name AS brought_by_user, assigned.full_name AS assigned_supervisor_name FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by LEFT JOIN users assigned ON assigned.id = r.assigned_supervisor_id WHERE r.status = ? AND {$managementQueueVisibility} ORDER BY r.created_at DESC", [$statusFilter]);
 } else {
@@ -171,7 +178,7 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <div class="card mb-4 fade-in"><div class="card-body p-2"><div class="table-responsive"><table class="table table-hover align-middle bg-white mb-0"><thead><tr>
 <th><?php echo e(t('sponsors.request_date')); ?></th><th><?php echo e(t('sponsors.request_sponsor_name')); ?></th><th><?php echo e(t('sponsors.request_phone')); ?></th><th><?php echo e(t('sponsors.request_source')); ?></th><th><?php echo e(t('sponsors.request_brought_by')); ?></th><th><?php echo e(t('sponsors.request_status')); ?></th><th>المشرف المسؤول</th><th><?php echo e(t('sponsors.request_notes')); ?></th><th class="text-center"><?php echo e(t('sponsors.request_actions')); ?></th>
 </tr></thead><tbody>
-<?php if (!$leads): ?><tr><td colspan="9" class="text-center text-muted py-4"><?php echo e(t('sponsors.request_no_results')); ?></td></tr><?php else: foreach ($leads as $lead): $badges=['new'=>'bg-info','contacted'=>'bg-warning text-dark','converted'=>'bg-success','lost'=>'bg-secondary']; $byDisplay=trim((string)($lead['brought_by_name']??''))!==''?$lead['brought_by_name']:($lead['brought_by_user']??'—'); $sourceMeta=$sourceOptions[$lead['source']]??['icon'=>'fas fa-question-circle text-muted','key'=>'sponsors.request_source_other']; $isLegalEntity=in_array((string)($lead['sponsor_type']??'individual'),['company','organization'],true); $isSupervisorRoutedOnlineIndividual=(string)($lead['source']??'')==='public_form' && (string)($lead['sponsor_type']??'individual')==='individual' && !empty($lead['assigned_supervisor_id']); $canManageLead=!$isSupervisorRoutedOnlineIndividual && (!$isLegalEntity || ($role==='vice_general_manager' && empty($lead['assigned_supervisor_id']))); ?>
+<?php if (!$leads): ?><tr><td colspan="9" class="text-center text-muted py-4"><?php echo e(t('sponsors.request_no_results')); ?></td></tr><?php else: foreach ($leads as $lead): $badges=['new'=>'bg-info','contacted'=>'bg-warning text-dark','converted'=>'bg-success','lost'=>'bg-secondary']; $byDisplay=trim((string)($lead['brought_by_name']??''))!==''?$lead['brought_by_name']:($lead['brought_by_user']??'—'); $sourceMeta=$sourceOptions[$lead['source']]??['icon'=>'fas fa-question-circle text-muted','key'=>'sponsors.request_source_other']; $isLegalEntity=in_array((string)($lead['sponsor_type']??'individual'),['company','organization'],true); $isOnlineApplication=(string)($lead['source']??'')==='public_form'; $isSupervisorRoutedOnlineIndividual=$isOnlineApplication && (string)($lead['sponsor_type']??'individual')==='individual' && !empty($lead['assigned_supervisor_id']); $canManageLead=(!$isOnlineApplication || ($role==='vice_general_manager' && !$isSupervisorRoutedOnlineIndividual)) && (!$isLegalEntity || ($role==='vice_general_manager' && empty($lead['assigned_supervisor_id']))); ?>
 <tr><td><?php echo date('Y-m-d',strtotime($lead['created_at'])); ?></td><td><?php echo e($lead['sponsor_name']); ?></td><td dir="ltr"><?php echo e($lead['phone']??'-'); ?></td><td><i class="<?php echo e($sourceMeta['icon']); ?> me-1"></i><?php echo e(t($sourceMeta['key'])); ?></td><td><?php echo e($byDisplay); ?></td><td><span class="badge <?php echo $badges[$lead['status']]??'bg-secondary'; ?>"><?php echo e(t($statusKeys[$lead['status']]??'sponsors.request_lost')); ?></span></td><td>
 <?php if (in_array((string)($lead['sponsor_type'] ?? 'individual'), ['company', 'organization'], true)): ?>
     <?php if (!empty($lead['assigned_supervisor_id'])): ?>
