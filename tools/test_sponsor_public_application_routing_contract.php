@@ -44,8 +44,8 @@ $checks = [
         && str_contains($sources['management queue'], 'WHERE {$managementQueueVisibility}')
         && str_contains($sources['management queue'], "r.source <> 'public_form'"),
     'online requests are visible and actionable in management only for the VGM role' =>
-        str_contains($sources['management queue'], "$role === 'vice_general_manager'")
-        && str_contains($sources['management queue'], "source'] ?? '') === 'public_form' && $role !== 'vice_general_manager'"),
+        str_contains($sources['management queue'], "\$role === 'vice_general_manager'")
+        && str_contains($sources['management queue'], "source'] ?? '') === 'public_form' && \$role !== 'vice_general_manager'"),
     'management status and reopen handlers reject supervisor-routed online individuals' =>
         str_contains($sources['management queue'], "\$request['source'] ?? '') === 'public_form'")
         && str_contains($sources['management queue'], 'لا يمكن إعادته من قائمة الإدارة'),
