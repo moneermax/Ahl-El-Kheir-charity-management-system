@@ -46,13 +46,16 @@ $gender = $type === 'individual'
             : 'organization';
 SOURCE
         ),
-    'conversion resolves supervisor only for individuals' =>
+    'conversion resolves matrix ownership only for individuals and preserves explicit online assignment' =>
         str_contains($conversion, <<<'SOURCE'
-$supervisorId = $type === 'individual'
+$matrixSupervisorId = $type === 'individual'
             ? resolveSponsorSupervisorId($name, $gender)
             : null;
 SOURCE
-        ),
+        )
+        && str_contains($conversion, '$storedOnlineSupervisorId')
+        && str_contains($conversion, '$supervisorId = $storedOnlineSupervisorId > 0')
+        && str_contains($conversion, '$isManualOverride'),
     'conversion records assignment history only when a supervisor exists' =>
         str_contains($conversion, 'if ($supervisorId) {')
         && str_contains($conversion, 'ensureActiveSponsorAssignmentHistory($newId, $supervisorId, $actorId);'),
