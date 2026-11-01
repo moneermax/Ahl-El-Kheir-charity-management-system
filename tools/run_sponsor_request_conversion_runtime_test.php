@@ -220,8 +220,8 @@ try {
             [$publicEntityName]
         );
         $publicEntityNotifications = $publicEntity
-            ? dbFetchAll('SELECT recipient_user_id, link FROM notifications WHERE link = ?', [
-                'modules/sponsors/requests.php',
+            ? dbFetchAll('SELECT recipient_user_id, link FROM notifications WHERE body = ?', [
+                $publicEntityName . ' — 0912345679',
             ])
             : [];
         runtimeTest(
