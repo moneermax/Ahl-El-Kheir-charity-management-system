@@ -43,10 +43,10 @@ $checks = [
         str_contains($sources['management queue'], "r.source = 'public_form' AND r.sponsor_type = 'individual' AND r.assigned_supervisor_id IS NOT NULL")
         && str_contains($sources['management queue'], 'WHERE {$managementQueueVisibility}'),
     'management status and reopen handlers reject supervisor-routed online individuals' =>
-        str_contains($sources['management queue'], "($request['source'] ?? '') === 'public_form'")
+        str_contains($sources['management queue'], "\$request['source'] ?? '') === 'public_form'")
         && str_contains($sources['management queue'], 'لا يمكن إعادته من قائمة الإدارة'),
     'management conversion is blocked for supervisor-routed online individuals' =>
-        str_contains($sources['conversion'], "($req['source'] ?? '') === 'public_form'")
+        str_contains($sources['conversion'], "\$req['source'] ?? '') === 'public_form'")
         && str_contains($sources['conversion'], 'يجب تحويله من صفحة طلبات المشرف'),
     'supervisor detail remains scoped to the assigned supervisor' =>
         str_contains($sources['supervisor detail'], 'WHERE id = ? AND assigned_supervisor_id = ?'),
