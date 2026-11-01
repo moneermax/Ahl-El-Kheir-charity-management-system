@@ -155,7 +155,7 @@ $activeSupervisors = $role === 'vice_general_manager'
         ORDER BY u.full_name")
     : [];
 $managementQueueVisibility = $role === 'vice_general_manager'
-    ? "NOT (r.source = 'public_form' AND r.sponsor_type = 'individual' AND r.assigned_supervisor_id IS NOT NULL AND r.status IN ('new', 'contacted'))"
+    ? "(r.source IS NULL OR NOT (r.source = 'public_form' AND r.sponsor_type = 'individual' AND r.assigned_supervisor_id IS NOT NULL AND r.status IN ('new', 'contacted')))"
     : "(r.source IS NULL OR r.source <> 'public_form')";
 if ($statusFilter !== '') {
     $leads = dbFetchAll("SELECT r.*, u.full_name AS brought_by_user, assigned.full_name AS assigned_supervisor_name FROM sponsor_requests r LEFT JOIN users u ON u.id = r.brought_by LEFT JOIN users assigned ON assigned.id = r.assigned_supervisor_id WHERE r.status = ? AND {$managementQueueVisibility} ORDER BY r.created_at DESC", [$statusFilter]);
