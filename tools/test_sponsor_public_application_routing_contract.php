@@ -47,6 +47,12 @@ $checks = [
     'online requests are visible and actionable in management only for the VGM role' =>
         str_contains($sources['management queue'], "\$role === 'vice_general_manager'")
         && str_contains($sources['management queue'], "source'] ?? '') === 'public_form' && \$role !== 'vice_general_manager'"),
+    'VGM can assign only unassigned online-individual fallbacks or legal entities' =>
+        str_contains($sources['management queue'], '$isUnmatchedOnlineIndividual=')
+        && str_contains($sources['management queue'], '$canManuallyAssign=')
+        && str_contains($sources['conversion'], "source, status, assigned_supervisor_id")
+        && str_contains($sources['conversion'], "$"."isUnmatchedOnlineIndividual")
+        && str_contains($sources['conversion'], "الإسناد اليدوي متاح لطلبات الجهات"),
     'management status and reopen handlers reject supervisor-routed online individuals' =>
         str_contains($sources['management queue'], "\$request['source'] ?? '') === 'public_form'")
         && str_contains($sources['management queue'], 'لا يمكن إعادته من قائمة الإدارة'),
