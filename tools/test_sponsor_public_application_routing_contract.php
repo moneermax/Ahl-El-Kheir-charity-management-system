@@ -12,6 +12,7 @@ $paths = [
     'supervisor detail' => $root . '/modules/sponsors/my_request.php',
     'assignment access' => $root . '/config/sponsor_assignments.php',
     'sponsor list' => $root . '/modules/sponsors/index.php',
+    'sponsor edit' => $root . '/modules/sponsors/edit.php',
     'Arabic catalog' => $root . '/lang/sponsor_requests_ar.php',
     'English catalog' => $root . '/lang/sponsor_requests_en.php',
 ];
@@ -63,15 +64,20 @@ $checks = [
         && str_contains($sources['conversion'], 'يجب تحويله من صفحة طلبات المشرف'),
     'supervisor detail remains scoped to the assigned supervisor' =>
         str_contains($sources['supervisor detail'], 'WHERE id = ? AND assigned_supervisor_id = ?'),
-    'manual override access is limited to the selected supervisor' =>
+    'manual override access is exclusive to the selected supervisor' =>
         str_contains($sources['assignment access'], "is_manual_override'] ?? 0) === 1")
-        && str_contains($sources['assignment access'], "supervisor_id'] ?? 0) === \$supervisorId"),
+        && str_contains($sources['assignment access'], 'return (int)')
+        && str_contains($sources['assignment access'], '=== $supervisorId;'),
     'supervisor sponsor list includes manual overrides outside the letter matrix' =>
         str_contains($sources['sponsor list'], 'supervisor_id,is_manual_override')
         && str_contains($sources['sponsor list'], 'supervisor_id = ? AND is_manual_override = 1'),
     'online request assignment is preserved as an explicit sponsor override during conversion' =>
         str_contains($sources['conversion'], '$isManualOverride')
         && str_contains($sources['conversion'], 'NOW(), ?)'),
+    'ordinary sponsor edits preserve an existing manual override while identity remains unchanged' =>
+        str_contains($sources['sponsor edit'], '$preserveManualOverride')
+        && str_contains($sources['sponsor edit'], '$assignedSupervisorId=$preserveManualOverride')
+        && str_contains($sources['sponsor edit'], '$isManualOverride=$preserveManualOverride'),
 ];
 
 $failed = 0;
