@@ -235,6 +235,15 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
             </dialog>
             <form method="post">
                 <?php echo csrf_field(); ?>
+                <!-- نوع مقدم الطلب -->
+                <div class="f-row">
+                    <label for="sponsorType"><?php echo t('النوع'); ?></label>
+                    <select name="sponsor_type" id="sponsorType" class="form-select" style="max-width:200px">
+                        <option value="individual" <?php echo $form['sponsor_type'] === 'individual' ? 'selected' : ''; ?>><?php echo t('فرد'); ?></option>
+                        <option value="company" <?php echo $form['sponsor_type'] === 'company' ? 'selected' : ''; ?>><?php echo t('شركة'); ?></option>
+                        <option value="organization" <?php echo $form['sponsor_type'] === 'organization' ? 'selected' : ''; ?>><?php echo t('منظمة'); ?></option>
+                    </select>
+                </div>
                 <!-- الاسم الكامل -->
                 <div class="f-row">
                     <label id="applicantNameLabel"><?php echo t('الاسم الكامل'); ?> *</label>
@@ -262,15 +271,6 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 <div class="f-row">
                     <label id="applicantEmailLabel"><?php echo t('البريد الإلكتروني'); ?></label>
                     <input type="email" name="email" class="form-control" style="max-width:360px" dir="ltr" value="<?php echo e($form['email']); ?>">
-                </div>
-                <!-- نوع مقدم الطلب -->
-                <div class="f-row">
-                    <label for="sponsorType"><?php echo t('النوع'); ?></label>
-                    <select name="sponsor_type" id="sponsorType" class="form-select" style="max-width:200px">
-                        <option value="individual" <?php echo $form['sponsor_type'] === 'individual' ? 'selected' : ''; ?>><?php echo t('فرد'); ?></option>
-                        <option value="company" <?php echo $form['sponsor_type'] === 'company' ? 'selected' : ''; ?>><?php echo t('شركة'); ?></option>
-                        <option value="organization" <?php echo $form['sponsor_type'] === 'organization' ? 'selected' : ''; ?>><?php echo t('منظمة'); ?></option>
-                    </select>
                 </div>
                 <div id="entityContactFields" class="entity-contact-fields border rounded-3 p-3 mb-3<?php echo $form['sponsor_type'] === 'individual' ? ' is-collapsed' : ''; ?>" aria-hidden="<?php echo $form['sponsor_type'] === 'individual' ? 'true' : 'false'; ?>">
                     <h6 class="fw-bold mb-2"><?php echo AK_LANG === 'en' ? 'Authorized representative and contact preferences' : 'بيانات الشخص المفوض بالتواصل وتفضيلات الاتصال'; ?></h6>
