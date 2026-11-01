@@ -122,6 +122,9 @@ body{background:linear-gradient(135deg,#0a1f44 0%,#1b4d8f 100%);font-family:'Cai
 input[type=number]{-moz-appearance:textfield;appearance:textfield}
 input[type=number]::-webkit-outer-spin-button,
 input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.entity-contact-fields{overflow:hidden;max-height:900px;opacity:1;transform:translateY(0);transition:max-height .38s ease,opacity .24s ease,transform .24s ease,margin .38s ease,padding .38s ease;will-change:max-height,opacity,transform}
+.entity-contact-fields.is-collapsed{max-height:0;opacity:0;transform:translateY(-.5rem);margin-block:0!important;padding-block:0!important;border-width:0!important;pointer-events:none}
+@media(prefers-reduced-motion:reduce){.entity-contact-fields{transition:none}}
 </style>
 </head>
 <body>
@@ -261,7 +264,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                         <option value="organization" <?php echo $form['sponsor_type'] === 'organization' ? 'selected' : ''; ?>><?php echo t('منظمة'); ?></option>
                     </select>
                 </div>
-                <div id="entityContactFields" class="border rounded-3 p-3 mb-3" <?php echo $form['sponsor_type'] === 'individual' ? 'hidden' : ''; ?>>
+                <div id="entityContactFields" class="entity-contact-fields border rounded-3 p-3 mb-3<?php echo $form['sponsor_type'] === 'individual' ? ' is-collapsed' : ''; ?>" aria-hidden="<?php echo $form['sponsor_type'] === 'individual' ? 'true' : 'false'; ?>">
                     <h6 class="fw-bold mb-2"><?php echo AK_LANG === 'en' ? 'Authorized representative and contact preferences' : 'بيانات الشخص المفوض بالتواصل وتفضيلات الاتصال'; ?></h6>
                     <p class="small text-muted mb-3"><?php echo AK_LANG === 'en' ? 'Use the official representative details. The phone and email above are the organization’s contact channels.' : 'يرجى إدخال بيانات ممثل الجهة المفوض. الهاتف والبريد أعلاه هما قنوات التواصل الرسمية للجهة.'; ?></p>
                     <div class="f-row"><label for="contactPersonName"><?php echo AK_LANG === 'en' ? 'Representative full name' : 'اسم الشخص المفوض بالتواصل'; ?> *</label><input id="contactPersonName" type="text" name="contact_person_name" class="form-control" style="max-width:420px" maxlength="255" value="<?php echo e($form['contact_person_name']); ?>"></div>
@@ -292,11 +295,14 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                     <input type="text" name="address" class="form-control" style="max-width:560px" value="<?php echo e($form['address']); ?>">
                 </div>
                 <!-- عدد الأيتام + المبلغ المقترح -->
-                <div class="f-row">
+                <div class="f-row" id="desiredOrphansRow">
                     <label id="desiredOrphansLabel"><?php echo t('عدد الأيتام المطلوب كفالتهم'); ?></label>
                     <input type="number" min="1" max="50" name="desired_orphans" class="form-control" style="max-width:120px" dir="ltr" value="<?php echo e($form['desired_orphans']); ?>">
-                    <label class="gap-label" id="proposedAmountLabel"><?php echo t('المبلغ الشهري المقترح'); ?></label>
-                    <input type="number" min="0" step="500" name="proposed_amount" class="form-control" style="max-width:160px" dir="ltr" value="<?php echo e($form['proposed_amount']); ?>">
+                </div>
+                <div class="f-row" id="proposedAmountRow">
+                    <label for="proposedAmountInput" id="proposedAmountLabel"><?php echo t('المبلغ الشهري المقترح'); ?></label>
+                    <input id="proposedAmountInput" type="number" min="0" step="500" name="proposed_amount" class="form-control" style="max-width:220px" dir="ltr" value="<?php echo e($form['proposed_amount']); ?>" aria-describedby="proposedAmountHelp">
+                    <small id="proposedAmountHelp" class="text-muted"><?php echo AK_LANG === 'en' ? 'This is a non-binding proposed amount for discussion.' : 'قيمة مقترحة للمناقشة وليست التزاماً مالياً نهائياً.'; ?></small>
                 </div>
                 <!-- ملاحظات -->
                 <div class="f-row" style="align-items:flex-start">
@@ -345,7 +351,13 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     const amountLabel = document.getElementById('proposedAmountLabel');
     function syncEntityFields() {
         const entity = type.value !== 'individual';
-        if (entityFields) entityFields.hidden = !entity;
+        if (entityFields) {
+            entityFields.classList.toggle('is-collapsed', !entity);
+            entityFields.setAttribute('aria-hidden', entity ? 'false' : 'true');
+            entityFields.querySelectorAll('input, select, textarea').forEach(control => {
+                control.disabled = !entity;
+            });
+        }
         const entityTerms = document.getElementById('entityTerms');
         const entityTermsAr = document.getElementById('entityTermsAr');
         if (entityTerms) entityTerms.hidden = !entity || document.documentElement.lang !== 'en';
@@ -358,9 +370,20 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
         if (orphanLabel) orphanLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Initial number of children proposed' : 'العدد المبدئي للأطفال المقترح كفالتهم') : (document.documentElement.lang === 'en' ? 'Number of orphans to sponsor' : 'عدد الأيتام المطلوب كفالتهم');
         if (amountLabel) amountLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Proposed total monthly budget' : 'الميزانية الشهرية الإجمالية المقترحة') : (document.documentElement.lang === 'en' ? 'Proposed monthly amount' : 'المبلغ الشهري المقترح');
     }
-    type.addEventListener('change', () => { syncGenderRequirement(); syncEntityFields(); });
-    syncGenderRequirement();
-    syncEntityFields();
+    function syncTypePresentation() {
+        syncGenderRequirement();
+        syncEntityFields();
+    }
+    // Update the form in the current document; changing applicant type must
+    // never submit or navigate the enclosing form.
+    type.addEventListener('input', syncTypePresentation);
+    type.addEventListener('change', syncTypePresentation);
+    if (entityFields) {
+        entityFields.querySelectorAll('input, select, textarea').forEach(control => {
+            control.disabled = type.value === 'individual';
+        });
+    }
+    syncTypePresentation();
 })();
 (function () {
     const confirmation = document.getElementById('submissionConfirmationDialog');
