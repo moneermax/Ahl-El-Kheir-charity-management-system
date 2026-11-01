@@ -18,12 +18,21 @@ if($role==='supervisor'){
     $matrixRows=dbFetchAll("SELECT letter_id FROM supervisor_letters WHERE supervisor_id=?",[$uid]);
     $letterIds=array_values(array_unique(array_map('intval',array_column($matrixRows,'letter_id'))));
     $allowedSponsorIds=[];
+    $matrixCondition = '';
+    $candidateParams = [$uid];
     if($letterIds){
         $ph=implode(',',array_fill(0,count($letterIds),'?'));
-        $candidateSponsors=dbFetchAll("SELECT id,first_letter_id,gender FROM sponsors WHERE first_letter_id IN ($ph)",$letterIds);
-        foreach($candidateSponsors as $candidateSponsor){
-            if(supervisorCanAccessSponsor($uid,$candidateSponsor))$allowedSponsorIds[]=(int)$candidateSponsor['id'];
-        }
+        $matrixCondition = "first_letter_id IN ($ph) OR ";
+        $candidateParams = array_merge($letterIds, [$uid]);
+    }
+    $candidateSponsors=dbFetchAll(
+        "SELECT id,first_letter_id,gender,supervisor_id,is_manual_override
+         FROM sponsors
+         WHERE ({$matrixCondition}supervisor_id = ? AND is_manual_override = 1)",
+        $candidateParams
+    );
+    foreach($candidateSponsors as $candidateSponsor){
+        if(supervisorCanAccessSponsor($uid,$candidateSponsor))$allowedSponsorIds[]=(int)$candidateSponsor['id'];
     }
     if(!$allowedSponsorIds){$sql.=' AND 0=1';}
     else{$ph=implode(',',array_fill(0,count($allowedSponsorIds),'?'));$sql.=" AND s.id IN ($ph)";$params=$allowedSponsorIds;}
