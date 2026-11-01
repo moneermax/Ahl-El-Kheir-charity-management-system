@@ -200,3 +200,8 @@ GitHub Actions run [#41285710737](https://github.com/moneermax/Ahl-El-Kheir-char
 - HR catalogue migration and rescheduling service jobs passed.
 
 This is CI/source/runtime-harness evidence, not authenticated local-browser acceptance. No active local database migration or live sponsor/request mutation was performed. No migration is required for this routing/source-label change. The remaining acceptance gate is one controlled local browser walkthrough after safely pulling `main`; do not repeat previously closed individual conversion, legal-entity service, or unrelated module tests.
+
+
+## 2026-11-01 — VGM fallback assignment and access
+
+The public `apply.php` POST path and VGM fallback workflow were expanded and runtime-tested in GitHub Actions run `41287853039` (see final run status before treating this checkpoint as verified). VGM may directly process an unassigned public individual with no matrix match, or assign that request to an active supervisor. Conversion preserves that explicit assignment using the existing `is_manual_override` field. Manual override access is exclusive to the selected supervisor, the sponsor list includes that override, and ordinary edits preserve it while the individual's name and gender remain unchanged. The runtime fixture covers request assignment, audit, notification, conversion, supervisor access, and cleanup. No live/local application database was modified. No schema migration was required.
