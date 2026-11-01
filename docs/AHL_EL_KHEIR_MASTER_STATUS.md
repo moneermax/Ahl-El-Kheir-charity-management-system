@@ -5674,3 +5674,14 @@ The source value remains the existing `sponsor_requests.source='public_form'`; t
 Implementation commits include `344d8ed81f72800c95f0a0b5c0ff9ad00bf10a7d`, `d1fd23a788682ec6d470e7f710ec5612c42235c1`, `dd5f76e0637255f260e39a2e905ecc2d7f220c34`, `6ae99afa559385b4fbd3035bcca0549143c5b39e`, `278b8cdcb6bb134ea6b04374f4560aacae010813`, `a3cdb9e7526f815d8414e316ab6452ee9dce5b90`, and associated language/contract/workflow commits. Added `tools/test_sponsor_public_application_routing_contract.php` to CI and extended `tools/run_sponsor_request_conversion_runtime_test.php` for assigned-individual supervisor ownership and VGM fallback behavior.
 
 **Verification boundary:** GitHub Actions run [#41285601147](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41285601147) is the current full verification run and must pass before the source change is considered CI-verified. Authenticated Linux/XAMPP browser acceptance remains pending. After CI passes and the user safely pulls `main`, verify one individual application routes only to the assigned supervisor; one company/organization application routes only to VGM and can be processed or assigned; the source label is shown correctly; and an assigned individual request is not actionable from the VGM queue. Do not submit a real public application; use a controlled disposable/test fixture or a reviewed cleanup plan. No schema migration is needed.
+
+
+## 2026-11-01 — Public sponsor application routing: CI VERIFIED
+
+GitHub Actions run [#41285710737](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41285710737) **passed all six jobs** on code commit `04c33faa436c0983f8e321967cc3233a75b27e3d`:
+- PHP 8.2 lint and the new public-application routing/source contract passed with no warnings.
+- MariaDB 10.4.32 sponsor-request migration and full-schema migration jobs passed.
+- The disposable sponsor conversion runtime harness passed: assigned online individuals are blocked from management conversion and can be converted by their assigned supervisor; an unassigned online individual fallback is blocked for non-VGM management and can be processed by the VGM when no active matrix supervisor exists; existing VGM legal-entity direct-processing and supervisor-assignment cases still pass. The disposable database was removed.
+- HR catalogue migration and rescheduling service jobs passed.
+
+This is CI/source/runtime-harness evidence, not authenticated local-browser acceptance. No active local database migration or live sponsor/request mutation was performed. No migration is required for this routing/source-label change. The remaining acceptance gate is one controlled local browser walkthrough after safely pulling `main`; do not repeat previously closed individual conversion, legal-entity service, or unrelated module tests.
