@@ -40,7 +40,7 @@ $checks = [
         str_contains($sources['Arabic catalog'], "'sponsors.request_source_online'=>'تقديم عبر الموقع الإلكتروني'")
         && str_contains($sources['English catalog'], "'sponsors.request_source_online'=>'Website Application'"),
     'assigned online individuals are excluded from the management queue' =>
-        str_contains($sources['management queue'], "r.source = 'public_form' AND r.sponsor_type = 'individual' AND r.assigned_supervisor_id IS NOT NULL")
+        str_contains($sources['management queue'], "r.source = 'public_form' AND r.sponsor_type = 'individual' AND r.assigned_supervisor_id IS NOT NULL AND r.status IN ('new', 'contacted')")
         && str_contains($sources['management queue'], 'WHERE {$managementQueueVisibility}'),
     'management status and reopen handlers reject supervisor-routed online individuals' =>
         str_contains($sources['management queue'], "\$request['source'] ?? '') === 'public_form'")
