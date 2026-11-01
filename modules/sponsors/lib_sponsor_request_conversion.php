@@ -97,15 +97,18 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
             [$normalizedLetter]
         );
         $letterId = $letterRow ? (int)$letterRow['id'] : null;
-        $supervisorId = null;
-        if ($type === 'individual') {
-            $storedOnlineSupervisorId = (string)($req['source'] ?? '') === 'public_form'
-                ? (int)($req['assigned_supervisor_id'] ?? 0)
-                : 0;
-            $supervisorId = $storedOnlineSupervisorId > 0
-                ? $storedOnlineSupervisorId
-                : resolveSponsorSupervisorId($name, $gender);
-        }
+        $matrixSupervisorId = $type === 'individual'
+            ? resolveSponsorSupervisorId($name, $gender)
+            : null;
+        $storedOnlineSupervisorId = $type === 'individual'
+            && (string)($req['source'] ?? '') === 'public_form'
+            ? (int)($req['assigned_supervisor_id'] ?? 0)
+            : 0;
+        $supervisorId = $storedOnlineSupervisorId > 0
+            ? $storedOnlineSupervisorId
+            : $matrixSupervisorId;
+        $isManualOverride = $storedOnlineSupervisorId > 0
+            && $storedOnlineSupervisorId !== (int)($matrixSupervisorId ?? 0) ? 1 : 0;
         $n = (int)(dbFetchOne('SELECT COUNT(*) c FROM sponsors')['c'] ?? 0) + 1;
         $code = 'SP-' . str_pad((string)$n, 6, '0', STR_PAD_LEFT);
         $payment = in_array((string)($req['preferred_payment_method'] ?? ''), ['cash', 'bank_transfer', 'credit_card', 'mobile', 'other'], true)
@@ -123,7 +126,7 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
                  preferred_payment_method, notes, desired_orphans, acquisition_source,
                  brought_by_user_id, brought_by_name, created_by, supervisor_id, assigned_by,
                  assigned_at, is_manual_override)
-             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 0)",
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?)",
             [
                 $name, $rawLetter, $letterId, $req['phone'] ?? null,
                 $req['phone_purpose'] ?? 'both', $req['alt_phone'] ?? null,
@@ -136,7 +139,7 @@ function convertSponsorRequestToSponsor(int $requestId, int $actorId, string $au
                 $payment, $req['notes'] ?? null,
                 isset($req['desired_orphans']) && $req['desired_orphans'] !== '' ? (int)$req['desired_orphans'] : null,
                 $req['source'] ?? 'public_form', $broughtByUserId,
-                $req['brought_by_name'] ?? null, $actorId, $supervisorId, $actorId
+                $req['brought_by_name'] ?? null, $actorId, $supervisorId, $actorId, $isManualOverride
             ]
         );
 
