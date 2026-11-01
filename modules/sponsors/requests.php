@@ -111,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
     if ($action === 'assign_supervisor' && !empty($_POST['id'])) {
         if ($role !== 'vice_general_manager') {
             http_response_code(403);
-            flash('error', 'إسناد طلبات الشركات والمنظمات من صلاحيات نائب المدير العام فقط.');
+            flash('error', 'إسناد طلبات الجهات وحالات الأفراد الإلكترونية غير المسندة من صلاحيات نائب المدير العام فقط.');
         } else {
             $id = (int)$_POST['id'];
             $supervisorId = (int)($_POST['supervisor_id'] ?? 0);
@@ -178,28 +178,26 @@ include dirname(__DIR__, 2) . '/includes/header.php'; ?>
 <div class="card mb-4 fade-in"><div class="card-body p-2"><div class="table-responsive"><table class="table table-hover align-middle bg-white mb-0"><thead><tr>
 <th><?php echo e(t('sponsors.request_date')); ?></th><th><?php echo e(t('sponsors.request_sponsor_name')); ?></th><th><?php echo e(t('sponsors.request_phone')); ?></th><th><?php echo e(t('sponsors.request_source')); ?></th><th><?php echo e(t('sponsors.request_brought_by')); ?></th><th><?php echo e(t('sponsors.request_status')); ?></th><th>المشرف المسؤول</th><th><?php echo e(t('sponsors.request_notes')); ?></th><th class="text-center"><?php echo e(t('sponsors.request_actions')); ?></th>
 </tr></thead><tbody>
-<?php if (!$leads): ?><tr><td colspan="9" class="text-center text-muted py-4"><?php echo e(t('sponsors.request_no_results')); ?></td></tr><?php else: foreach ($leads as $lead): $badges=['new'=>'bg-info','contacted'=>'bg-warning text-dark','converted'=>'bg-success','lost'=>'bg-secondary']; $byDisplay=trim((string)($lead['brought_by_name']??''))!==''?$lead['brought_by_name']:($lead['brought_by_user']??'—'); $sourceMeta=$sourceOptions[$lead['source']]??['icon'=>'fas fa-question-circle text-muted','key'=>'sponsors.request_source_other']; $isLegalEntity=in_array((string)($lead['sponsor_type']??'individual'),['company','organization'],true); $isOnlineApplication=(string)($lead['source']??'')==='public_form'; $isSupervisorRoutedOnlineIndividual=$isOnlineApplication && (string)($lead['sponsor_type']??'individual')==='individual' && !empty($lead['assigned_supervisor_id']); $canManageLead=(!$isOnlineApplication || ($role==='vice_general_manager' && !$isSupervisorRoutedOnlineIndividual)) && (!$isLegalEntity || ($role==='vice_general_manager' && empty($lead['assigned_supervisor_id']))); ?>
+<?php if (!$leads): ?><tr><td colspan="9" class="text-center text-muted py-4"><?php echo e(t('sponsors.request_no_results')); ?></td></tr><?php else: foreach ($leads as $lead): $badges=['new'=>'bg-info','contacted'=>'bg-warning text-dark','converted'=>'bg-success','lost'=>'bg-secondary']; $byDisplay=trim((string)($lead['brought_by_name']??''))!==''?$lead['brought_by_name']:($lead['brought_by_user']??'—'); $sourceMeta=$sourceOptions[$lead['source']]??['icon'=>'fas fa-question-circle text-muted','key'=>'sponsors.request_source_other']; $isLegalEntity=in_array((string)($lead['sponsor_type']??'individual'),['company','organization'],true); $isOnlineApplication=(string)($lead['source']??'')==='public_form'; $isSupervisorRoutedOnlineIndividual=$isOnlineApplication && (string)($lead['sponsor_type']??'individual')==='individual' && !empty($lead['assigned_supervisor_id']); $isUnmatchedOnlineIndividual=$isOnlineApplication && (string)($lead['sponsor_type']??'individual')==='individual' && empty($lead['assigned_supervisor_id']); $canManuallyAssign=$role==='vice_general_manager' && empty($lead['assigned_supervisor_id']) && in_array((string)$lead['status'],['new','contacted'],true) && ($isLegalEntity || $isUnmatchedOnlineIndividual); $canManageLead=(!$isOnlineApplication || ($role==='vice_general_manager' && !$isSupervisorRoutedOnlineIndividual)) && (!$isLegalEntity || ($role==='vice_general_manager' && empty($lead['assigned_supervisor_id']))); ?>
 <tr><td><?php echo date('Y-m-d',strtotime($lead['created_at'])); ?></td><td><?php echo e($lead['sponsor_name']); ?></td><td dir="ltr"><?php echo e($lead['phone']??'-'); ?></td><td><i class="<?php echo e($sourceMeta['icon']); ?> me-1"></i><?php echo e(t($sourceMeta['key'])); ?></td><td><?php echo e($byDisplay); ?></td><td><span class="badge <?php echo $badges[$lead['status']]??'bg-secondary'; ?>"><?php echo e(t($statusKeys[$lead['status']]??'sponsors.request_lost')); ?></span></td><td>
-<?php if (in_array((string)($lead['sponsor_type'] ?? 'individual'), ['company', 'organization'], true)): ?>
-    <?php if (!empty($lead['assigned_supervisor_id'])): ?>
-        <span class="badge bg-light text-dark border"><?php echo e($lead['assigned_supervisor_name'] ?? 'مشرف مسند'); ?></span>
-    <?php elseif ($role === 'vice_general_manager' && in_array((string)$lead['status'], ['new', 'contacted'], true)): ?>
-        <form method="post" class="d-flex gap-1 align-items-center">
-            <?php echo csrf_field(); ?>
-            <input type="hidden" name="action" value="assign_supervisor">
-            <input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>">
-            <select name="supervisor_id" class="form-select form-select-sm" required aria-label="اختيار المشرف">
-                <option value="">اختر المشرف</option>
-                <?php foreach ($activeSupervisors as $supervisor): ?>
-                    <option value="<?php echo (int)$supervisor['id']; ?>"><?php echo e($supervisor['full_name']); ?></option>
-                <?php endforeach; ?>
-            </select>
-            <button type="submit" class="btn btn-sm btn-outline-primary" <?php echo !$activeSupervisors ? 'disabled' : ''; ?>>إسناد</button>
-        </form>
-        <?php if (!$activeSupervisors): ?><small class="text-muted">لا يوجد مشرف نشط متاح حالياً.</small><?php endif; ?>
-    <?php else: ?>
-        <span class="text-muted">بانتظار قرار نائب المدير العام</span>
-    <?php endif; ?>
+<?php if (!empty($lead['assigned_supervisor_id'])): ?>
+    <span class="badge bg-light text-dark border"><?php echo e($lead['assigned_supervisor_name'] ?? 'مشرف مسند'); ?></span>
+<?php elseif ($canManuallyAssign): ?>
+    <form method="post" class="d-flex gap-1 align-items-center">
+        <?php echo csrf_field(); ?>
+        <input type="hidden" name="action" value="assign_supervisor">
+        <input type="hidden" name="id" value="<?php echo (int)$lead['id']; ?>">
+        <select name="supervisor_id" class="form-select form-select-sm" required aria-label="اختيار المشرف">
+            <option value="">اختر المشرف</option>
+            <?php foreach ($activeSupervisors as $supervisor): ?>
+                <option value="<?php echo (int)$supervisor['id']; ?>"><?php echo e($supervisor['full_name']); ?></option>
+            <?php endforeach; ?>
+        </select>
+        <button type="submit" class="btn btn-sm btn-outline-primary" <?php echo !$activeSupervisors ? 'disabled' : ''; ?>>إسناد</button>
+    </form>
+    <?php if (!$activeSupervisors): ?><small class="text-muted">لا يوجد مشرف نشط متاح حالياً.</small><?php endif; ?>
+<?php elseif ($isLegalEntity || $isUnmatchedOnlineIndividual): ?>
+    <span class="text-muted">بانتظار قرار نائب المدير العام</span>
 <?php else: ?>
     <span class="text-muted"><?php echo e($lead['assigned_supervisor_name'] ?? 'وفق توزيع الحروف والجنس'); ?></span>
 <?php endif; ?>
