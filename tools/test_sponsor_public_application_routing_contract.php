@@ -78,9 +78,19 @@ $checks = [
         str_contains($sources['sponsor edit'], '$preserveManualOverride')
         && str_contains($sources['sponsor edit'], '$assignedSupervisorId=$preserveManualOverride')
         && str_contains($sources['sponsor edit'], '$isManualOverride=$preserveManualOverride'),
-    'applicant type is followed immediately by the inline sponsorship terms before personal details' =>
-        strpos($sources['application'], 'id="sponsorType"') < strpos($sources['application'], 'id="sponsorshipTermsPanel"')
-        && strpos($sources['application'], 'id="sponsorshipTermsPanel"') < strpos($sources['application'], 'id="applicantNameLabel"'),
+    'applicant type opens its modal terms before enabling applicant details' =>
+        strpos($sources['application'], 'id="sponsorType"') < strpos($sources['application'], 'id="sponsorshipTermsDialog"')
+        && strpos($sources['application'], 'id="sponsorshipTermsDialog"') < strpos($sources['application'], 'id="applicantDetailsSection"')
+        && strpos($sources['application'], 'id="applicantDetailsSection"') < strpos($sources['application'], 'id="applicantNameLabel"'),
+    'applicant type starts unselected and is mandatory in both browser and server validation' =>
+        str_contains($sources['application'], "'sponsor_type'=>'','gender'=>'")
+        && str_contains($sources['application'], '<option value=""')
+        && str_contains($sources['application'], 'id="sponsorType" class="form-select" style="max-width:220px" required')
+        && str_contains($sources['application'], "if ($"."type === '') $"."errors[] = 'يرجى اختيار نوع مقدم الطلب.';"),
+    'dependent applicant details remain hidden and disabled until a type is selected' =>
+        str_contains($sources['application'], 'id="applicantDetailsSection" class="border-0 p-0 m-0" disabled hidden')
+        && str_contains($sources['application'], 'applicantDetails.hidden = !selected;')
+        && str_contains($sources['application'], 'applicantDetails.disabled = !selected;'),
     'individual and legal-entity applicants have separate term content' =>
         str_contains($sources['application'], 'id="individualSponsorshipTerms"')
         && str_contains($sources['application'], 'id="entitySponsorshipTerms"')
@@ -93,12 +103,15 @@ $checks = [
         && str_contains($sources['application'], 'شروط كفالة المنظمات')
         && str_contains($sources['application'], 'overall proposed monthly budget')
         && str_contains($sources['application'], 'ميزانية شهرية إجمالية مقترحة'),
-    'changing applicant type updates only the matching terms without opening a general terms dialog' =>
+    'selecting applicant type opens a modal with only matching terms and allows reopening' =>
         str_contains($sources['application'], 'individualTerms.hidden = !individual;')
-        && str_contains($sources['application'], 'entityTerms.hidden = individual;')
-        && str_contains($sources['application'], 'syncSponsorshipTerms();')
-        && !str_contains($sources['application'], 'id="openTerms"')
-        && !str_contains($sources['application'], 'id="sponsorshipTermsDialog"'),
+        && str_contains($sources['application'], 'entityTerms.hidden = !entity;')
+        && str_contains($sources['application'], 'openSponsorshipTerms();')
+        && str_contains($sources['application'], 'termsDialog.showModal()')
+        && str_contains($sources['application'], 'openTermsButton.disabled = !individual && !entity;')
+        && str_contains($sources['application'], 'id="openSponsorshipTerms"')
+        && str_contains($sources['application'], 'id="sponsorshipTermsDialog"')
+        && !str_contains($sources['application'], 'id="sponsorshipTermsPanel"'),
 ];
 
 $failed = 0;
