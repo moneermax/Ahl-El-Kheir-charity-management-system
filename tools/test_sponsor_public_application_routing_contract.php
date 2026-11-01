@@ -78,6 +78,27 @@ $checks = [
         str_contains($sources['sponsor edit'], '$preserveManualOverride')
         && str_contains($sources['sponsor edit'], '$assignedSupervisorId=$preserveManualOverride')
         && str_contains($sources['sponsor edit'], '$isManualOverride=$preserveManualOverride'),
+    'applicant type is followed immediately by the inline sponsorship terms before personal details' =>
+        strpos($sources['application'], 'id="sponsorType"') < strpos($sources['application'], 'id="sponsorshipTermsPanel"')
+        && strpos($sources['application'], 'id="sponsorshipTermsPanel"') < strpos($sources['application'], 'id="applicantNameLabel"'),
+    'individual and legal-entity applicants have separate term content' =>
+        str_contains($sources['application'], 'id="individualSponsorshipTerms"')
+        && str_contains($sources['application'], 'id="entitySponsorshipTerms"')
+        && str_contains($sources['application'], 'does not guarantee assignment of a specific child')
+        && str_contains($sources['application'], 'لا يضمن تقديم الطلب تخصيص يتيم بعينه'),
+    'company and organization term headings follow the selected type while sharing the legal-entity rules' =>
+        str_contains($sources['application'], 'Company sponsorship terms')
+        && str_contains($sources['application'], 'Organization sponsorship terms')
+        && str_contains($sources['application'], 'شروط كفالة الشركات')
+        && str_contains($sources['application'], 'شروط كفالة المنظمات')
+        && str_contains($sources['application'], 'overall proposed monthly budget')
+        && str_contains($sources['application'], 'ميزانية شهرية إجمالية مقترحة'),
+    'changing applicant type updates only the matching terms without opening a general terms dialog' =>
+        str_contains($sources['application'], 'individualTerms.hidden = !individual;')
+        && str_contains($sources['application'], 'entityTerms.hidden = individual;')
+        && str_contains($sources['application'], 'syncSponsorshipTerms();')
+        && !str_contains($sources['application'], 'id="openTerms"')
+        && !str_contains($sources['application'], 'id="sponsorshipTermsDialog"'),
 ];
 
 $failed = 0;
