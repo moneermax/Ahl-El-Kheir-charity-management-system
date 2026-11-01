@@ -250,6 +250,8 @@ jobs:
           php tools/test_sponsor_non_individual_conversion_contract.php
           php tools/test_sponsor_legal_entity_contact_contract.php
           php -l tools/test_sponsor_legal_entity_contact_contract.php
+          php tools/test_sponsor_public_application_routing_contract.php
+          php -l tools/test_sponsor_public_application_routing_contract.php
           php -l tools/test_sponsor_non_individual_conversion_contract.php
           php -l tools/run_sponsor_request_conversion_runtime_test.php
 
