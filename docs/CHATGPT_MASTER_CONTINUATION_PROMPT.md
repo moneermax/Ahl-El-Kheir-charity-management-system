@@ -3398,3 +3398,18 @@ Latest source commits: `54da9078b8ba0c1330453db8c7d71f3f9c8045e4` and `cf29d6d31
 CI run [#41321131917](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41321131917) passed all six jobs, including the public-application source contract and PHP 8.2 lint. Existing sponsor conversion runtime checks passed in the full-schema job.
 
 **Next gate:** safely pull `main`; visually verify فرد / شركة / منظمة term switching in Arabic and English and confirm no page refresh/scroll jump. Do not submit a real application. This is browser acceptance only; do not repeat closed routing or conversion tests. No schema migration is needed.
+
+
+## 2026-11-01 — Public sponsor application: mandatory applicant type + terms modal
+
+The public `apply.php` form now starts with no applicant type selected. The selector is required in the browser, and the POST handler rejects a missing/invalid type rather than silently converting it to `individual`. The applicant-dependent form fields remain hidden and disabled until a valid type is selected.
+
+Selecting فرد / شركة / منظمة opens a native dialog showing only the matching sponsorship terms. Individual terms remain distinct; company and organization use the existing shared legal-entity conditions with a type-specific heading. Arabic and English are supported. The dialog can be closed to continue and reopened through **عرض الشروط / View terms** without changing the selection. The dialog is informational only; no acceptance checkbox or new legal consent state was added.
+
+No database/schema/migration change was required. The existing request persistence, routing, conversion and accounting behavior remain unchanged; the only server-side validation change is that applicant type must be explicitly selected.
+
+Code commits: `1218e0a888df78bc5319477f3be57b41fa39747e` (form and server behavior), `4380e5df10f6569e3ad4a26daaa6baa8c168bdd7` (modal source-contract coverage), `80988d87dc1337a6bd4fd9190922bd707fdb7509` and `4813ce8cd2d07d7a71c9fbdaa7ff1d6035964c60` (updated existing source-contract expectations for mandatory selection and the new modal event handler).
+
+GitHub Actions run [#41331305983](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41331305983) passed all six jobs, including PHP 8.2 lint, public application/source-contract tests, MariaDB migration checks and the existing disposable sponsor conversion runtime harness.
+
+**Remaining acceptance boundary:** authenticated local-browser visual acceptance is pending. After pulling `main`, verify the initial blank selector and hidden fields; select each type and confirm the correct modal terms only; close the modal and confirm the matching fields appear; reopen the terms; and repeat in Arabic and English. Do not submit a real public application. No migration or database action is needed.
