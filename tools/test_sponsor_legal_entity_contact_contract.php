@@ -43,7 +43,8 @@ $checks = [
         && str_contains($sources['application'], 'contactName.required = entity'),
     'applicant type changes are handled in place with animation' =>
         str_contains($sources['application'], 'type.addEventListener(\'input\', syncTypePresentation)')
-        && str_contains($sources['application'], 'type.addEventListener(\'change\', syncTypePresentation)')
+        && str_contains($sources['application'], 'type.addEventListener(\'change\', function ()')
+        && str_contains($sources['application'], 'if (type.value) openSponsorshipTerms();')
         && str_contains($sources['application'], '.entity-contact-fields{')
         && str_contains($sources['application'], 'classList.toggle(\'is-collapsed\', !entity)'),
     'entity-only controls are disabled when the applicant is an individual' =>
