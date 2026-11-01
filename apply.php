@@ -15,22 +15,23 @@ if (!function_exists('t')) { function t(string $s): string { return function_exi
 $purposes = ['call' => 'للاتصال', 'whatsapp' => 'واتساب', 'both' => 'للاتصال وواتساب'];
 
 $done = false; $errors = []; $assignedSupervisorName = null;
-$form = ['full_name'=>'','phone'=>'','phone_purpose'=>'both','alt_phone'=>'','alt_phone_purpose'=>'both','email'=>'','address'=>'','sponsor_type'=>'individual','gender'=>'','contact_person_name'=>'','contact_person_position'=>'','preferred_contact_method'=>'any','preferred_contact_time'=>'','preferred_payment_method'=>'cash','desired_orphans'=>'','proposed_amount'=>'','notes'=>''];
+$form = ['full_name'=>'','phone'=>'','phone_purpose'=>'both','alt_phone'=>'','alt_phone_purpose'=>'both','email'=>'','address'=>'','sponsor_type'=>'','gender'=>'','contact_person_name'=>'','contact_person_position'=>'','preferred_contact_method'=>'any','preferred_contact_time'=>'','preferred_payment_method'=>'cash','desired_orphans'=>'','proposed_amount'=>'','notes'=>''];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     foreach ($form as $key => $default) if (isset($_POST[$key]) && is_scalar($_POST[$key])) $form[$key] = trim((string)$_POST[$key]);
     if (!verify_csrf()) $errors[] = 'انتهت صلاحية النموذج أو أن الطلب غير صالح. حدّث الصفحة وحاول مرة أخرى.';
     $name = $form['full_name']; $phone = $form['phone'];
-    $type = in_array($form['sponsor_type'], ['individual','company','organization'], true) ? $form['sponsor_type'] : 'individual';
-    $gender = $type === 'individual' ? strtolower($form['gender']) : 'organization';
+    $type = in_array($form['sponsor_type'], ['individual','company','organization'], true) ? $form['sponsor_type'] : '';
+    $gender = $type === 'individual' ? strtolower($form['gender']) : ($type === '' ? '' : 'organization');
     $phonePurpose = in_array($form['phone_purpose'], ['call','whatsapp','both'], true) ? $form['phone_purpose'] : 'both';
     $altPhonePurpose = in_array($form['alt_phone_purpose'], ['call','whatsapp','both'], true) ? $form['alt_phone_purpose'] : 'both';
     $payment = in_array($form['preferred_payment_method'], ['cash','bank_transfer','credit_card','mobile','other'], true) ? $form['preferred_payment_method'] : 'cash';
     $desiredOrphans = $form['desired_orphans'] !== '' && ctype_digit($form['desired_orphans']) ? (int)$form['desired_orphans'] : null;
     $proposedAmount = $form['proposed_amount'] !== '' && is_numeric($form['proposed_amount']) && (float)$form['proposed_amount'] >= 0 ? (float)$form['proposed_amount'] : null;
-    $contactPersonName = $type !== 'individual' ? trim($form['contact_person_name']) : null;
-    $contactPersonPosition = $type !== 'individual' && $form['contact_person_position'] !== '' ? trim($form['contact_person_position']) : null;
+    $contactPersonName = $type !== '' && $type !== 'individual' ? trim($form['contact_person_name']) : null;
+    $contactPersonPosition = $type !== '' && $type !== 'individual' && $form['contact_person_position'] !== '' ? trim($form['contact_person_position']) : null;
     $contactMethod = in_array($form['preferred_contact_method'], ['call', 'whatsapp', 'email', 'any'], true) ? $form['preferred_contact_method'] : null;
-    $contactTime = $type !== 'individual' && $form['preferred_contact_time'] !== '' ? trim($form['preferred_contact_time']) : null;
+    $contactTime = $type !== '' && $type !== 'individual' && $form['preferred_contact_time'] !== '' ? trim($form['preferred_contact_time']) : null;
+    if ($type === '') $errors[] = 'يرجى اختيار نوع مقدم الطلب.';
     if ($name === '') $errors[] = 'الاسم الكامل مطلوب.';
     if ($phone === '') $errors[] = 'الهاتف مطلوب.';
     if ($type === 'individual' && !in_array($gender, ['male','female'], true)) $errors[] = 'يرجى تحديد الجنس للأفراد.';
@@ -178,49 +179,62 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 <?php echo csrf_field(); ?>
                 <!-- نوع مقدم الطلب -->
                 <div class="f-row">
-                    <label for="sponsorType"><?php echo t('النوع'); ?></label>
-                    <select name="sponsor_type" id="sponsorType" class="form-select" style="max-width:200px">
+                    <label for="sponsorType"><?php echo t('النوع'); ?> *</label>
+                    <select name="sponsor_type" id="sponsorType" class="form-select" style="max-width:220px" required>
+                        <option value="" <?php echo $form['sponsor_type'] === '' ? 'selected' : ''; ?>>— <?php echo AK_LANG === 'en' ? 'Select applicant type' : 'اختر نوع مقدم الطلب'; ?> —</option>
                         <option value="individual" <?php echo $form['sponsor_type'] === 'individual' ? 'selected' : ''; ?>><?php echo t('فرد'); ?></option>
                         <option value="company" <?php echo $form['sponsor_type'] === 'company' ? 'selected' : ''; ?>><?php echo t('شركة'); ?></option>
                         <option value="organization" <?php echo $form['sponsor_type'] === 'organization' ? 'selected' : ''; ?>><?php echo t('منظمة'); ?></option>
                     </select>
+                    <button type="button" id="openSponsorshipTerms" class="btn btn-outline-primary btn-sm" disabled>
+                        <i class="fas fa-file-contract me-1" aria-hidden="true"></i><?php echo AK_LANG === 'en' ? 'View terms' : 'عرض الشروط'; ?>
+                    </button>
                 </div>
-                <section id="sponsorshipTermsPanel" class="sponsorship-terms-panel border rounded-3 p-3 mb-3" aria-live="polite" aria-atomic="true">
-                    <h6 id="sponsorshipTermsTitle" class="fw-bold mb-2"><?php echo AK_LANG === 'en' ? ($form['sponsor_type'] === 'individual' ? 'Individual sponsorship terms' : ($form['sponsor_type'] === 'company' ? 'Company sponsorship terms' : 'Organization sponsorship terms')) : ($form['sponsor_type'] === 'individual' ? 'شروط كفالة الأفراد' : ($form['sponsor_type'] === 'company' ? 'شروط كفالة الشركات' : 'شروط كفالة المنظمات')); ?></h6>
-                    <?php if (AK_LANG === 'en'): ?>
-                        <div id="individualSponsorshipTerms" class="sponsorship-terms-content"<?php echo $form['sponsor_type'] === 'individual' ? '' : ' hidden'; ?>>
-                            <ul class="mb-0">
-                                <li>This application is an initial request; it does not create an active sponsorship or a final financial commitment.</li>
-                                <li>The requested number of children, proposed monthly amount, and preferred payment method are proposals for discussion. They become final only after confirmation with the organization.</li>
-                                <li>Matching depends on eligible children being available and on the organization's procedures. Submitting an application does not guarantee assignment of a specific child.</li>
-                                <li>Sponsorship starts only after the details are confirmed and the organization's normal registration steps are completed.</li>
-                            </ul>
-                        </div>
-                        <div id="entitySponsorshipTerms" class="sponsorship-terms-content"<?php echo $form['sponsor_type'] === 'individual' ? ' hidden' : ''; ?>>
-                            <ul class="mb-0">
-                                <li>The company or organization may propose sponsoring one or more children and provide an overall proposed monthly budget.</li>
-                                <li>The final number of children, monthly commitment, payment schedule, and required documentation will be agreed with the organization before activation.</li>
-                                <li>This application is an expression of interest only; it does not create a financial obligation or activate any sponsorship.</li>
-                            </ul>
-                        </div>
-                    <?php else: ?>
-                        <div id="individualSponsorshipTerms" class="sponsorship-terms-content"<?php echo $form['sponsor_type'] === 'individual' ? '' : ' hidden'; ?>>
-                            <ul class="mb-0">
-                                <li>هذا الطلب مبدئي، ولا ينشئ كفالة قائمة أو التزاماً مالياً نهائياً.</li>
-                                <li>عدد الأيتام والمبلغ الشهري المقترح وطريقة الدفع المفضلة هي مقترحات للمناقشة، ولا تصبح نهائية إلا بعد تأكيدها مع المنظمة.</li>
-                                <li>تعتمد المطابقة على توفر الحالات المستوفية للشروط وإجراءات المنظمة، ولا يضمن تقديم الطلب تخصيص يتيم بعينه.</li>
-                                <li>تبدأ الكفالة بعد تأكيد التفاصيل واستكمال إجراءات التسجيل المعتمدة لدى المنظمة.</li>
-                            </ul>
-                        </div>
-                        <div id="entitySponsorshipTerms" class="sponsorship-terms-content"<?php echo $form['sponsor_type'] === 'individual' ? ' hidden' : ''; ?>>
-                            <ul class="mb-0">
-                                <li>يمكن للشركة أو المنظمة اقتراح كفالة طفل واحد أو أكثر وتحديد ميزانية شهرية إجمالية مقترحة.</li>
-                                <li>يتم الاتفاق مع المنظمة قبل التفعيل على العدد النهائي للأطفال والالتزام الشهري وجدول السداد والمستندات المطلوبة.</li>
-                                <li>هذا الطلب إبداء رغبة مبدئية فقط؛ ولا ينشئ التزاماً مالياً ولا يفعّل أي كفالة.</li>
-                            </ul>
-                        </div>
-                    <?php endif; ?>
-                </section>
+                <dialog class="terms-dialog" id="sponsorshipTermsDialog" aria-labelledby="sponsorshipTermsTitle">
+                    <div class="terms-dialog-header d-flex align-items-center justify-content-between gap-3">
+                        <h5 class="mb-0" id="sponsorshipTermsTitle"><?php echo AK_LANG === 'en' ? 'Sponsorship terms' : 'شروط الكفالة'; ?></h5>
+                        <button type="button" id="closeSponsorshipTermsIcon" class="btn-close btn-close-white" aria-label="<?php echo AK_LANG === 'en' ? 'Close terms' : 'إغلاق الشروط'; ?>"></button>
+                    </div>
+                    <div class="terms-dialog-body">
+                        <?php if (AK_LANG === 'en'): ?>
+                            <div id="individualSponsorshipTerms" class="sponsorship-terms-content" hidden>
+                                <ul class="mb-0">
+                                    <li>This application is an initial request; it does not create an active sponsorship or a final financial commitment.</li>
+                                    <li>The requested number of children, proposed monthly amount, and preferred payment method are proposals for discussion. They become final only after confirmation with the organization.</li>
+                                    <li>Matching depends on eligible children being available and on the organization's procedures. Submitting an application does not guarantee assignment of a specific child.</li>
+                                    <li>Sponsorship starts only after the details are confirmed and the organization's normal registration steps are completed.</li>
+                                </ul>
+                            </div>
+                            <div id="entitySponsorshipTerms" class="sponsorship-terms-content" hidden>
+                                <ul class="mb-0">
+                                    <li>The company or organization may propose sponsoring one or more children and provide an overall proposed monthly budget.</li>
+                                    <li>The final number of children, monthly commitment, payment schedule, and required documentation will be agreed with the organization before activation.</li>
+                                    <li>This application is an expression of interest only; it does not create a financial obligation or activate any sponsorship.</li>
+                                </ul>
+                            </div>
+                        <?php else: ?>
+                            <div id="individualSponsorshipTerms" class="sponsorship-terms-content" hidden>
+                                <ul class="mb-0">
+                                    <li>هذا الطلب مبدئي، ولا ينشئ كفالة قائمة أو التزاماً مالياً نهائياً.</li>
+                                    <li>عدد الأيتام والمبلغ الشهري المقترح وطريقة الدفع المفضلة هي مقترحات للمناقشة، ولا تصبح نهائية إلا بعد تأكيدها مع المنظمة.</li>
+                                    <li>تعتمد المطابقة على توفر الحالات المستوفية للشروط وإجراءات المنظمة، ولا يضمن تقديم الطلب تخصيص يتيم بعينه.</li>
+                                    <li>تبدأ الكفالة بعد تأكيد التفاصيل واستكمال إجراءات التسجيل المعتمدة لدى المنظمة.</li>
+                                </ul>
+                            </div>
+                            <div id="entitySponsorshipTerms" class="sponsorship-terms-content" hidden>
+                                <ul class="mb-0">
+                                    <li>يمكن للشركة أو المنظمة اقتراح كفالة طفل واحد أو أكثر وتحديد ميزانية شهرية إجمالية مقترحة.</li>
+                                    <li>يتم الاتفاق مع المنظمة قبل التفعيل على العدد النهائي للأطفال والالتزام الشهري وجدول السداد والمستندات المطلوبة.</li>
+                                    <li>هذا الطلب إبداء رغبة مبدئية فقط؛ ولا ينشئ التزاماً مالياً ولا يفعّل أي كفالة.</li>
+                                </ul>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="px-4 pb-4 text-end">
+                        <button type="button" id="closeSponsorshipTerms" class="btn btn-primary px-4"><?php echo AK_LANG === 'en' ? 'Continue' : 'متابعة'; ?></button>
+                    </div>
+                </dialog>
+                <fieldset id="applicantDetailsSection" class="border-0 p-0 m-0" disabled hidden>
                 <!-- الاسم الكامل -->
                 <div class="f-row">
                     <label id="applicantNameLabel"><?php echo t('الاسم الكامل'); ?> *</label>
@@ -297,6 +311,7 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
                 <div class="mt-4 text-center">
                     <button class="btn btn-primary px-5"><i class="fas fa-paper-plane me-1"></i> <?php echo t('إرسال الطلب'); ?></button>
                 </div>
+                </fieldset>
             </form>
         <?php endif; ?>
     </div>
@@ -321,13 +336,20 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
     const emailLabel = document.getElementById('applicantEmailLabel');
     const orphanLabel = document.getElementById('desiredOrphansLabel');
     const amountLabel = document.getElementById('proposedAmountLabel');
+    const termsDialog = document.getElementById('sponsorshipTermsDialog');
     const termsTitle = document.getElementById('sponsorshipTermsTitle');
     const individualTerms = document.getElementById('individualSponsorshipTerms');
     const entityTerms = document.getElementById('entitySponsorshipTerms');
+    const openTermsButton = document.getElementById('openSponsorshipTerms');
+    const closeTermsButton = document.getElementById('closeSponsorshipTerms');
+    const closeTermsIcon = document.getElementById('closeSponsorshipTermsIcon');
+    const applicantDetails = document.getElementById('applicantDetailsSection');
     function syncSponsorshipTerms() {
         const individual = type.value === 'individual';
+        const entity = type.value === 'company' || type.value === 'organization';
         if (individualTerms) individualTerms.hidden = !individual;
-        if (entityTerms) entityTerms.hidden = individual;
+        if (entityTerms) entityTerms.hidden = !entity;
+        if (openTermsButton) openTermsButton.disabled = !individual && !entity;
         if (termsTitle) {
             const isEnglish = document.documentElement.lang === 'en';
             const title = type.value === 'company'
@@ -338,8 +360,24 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
             termsTitle.textContent = title;
         }
     }
+    function openSponsorshipTerms() {
+        if (!type.value || !termsDialog) return;
+        if (typeof termsDialog.showModal === 'function') {
+            if (!termsDialog.open) termsDialog.showModal();
+        } else {
+            termsDialog.setAttribute('open', 'open');
+        }
+    }
+    function closeSponsorshipTerms() {
+        if (!termsDialog) return;
+        if (typeof termsDialog.close === 'function' && termsDialog.open) {
+            termsDialog.close();
+        } else {
+            termsDialog.removeAttribute('open');
+        }
+    }
     function syncEntityFields() {
-        const entity = type.value !== 'individual';
+        const entity = type.value === 'company' || type.value === 'organization';
         if (entityFields) {
             entityFields.classList.toggle('is-collapsed', !entity);
             entityFields.setAttribute('aria-hidden', entity ? 'false' : 'true');
@@ -356,17 +394,28 @@ input[type=number]::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
         if (amountLabel) amountLabel.textContent = entity ? (document.documentElement.lang === 'en' ? 'Proposed total monthly budget' : 'الميزانية الشهرية الإجمالية المقترحة') : (document.documentElement.lang === 'en' ? 'Proposed monthly amount' : 'المبلغ الشهري المقترح');
     }
     function syncTypePresentation() {
+        const selected = type.value !== '';
+        if (applicantDetails) {
+            applicantDetails.hidden = !selected;
+            applicantDetails.disabled = !selected;
+        }
         syncGenderRequirement();
         syncEntityFields();
         syncSponsorshipTerms();
     }
-    // Update the form in the current document; changing applicant type must
-    // never submit or navigate the enclosing form.
+    // Update the form in place. A deliberate type selection opens only its
+    // matching terms; the applicant can reopen them without changing type.
     type.addEventListener('input', syncTypePresentation);
-    type.addEventListener('change', syncTypePresentation);
-    if (entityFields) {
-        entityFields.querySelectorAll('input, select, textarea').forEach(control => {
-            control.disabled = type.value === 'individual';
+    type.addEventListener('change', function () {
+        syncTypePresentation();
+        if (type.value) openSponsorshipTerms();
+    });
+    if (openTermsButton) openTermsButton.addEventListener('click', openSponsorshipTerms);
+    if (closeTermsButton) closeTermsButton.addEventListener('click', closeSponsorshipTerms);
+    if (closeTermsIcon) closeTermsIcon.addEventListener('click', closeSponsorshipTerms);
+    if (termsDialog) {
+        termsDialog.addEventListener('click', function (event) {
+            if (event.target === termsDialog) closeSponsorshipTerms();
         });
     }
     syncTypePresentation();
