@@ -23,7 +23,21 @@ foreach ($paths as $label => $path) {
     }
     $sources[$label] = $source;
 }
+$formStart = strpos($sources['application'], '<form method="post">');
+$typeField = strpos($sources['application'], '<select name="sponsor_type" id="sponsorType"');
+$nameField = strpos($sources['application'], 'name="full_name"');
+$phoneField = strpos($sources['application'], 'name="phone"');
+$typeIsFirstFormField = $formStart !== false
+    && $typeField !== false
+    && $nameField !== false
+    && $phoneField !== false
+    && $typeField > $formStart
+    && $typeField < $nameField
+    && $typeField < $phoneField;
+
 $checks = [
+    'applicant type is the first data field in the public form' =>
+        $typeIsFirstFormField,
     'legal-entity contact section is conditionally rendered' =>
         str_contains($sources['application'], 'id="entityContactFields"')
         && str_contains($sources['application'], 'contactName.required = entity'),
