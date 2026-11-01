@@ -25,7 +25,7 @@ $checks = [
         str_contains($application, "['individual','company','organization']"),
     'public form normalizes non-individual gender to organization' =>
         str_contains($application, <<<'SOURCE'
-$gender = $type === 'individual' ? strtolower($form['gender']) : 'organization';
+$gender = $type === 'individual' ? strtolower($form['gender']) : ($type === '' ? '' : 'organization');
 SOURCE
         ),
     'public form resolves a supervisor only for individual applicants' =>
