@@ -5698,3 +5698,14 @@ Scope update: GitHub Actions run [#41287853039](https://github.com/moneermax/Ahl
 Following the user's visual acceptance of the in-place company/organization switch and proposed-budget input, the applicant-type selector (فرد / شركة / منظمة) was moved to the first data field immediately after the form's CSRF field. This makes the selection precede the name, contact and other conditional fields whose presentation/requirements depend on applicant type. No field names, POST handling, routing, validation, persistence, schema, or migration behavior changed. The existing legal-entity animation and conditional required/disabled controls remain intact.
 
 Code commits: `f4638a9fd4bc70f7fc527b44c8762d9532e19bb7` (form order) and `9ed2eca35f17662e1f9796a25f2b3684806bffaa` (source-contract guard verifies applicant type precedes the other initial data fields). PHP lint and CI verification are pending. Browser visual verification of the new field order is pending. No application was submitted and no live sponsor/request data or database schema was changed.
+
+
+## 2026-11-01 — Public sponsor application terms: CI VERIFIED
+
+The public `apply.php` form now renders the relevant sponsorship terms inline directly below the applicant-type selector. The generic modal and manual-open control were removed. Individual terms are distinct from the legal-entity terms; companies and organizations retain the same established legal-entity conditions but receive type-specific headings. Arabic and English are supported, and type changes update the terms in place.
+
+No acceptance checkbox was added. No database/schema/migration, POST handling, validation, routing or persistence behavior changed.
+
+Commits: `54da9078b8ba0c1330453db8c7d71f3f9c8045e4`, `cf29d6d31953a8ef3db03f94eb69c4a0c71f8857`. GitHub Actions run [#41321131917](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41321131917) passed all six jobs, including the PHP 8.2 source contract/lint and existing sponsor conversion runtime harness.
+
+**Still pending:** local authenticated browser visual acceptance of individual/company/organization term switching in Arabic and English. Do not submit a real application. No migration is required.
