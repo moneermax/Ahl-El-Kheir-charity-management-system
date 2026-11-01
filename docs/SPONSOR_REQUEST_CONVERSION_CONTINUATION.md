@@ -211,3 +211,19 @@ The public `apply.php` POST path and VGM fallback workflow were expanded and run
 Following the user's visual acceptance of the in-place company/organization switch and proposed-budget input, the applicant-type selector (فرد / شركة / منظمة) was moved to the first data field immediately after the form's CSRF field. This makes the selection precede the name, contact and other conditional fields whose presentation/requirements depend on applicant type. No field names, POST handling, routing, validation, persistence, schema, or migration behavior changed. The existing legal-entity animation and conditional required/disabled controls remain intact.
 
 Code commits: `f4638a9fd4bc70f7fc527b44c8762d9532e19bb7` (form order) and `9ed2eca35f17662e1f9796a25f2b3684806bffaa` (source-contract guard verifies applicant type precedes the other initial data fields). PHP lint and CI verification are pending. Browser visual verification of the new field order is pending. No application was submitted and no live sponsor/request data or database schema was changed.
+
+
+## 2026-11-01 — Applicant-type-specific sponsorship terms
+
+The public `apply.php` form now displays sponsorship terms inline immediately below the first-field applicant-type selector. The previous manual-open general-terms dialog and its mixed generic instructions were removed. Switching between فرد / شركة / منظمة updates the visible terms and heading in place without submitting or navigating the form.
+
+- Individual applicants see only individual terms: the application is preliminary and non-binding; requested child count, proposed monthly amount and payment preference remain proposals until confirmed; matching depends on eligible-child availability and organizational procedures; activation follows confirmation and normal registration.
+- Company and organization applicants see the existing shared legal-entity conditions, with a type-specific heading: the entity may propose one or more children and an overall monthly budget; final child count, monthly commitment, payment schedule and required documents are agreed before activation; the request creates no financial obligation and activates no sponsorship.
+- Arabic and English content are both updated. No acceptance checkbox was introduced because the existing workflow does not define one.
+- No POST, validation, routing, persistence, schema or migration behavior changed.
+
+Code commits: `54da9078b8ba0c1330453db8c7d71f3f9c8045e4` (inline type-specific terms) and `cf29d6d31953a8ef3db03f94eb69c4a0c71f8857` (source-contract coverage).
+
+GitHub Actions run [#41321131917](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41321131917) passed all six jobs. The PHP 8.2 job executed the public-application routing/terms source contract and PHP lint; MariaDB migration jobs and the existing disposable sponsor-conversion runtime harness also passed.
+
+**Verification boundary:** CI/source verification is PASS; authenticated local-browser visual acceptance is still pending. After safely pulling `main`, check that each of the three types shows only its matching terms, that switching types does not refresh or jump the page, and that Arabic/English headings and content match. Do not submit a real application or repeat closed routing/conversion tests. No database migration is required.
