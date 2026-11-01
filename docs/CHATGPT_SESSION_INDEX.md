@@ -3460,3 +3460,10 @@ Scope update: GitHub Actions run [#41287853039](https://github.com/moneermax/Ahl
 Following the user's visual acceptance of the in-place company/organization switch and proposed-budget input, the applicant-type selector (فرد / شركة / منظمة) was moved to the first data field immediately after the form's CSRF field. This makes the selection precede the name, contact and other conditional fields whose presentation/requirements depend on applicant type. No field names, POST handling, routing, validation, persistence, schema, or migration behavior changed. The existing legal-entity animation and conditional required/disabled controls remain intact.
 
 Code commits: `f4638a9fd4bc70f7fc527b44c8762d9532e19bb7` (form order) and `9ed2eca35f17662e1f9796a25f2b3684806bffaa` (source-contract guard verifies applicant type precedes the other initial data fields). PHP lint and CI verification are pending. Browser visual verification of the new field order is pending. No application was submitted and no live sponsor/request data or database schema was changed.
+
+
+## 2026-11-01 — Applicant-type-specific sponsorship terms
+
+The public `apply.php` now shows inline sponsorship terms immediately below the applicant-type selector. The old general-terms modal was removed. Individual applicants see only individual terms; company and organization applicants share the established legal-entity conditions, while the heading identifies the selected type. Switching is in-place, with Arabic and English content. No acceptance checkbox, schema change, migration, POST, routing or persistence change was introduced.
+
+Commits: `54da9078b8ba0c1330453db8c7d71f3f9c8045e4`, `cf29d6d31953a8ef3db03f94eb69c4a0c71f8857`. CI run [#41321131917](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41321131917) passed all six jobs, including PHP 8.2 lint/source contract and the existing sponsor conversion runtime harness. Local browser visual acceptance remains pending; safely pull `main` and check the three types and both languages without submitting a real application.
