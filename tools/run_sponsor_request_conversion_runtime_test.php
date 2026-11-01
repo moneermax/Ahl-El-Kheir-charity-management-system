@@ -483,6 +483,48 @@ try {
         'assigned supervisor can convert the online individual request through the supervisor path'
     );
 
+    // If the individual matrix has no matching active supervisor, the request
+    // stays unassigned and is routed to the VGM rather than disappearing.
+    $unassignedOnlineFixture = $admin->prepare(
+        'INSERT INTO ' . quoteIdentifier($testDb) .
+        '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
+        'VALUES (?, \'individual\', \'male\', \'cash\', \'public_form\', NULL, \'new\')'
+    );
+    $unassignedOnlineFixture->execute(['مقدم طلب إلكتروني بلا توزيع حروف']);
+    $unassignedOnlineRequestId = (int)$admin->lastInsertId();
+    $_SESSION = [
+        'user_id' => 19,
+        'user_role' => 'supervisor',
+        'user_name' => 'Runtime test supervisor',
+    ];
+    $nonVgmFallbackRejected = false;
+    try {
+        convertSponsorRequestToSponsor($unassignedOnlineRequestId, 19, 'management_queue');
+    } catch (RuntimeException $e) {
+        $nonVgmFallbackRejected = true;
+    }
+    runtimeTest(
+        $nonVgmFallbackRejected,
+        'unassigned online individual fallback cannot be processed by a non-VGM management actor'
+    );
+    $_SESSION = [
+        'user_id' => $vgmUserId,
+        'user_role' => 'vice_general_manager',
+        'user_name' => 'Runtime test VGM',
+    ];
+    $unassignedOnlineSponsorId = convertSponsorRequestToSponsor($unassignedOnlineRequestId, $vgmUserId, 'management_queue');
+    $unassignedOnlineSponsor = dbFetchOne(
+        'SELECT sponsor_type, gender, supervisor_id, created_by FROM sponsors WHERE id = ?',
+        [$unassignedOnlineSponsorId]
+    );
+    runtimeTest(
+        $unassignedOnlineSponsor && $unassignedOnlineSponsor['sponsor_type'] === 'individual'
+            && $unassignedOnlineSponsor['gender'] === 'male'
+            && $unassignedOnlineSponsor['supervisor_id'] === null
+            && (int)$unassignedOnlineSponsor['created_by'] === $vgmUserId,
+        'VGM can process an unassigned online individual when no active matrix supervisor is available'
+    );
+
     $unauthorizedFixture = $admin->prepare(
         'INSERT INTO ' . quoteIdentifier($testDb) .
         '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
