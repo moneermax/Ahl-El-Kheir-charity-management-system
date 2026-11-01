@@ -187,14 +187,18 @@ function assignLegalEntitySponsorRequestToSupervisor(int $requestId, int $superv
     $pdo->beginTransaction();
     try {
         $request = dbFetchOne(
-            'SELECT id, sponsor_type, status, assigned_supervisor_id FROM sponsor_requests WHERE id = ? FOR UPDATE',
+            'SELECT id, sponsor_type, source, status, assigned_supervisor_id FROM sponsor_requests WHERE id = ? FOR UPDATE',
             [$requestId]
         );
         if (!$request) {
             throw new InvalidArgumentException('طلب الكفالة غير موجود.');
         }
-        if (!in_array((string)$request['sponsor_type'], ['company', 'organization'], true)) {
-            throw new InvalidArgumentException('الإسناد اليدوي متاح لطلبات الشركات والمنظمات فقط.');
+        $isLegalEntity = in_array((string)$request['sponsor_type'], ['company', 'organization'], true);
+        $isUnmatchedOnlineIndividual = (string)($request['source'] ?? '') === 'public_form'
+            && (string)$request['sponsor_type'] === 'individual'
+            && empty($request['assigned_supervisor_id']);
+        if (!$isLegalEntity && !$isUnmatchedOnlineIndividual) {
+            throw new InvalidArgumentException('الإسناد اليدوي متاح لطلبات الجهات أو طلبات الأفراد الإلكترونية غير المسندة وفق مصفوفة التوزيع فقط.');
         }
         if (!in_array((string)$request['status'], ['new', 'contacted'], true)) {
             throw new InvalidArgumentException('لا يمكن إسناد طلب مغلق أو تم تحويله.');
