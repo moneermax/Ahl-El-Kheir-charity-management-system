@@ -3413,3 +3413,10 @@ Code commits: `1218e0a888df78bc5319477f3be57b41fa39747e` (form and server behavi
 GitHub Actions run [#41331305983](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41331305983) passed all six jobs, including PHP 8.2 lint, public application/source-contract tests, MariaDB migration checks and the existing disposable sponsor conversion runtime harness.
 
 **Remaining acceptance boundary:** authenticated local-browser visual acceptance is pending. After pulling `main`, verify the initial blank selector and hidden fields; select each type and confirm the correct modal terms only; close the modal and confirm the matching fields appear; reopen the terms; and repeat in Arabic and English. Do not submit a real public application. No migration or database action is needed.
+
+
+## 2026-11-01 — Public application type/terms modal: browser acceptance CLOSED
+
+The user pulled the current `main` revision and visually reviewed the final public application form, then confirmed that it looks perfect. This closes the browser-visual acceptance boundary for the applicant-type-first layout, unselected initial state, type-specific terms dialog, and conditional form presentation at the user's stated acceptance level. No real application submission or database mutation was reported. This is user-confirmed visual acceptance only; it does not add claims of end-to-end public submission or authenticated routing acceptance.
+
+The relevant code and CI evidence remain unchanged: commit `bfabe578cc41666b61a80df1dcc6de7be8d6f367`; GitHub Actions run [#41331305983](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41331305983) passed all six jobs. No migration or additional test rerun is required for this visual acceptance.
