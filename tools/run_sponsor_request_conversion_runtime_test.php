@@ -666,13 +666,20 @@ try {
     ];
     $manualFallbackSponsorId = convertSponsorRequestToSponsor($manualFallbackRequestId, 19);
     $manualFallbackSponsor = dbFetchOne(
-        'SELECT sponsor_type, supervisor_id FROM sponsors WHERE id = ?',
+        'SELECT sponsor_type, supervisor_id, is_manual_override, first_letter_id FROM sponsors WHERE id = ?',
         [$manualFallbackSponsorId]
     );
     runtimeTest(
         $manualFallbackSponsor && $manualFallbackSponsor['sponsor_type'] === 'individual'
-            && (int)$manualFallbackSponsor['supervisor_id'] === 19,
-        'manually assigned unmatched online individual is subsequently convertible by its assigned supervisor'
+            && (int)$manualFallbackSponsor['supervisor_id'] === 19
+            && (int)$manualFallbackSponsor['is_manual_override'] === 1,
+        'manually assigned unmatched online individual converts with the explicit supervisor override recorded'
+    );
+    runtimeTest(
+        $manualFallbackSponsor
+            && supervisorCanAccessSponsor(19, $manualFallbackSponsor)
+            && !supervisorCanAccessSponsor(20, $manualFallbackSponsor),
+        'only the explicitly selected supervisor can access the manually reassigned sponsor outside the matrix'
     );
 
     $unauthorizedFixture = $admin->prepare(
