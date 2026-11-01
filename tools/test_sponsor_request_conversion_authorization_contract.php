@@ -40,8 +40,12 @@ $checks = [
     'legal-entity request assignment is an explicit VGM-only operation' =>
         str_contains($helper, 'function assignLegalEntitySponsorRequestToSupervisor')
         && str_contains($helper, "Session::getUserRole() !== 'vice_general_manager'"),
-    'manual request assignment is restricted to company and organization types' =>
-        str_contains($helper, "['company', 'organization']"),
+    'manual request assignment accepts legal entities and only unassigned online-individual fallbacks' =>
+        str_contains($helper, "['company', 'organization']")
+        && str_contains($helper, "source'] ?? '') === 'public_form'")
+        && str_contains($helper, "sponsor_type'] === 'individual'")
+        && str_contains($helper, '$isUnmatchedOnlineIndividual')
+        && str_contains($helper, 'if (!$isLegalEntity && !$isUnmatchedOnlineIndividual)'),
     'manual request assignment only accepts actionable states' =>
         str_contains($helper, "['new', 'contacted']")
         && str_contains($helper, 'assigned_supervisor_id'),
@@ -53,8 +57,10 @@ $checks = [
         str_contains($helper, "'ASSIGN_SUPERVISOR', 'sponsor_request'"),
     'assigned supervisor receives an in-app request link after commit' =>
         str_contains($helper, 'modules/sponsors/my_request.php?id='),
-    'only VGM sees the manual assignment control in the management queue' =>
-        str_contains($queue, '$role === \'vice_general_manager\'')
+    'only VGM sees the manual assignment control for eligible requests' =>
+        str_contains($queue, '$role===\'vice_general_manager\'')
+        && str_contains($queue, '$isUnmatchedOnlineIndividual')
+        && str_contains($queue, '$canManuallyAssign')
         && str_contains($queue, 'assignLegalEntitySponsorRequestToSupervisor'),
     'management queue keeps the existing direct-processing conversion option' =>
         str_contains($queue, "convertSponsorRequestToSponsor(\$id, (int)Session::getUserId(), 'management_queue')"),
