@@ -28,6 +28,10 @@ $failures = 0;
 
 $_SERVER['REQUEST_METHOD'] = 'CLI';
 $_SERVER['HTTP_HOST'] = 'localhost';
+// Start the CLI session before any test output so the public form's CSRF
+// verification can use the same session lifecycle as a browser request.
+require_once $root . '/config/session.php';
+Session::start();
 
 function runtimeTest(bool $condition, string $label): void
 {
