@@ -5685,3 +5685,10 @@ GitHub Actions run [#41285710737](https://github.com/moneermax/Ahl-El-Kheir-char
 - HR catalogue migration and rescheduling service jobs passed.
 
 This is CI/source/runtime-harness evidence, not authenticated local-browser acceptance. No active local database migration or live sponsor/request mutation was performed. No migration is required for this routing/source-label change. The remaining acceptance gate is one controlled local browser walkthrough after safely pulling `main`; do not repeat previously closed individual conversion, legal-entity service, or unrelated module tests.
+
+
+## 2026-11-01 — Public application POST routing: runtime verified
+
+Follow-up GitHub Actions run [#41286756893](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41286756893) passed all six jobs on commit `6831fcd340eadadf3129fee4139d0e50891e5055`. The disposable MariaDB 10.4.32 runtime harness invoked the actual `apply.php` POST handler and verified: a matrix-matched individual is assigned to the expected supervisor and notifies only that supervisor; company and organization applications remain unassigned and notify the VGM queue; existing VGM direct-processing and company-request assignment paths, ownership checks, duplicate protection, audit records, and disposable-database cleanup pass. The disposable database was dropped successfully. No local/live application database or real public submission was used.
+
+Scope note: the VGM manual-assignment helper is explicitly limited to company/organization requests. An individual with no matrix match can be processed by the VGM, but manual reassignment of that fallback to a supervisor is not currently supported or runtime-proven. Do not broaden this rule without confirming the intended workflow. Remaining acceptance is authenticated local-browser review of queue/actions; the online source label and existing rows were already checked by the user. No migration is required.
