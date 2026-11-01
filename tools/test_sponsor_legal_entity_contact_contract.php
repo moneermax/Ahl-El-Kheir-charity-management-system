@@ -27,6 +27,18 @@ $checks = [
     'legal-entity contact section is conditionally rendered' =>
         str_contains($sources['application'], 'id="entityContactFields"')
         && str_contains($sources['application'], 'contactName.required = entity'),
+    'applicant type changes are handled in place with animation' =>
+        str_contains($sources['application'], 'type.addEventListener(\'input\', syncTypePresentation)')
+        && str_contains($sources['application'], 'type.addEventListener(\'change\', syncTypePresentation)')
+        && str_contains($sources['application'], '.entity-contact-fields{')
+        && str_contains($sources['application'], 'classList.toggle(\'is-collapsed\', !entity)'),
+    'entity-only controls are disabled when the applicant is an individual' =>
+        str_contains($sources['application'], 'control.disabled = !entity'),
+    'proposal amount has a dedicated visible input row and remains persisted' =>
+        str_contains($sources['application'], 'id="proposedAmountRow"')
+        && str_contains($sources['application'], 'id="proposedAmountInput"')
+        && str_contains($sources['application'], 'name="proposed_amount"')
+        && str_contains($sources['application'], 'الميزانية الشهرية الإجمالية المقترحة'),
     'representative name and position are captured' =>
         str_contains($sources['application'], 'name="contact_person_name"')
         && str_contains($sources['application'], 'name="contact_person_position"'),
