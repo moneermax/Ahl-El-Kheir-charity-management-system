@@ -621,6 +621,60 @@ try {
         'VGM can process an unassigned online individual when no active matrix supervisor is available'
     );
 
+    // The VGM must also be able to delegate an individual application when
+    // the first-letter/gender matrix produced no supervisor match.
+    $manualFallbackFixture = $admin->prepare(
+        'INSERT INTO ' . quoteIdentifier($testDb) .
+        '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
+        'VALUES (?, \'individual\', \'male\', \'cash\', \'public_form\', NULL, \'new\')'
+    );
+    $manualFallbackFixture->execute(['مقدم طلب إلكتروني للإسناد اليدوي']);
+    $manualFallbackRequestId = (int)$admin->lastInsertId();
+    $_SESSION = [
+        'user_id' => $vgmUserId,
+        'user_role' => 'vice_general_manager',
+        'user_name' => 'Runtime test VGM',
+    ];
+    $manualFallbackSupervisorName = assignLegalEntitySponsorRequestToSupervisor($manualFallbackRequestId, 19, $vgmUserId);
+    $manualFallbackRequest = dbFetchOne(
+        'SELECT assigned_supervisor_id, status FROM sponsor_requests WHERE id = ?',
+        [$manualFallbackRequestId]
+    );
+    $manualFallbackAudit = dbFetchOne(
+        "SELECT COUNT(*) AS total FROM audit_log WHERE entity_type = 'sponsor_request' AND entity_id = ? AND action = 'ASSIGN_SUPERVISOR'",
+        [$manualFallbackRequestId]
+    );
+    $manualFallbackNotification = dbFetchOne(
+        "SELECT recipient_user_id, link FROM notifications WHERE recipient_user_id = ? AND link = ? ORDER BY id DESC LIMIT 1",
+        [19, 'modules/sponsors/my_request.php?id=' . $manualFallbackRequestId]
+    );
+    runtimeTest(
+        $manualFallbackRequest && (int)$manualFallbackRequest['assigned_supervisor_id'] === 19
+            && $manualFallbackRequest['status'] === 'new'
+            && $manualFallbackSupervisorName !== '',
+        'VGM can manually assign an unmatched online individual to an active supervisor without changing request status'
+    );
+    runtimeTest(
+        $manualFallbackAudit && (int)$manualFallbackAudit['total'] === 1
+            && $manualFallbackNotification && (int)$manualFallbackNotification['recipient_user_id'] === 19,
+        'manual assignment of unmatched online individual writes audit and notifies the assigned supervisor'
+    );
+    $_SESSION = [
+        'user_id' => 19,
+        'user_role' => 'supervisor',
+        'user_name' => 'Runtime test supervisor',
+    ];
+    $manualFallbackSponsorId = convertSponsorRequestToSponsor($manualFallbackRequestId, 19);
+    $manualFallbackSponsor = dbFetchOne(
+        'SELECT sponsor_type, supervisor_id FROM sponsors WHERE id = ?',
+        [$manualFallbackSponsorId]
+    );
+    runtimeTest(
+        $manualFallbackSponsor && $manualFallbackSponsor['sponsor_type'] === 'individual'
+            && (int)$manualFallbackSponsor['supervisor_id'] === 19,
+        'manually assigned unmatched online individual is subsequently convertible by its assigned supervisor'
+    );
+
     $unauthorizedFixture = $admin->prepare(
         'INSERT INTO ' . quoteIdentifier($testDb) .
         '.sponsor_requests (sponsor_name, sponsor_type, gender, preferred_payment_method, source, assigned_supervisor_id, status) ' .
