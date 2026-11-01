@@ -53,11 +53,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             [$name, $phone, $phonePurpose, $form['alt_phone'] !== '' ? $form['alt_phone'] : null, $altPhonePurpose, $form['email'] !== '' ? $form['email'] : null, $form['address'] !== '' ? $form['address'] : null, $type, $contactPersonName, $contactPersonPosition, $type !== 'individual' ? $contactMethod : null, $contactTime, $gender, $payment, $proposedAmount, $desiredOrphans, $form['notes'] !== '' ? $form['notes'] : null, $raw, $letterId, $supId]);
         $reqId = (int)(dbFetchOne("SELECT LAST_INSERT_ID() id")['id']);
         try {
+            // Route each public application to one operational owner:
+            // matrix-assigned individuals go straight to their supervisor;
+            // legal entities (and individuals without a valid matrix match)
+            // go to the VGM for direct processing or supervisor assignment.
             $targets = [];
-            if ($supId) $targets[] = $supId;
-            foreach (dbFetchAll("SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code IN ('admin','vice_general_manager') AND u.is_active = 1") as $u) $targets[] = (int)$u['id'];
+            if ($supId) {
+                $targets[] = $supId;
+            } else {
+                foreach (dbFetchAll("SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code = 'vice_general_manager' AND u.is_active = 1") as $u) {
+                    $targets[] = (int)$u['id'];
+                }
+            }
             foreach (array_unique($targets) as $tid) {
-                // Supervisors receive a scoped detail link; management retains the full queue.
                 $targetLink = ($supId && (int)$tid === (int)$supId)
                     ? 'modules/sponsors/my_request.php?id=' . $reqId
                     : 'modules/sponsors/requests.php';
