@@ -66,6 +66,25 @@ $checks = [
         str_contains($sources['sponsorship lifecycle'], "status IN ('active','paused')")
         && str_contains($sources['sponsorship lifecycle'], '$remaining ? \'matched\' : $fallback')
         && str_contains($sources['orphan profile'], "SET match_status = 'matched' WHERE id = ?"),
+    'Tree heading subtitle keeps the white-on-blue contrast' =>
+        str_contains($sources['tree management'], '<p class="mb-2">')
+        && !str_contains($sources['tree management'], '<p class="text-muted mb-2">'),
+    'Tree management labels use Tree terminology instead of entity wording' =>
+        !str_contains($sources['tree management'], 'الكيان')
+        && str_contains($sources['tree management'], 'اسم الشجرة')
+        && str_contains($sources['tree management'], '<th>الشجرة</th>'),
+    'initial member picker supports search and gender/supervisor filters' =>
+        str_contains($sources['tree management'], 'id="treeMemberSearch"')
+        && str_contains($sources['tree management'], 'id="treeMemberGenderFilter"')
+        && str_contains($sources['tree management'], 'id="treeMemberSupervisorFilter"'),
+    'member picker supports bulk selection and preserves checked state after validation errors' =>
+        str_contains($sources['tree management'], 'id="treeMemberSelectVisible"')
+        && str_contains($sources['tree management'], 'id="treeMemberClearVisible"')
+        && str_contains($sources['tree management'], 'id="treeMemberClearAll"')
+        && str_contains($sources['tree management'], '$submittedMemberIds, true'),
+    'initial member picker no longer truncates eligible individuals at 500' =>
+        str_contains($sources['tree management'], 'FROM sponsors WHERE sponsor_type = \'individual\' AND status = \'active\' ORDER BY full_name')
+        && !str_contains($sources['tree management'], 'ORDER BY full_name LIMIT 500'),
 ];
 $failed = 0;
 foreach ($checks as $label => $passed) {
