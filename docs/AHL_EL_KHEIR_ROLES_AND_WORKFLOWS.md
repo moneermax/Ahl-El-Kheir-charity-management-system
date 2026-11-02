@@ -193,3 +193,12 @@ The assigned supervisor may explicitly convert a request assigned to their accou
 ## Company and organization sponsorship applications — 2026-10-31
 
 Company/organization applicants provide the legal entity name and its official phone/email/address through the existing application fields, plus the authorized representative's name and position, preferred contact method, and preferred contact time. They may propose sponsoring one or more children and an overall monthly budget. These values are proposals only. The final child count, monthly commitment, payment schedule, and required documentation are agreed with the organization before activation. The request is routed to the VGM, who may process it directly while unassigned or assign it to one active supervisor. Individual applications continue using the existing first-letter + gender supervisor matrix.
+
+
+## 2026-11-02 — Sponsor Tree workflow
+
+Admin and VGM manage Tree entities; a supervisor may manage only a Tree/legal-entity sponsor within the existing sponsor ownership/scope helper. A Tree is an ordinary company/organization sponsor with existing contact-person fields.
+
+Tree type `optional_members` permits zero members at creation and later membership management. Tree type `required_members` requires at least one active member at creation and cannot be left without an active membership through the Tree management workflow. Existing individual sponsor records are members; the same individual may join multiple Trees. Membership activation/removal is independent from individual sponsor activation.
+
+Tree membership does not allocate or split sponsorship amounts. The Tree sponsor uses the existing orphan-level sponsorship and payment workflows. Shared orphan sponsorships are separate sponsor–orphan records; completing/cancelling one relationship must not change the orphan's matched state while another active/paused relationship remains. See `SPONSOR_TREES_CONTINUATION.md` for implementation and verification boundaries.
