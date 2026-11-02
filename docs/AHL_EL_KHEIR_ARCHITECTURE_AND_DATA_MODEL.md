@@ -165,3 +165,10 @@ Evidence boundary:
 - No production payroll-generation code was changed as a result of the earlier read-only October simulation or this rollback-only test.
 
 The unfinished attendance same-page POST scroll-jump issue remains separate and must not be reopened during this work.
+
+
+## 2026-11-02 — Sponsor Trees
+
+A Tree is not a separate sponsor or accounting class. Its entity is an ordinary legal-entity row in `sponsors`, with one `sponsor_trees` metadata row. Existing individual sponsor rows are linked through `sponsor_tree_members`. This is many-to-many: one individual can belong to multiple Trees.
+
+Membership state is independent of individual sponsor status and orphan sponsorship. Ending a membership does not delete the individual or change their sponsor status. Sponsorship/payment history remains attached to its own `sponsorships` and `transactions.sponsorship_id` records. The dated migration and local acceptance boundary are documented in `SPONSOR_TREES_CONTINUATION.md`.
