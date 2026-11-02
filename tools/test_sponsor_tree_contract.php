@@ -81,7 +81,8 @@ $checks = [
         str_contains($sources['tree management'], 'id="treeMemberSelectVisible"')
         && str_contains($sources['tree management'], 'id="treeMemberClearVisible"')
         && str_contains($sources['tree management'], 'id="treeMemberClearAll"')
-        && str_contains($sources['tree management'], '$submittedMemberIds, true'),
+        && str_contains($sources['tree management'], '$submittedMemberIds, true')
+        && str_contains($sources['tree management'], '.tree-member-option[hidden] { display: none !important; }'),
     'initial member picker no longer truncates eligible individuals at 500' =>
         str_contains($sources['tree management'], 'FROM sponsors WHERE sponsor_type = \'individual\' AND status = \'active\' ORDER BY full_name')
         && !str_contains($sources['tree management'], 'ORDER BY full_name LIMIT 500'),
