@@ -59,6 +59,9 @@ $checks = [
         && !str_contains($sources['sponsorship creation'], 'SELECT id FROM sponsorships WHERE child_id = ? AND status IN'),
     'shared sponsorship creation locks the orphan row before insert' =>
         str_contains($sources['sponsorship creation'], 'SELECT id FROM family_children WHERE id = ? FOR UPDATE'),
+    'sponsorship lifecycle uses the same orphan-first lock order as creation' =>
+        strpos($sources['sponsorship lifecycle'], 'SELECT id FROM family_children WHERE id = ? FOR UPDATE')
+            < strpos($sources['sponsorship lifecycle'], 'SELECT id, child_id, status FROM sponsorships WHERE id = ? FOR UPDATE'),
     'orphan match status remains matched while any active or paused sponsorship remains' =>
         str_contains($sources['sponsorship lifecycle'], "status IN ('active','paused')")
         && str_contains($sources['sponsorship lifecycle'], '$remaining ? \'matched\' : $fallback')
