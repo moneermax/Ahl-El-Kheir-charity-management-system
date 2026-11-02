@@ -66,3 +66,17 @@ After safely pulling `main` on Linux Mint:
 Do not delete test sponsors, orphans, sponsorships or transactions to clean up. Use controlled test records and retain audit history.
 
 **Verification boundary:** CI proves source syntax/contracts and migration behavior on a disposable MariaDB full schema. It does not prove local authenticated browser behavior or end-to-end application/accounting behavior. Do not mark the feature fully accepted until the local checks above are completed.
+
+
+## 2026-11-02 — Sponsor Tree page usability follow-up
+
+The authenticated VGM browser review identified three page-level usability issues. A targeted follow-up was committed to `main`:
+- Removed Bootstrap's `text-muted` utility from the subtitle inside the dark Tree title banner. The shared `.welcome-section p` white-text rule now controls that subtitle; no global theme change was made.
+- Replaced visible `الكيان` wording with Tree terminology. The company/organization selector is labelled `نوع الجهة` to distinguish it from `نوع الشجرة` (optional/required membership policy).
+- Replaced the initial creation form's native multi-select with a searchable checklist. It filters by name/sponsor code, gender and assigned supervisor; shows visible/selected counts; supports selecting all visible results, clearing visible results, and clearing all selections. Filtering hides rows without clearing their checked state. Validation errors preserve submitted selections.
+
+The initial creation picker now loads all active individual sponsors rather than silently limiting the list to 500. Existing server-side eligibility checks, supervisor scope checks, CSRF protection, required-member validation, and membership persistence are unchanged. The separate add-member control on an already-created Tree is unchanged. No database/schema/migration change was made.
+
+Code commits: `92374f84bad0529aa5292076abad0fb8ad156ded` (page UX), `a168cfffa6349e1a2c00e9781d3e6e5200a993d6` (filter visibility/Arabic search normalization), `102e56f486c71ab76798fd56465ff95fa574548d` and `bed1482f4e61db6d97ffcce1f5ed27c8e1a4809d` (source-contract coverage).
+
+**Verification boundary:** PHP lint, the expanded source contract, GitHub Actions, and authenticated local-browser review are pending. After CI passes, pull `main`, test search by name and code, each filter, bulk select/clear, selection retention while filtering, and a required-member validation error. Do not create real Tree records solely to test the picker. This UI follow-up does not close the broader Sponsor Tree local acceptance checklist.
