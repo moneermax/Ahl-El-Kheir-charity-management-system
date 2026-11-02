@@ -10,8 +10,9 @@ if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit
 $role = Session::getUserRole();
 if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
     http_response_code(403);
-    exit('ليس لديك صلاحية لإدارة الأشجار.');
+    exit('ليس لديك صلاحية لعرض الأشجار.');
 }
+$canManageTrees = in_array($role, ['admin', 'vice_general_manager'], true);
 
 $pageTitle = 'إدارة أشجار الكفلاء';
 $active = 'sponsor_trees';
@@ -20,6 +21,11 @@ $treeId = (int) ($_GET['id'] ?? 0);
 $errors = [];
 $success = '';
 $submittedMemberIds = [];
+$submittedSupervisorId = (int) ($_POST['supervisor_id'] ?? 0);
+$treeSupervisors = dbFetchAll(
+    "SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id
+     WHERE r.code = 'supervisor' ORDER BY u.full_name"
+);
 
 function ak_tree_gender_label(string $gender): string
 {
@@ -49,6 +55,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $action = (string) ($_POST['action'] ?? '');
         try {
+            if (in_array($action, ['create_tree', 'add_member', 'set_member_status', 'assign_supervisor'], true) && !$canManageTrees) {
+                throw new RuntimeException('إدارة الأشجار وعضويتها وتعيين مشرف المتابعة متاحة لنائب المدير العام فقط.');
+            }
             if ($action === 'create_tree') {
                 $name = trim((string) ($_POST['full_name'] ?? ''));
                 $entityType = (string) ($_POST['sponsor_type'] ?? '');
@@ -61,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contactMethod = (string) ($_POST['preferred_contact_method'] ?? 'any');
                 $contactTime = trim((string) ($_POST['preferred_contact_time'] ?? ''));
                 $payment = (string) ($_POST['payment'] ?? 'cash');
+                $supervisorId = (int) ($_POST['supervisor_id'] ?? 0);
                 $memberIds = array_values(array_unique(array_filter(array_map('intval', (array) ($_POST['member_ids'] ?? [])))));
                 $submittedMemberIds = $memberIds;
 
@@ -70,6 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'البريد الإلكتروني غير صالح.';
                 if (!in_array($contactMethod, ['call', 'whatsapp', 'email', 'any'], true)) $errors[] = 'طريقة التواصل غير صحيحة.';
                 if (!in_array($payment, ['cash', 'bank_transfer', 'credit_card', 'mobile', 'other'], true)) $errors[] = 'طريقة الدفع غير صحيحة.';
+                $validSupervisor = $supervisorId > 0 ? dbFetchOne(
+                    "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND r.code = 'supervisor'",
+                    [$supervisorId]
+                ) : null;
+                if (!$validSupervisor) $errors[] = 'يجب اختيار مشرف متابعة صالح من قائمة المشرفين.';
                 if ($treeType === 'required_members' && !$memberIds) $errors[] = 'هذا النوع من الأشجار يتطلب إضافة عضو واحد على الأقل.';
 
                 $members = [];
@@ -98,17 +113,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         dbExecute(
                             "INSERT INTO sponsors
                                 (full_name, phone, email, address, sponsor_type, gender, preferred_payment_method, status, created_by,
+                                 supervisor_id, assigned_by, assigned_at, is_manual_override,
                                  contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time)
-                             VALUES (?, ?, ?, ?, ?, 'organization', ?, 'active', ?, ?, ?, ?, ?)",
+                             VALUES (?, ?, ?, ?, ?, 'organization', ?, 'active', ?, ?, ?, NOW(), 1, ?, ?, ?, ?)",
                             [
                                 $name, $phone !== '' ? $phone : null, $email !== '' ? $email : null,
                                 $address !== '' ? $address : null, $entityType, $payment, $uid,
+                                $supervisorId, $uid,
                                 $contactName !== '' ? $contactName : null,
                                 $contactPosition !== '' ? $contactPosition : null,
                                 $contactMethod, $contactTime !== '' ? $contactTime : null
                             ]
                         );
                         $sponsorId = (int) dbLastInsertId();
+                        ensureActiveSponsorAssignmentHistory($sponsorId, $supervisorId, $uid);
                         $sponsorCode = 'SP-' . str_pad((string) $sponsorId, 6, '0', STR_PAD_LEFT);
                         dbExecute("UPDATE sponsors SET sponsor_code = ? WHERE id = ?", [$sponsorCode, $sponsorId]);
                         dbExecute(
@@ -125,7 +143,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         ak_tree_audit($uid, 'CREATE', 'sponsor_trees', $newTreeId, null, [
                             'sponsor_id' => $sponsorId, 'sponsor_code' => $sponsorCode,
-                            'tree_type' => $treeType, 'member_ids' => $memberIds
+                            'tree_type' => $treeType, 'member_ids' => $memberIds,
+                            'supervisor_id' => $supervisorId
                         ]);
                         db()->commit();
                         flash('success', 'تم إنشاء الشجرة بنجاح، وتم تسجيلها ككفيل عادي.');
@@ -135,6 +154,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         if (db()->inTransaction()) db()->rollBack();
                         throw $e;
                     }
+                }
+            } elseif ($action === 'assign_supervisor') {
+                $targetTreeId = (int) ($_POST['tree_id'] ?? 0);
+                $supervisorId = (int) ($_POST['supervisor_id'] ?? 0);
+                $validSupervisor = dbFetchOne(
+                    "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND r.code = 'supervisor'",
+                    [$supervisorId]
+                );
+                if (!$validSupervisor) throw new RuntimeException('اختر مشرفاً صالحاً لمتابعة الشجرة.');
+                db()->beginTransaction();
+                try {
+                    $tree = dbFetchOne(
+                        "SELECT st.id AS tree_id, s.id AS sponsor_id, s.supervisor_id, s.is_manual_override
+                         FROM sponsor_trees st JOIN sponsors s ON s.id = st.sponsor_id
+                         WHERE st.id = ? FOR UPDATE",
+                        [$targetTreeId]
+                    );
+                    if (!$tree) throw new RuntimeException('الشجرة غير موجودة.');
+                    $oldSupervisorId = (int) ($tree['supervisor_id'] ?? 0);
+                    if ($oldSupervisorId !== $supervisorId || (int) $tree['is_manual_override'] !== 1) {
+                        recordSponsorAssignment((int) $tree['sponsor_id'], $supervisorId, $uid, 'tree_follow_up_reassignment', 'permanent');
+                        dbExecute(
+                            "UPDATE sponsors SET supervisor_id = ?, is_manual_override = 1, assigned_by = ?, assigned_at = NOW(), updated_by = ? WHERE id = ?",
+                            [$supervisorId, $uid, $uid, (int) $tree['sponsor_id']]
+                        );
+                        ensureActiveSponsorAssignmentHistory((int) $tree['sponsor_id'], $supervisorId, $uid);
+                        ak_tree_audit($uid, 'ASSIGN_SUPERVISOR', 'sponsor_trees', $targetTreeId,
+                            ['supervisor_id' => $oldSupervisorId ?: null],
+                            ['supervisor_id' => $supervisorId]);
+                    }
+                    db()->commit();
+                    flash('success', 'تم تعيين مشرف متابعة الشجرة وتسجيل التعيين في سجل الكفيل.');
+                    header('Location: ' . APP_URL . 'modules/sponsors/trees.php?id=' . $targetTreeId);
+                    exit();
+                } catch (Throwable $e) {
+                    if (db()->inTransaction()) db()->rollBack();
+                    throw $e;
                 }
             } elseif ($action === 'add_member') {
                 $targetTreeId = (int) ($_POST['tree_id'] ?? 0);
@@ -239,24 +295,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $treeSql = "SELECT st.id, st.tree_type, st.created_at, s.id AS sponsor_id, s.full_name, s.sponsor_code, s.sponsor_type, s.status AS sponsor_status,
+            assigned_user.full_name AS supervisor_name,
             COUNT(CASE WHEN tm.status = 'active' THEN 1 END) AS active_members,
             COUNT(tm.id) AS total_members
      FROM sponsor_trees st
      JOIN sponsors s ON s.id = st.sponsor_id
-     LEFT JOIN sponsor_tree_members tm ON tm.tree_id = st.id";
+     LEFT JOIN sponsor_tree_members tm ON tm.tree_id = st.id
+     LEFT JOIN users assigned_user ON assigned_user.id = s.supervisor_id";
 $treeParams = [];
 if ($role === 'supervisor') {
-    $treeSql .= " WHERE s.created_by = ?";
+    $treeSql .= " WHERE s.supervisor_id = ? AND s.is_manual_override = 1";
     $treeParams[] = $uid;
 }
-$treeSql .= " GROUP BY st.id, st.tree_type, st.created_at, s.id, s.full_name, s.sponsor_code, s.sponsor_type, s.status ORDER BY st.id DESC";
+$treeSql .= " GROUP BY st.id, st.tree_type, st.created_at, s.id, s.full_name, s.sponsor_code, s.sponsor_type, s.status, assigned_user.full_name ORDER BY st.id DESC";
 $trees = dbFetchAll($treeSql, $treeParams);
 $currentTree = $treeId > 0 ? dbFetchOne(
     "SELECT st.*, s.id AS sponsor_id, s.full_name, s.sponsor_code, s.sponsor_type, s.status AS sponsor_status,
             s.created_by, s.supervisor_id, s.first_letter_id, s.gender, s.is_manual_override,
             s.phone, s.email, s.address, s.contact_person_name, s.contact_person_position,
-            s.preferred_contact_method, s.preferred_contact_time
-     FROM sponsor_trees st JOIN sponsors s ON s.id = st.sponsor_id WHERE st.id = ?",
+            s.preferred_contact_method, s.preferred_contact_time, assigned_user.full_name AS supervisor_name
+     FROM sponsor_trees st JOIN sponsors s ON s.id = st.sponsor_id
+     LEFT JOIN users assigned_user ON assigned_user.id = s.supervisor_id
+     WHERE st.id = ?",
     [$treeId]
 ) : null;
 if ($role === 'supervisor' && $currentTree && !supervisorCanAccessSponsor($uid, $currentTree)) {
@@ -306,9 +366,9 @@ sort($memberGenders, SORT_NATURAL | SORT_FLAG_CASE);
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <div class="welcome-section fade-in">
-    <h2>أشجار الكفلاء</h2>
+    <h2><i class="fas fa-tree text-success me-2" aria-hidden="true"></i>أشجار الكفلاء</h2>
     <p class="mb-2">كل شجرة تُسجّل ككفيل عادي، وعضويات الأفراد مستقلة عن كفالات الأيتام وسجلات الدفع.</p>
-    <div class="quick-actions"><a class="btn btn-primary btn-sm" href="#createTree"><i class="fas fa-plus me-1"></i>إنشاء شجرة جديدة</a></div>
+    <?php if ($canManageTrees): ?><div class="quick-actions"><a class="btn btn-primary btn-sm" href="#createTree"><i class="fas fa-plus me-1"></i>إنشاء شجرة جديدة</a></div><?php endif; ?>
 </div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?php echo e($error); ?></li><?php endforeach; ?></ul></div><?php endif; ?>
@@ -322,34 +382,53 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="col-md-3"><small class="text-muted">نوع الجهة</small><div><?php echo e($currentTree['sponsor_type']); ?></div></div>
             <div class="col-md-3"><small class="text-muted">نوع الشجرة</small><div><?php echo $currentTree['tree_type'] === 'required_members' ? 'أعضاء إلزاميون' : 'أعضاء اختياريون'; ?></div></div>
             <div class="col-md-3"><small class="text-muted">حالة الكفيل</small><div><?php echo e($currentTree['sponsor_status']); ?></div></div>
+            <div class="col-md-3"><small class="text-muted">مشرف المتابعة</small><div><?php echo e($currentTree['supervisor_name'] ?: '—'); ?></div></div>
             <div class="col-md-3"><small class="text-muted">الشخص المسؤول للتواصل</small><div><?php echo e($currentTree['contact_person_name'] ?: '—'); ?></div></div>
             <div class="col-md-3"><small class="text-muted">المنصب</small><div><?php echo e($currentTree['contact_person_position'] ?: '—'); ?></div></div>
             <div class="col-md-3"><small class="text-muted">الهاتف</small><div dir="ltr"><?php echo e($currentTree['phone'] ?: '—'); ?></div></div>
             <div class="col-md-3"><small class="text-muted">البريد</small><div><?php echo e($currentTree['email'] ?: '—'); ?></div></div>
         </div>
         <p class="text-muted small mb-0">إيقاف عضوية أو تعطيل ملف فرد لا يغيّر أي كفالة أو دفعة مرتبطة بذلك الفرد.</p>
+        <?php if ($canManageTrees): ?>
+        <hr>
+        <form method="post" class="row g-2 align-items-end">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="action" value="assign_supervisor">
+            <input type="hidden" name="tree_id" value="<?php echo $treeId; ?>">
+            <div class="col-md-8">
+                <label class="form-label">مشرف متابعة الشجرة</label>
+                <select class="form-select" name="supervisor_id" required>
+                    <option value="">اختر المشرف المسؤول</option>
+                    <?php foreach ($treeSupervisors as $treeSupervisor): ?>
+                        <option value="<?php echo (int) $treeSupervisor['id']; ?>" <?php echo (int) $currentTree['supervisor_id'] === (int) $treeSupervisor['id'] ? 'selected' : ''; ?>><?php echo e($treeSupervisor['full_name']); ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="col-md-4"><button class="btn btn-outline-success w-100"><i class="fas fa-user-check me-1"></i>حفظ مشرف المتابعة</button></div>
+        </form>
+        <?php endif; ?>
     </div>
 </div>
 <div class="card mb-4 fade-in">
     <div class="card-header">أعضاء الشجرة (<?php echo count($activeMembers); ?> نشط)</div>
     <div class="card-body">
         <?php if (!$members): ?><p class="text-muted mb-0">لا يوجد أعضاء مضافون حالياً. يمكن إضافة أعضاء لاحقاً لهذا النوع من الأشجار.</p><?php else: ?>
-        <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>الفرد</th><th>كود الكفيل</th><th>حالة الفرد</th><th>حالة العضوية</th><th>تاريخ الانضمام</th><th>الإجراء</th></tr></thead><tbody>
+        <div class="table-responsive"><table class="table table-hover align-middle"><thead><tr><th>الفرد</th><th>كود الكفيل</th><th>حالة الفرد</th><th>حالة العضوية</th><th>تاريخ الانضمام</th><?php if ($canManageTrees): ?><th>الإجراء</th><?php endif; ?></tr></thead><tbody>
         <?php foreach ($members as $member): ?><tr>
             <td><a href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo (int) $member['sponsor_id']; ?>"><?php echo e($member['full_name']); ?></a></td>
             <td><?php echo e($member['sponsor_code']); ?></td><td><?php echo e($member['sponsor_status']); ?></td>
             <td><?php echo $member['membership_status'] === 'active' ? '<span class="badge bg-success">نشط</span>' : '<span class="badge bg-secondary">غير نشط</span>'; ?></td>
             <td><?php echo e($member['joined_at']); ?></td>
-            <td><?php if ($member['membership_status'] === 'active'): ?><form method="post" class="d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_member_status"><input type="hidden" name="tree_id" value="<?php echo $treeId; ?>"><input type="hidden" name="membership_id" value="<?php echo (int) $member['membership_id']; ?>"><input type="hidden" name="new_status" value="inactive"><button class="btn btn-sm btn-outline-danger" onclick="return confirm('إيقاف العضوية فقط؟ لن يتم تعطيل الفرد أو المساس بكفالاته.')">إزالة من الشجرة</button></form><?php else: ?><form method="post" class="d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_member_status"><input type="hidden" name="tree_id" value="<?php echo $treeId; ?>"><input type="hidden" name="membership_id" value="<?php echo (int) $member['membership_id']; ?>"><input type="hidden" name="new_status" value="active"><button class="btn btn-sm btn-outline-success">إعادة تفعيل العضوية</button></form><?php endif; ?></td>
+            <?php if ($canManageTrees): ?><td><?php if ($member['membership_status'] === 'active'): ?><form method="post" class="d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_member_status"><input type="hidden" name="tree_id" value="<?php echo $treeId; ?>"><input type="hidden" name="membership_id" value="<?php echo (int) $member['membership_id']; ?>"><input type="hidden" name="new_status" value="inactive"><button class="btn btn-sm btn-outline-danger" onclick="return confirm('إيقاف العضوية فقط؟ لن يتم تعطيل الفرد أو المساس بكفالاته.')">إزالة من الشجرة</button></form><?php else: ?><form method="post" class="d-inline"><?php echo csrf_field(); ?><input type="hidden" name="action" value="set_member_status"><input type="hidden" name="tree_id" value="<?php echo $treeId; ?>"><input type="hidden" name="membership_id" value="<?php echo (int) $member['membership_id']; ?>"><input type="hidden" name="new_status" value="active"><button class="btn btn-sm btn-outline-success">إعادة تفعيل العضوية</button></form><?php endif; ?></td><?php endif; ?>
         </tr><?php endforeach; ?>
         </tbody></table></div><?php endif; ?>
-        <hr><h6>إضافة فرد إلى الشجرة</h6>
-        <?php if ($availableMembers): ?><form method="post" class="row g-2 align-items-end"><?php echo csrf_field(); ?><input type="hidden" name="action" value="add_member"><input type="hidden" name="tree_id" value="<?php echo $treeId; ?>"><div class="col-md-8"><label class="form-label">الفرد</label><select class="form-select" name="member_sponsor_id" required><option value="">اختر فرداً نشطاً</option><?php foreach ($availableMembers as $person): ?><option value="<?php echo (int) $person['id']; ?>"><?php echo e($person['full_name']); ?> (<?php echo e($person['sponsor_code']); ?>)</option><?php endforeach; ?></select></div><div class="col-md-4"><button class="btn btn-primary w-100">إضافة العضو</button></div></form><?php else: ?><p class="text-muted small mb-0">لا يوجد أفراد كفلاء نشطون متاحون للإضافة.</p><?php endif; ?>
+        <?php if ($canManageTrees): ?><hr><h6>إضافة فرد إلى الشجرة</h6>
+        <?php if ($availableMembers): ?><form method="post" class="row g-2 align-items-end"><?php echo csrf_field(); ?><input type="hidden" name="action" value="add_member"><input type="hidden" name="tree_id" value="<?php echo $treeId; ?>"><div class="col-md-8"><label class="form-label">الفرد</label><select class="form-select" name="member_sponsor_id" required><option value="">اختر فرداً نشطاً</option><?php foreach ($availableMembers as $person): ?><option value="<?php echo (int) $person['id']; ?>"><?php echo e($person['full_name']); ?> (<?php echo e($person['sponsor_code']); ?>)</option><?php endforeach; ?></select></div><div class="col-md-4"><button class="btn btn-primary w-100">إضافة العضو</button></div></form><?php else: ?><p class="text-muted small mb-0">لا يوجد أفراد كفلاء نشطون متاحون للإضافة.</p><?php endif; ?><?php endif; ?>
     </div>
 </div>
 <?php endif; ?>
 
-<div class="card mb-4 fade-in" id="createTree">
+<?php if ($canManageTrees): ?><div class="card mb-4 fade-in" id="createTree">
     <div class="card-header">إنشاء شجرة جديدة</div>
     <div class="card-body">
         <form method="post"><input type="hidden" name="action" value="create_tree"><?php echo csrf_field(); ?>
@@ -357,6 +436,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="col-md-6"><label class="form-label">اسم الشجرة *</label><input class="form-control" name="full_name" required></div>
                 <div class="col-md-3"><label class="form-label">نوع الجهة *</label><select class="form-select" name="sponsor_type" required><option value="">اختر</option><option value="company">شركة</option><option value="organization">منظمة</option></select></div>
                 <div class="col-md-3"><label class="form-label">نوع الشجرة *</label><select class="form-select" name="tree_type" id="treeType" required><option value="">اختر</option><option value="optional_members">أعضاء اختياريون (يمكن الإنشاء دون أعضاء)</option><option value="required_members">أعضاء إلزاميون (عضو واحد على الأقل)</option></select></div>
+                <div class="col-md-6"><label class="form-label">مشرف متابعة الشجرة *</label><select class="form-select" name="supervisor_id" required><option value="">اختر المشرف المسؤول عن المتابعة</option><?php foreach ($treeSupervisors as $treeSupervisor): ?><option value="<?php echo (int) $treeSupervisor['id']; ?>" <?php echo $submittedSupervisorId === (int) $treeSupervisor['id'] ? 'selected' : ''; ?>><?php echo e($treeSupervisor['full_name']); ?></option><?php endforeach; ?></select></div>
                 <div class="col-md-3"><label class="form-label">الهاتف</label><input class="form-control" name="phone" dir="ltr"></div>
                 <div class="col-md-3"><label class="form-label">البريد الإلكتروني</label><input class="form-control" type="email" name="email" dir="ltr"></div>
                 <div class="col-md-6"><label class="form-label">العنوان</label><input class="form-control" name="address"></div>
@@ -428,10 +508,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <div class="mt-3"><button class="btn btn-primary">إنشاء الشجرة</button></div>
         </form>
     </div>
-</div>
+</div><?php endif; ?>
 
-<div class="card fade-in"><div class="card-header">الأشجار المسجلة</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>الشجرة</th><th>الكود</th><th>نوع الشجرة</th><th>الأعضاء النشطون</th><th>إجمالي العضويات</th><th>حالة الكفيل</th><th></th></tr></thead><tbody>
-<?php if (!$trees): ?><tr><td colspan="7" class="text-center text-muted py-3">لا توجد أشجار مسجلة.</td></tr><?php else: foreach ($trees as $tree): ?><tr><td><?php echo e($tree['full_name']); ?></td><td><?php echo e($tree['sponsor_code']); ?></td><td><?php echo $tree['tree_type'] === 'required_members' ? 'أعضاء إلزاميون' : 'أعضاء اختياريون'; ?></td><td><?php echo (int) $tree['active_members']; ?></td><td><?php echo (int) $tree['total_members']; ?></td><td><?php echo e($tree['sponsor_status']); ?></td><td><a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsors/trees.php?id=<?php echo (int) $tree['id']; ?>">إدارة الأعضاء</a><a class="btn btn-sm btn-outline-secondary ms-1" href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo (int) $tree['sponsor_id']; ?>">ملف الكفيل</a></td></tr><?php endforeach; endif; ?>
+<div class="card fade-in"><div class="card-header">الأشجار المسجلة</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>الشجرة</th><th>الكود</th><th>نوع الشجرة</th><th>الأعضاء النشطون</th><th>إجمالي العضويات</th><th>مشرف المتابعة</th><th>حالة الكفيل</th><th></th></tr></thead><tbody>
+<?php if (!$trees): ?><tr><td colspan="8" class="text-center text-muted py-3">لا توجد أشجار مسجلة.</td></tr><?php else: foreach ($trees as $tree): ?><tr><td><?php echo e($tree['full_name']); ?></td><td><?php echo e($tree['sponsor_code']); ?></td><td><?php echo $tree['tree_type'] === 'required_members' ? 'أعضاء إلزاميون' : 'أعضاء اختياريون'; ?></td><td><?php echo (int) $tree['active_members']; ?></td><td><?php echo (int) $tree['total_members']; ?></td><td><?php echo e($tree['supervisor_name'] ?: '—'); ?></td><td><?php echo e($tree['sponsor_status']); ?></td><td><a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsors/trees.php?id=<?php echo (int) $tree['id']; ?>">إدارة الأعضاء</a><a class="btn btn-sm btn-outline-secondary ms-1" href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo (int) $tree['sponsor_id']; ?>">ملف الكفيل</a></td></tr><?php endforeach; endif; ?>
 </tbody></table></div></div></div>
 <style>
 .tree-member-picker .tree-member-option[hidden] { display: none !important; }
