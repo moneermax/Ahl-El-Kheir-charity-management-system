@@ -18,6 +18,20 @@ $sp=dbFetchOne("SELECT s.*,l.code AS letter,u.full_name AS supervisor_name FROM 
 if(!$sp){flash('error',t('sponsors.view_not_found'));redirect('modules/sponsors/index.php');}
 if($role==='supervisor'&&!supervisorCanAccessSponsor(Session::getUserId(),$sp)){flash('error',t('sponsors.view_no_permission'));redirect('modules/sponsors/index.php');}
 $entityApplication = in_array((string)($sp['sponsor_type'] ?? ''), ['company', 'organization'], true) ? $sp : null;
+$treeInfo = dbFetchOne("SELECT id, tree_type FROM sponsor_trees WHERE sponsor_id = ?", [$id]);
+$treeMemberships = [];
+if (($sp['sponsor_type'] ?? '') === 'individual') {
+    $treeMemberships = dbFetchAll(
+        "SELECT st.id, st.tree_type, st.sponsor_id AS tree_sponsor_id, ts.full_name AS tree_name,
+                tm.status AS membership_status
+         FROM sponsor_tree_members tm
+         JOIN sponsor_trees st ON st.id = tm.tree_id
+         JOIN sponsors ts ON ts.id = st.sponsor_id
+         WHERE tm.member_sponsor_id = ?
+         ORDER BY tm.status ASC, ts.full_name ASC",
+        [$id]
+    );
+}
 $contactMethodLabels = ['call' => 'اتصال هاتفي', 'whatsapp' => 'واتساب', 'email' => 'البريد الإلكتروني', 'any' => 'أي وسيلة مناسبة'];
 $ships=dbFetchAll("SELECT sp.id,COALESCE(NULLIF(TRIM(sp.sponsorship_code),''),CONCAT('SH-',LPAD(sp.id,6,'0'))) AS sponsorship_code,sp.monthly_amount,sp.start_date,sp.status,fc.child_name,f.mother_name,f.family_code FROM sponsorships sp JOIN family_children fc ON fc.id=sp.child_id JOIN families f ON f.id=fc.family_id WHERE sp.sponsor_id=? ORDER BY sp.status ASC,sp.id DESC",[$id]);
 $activeOrphanCount=(int)(dbFetchOne("SELECT COUNT(DISTINCT sp.child_id) AS total FROM sponsorships sp WHERE sp.sponsor_id=? AND sp.status='active'",[$id])['total']??0);
@@ -33,6 +47,12 @@ include dirname(__DIR__,2).'/includes/header.php'; ?>
 <div class="col-md-3"><small class="text-muted">طريقة التواصل المفضلة</small><div><?php echo e($contactMethodLabels[$entityApplication['preferred_contact_method'] ?? ''] ?? '—'); ?></div></div>
 <div class="col-md-3"><small class="text-muted">الوقت المناسب للتواصل</small><div><?php echo e($entityApplication['preferred_contact_time'] ?: '—'); ?></div></div>
 </div></div></div>
+<?php endif; ?>
+<?php if (in_array($role, ['admin', 'vice_general_manager'], true) && ($treeInfo || $treeMemberships)): ?>
+<div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-sitemap me-2"></i>الانتماء إلى الأشجار</div><div class="card-body">
+<?php if ($treeInfo): ?><p class="mb-2">هذا الكيان مسجل كشجرة: <strong><?php echo $treeInfo['tree_type'] === 'required_members' ? 'أعضاء إلزاميون' : 'أعضاء اختياريون'; ?></strong> · <a href="<?php echo APP_URL; ?>modules/sponsors/trees.php?id=<?php echo (int)$treeInfo['id']; ?>">إدارة الشجرة</a></p><?php endif; ?>
+<?php if ($treeMemberships): ?><ul class="mb-0"><?php foreach ($treeMemberships as $membership): ?><li><a href="<?php echo APP_URL; ?>modules/sponsors/trees.php?id=<?php echo (int)$membership['id']; ?>"><?php echo e($membership['tree_name']); ?></a> — <?php echo $membership['membership_status'] === 'active' ? 'عضوية نشطة' : 'عضوية غير نشطة'; ?></li><?php endforeach; ?></ul><?php elseif (!$treeInfo): ?><p class="text-muted mb-0">هذا الفرد غير مرتبط بأي شجرة حالياً.</p><?php endif; ?>
+</div></div>
 <?php endif; ?>
 <div class="card mb-4 fade-in"><div class="card-header"><i class="fas fa-qrcode me-2"></i>رمز QR للكفيل</div><div class="card-body d-flex flex-wrap align-items-center gap-3"><div class="text-center"><?php if($sponsorQrData!==''): ?><img src="<?php echo e($sponsorQrData); ?>" alt="QR <?php echo e($sp['sponsor_code']); ?>" width="220" height="220" style="max-width:100%;height:auto;image-rendering:pixelated"><?php else: ?><div class="alert alert-warning mb-0">تعذر إنشاء رمز QR من المكتبة المحلية.</div><?php endif; ?></div><div><p class="mb-2"><strong>كود الكفيل:</strong> <?php echo e($sp['sponsor_code']); ?></p><p class="mb-2"><strong>الأيتام المكفولون حالياً:</strong> <?php echo number_format($activeOrphanCount); ?></p><p class="text-muted mb-0">يفتح الرمز ملف الكفيل داخل النظام، مع تطبيق تسجيل الدخول وصلاحيات المستخدم.</p></div></div></div>
 <div class="card fade-in"><div class="card-header"><i class="fas fa-child me-2"></i><?php echo e(t('sponsors.view_sponsorships_orphans')); ?></div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead class="table-light"><tr><th><?php echo e(t('sponsors.view_code')); ?></th><th><?php echo e(t('sponsors.view_orphan')); ?></th><th><?php echo e(t('sponsors.view_family')); ?></th><th><?php echo e(t('sponsors.view_monthly_amount')); ?></th><th><?php echo e(t('sponsors.view_start')); ?></th><th><?php echo e(t('sponsors.view_status')); ?></th><th></th></tr></thead><tbody><?php if(!$ships): ?><tr><td colspan="7" class="text-center text-muted py-3"><?php echo e(t('sponsors.view_no_sponsorships')); ?></td></tr><?php else:foreach($ships as $s):$st=['active'=>[t('sponsors.view_active'),'bg-success'],'paused'=>[t('sponsors.view_paused'),'bg-warning'],'completed'=>[t('sponsors.view_completed'),'bg-info'],'cancelled'=>[t('sponsors.view_cancelled'),'bg-danger']];[$stLabel,$stClass]=$st[$s['status']]??[$s['status'],'bg-secondary']; ?><tr><td><?php echo e($s['sponsorship_code']); ?></td><td><strong><?php echo e($s['child_name']); ?></strong></td><td><?php echo e($s['mother_name']); ?> <small class="text-muted">(<?php echo e($s['family_code']); ?>)</small></td><td><?php echo number_format((float)$s['monthly_amount'],0); ?></td><td><?php echo e($s['start_date']); ?></td><td><span class="badge <?php echo $stClass; ?>"><?php echo e($stLabel); ?></span></td><td class="text-nowrap"><a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo(int)$s['id']; ?>" title="<?php echo e(t('sponsors.view_details')); ?>"><i class="fas fa-eye"></i></a><?php if(in_array($role,['admin','vice_general_manager','supervisor','financial_manager','accountant'],true)&&$s['status']==='active'): ?><a class="btn btn-sm btn-success" href="<?php echo APP_URL; ?>modules/transactions/create.php?sponsorship_id=<?php echo(int)$s['id']; ?>" title="<?php echo e(t('sponsors.view_monthly_payment')); ?>"><i class="fas fa-receipt"></i></a><?php endif;?></td></tr><?php endforeach;endif; ?></tbody></table></div></div></div>
