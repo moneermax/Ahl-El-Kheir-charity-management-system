@@ -118,18 +118,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 (full_name, phone, email, address, sponsor_type, gender, preferred_payment_method, status, created_by,
                                  supervisor_id, assigned_by, assigned_at, is_manual_override,
                                  contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time)
-                             VALUES (?, ?, ?, ?, ?, 'organization', ?, 'active', ?, ?, ?, NOW(), 1, ?, ?, ?, ?)",
+                             VALUES (?, ?, ?, ?, ?, 'organization', ?, 'active', ?, NULL, NULL, NULL, 0, ?, ?, ?, ?)",
                             [
                                 $name, $phone !== '' ? $phone : null, $email !== '' ? $email : null,
                                 $address !== '' ? $address : null, $entityType, $payment, $uid,
-                                $supervisorId, $uid,
                                 $contactName !== '' ? $contactName : null,
                                 $contactPosition !== '' ? $contactPosition : null,
                                 $contactMethod, $contactTime !== '' ? $contactTime : null
                             ]
                         );
                         $sponsorId = (int) dbLastInsertId();
-                        ensureActiveSponsorAssignmentHistory($sponsorId, $supervisorId, $uid);
+                        recordSponsorAssignment($sponsorId, $supervisorId, $uid, 'tree_follow_up_assignment', 'permanent');
+                        dbExecute(
+                            "UPDATE sponsors SET supervisor_id = ?, assigned_by = ?, assigned_at = NOW(), is_manual_override = 1 WHERE id = ?",
+                            [$supervisorId, $uid, $sponsorId]
+                        );
                         $sponsorCode = 'SP-' . str_pad((string) $sponsorId, 6, '0', STR_PAD_LEFT);
                         dbExecute("UPDATE sponsors SET sponsor_code = ? WHERE id = ?", [$sponsorCode, $sponsorId]);
                         dbExecute(
