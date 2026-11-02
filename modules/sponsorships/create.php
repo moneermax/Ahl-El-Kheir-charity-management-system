@@ -39,7 +39,8 @@ function ak_sp_auto_match(int $limit): array {
 
 $errors = [];
 $input = ['sponsor_id' => (int)($_POST['sponsor_id'] ?? $_GET['sponsor_id'] ?? 0), 'notes' => (string)($_POST['notes'] ?? '')];
-$selectedOrphans = array_map('intval', (array)($_POST['orphans'] ?? []));
+$selectedOrphans = array_values(array_unique(array_map('intval', (array)($_POST['orphans'] ?? []))));
+sort($selectedOrphans, SORT_NUMERIC);
 $perAmounts = [];
 foreach ((array)($_POST['orphan_amount'] ?? []) as $k => $v) $perAmounts[(int)$k] = (float)str_replace(',', '', (string)$v);
 $oq = trim((string)($_GET['oq'] ?? ''));
@@ -95,6 +96,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['save'])) {
             try {
                 $created = [];
                 foreach ($valid as $v) {
+                    $childLock = dbFetchOne("SELECT id FROM family_children WHERE id = ? FOR UPDATE", [$v['id']]);
+                    if (!$childLock) throw new RuntimeException('اليتيم غير موجود أو لم يعد متاحاً.');
+                    $existingForSponsor = dbFetchOne("SELECT id FROM sponsorships WHERE sponsor_id = ? AND child_id = ? AND status IN ('active','paused') LIMIT 1 FOR UPDATE", [$input['sponsor_id'], $v['id']]);
+                    if ($existingForSponsor) throw new RuntimeException('لديك كفالة نشطة أو موقوفة لهذا اليتيم بالفعل.');
                     dbExecute("INSERT INTO sponsorships (sponsor_id, child_id, monthly_amount, currency_code, start_date, status, notes, created_by) VALUES (?, ?, ?, 'SDG', CURDATE(), 'active', ?, ?)", [$input['sponsor_id'], $v['id'], $v['amount'], $input['notes'], $uid]);
                     $newId = (int)dbLastInsertId();
                     $code = 'SH-' . str_pad((string)$newId, 6, '0', STR_PAD_LEFT);
