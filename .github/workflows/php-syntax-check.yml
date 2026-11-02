@@ -444,6 +444,13 @@ jobs:
           # Tree schema must be repeatable and preserve the many-to-many membership contract.
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-11-02_sponsor_trees.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-11-02_sponsor_trees.sql
+          # Tree entity classification must be repeatable without changing sponsor_type.
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-11-02_sponsor_tree_entity_categories.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-11-02_sponsor_tree_entity_categories.sql
+          tree_entity_columns=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsors' AND column_name IN ('legal_entity_category','legal_entity_category_other')")
+          test "$tree_entity_columns" = "2"
+          tree_entity_sponsor_type=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT column_type FROM information_schema.columns WHERE table_schema = DATABASE() AND table_name = 'sponsors' AND column_name = 'sponsor_type'")
+          [[ "$tree_entity_sponsor_type" == *"'individual'"* && "$tree_entity_sponsor_type" == *"'company'"* && "$tree_entity_sponsor_type" == *"'organization'"* ]]
           tree_tables=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('sponsor_trees','sponsor_tree_members')")
           tree_member_unique=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'sponsor_tree_members' AND index_name = 'uq_sponsor_tree_member' AND column_name IN ('tree_id','member_sponsor_id')")
           tree_restrict_fks=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.referential_constraints WHERE constraint_schema = DATABASE() AND constraint_name IN ('fk_sponsor_trees_sponsor','fk_sponsor_tree_members_tree','fk_sponsor_tree_members_sponsor') AND delete_rule = 'RESTRICT'")
