@@ -44,7 +44,7 @@ $checks = [
         && str_contains($sources['tree management'], "INSERT INTO sponsors")
         && str_contains($sources['tree management'], "INSERT INTO sponsor_trees"),
     'optional-member Tree can be created empty' =>
-        str_contains($sources['tree management'], "$"."treeType === 'required_members' && !$memberIds"),
+        str_contains($sources['tree management'], '$treeType === \'required_members\' && !$memberIds'),
     'required-member Tree cannot lose its final active membership' =>
         str_contains($sources['tree management'], "tree_type'] === 'required_members'")
         && str_contains($sources['tree management'], '$activeCount <= 1'),
@@ -61,7 +61,7 @@ $checks = [
         str_contains($sources['sponsorship creation'], 'SELECT id FROM family_children WHERE id = ? FOR UPDATE'),
     'orphan match status remains matched while any active or paused sponsorship remains' =>
         str_contains($sources['sponsorship lifecycle'], "status IN ('active','paused')")
-        && str_contains($sources['sponsorship lifecycle'], "$"."remaining ? 'matched' : $fallback")
+        && str_contains($sources['sponsorship lifecycle'], '$remaining ? \'matched\' : $fallback')
         && str_contains($sources['orphan profile'], "SET match_status = 'matched' WHERE id = ?"),
 ];
 $failed = 0;
