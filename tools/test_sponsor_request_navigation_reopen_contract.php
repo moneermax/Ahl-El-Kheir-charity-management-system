@@ -24,7 +24,8 @@ $checks = [
     'VGM sidebar exposes sponsor requests using the existing role-safe queue' =>
         str_contains($sources['sidebar'], "'vice_general_manager' => [")
         && str_contains($sources['sidebar'], "'active' => 'requests', 'label_key' => 'navigation.join_requests'")
-        && str_contains($sources['sidebar'], "'url' => 'modules/sponsors/requests.php'"),
+        && str_contains($sources['sidebar'], "'url' => 'modules/sponsors/requests.php'")
+        && str_contains($sources['request queue'], "$"."active = 'requests';"),
     'VGM dashboard has a direct sponsor requests action' =>
         str_contains($sources['VGM dashboard'], "'href'=>'modules/sponsors/requests.php'")
         && str_contains($sources['VGM dashboard'], "'key'=>'navigation.join_requests'")
