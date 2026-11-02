@@ -38,7 +38,7 @@ $checks = [
         && str_contains($sources['tree management'], "status = ?, ended_at = ?, updated_by = ?")
         && !str_contains($sources['tree management'], 'DELETE FROM sponsor_tree_members'),
     'Tree creation is restricted to authorized management roles' =>
-        str_contains($sources['tree management'], "['admin', 'vice_general_manager']"),
+        str_contains($sources['tree management'], "['admin', 'vice_general_manager', 'supervisor']"),
     'Tree entity is persisted as a normal legal-entity sponsor' =>
         str_contains($sources['tree management'], "['company', 'organization']")
         && str_contains($sources['tree management'], "INSERT INTO sponsors")
