@@ -55,6 +55,7 @@ $menus = [
 
     'vice_general_manager' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/vgm_dashboard.php'],
+        ['active' => 'requests', 'label_key' => 'navigation.join_requests', 'icon' => 'fa-hand-holding-heart', 'url' => 'modules/sponsors/requests.php'],
         ['active' => 'families', 'label_key' => 'navigation.family_register', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
         ['active' => 'orphan_groups', 'label_key' => 'navigation.orphan_groups', 'icon' => 'fa-people-group', 'url' => 'modules/deputy_gm/groups.php'],
         ['active' => 'sponsorships', 'label_key' => 'navigation.sponsorship_register', 'icon' => 'fa-file-contract', 'url' => 'modules/sponsorships/index.php'],
