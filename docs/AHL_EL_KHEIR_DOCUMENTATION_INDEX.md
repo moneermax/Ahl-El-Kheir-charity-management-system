@@ -174,3 +174,7 @@ The new independent task is a systematic archive for receipts and uploaded docum
 ## 2026-10-29 — Sponsor request conversion workflow
 
 Read `SPONSOR_REQUEST_CONVERSION_CONTINUATION.md` before continuing the sponsor application conversion workflow. The assigned-supervisor action now explicitly converts an actionable request to an active sponsor and redirects to the sponsor detail page. A follow-up source fix rechecks request ownership under the row lock to close a reassignment race. Local browser/runtime verification remains pending; do not describe the complete workflow as runtime-verified until the documented acceptance checks pass.
+
+
+Sponsor Trees:
+- SPONSOR_TREES_CONTINUATION.md — Tree/member model, shared orphan sponsorship isolation, implementation and local acceptance checklist.
