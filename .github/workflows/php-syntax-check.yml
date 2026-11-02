@@ -438,6 +438,17 @@ jobs:
           MYSQL_PWD: root
         run: |
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/ahl_el_kheir.sql
+          # Legal-entity contact fields are a prerequisite for Tree sponsor records.
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql
+          # Tree schema must be repeatable and preserve the many-to-many membership contract.
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-11-02_sponsor_trees.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-11-02_sponsor_trees.sql
+          tree_tables=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('sponsor_trees','sponsor_tree_members')")
+          tree_member_unique=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.statistics WHERE table_schema = DATABASE() AND table_name = 'sponsor_tree_members' AND index_name = 'uq_sponsor_tree_member' AND column_name IN ('tree_id','member_sponsor_id')")
+          tree_restrict_fks=$(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.referential_constraints WHERE constraint_schema = DATABASE() AND constraint_name IN ('fk_sponsor_trees_sponsor','fk_sponsor_tree_members_tree','fk_sponsor_tree_members_sponsor') AND delete_rule = 'RESTRICT'")
+          test "$tree_tables" = "2"
+          test "$tree_member_unique" = "2"
+          test "$tree_restrict_fks" = "3"
           # Move User Management schema/reference-data setup out of page requests; verify repeatability on the full checked-in schema.
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-28_user_management_runtime_schema_cleanup.sql
