@@ -179,6 +179,9 @@ jobs:
             tools/test_sponsor_legal_entity_contact_contract.php
             config/sponsor_assignments.php
             modules/sponsors/requests.php
+            includes/sidebar.php
+            dashboard/vgm_dashboard.php
+            tools/test_sponsor_request_navigation_reopen_contract.php
             modules/users/index.php
             modules/users/profile.php
             modules/system/import_sponsors.php
@@ -245,6 +248,8 @@ jobs:
           php tools/test_mobile_api_role_normalization.php
           php tools/test_sponsor_conversion_toast_contract.php
           php tools/test_sponsor_request_conversion_authorization_contract.php
+          php tools/test_sponsor_request_navigation_reopen_contract.php
+          php -l tools/test_sponsor_request_navigation_reopen_contract.php
           php tools/test_sponsor_non_individual_edit_contract.php
           php -l tools/test_sponsor_non_individual_edit_contract.php
           php tools/test_sponsor_non_individual_conversion_contract.php
