@@ -177,6 +177,7 @@ jobs:
             modules/sponsors/edit.php
             modules/sponsors/view.php
             modules/sponsors/trees.php
+            modules/sponsors/index.php
             modules/sponsorships/create.php
             modules/sponsorships/view.php
             modules/families/orphan_profile.php
