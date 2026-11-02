@@ -22,6 +22,16 @@ $errors = [];
 $success = '';
 $submittedMemberIds = [];
 $submittedSupervisorId = (int) ($_POST['supervisor_id'] ?? 0);
+$submittedEntityCategory = (string) ($_POST['entity_category'] ?? '');
+$submittedEntityCategoryOther = trim((string) ($_POST['entity_category_other'] ?? ''));
+$treeEntityCategories = ['company' => 'شركة', 'charity_association' => 'جمعية خيرية', 'local_organization' => 'منظمة محلية', 'international_organization' => 'منظمة دولية', 'civil_charitable_foundation' => 'مؤسسة أهلية / خيرية', 'government_entity' => 'جهة حكومية', 'educational_institution' => 'مؤسسة تعليمية', 'endowment' => 'وقف / مؤسسة وقفية', 'other' => 'جهة أخرى'];
+
+function ak_tree_entity_category_label(?string $category, ?string $other = null): string
+{
+    $labels = ['company' => 'شركة', 'charity_association' => 'جمعية خيرية', 'local_organization' => 'منظمة محلية', 'international_organization' => 'منظمة دولية', 'civil_charitable_foundation' => 'مؤسسة أهلية / خيرية', 'government_entity' => 'جهة حكومية', 'educational_institution' => 'مؤسسة تعليمية', 'endowment' => 'وقف / مؤسسة وقفية', 'other' => 'جهة أخرى'];
+    $label = $labels[$category ?? ''] ?? 'غير محدد';
+    return $category === 'other' && trim((string) $other) !== '' ? $label . ': ' . trim((string) $other) : $label;
+}
 $treeSupervisors = dbFetchAll(
     "SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id
      WHERE r.code = 'supervisor'
@@ -62,7 +72,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
             if ($action === 'create_tree') {
                 $name = trim((string) ($_POST['full_name'] ?? ''));
-                $entityType = (string) ($_POST['sponsor_type'] ?? '');
+                $entityCategory = (string) ($_POST['entity_category'] ?? '');
+                $entityCategoryOther = trim((string) ($_POST['entity_category_other'] ?? ''));
+                $entityType = $entityCategory === 'company' ? 'company' : 'organization';
                 $treeType = (string) ($_POST['tree_type'] ?? '');
                 $phone = trim((string) ($_POST['phone'] ?? ''));
                 $email = trim((string) ($_POST['email'] ?? ''));
@@ -77,7 +89,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $submittedMemberIds = $memberIds;
 
                 if ($name === '') $errors[] = 'اسم الشجرة مطلوب.';
-                if (!in_array($entityType, ['company', 'organization'], true)) $errors[] = 'اختر نوع الجهة.';
+                if (!array_key_exists($entityCategory, $treeEntityCategories)) $errors[] = 'اختر نوع الجهة.';
+                if ($entityCategory === 'other' && $entityCategoryOther === '') $errors[] = 'يرجى توضيح نوع الجهة الأخرى.';
+                if ($entityCategory !== 'other') $entityCategoryOther = '';
                 if (!in_array($treeType, ['optional_members', 'required_members'], true)) $errors[] = 'اختر نوع الشجرة.';
                 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'البريد الإلكتروني غير صالح.';
                 if (!in_array($contactMethod, ['call', 'whatsapp', 'email', 'any'], true)) $errors[] = 'طريقة التواصل غير صحيحة.';
@@ -117,14 +131,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             "INSERT INTO sponsors
                                 (full_name, phone, email, address, sponsor_type, gender, preferred_payment_method, status, created_by,
                                  supervisor_id, assigned_by, assigned_at, is_manual_override,
-                                 contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time)
-                             VALUES (?, ?, ?, ?, ?, 'organization', ?, 'active', ?, NULL, NULL, NULL, 0, ?, ?, ?, ?)",
+                                 contact_person_name, contact_person_position, preferred_contact_method, preferred_contact_time,
+                                 legal_entity_category, legal_entity_category_other)
+                             VALUES (?, ?, ?, ?, ?, 'organization', ?, 'active', ?, NULL, NULL, NULL, 0, ?, ?, ?, ?, ?, ?)",
                             [
                                 $name, $phone !== '' ? $phone : null, $email !== '' ? $email : null,
                                 $address !== '' ? $address : null, $entityType, $payment, $uid,
                                 $contactName !== '' ? $contactName : null,
                                 $contactPosition !== '' ? $contactPosition : null,
-                                $contactMethod, $contactTime !== '' ? $contactTime : null
+                                $contactMethod, $contactTime !== '' ? $contactTime : null,
+                                $entityCategory, $entityCategoryOther !== '' ? $entityCategoryOther : null
                             ]
                         );
                         $sponsorId = (int) dbLastInsertId();
@@ -319,6 +335,7 @@ $currentTree = $treeId > 0 ? dbFetchOne(
     "SELECT st.*, s.id AS sponsor_id, s.full_name, s.sponsor_code, s.sponsor_type, s.status AS sponsor_status,
             s.created_by, s.supervisor_id, s.first_letter_id, s.gender, s.is_manual_override,
             s.phone, s.email, s.address, s.contact_person_name, s.contact_person_position,
+            s.legal_entity_category, s.legal_entity_category_other,
             s.preferred_contact_method, s.preferred_contact_time, assigned_user.full_name AS supervisor_name
      FROM sponsor_trees st JOIN sponsors s ON s.id = st.sponsor_id
      LEFT JOIN users assigned_user ON assigned_user.id = s.supervisor_id
@@ -385,7 +402,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body">
         <div class="row g-3 mb-3">
             <div class="col-md-3"><small class="text-muted">كود الكفيل</small><div><?php echo e($currentTree['sponsor_code']); ?></div></div>
-            <div class="col-md-3"><small class="text-muted">نوع الجهة</small><div><?php echo e($currentTree['sponsor_type']); ?></div></div>
+            <div class="col-md-3"><small class="text-muted">نوع الجهة</small><div><?php echo e(ak_tree_entity_category_label($currentTree['legal_entity_category'] ?? null, $currentTree['legal_entity_category_other'] ?? null)); ?></div></div>
             <div class="col-md-3"><small class="text-muted">نوع الشجرة</small><div><?php echo $currentTree['tree_type'] === 'required_members' ? 'أعضاء إلزاميون' : 'أعضاء اختياريون'; ?></div></div>
             <div class="col-md-3"><small class="text-muted">حالة الكفيل</small><div><?php echo e($currentTree['sponsor_status']); ?></div></div>
             <div class="col-md-3"><small class="text-muted">مشرف المتابعة</small><div><?php echo e($currentTree['supervisor_name'] ?: '—'); ?></div></div>
@@ -440,7 +457,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <form method="post"><input type="hidden" name="action" value="create_tree"><?php echo csrf_field(); ?>
             <div class="row g-3">
                 <div class="col-md-6"><label class="form-label">اسم الشجرة *</label><input class="form-control" name="full_name" required></div>
-                <div class="col-md-3"><label class="form-label">نوع الجهة *</label><select class="form-select" name="sponsor_type" required><option value="">اختر</option><option value="company">شركة</option><option value="organization">منظمة</option></select></div>
+                <div class="col-md-3"><label class="form-label">نوع الجهة *</label><select class="form-select" name="entity_category" id="treeEntityCategory" required><option value="">اختر</option><?php foreach ($treeEntityCategories as $categoryValue => $categoryLabel): ?><option value="<?php echo e($categoryValue); ?>" <?php echo $submittedEntityCategory === $categoryValue ? 'selected' : ''; ?>><?php echo e($categoryLabel); ?></option><?php endforeach; ?></select></div>
+                <div class="col-md-3" id="treeEntityCategoryOtherWrap" <?php echo $submittedEntityCategory === 'other' ? '' : 'hidden'; ?>><label class="form-label" for="treeEntityCategoryOther">توضيح نوع الجهة *</label><input class="form-control" type="text" name="entity_category_other" id="treeEntityCategoryOther" maxlength="150" value="<?php echo e($submittedEntityCategoryOther); ?>" <?php echo $submittedEntityCategory === 'other' ? 'required' : ''; ?>></div>
                 <div class="col-md-3"><label class="form-label">نوع الشجرة *</label><select class="form-select" name="tree_type" id="treeType" required><option value="">اختر</option><option value="optional_members">أعضاء اختياريون (يمكن الإنشاء دون أعضاء)</option><option value="required_members">أعضاء إلزاميون (عضو واحد على الأقل)</option></select></div>
                 <div class="col-md-6"><label class="form-label">مشرف متابعة الشجرة *</label><select class="form-select" name="supervisor_id" required><option value="">اختر المشرف المسؤول عن المتابعة</option><?php foreach ($treeSupervisors as $treeSupervisor): ?><option value="<?php echo (int) $treeSupervisor['id']; ?>" <?php echo $submittedSupervisorId === (int) $treeSupervisor['id'] ? 'selected' : ''; ?>><?php echo e($treeSupervisor['full_name']); ?></option><?php endforeach; ?></select></div>
                 <div class="col-md-3"><label class="form-label">الهاتف</label><input class="form-control" name="phone" dir="ltr"></div>
@@ -524,6 +542,20 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </style>
 <script>
 (function () {
+    const entityCategory = document.getElementById('treeEntityCategory');
+    const entityOtherWrap = document.getElementById('treeEntityCategoryOtherWrap');
+    const entityOtherInput = document.getElementById('treeEntityCategoryOther');
+    if (entityCategory && entityOtherWrap && entityOtherInput) {
+        const syncEntityOther = () => {
+            const isOther = entityCategory.value === 'other';
+            entityOtherWrap.hidden = !isOther;
+            entityOtherInput.required = isOther;
+            if (!isOther) entityOtherInput.value = '';
+        };
+        entityCategory.addEventListener('change', syncEntityOther);
+        syncEntityOther();
+    }
+
     const picker = document.querySelector('.tree-member-picker');
     if (!picker) return;
 
