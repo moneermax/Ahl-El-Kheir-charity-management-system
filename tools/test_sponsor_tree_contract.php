@@ -40,7 +40,7 @@ $checks = [
         && str_contains($sources['tree management'], "status = ?, ended_at = ?, updated_by = ?")
         && !str_contains($sources['tree management'], 'DELETE FROM sponsor_tree_members'),
     'VGM owns Tree creation and member administration; assigned supervisors are read-only' =>
-        str_contains($sources['tree management'], "$canManageTrees = in_array($role, ['admin', 'vice_general_manager'], true)")
+        str_contains($sources['tree management'], '$canManageTrees = in_array($role, [\'admin\', \'vice_general_manager\'], true)')
         && str_contains($sources['tree management'], "['create_tree', 'add_member', 'set_member_status', 'assign_supervisor']")
         && str_contains($sources['tree management'], "s.supervisor_id = ? AND s.is_manual_override = 1"),
     'Tree follow-up supervisor is mandatory and uses normal sponsor assignment history' =>
