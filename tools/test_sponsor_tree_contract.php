@@ -7,6 +7,7 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 $files = [
     'migration' => $root . '/database/migrations/2026-11-02_sponsor_trees.sql',
+    'entity category migration' => $root . '/database/migrations/2026-11-02_sponsor_tree_entity_categories.sql',
     'tree management' => $root . '/modules/sponsors/trees.php',
     'sidebar' => $root . '/includes/sidebar.php',
     'sponsor register' => $root . '/modules/sponsors/index.php',
@@ -63,6 +64,23 @@ $checks = [
         && str_contains($sources['sidebar'], "'active' => 'sponsor_trees'")
         && str_contains($sources['sidebar'], "'icon' => 'fa-tree text-success'")
         && str_contains($sources['sponsor register'], 'fa-tree text-success'),
+    'Tree entity categories are stored separately from the legacy sponsor_type' =>
+        str_contains($sources['entity category migration'], 'legal_entity_category VARCHAR(50)')
+        && str_contains($sources['entity category migration'], 'legal_entity_category_other VARCHAR(150)')
+        && str_contains($sources['tree management'], "['company', 'organization']")
+        && str_contains($sources['tree management'], "legal_entity_category, legal_entity_category_other")
+        && str_contains($sources['tree management'], "'company' => 'شركة'")
+        && str_contains($sources['tree management'], "'charity_association' => 'جمعية خيرية'")
+        && str_contains($sources['tree management'], "'local_organization' => 'منظمة محلية'")
+        && str_contains($sources['tree management'], "'international_organization' => 'منظمة دولية'")
+        && str_contains($sources['tree management'], "'civil_charitable_foundation' => 'مؤسسة أهلية / خيرية'")
+        && str_contains($sources['tree management'], "'government_entity' => 'جهة حكومية'")
+        && str_contains($sources['tree management'], "'educational_institution' => 'مؤسسة تعليمية'")
+        && str_contains($sources['tree management'], "'endowment' => 'وقف / مؤسسة وقفية'")
+        && str_contains($sources['tree management'], "'other' => 'جهة أخرى'")
+        && str_contains($sources['tree management'], "$entityCategory === 'company' ? 'company' : 'organization'")
+        && str_contains($sources['tree management'], "ak_tree_entity_category_label(")
+        && str_contains($sources['tree management'], "$entityCategory === 'other' && $entityCategoryOther === ''"),
     'Tree entity is persisted as a normal legal-entity sponsor' =>
         str_contains($sources['tree management'], "['company', 'organization']")
         && str_contains($sources['tree management'], "INSERT INTO sponsors")
