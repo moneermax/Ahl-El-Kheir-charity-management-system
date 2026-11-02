@@ -3474,3 +3474,10 @@ Code commits: `92374f84bad0529aa5292076abad0fb8ad156ded` (page UX), `a168cfffa63
 The initial Tree-creation member picker now matches typed search text against the **beginning of the first name only**, rather than any substring anywhere in the full name. Sponsor-code matching remains available as a separate alternative. The existing `input` event continues to recalculate results immediately on both typing and deletion; gender/supervisor filters and checked selections remain independent. Arabic normalization remains in place. No schema, migration, POST, permission, membership or sponsorship behavior changed.
 
 A source-contract assertion now guards first-name prefix matching, retained sponsor-code matching, live input-event filtering and removal of full-name substring matching. Local PHP lint/contract execution and authenticated browser confirmation are pending; verify both typing and deleting characters before accepting the picker. No Tree records need to be created for this UI check.
+
+
+## 2026-11-02 — Sponsor Tree multi-word name search correction
+
+User browser testing found that a valid multi-word name prefix such as `محمد ال` returned zero results. Source inspection identified the cause: the picker compared the full query against only the first name token. The search now compares the normalized full name's beginning with the complete query, so multi-word prefixes work without introducing arbitrary middle-name substring matches. Sponsor-code substring search and live filtering on typing/deletion remain unchanged.
+
+No schema/migration or membership/sponsorship behavior changed. The regression contract now guards full-name prefix matching. PHP lint, contract execution, CI and authenticated browser retest are pending.
