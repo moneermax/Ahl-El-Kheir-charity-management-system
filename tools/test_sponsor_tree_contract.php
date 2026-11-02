@@ -11,6 +11,7 @@ $files = [
     'sidebar' => $root . '/includes/sidebar.php',
     'sponsor register' => $root . '/modules/sponsors/index.php',
     'sponsor profile' => $root . '/modules/sponsors/view.php',
+    'sponsor edit' => $root . '/modules/sponsors/edit.php',
     'sponsorship creation' => $root . '/modules/sponsorships/create.php',
     'sponsorship lifecycle' => $root . '/modules/sponsorships/view.php',
     'orphan profile' => $root . '/modules/families/orphan_profile.php',
@@ -48,6 +49,11 @@ $checks = [
         && str_contains($sources['tree management'], 'ensureActiveSponsorAssignmentHistory($sponsorId, $supervisorId, $uid)')
         && str_contains($sources['tree management'], 'recordSponsorAssignment(')
         && str_contains($sources['tree management'], 'tree_follow_up_reassignment'),
+    'Tree sponsor edit preserves manual supervisor assignment and legal-entity type' =>
+        str_contains($sources['sponsor edit'], '$isTreeSponsor')
+        && str_contains($sources['sponsor edit'], '$isTreeSponsor && in_array($input[\'sponsor_type\'],[\'company\',\'organization\'],true)')
+        && str_contains($sources['sponsor edit'], 'لا يمكن تحويل كفيل الشجرة إلى فرد')
+        && str_contains($sources['sponsor edit'], 'if (!$isTreeSponsor)'),
     'Tree page and navigation expose the green Tree icon' =>
         str_contains($sources['tree management'], 'fa-tree text-success')
         && str_contains($sources['sidebar'], "'active' => 'sponsor_trees'")
