@@ -67,7 +67,7 @@ $checks = [
     'Tree entity categories are stored separately from the legacy sponsor_type' =>
         str_contains($sources['entity category migration'], 'legal_entity_category VARCHAR(50)')
         && str_contains($sources['entity category migration'], 'legal_entity_category_other VARCHAR(150)')
-        && str_contains($sources['tree management'], "['company', 'organization']")
+        && str_contains($sources['tree management'], "array_key_exists(\$entityCategory, \$treeEntityCategories)")
         && str_contains($sources['tree management'], "legal_entity_category, legal_entity_category_other")
         && str_contains($sources['tree management'], "'company' => 'شركة'")
         && str_contains($sources['tree management'], "'charity_association' => 'جمعية خيرية'")
@@ -83,7 +83,7 @@ $checks = [
         && str_contains($sources['tree management'], "\$entityCategory === 'other' && \$entityCategoryOther === ''")
         && str_contains($sources['tree management'], "preg_match('/^.{1,150}$/us', \$entityCategoryOther)"),
     'Tree entity is persisted as a normal legal-entity sponsor' =>
-        str_contains($sources['tree management'], "['company', 'organization']")
+        str_contains($sources['tree management'], "\$entityType = \$entityCategory === 'company' ? 'company' : 'organization'")
         && str_contains($sources['tree management'], "INSERT INTO sponsors")
         && str_contains($sources['tree management'], "INSERT INTO sponsor_trees"),
     'optional-member Tree can be created empty' =>
