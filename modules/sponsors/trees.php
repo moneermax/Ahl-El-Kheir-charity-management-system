@@ -19,6 +19,14 @@ $uid = (int) Session::getUserId();
 $treeId = (int) ($_GET['id'] ?? 0);
 $errors = [];
 $success = '';
+$submittedMemberIds = [];
+
+function ak_tree_gender_label(string $gender): string
+{
+    $value = trim($gender);
+    $labels = ['male' => 'ذكر', 'female' => 'أنثى', 'm' => 'ذكر', 'f' => 'أنثى', 'ذكر' => 'ذكر', 'أنثى' => 'أنثى'];
+    return $labels[strtolower($value)] ?? $value;
+}
 
 function ak_tree_audit(int $uid, string $action, string $type, int $id, ?array $old, ?array $new): void
 {
@@ -54,9 +62,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $contactTime = trim((string) ($_POST['preferred_contact_time'] ?? ''));
                 $payment = (string) ($_POST['payment'] ?? 'cash');
                 $memberIds = array_values(array_unique(array_filter(array_map('intval', (array) ($_POST['member_ids'] ?? [])))));
+                $submittedMemberIds = $memberIds;
 
-                if ($name === '') $errors[] = 'اسم الكيان مطلوب.';
-                if (!in_array($entityType, ['company', 'organization'], true)) $errors[] = 'اختر نوع الكيان.';
+                if ($name === '') $errors[] = 'اسم الشجرة مطلوب.';
+                if (!in_array($entityType, ['company', 'organization'], true)) $errors[] = 'اختر نوع الجهة.';
                 if (!in_array($treeType, ['optional_members', 'required_members'], true)) $errors[] = 'اختر نوع الشجرة.';
                 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'البريد الإلكتروني غير صالح.';
                 if (!in_array($contactMethod, ['call', 'whatsapp', 'email', 'any'], true)) $errors[] = 'طريقة التواصل غير صحيحة.';
@@ -119,7 +128,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             'tree_type' => $treeType, 'member_ids' => $memberIds
                         ]);
                         db()->commit();
-                        flash('success', 'تم إنشاء الشجرة والكيان ككفيل عادي بنجاح.');
+                        flash('success', 'تم إنشاء الشجرة بنجاح، وتم تسجيلها ككفيل عادي.');
                         header('Location: ' . APP_URL . 'modules/sponsors/trees.php?id=' . $newTreeId);
                         exit();
                     } catch (Throwable $e) {
@@ -277,11 +286,28 @@ if ($currentTree) {
     }
 }
 $activeMembers = array_values(array_filter($members, static fn(array $m): bool => $m['membership_status'] === 'active'));
+$people = dbFetchAll(
+    "SELECT id, full_name, COALESCE(NULLIF(TRIM(sponsor_code), ''), CONCAT('SP-', LPAD(id, 6, '0'))) AS sponsor_code,
+            first_letter_id, gender, supervisor_id, is_manual_override, created_by
+     FROM sponsors WHERE sponsor_type = 'individual' AND status = 'active' ORDER BY full_name"
+);
+if ($role === 'supervisor') {
+    $people = array_values(array_filter($people, static fn(array $person): bool => supervisorCanAccessSponsor($uid, $person)));
+}
+$memberSupervisors = dbFetchAll(
+    "SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id
+     WHERE r.code IN ('supervisor', 'admin', 'vice_general_manager') ORDER BY u.full_name"
+);
+$memberGenders = array_values(array_unique(array_filter(array_map(
+    static fn(array $person): string => trim((string) ($person['gender'] ?? '')),
+    $people
+))));
+sort($memberGenders, SORT_NATURAL | SORT_FLAG_CASE);
 include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <div class="welcome-section fade-in">
     <h2>أشجار الكفلاء</h2>
-    <p class="text-muted mb-2">كل شجرة كيان كفيل عادي، وعضويات الأفراد مستقلة عن كفالات الأيتام وسجلات الدفع.</p>
+    <p class="mb-2">كل شجرة تُسجّل ككفيل عادي، وعضويات الأفراد مستقلة عن كفالات الأيتام وسجلات الدفع.</p>
     <div class="quick-actions"><a class="btn btn-primary btn-sm" href="#createTree"><i class="fas fa-plus me-1"></i>إنشاء شجرة جديدة</a></div>
 </div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
@@ -293,7 +319,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body">
         <div class="row g-3 mb-3">
             <div class="col-md-3"><small class="text-muted">كود الكفيل</small><div><?php echo e($currentTree['sponsor_code']); ?></div></div>
-            <div class="col-md-3"><small class="text-muted">نوع الكيان</small><div><?php echo e($currentTree['sponsor_type']); ?></div></div>
+            <div class="col-md-3"><small class="text-muted">نوع الجهة</small><div><?php echo e($currentTree['sponsor_type']); ?></div></div>
             <div class="col-md-3"><small class="text-muted">نوع الشجرة</small><div><?php echo $currentTree['tree_type'] === 'required_members' ? 'أعضاء إلزاميون' : 'أعضاء اختياريون'; ?></div></div>
             <div class="col-md-3"><small class="text-muted">حالة الكفيل</small><div><?php echo e($currentTree['sponsor_status']); ?></div></div>
             <div class="col-md-3"><small class="text-muted">الشخص المسؤول للتواصل</small><div><?php echo e($currentTree['contact_person_name'] ?: '—'); ?></div></div>
@@ -324,12 +350,12 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php endif; ?>
 
 <div class="card mb-4 fade-in" id="createTree">
-    <div class="card-header">إنشاء كيان شجرة جديد</div>
+    <div class="card-header">إنشاء شجرة جديدة</div>
     <div class="card-body">
         <form method="post"><input type="hidden" name="action" value="create_tree"><?php echo csrf_field(); ?>
             <div class="row g-3">
-                <div class="col-md-6"><label class="form-label">اسم الكيان *</label><input class="form-control" name="full_name" required></div>
-                <div class="col-md-3"><label class="form-label">نوع الكيان *</label><select class="form-select" name="sponsor_type" required><option value="">اختر</option><option value="company">شركة</option><option value="organization">منظمة</option></select></div>
+                <div class="col-md-6"><label class="form-label">اسم الشجرة *</label><input class="form-control" name="full_name" required></div>
+                <div class="col-md-3"><label class="form-label">نوع الجهة *</label><select class="form-select" name="sponsor_type" required><option value="">اختر</option><option value="company">شركة</option><option value="organization">منظمة</option></select></div>
                 <div class="col-md-3"><label class="form-label">نوع الشجرة *</label><select class="form-select" name="tree_type" id="treeType" required><option value="">اختر</option><option value="optional_members">أعضاء اختياريون (يمكن الإنشاء دون أعضاء)</option><option value="required_members">أعضاء إلزاميون (عضو واحد على الأقل)</option></select></div>
                 <div class="col-md-3"><label class="form-label">الهاتف</label><input class="form-control" name="phone" dir="ltr"></div>
                 <div class="col-md-3"><label class="form-label">البريد الإلكتروني</label><input class="form-control" type="email" name="email" dir="ltr"></div>
@@ -339,20 +365,140 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="col-md-3"><label class="form-label">طريقة التواصل</label><select class="form-select" name="preferred_contact_method"><option value="any">أي وسيلة</option><option value="call">اتصال</option><option value="whatsapp">واتساب</option><option value="email">بريد إلكتروني</option></select></div>
                 <div class="col-md-3"><label class="form-label">الوقت المناسب</label><input class="form-control" name="preferred_contact_time"></div>
                 <div class="col-md-3"><label class="form-label">طريقة الدفع المفضلة</label><select class="form-select" name="payment"><option value="cash">نقدي</option><option value="bank_transfer">تحويل بنكي</option><option value="mobile">محفظة إلكترونية</option><option value="other">أخرى</option></select></div>
-                <div class="col-12"><label class="form-label">الأعضاء (يمكن اختيار أكثر من فرد)</label><select class="form-select" name="member_ids[]" multiple size="7"><?php
-                    $people = dbFetchAll("SELECT id, full_name, sponsor_code, first_letter_id, gender, supervisor_id, is_manual_override, created_by FROM sponsors WHERE sponsor_type = 'individual' AND status = 'active' ORDER BY full_name LIMIT 500");
-                    if ($role === 'supervisor') {
-                        $people = array_values(array_filter($people, static fn(array $person): bool => supervisorCanAccessSponsor($uid, $person)));
-                    }
-                    foreach ($people as $person) echo '<option value="' . (int) $person['id'] . '">' . e($person['full_name']) . ' (' . e($person['sponsor_code']) . ')</option>';
-                ?></select><small class="text-muted">الفرد الواحد يمكنه الانضمام إلى أكثر من شجرة. يمكن إدارة العضويات لاحقاً دون حذف سجل الفرد.</small></div>
+                <div class="col-12">
+                    <label class="form-label">أعضاء الشجرة (يمكن اختيار أكثر من فرد)</label>
+                    <div class="tree-member-picker border rounded-3 p-3">
+                        <div class="row g-2 mb-3">
+                            <div class="col-lg-6">
+                                <label class="form-label" for="treeMemberSearch">بحث بالاسم أو كود الكفيل</label>
+                                <input type="search" class="form-control" id="treeMemberSearch" placeholder="اكتب اسم الفرد أو كود الكفيل..." autocomplete="off">
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <label class="form-label" for="treeMemberGenderFilter">الجنس</label>
+                                <select class="form-select" id="treeMemberGenderFilter">
+                                    <option value="">كل الأفراد</option>
+                                    <?php foreach ($memberGenders as $gender): ?>
+                                        <option value="<?php echo e($gender); ?>"><?php echo e(ak_tree_gender_label($gender)); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                            <div class="col-sm-6 col-lg-3">
+                                <label class="form-label" for="treeMemberSupervisorFilter">المشرف</label>
+                                <select class="form-select" id="treeMemberSupervisorFilter">
+                                    <option value="">كل المشرفين</option>
+                                    <option value="0">بدون مشرف</option>
+                                    <?php foreach ($memberSupervisors as $memberSupervisor): ?>
+                                        <option value="<?php echo (int) $memberSupervisor['id']; ?>"><?php echo e($memberSupervisor['full_name']); ?></option>
+                                    <?php endforeach; ?>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                            <span class="small fw-bold" id="treeMemberCounts" aria-live="polite">المعروض: <?php echo count($people); ?> | المحدد: <?php echo count($submittedMemberIds); ?></span>
+                            <span class="flex-grow-1"></span>
+                            <button type="button" class="btn btn-sm btn-outline-primary" id="treeMemberSelectVisible">تحديد النتائج الظاهرة</button>
+                            <button type="button" class="btn btn-sm btn-outline-secondary" id="treeMemberClearVisible">إلغاء تحديد الظاهر</button>
+                            <button type="button" class="btn btn-sm btn-outline-danger" id="treeMemberClearAll">إلغاء تحديد الكل</button>
+                        </div>
+                        <div class="border rounded-2 overflow-auto" id="treeMemberOptions" style="max-height: 340px;">
+                            <?php foreach ($people as $person): ?>
+                                <?php $personSupervisorId = (int) ($person['supervisor_id'] ?? 0); ?>
+                                <label class="tree-member-option d-flex align-items-center gap-2 p-2 border-bottom mb-0"
+                                       data-name="<?php echo e($person['full_name']); ?>"
+                                       data-code="<?php echo e($person['sponsor_code']); ?>"
+                                       data-gender="<?php echo e((string) ($person['gender'] ?? '')); ?>"
+                                       data-supervisor="<?php echo $personSupervisorId; ?>">
+                                    <input class="form-check-input m-0 flex-shrink-0" type="checkbox" name="member_ids[]"
+                                           value="<?php echo (int) $person['id']; ?>" data-tree-member-checkbox
+                                           <?php echo in_array((int) $person['id'], $submittedMemberIds, true) ? 'checked' : ''; ?>>
+                                    <span class="flex-grow-1">
+                                        <span class="d-block fw-semibold"><?php echo e($person['full_name']); ?></span>
+                                        <small class="text-muted"><?php echo e($person['sponsor_code']); ?></small>
+                                    </span>
+                                </label>
+                            <?php endforeach; ?>
+                            <div class="p-3 text-center text-muted" id="treeMemberNoResults" <?php echo $people ? 'hidden' : ''; ?>>
+                                <?php echo $people ? 'لا توجد نتائج مطابقة للبحث أو عوامل التصفية.' : 'لا يوجد أفراد كفلاء نشطون متاحون.'; ?>
+                            </div>
+                        </div>
+                        <small class="text-muted d-block mt-2">الفرد الواحد يمكنه الانضمام إلى أكثر من شجرة. التصفية لا تلغي اختياراتك السابقة، ويمكن إدارة العضويات لاحقاً دون حذف سجل الفرد.</small>
+                    </div>
+                </div>
             </div>
             <div class="mt-3"><button class="btn btn-primary">إنشاء الشجرة</button></div>
         </form>
     </div>
 </div>
 
-<div class="card fade-in"><div class="card-header">الأشجار المسجلة</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>الكيان</th><th>الكود</th><th>نوع الشجرة</th><th>الأعضاء النشطون</th><th>إجمالي العضويات</th><th>حالة الكفيل</th><th></th></tr></thead><tbody>
+<div class="card fade-in"><div class="card-header">الأشجار المسجلة</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>الشجرة</th><th>الكود</th><th>نوع الشجرة</th><th>الأعضاء النشطون</th><th>إجمالي العضويات</th><th>حالة الكفيل</th><th></th></tr></thead><tbody>
 <?php if (!$trees): ?><tr><td colspan="7" class="text-center text-muted py-3">لا توجد أشجار مسجلة.</td></tr><?php else: foreach ($trees as $tree): ?><tr><td><?php echo e($tree['full_name']); ?></td><td><?php echo e($tree['sponsor_code']); ?></td><td><?php echo $tree['tree_type'] === 'required_members' ? 'أعضاء إلزاميون' : 'أعضاء اختياريون'; ?></td><td><?php echo (int) $tree['active_members']; ?></td><td><?php echo (int) $tree['total_members']; ?></td><td><?php echo e($tree['sponsor_status']); ?></td><td><a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsors/trees.php?id=<?php echo (int) $tree['id']; ?>">إدارة الأعضاء</a><a class="btn btn-sm btn-outline-secondary ms-1" href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo (int) $tree['sponsor_id']; ?>">ملف الكفيل</a></td></tr><?php endforeach; endif; ?>
 </tbody></table></div></div></div>
+<script>
+(function () {
+    const picker = document.querySelector('.tree-member-picker');
+    if (!picker) return;
+
+    const search = picker.querySelector('#treeMemberSearch');
+    const gender = picker.querySelector('#treeMemberGenderFilter');
+    const supervisor = picker.querySelector('#treeMemberSupervisorFilter');
+    const rows = Array.from(picker.querySelectorAll('.tree-member-option'));
+    const counts = picker.querySelector('#treeMemberCounts');
+    const empty = picker.querySelector('#treeMemberNoResults');
+    const normalize = (value) => String(value || '')
+        .normalize('NFKD')
+        .replace(/[\\u064B-\\u065F\\u0670]/g, '')
+        .replace(/[أإآ]/g, 'ا')
+        .replace(/ى/g, 'ي')
+        .toLocaleLowerCase('ar');
+
+    function updatePicker() {
+        const query = normalize(search.value.trim());
+        const selectedGender = gender.value;
+        const selectedSupervisor = supervisor.value;
+        let visible = 0;
+        let selected = 0;
+
+        rows.forEach((row) => {
+            const text = normalize(row.dataset.name + ' ' + row.dataset.code);
+            const matches = (!query || text.includes(query))
+                && (!selectedGender || row.dataset.gender === selectedGender)
+                && (!selectedSupervisor || row.dataset.supervisor === selectedSupervisor);
+            row.hidden = !matches;
+            if (matches) visible++;
+            const checkbox = row.querySelector('[data-tree-member-checkbox]');
+            if (checkbox && checkbox.checked) selected++;
+        });
+
+        if (counts) counts.textContent = 'المعروض: ' + visible + ' من ' + rows.length + ' | المحدد: ' + selected;
+        if (empty) empty.hidden = visible > 0;
+    }
+
+    function setVisibleSelection(checked) {
+        rows.forEach((row) => {
+            if (row.hidden) return;
+            const checkbox = row.querySelector('[data-tree-member-checkbox]');
+            if (checkbox) checkbox.checked = checked;
+        });
+        updatePicker();
+    }
+
+    search.addEventListener('input', updatePicker);
+    gender.addEventListener('change', updatePicker);
+    supervisor.addEventListener('change', updatePicker);
+    picker.querySelector('#treeMemberSelectVisible').addEventListener('click', () => setVisibleSelection(true));
+    picker.querySelector('#treeMemberClearVisible').addEventListener('click', () => setVisibleSelection(false));
+    picker.querySelector('#treeMemberClearAll').addEventListener('click', () => {
+        rows.forEach((row) => {
+            const checkbox = row.querySelector('[data-tree-member-checkbox]');
+            if (checkbox) checkbox.checked = false;
+        });
+        updatePicker();
+    });
+    rows.forEach((row) => {
+        const checkbox = row.querySelector('[data-tree-member-checkbox]');
+        if (checkbox) checkbox.addEventListener('change', updatePicker);
+    });
+    updatePicker();
+})();
+</script>
 <?php include dirname(__DIR__, 2) . '/includes/footer.php'; ?>
