@@ -5752,3 +5752,16 @@ The user pulled `main` and confirmed the VGM dashboard action and sidebar link b
 Final GitHub Actions run [#41430741112](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41430741112), run #3725, completed successfully on `main` head `16b82bb7addcbeeb13136940ef739e3a535531a1`. All six jobs passed: `php-lint`, `migration-full-schema`, `hr-job-description-migrations`, `sponsor-request-migration`, `migration-mariadb-10-4`, and `rescheduling-service-tests`.
 
 This closes the VGM navigation/reopen-control correction at its documented acceptance boundary. No schema or migration change was required. Do not repeat the checks or reopen this work without concrete regression evidence. The earlier pending-CI and pending-browser notes in this document are superseded by this final checkpoint.
+
+
+## 2026-11-02 — Sponsor Trees and shared sponsorship isolation: CI VERIFIED
+
+Implemented on `main`: Tree entities reuse ordinary company/organization sponsor records; optional-member and required-member Tree types; many-to-many individual membership; retained active/inactive membership state; contact-person reuse; scoped supervisor access; and independent member/sponsor/sponsorship lifecycles.
+
+The shared-sponsorship path now allows different sponsors to maintain separate sponsorship records for one orphan. Duplicate active/paused records are blocked for the same sponsor–orphan pair. Creation locks the orphan row. Completing/cancelling one sponsorship recalculates `family_children.match_status` while holding the sponsorship/orphan locks, preserving `matched` when another active/paused sponsorship remains.
+
+Migration: `database/migrations/2026-11-02_sponsor_trees.sql`. New module: `modules/sponsors/trees.php`. Regression contract: `tools/test_sponsor_tree_contract.php`.
+
+GitHub Actions run [#41444537899](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41444537899) passed all six jobs on commit `3c1ac328afe95b4ef29fb4702a7a1a4df340605b`, including PHP lint/source contract and MariaDB 10.4 full-schema migration repeatability with RESTRICT/composite-index assertions.
+
+**Not yet locally accepted:** Linux/XAMPP migration application, authenticated Tree UI, optional/required creation behavior, multiple-Tree membership, member deactivation isolation, and real local shared-sponsorship/payment workflow. These remain explicit acceptance steps in `SPONSOR_TREES_CONTINUATION.md`.
