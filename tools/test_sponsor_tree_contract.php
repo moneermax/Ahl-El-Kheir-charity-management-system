@@ -55,7 +55,8 @@ $checks = [
         && str_contains($sources['sponsor edit'], '$isTreeSponsor && in_array($input[\'sponsor_type\'],[\'company\',\'organization\'],true)')
         && str_contains($sources['sponsor edit'], 'لا يمكن تحويل كفيل الشجرة إلى فرد')
         && str_contains($sources['sponsor edit'], '$assignedBy')
-        && str_contains($sources['sponsor edit'], '$assignedAt')
+        && str_contains($sources['sponsor edit'], '$preserveTreeAssignmentMetadata')
+        && str_contains($sources['sponsor edit'], 'assigned_at=CASE WHEN ? = 1 THEN ? ELSE NOW() END')
         && str_contains($sources['sponsor edit'], 'if (!$isTreeSponsor)'),
     'Tree page and navigation expose the green Tree icon' =>
         str_contains($sources['tree management'], 'fa-tree text-success')
