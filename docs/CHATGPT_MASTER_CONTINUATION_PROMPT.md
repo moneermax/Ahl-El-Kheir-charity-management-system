@@ -3490,3 +3490,10 @@ VGM is the operational owner of Tree creation and membership: VGM creates each T
 Follow-up assignment reuses the existing sponsor assignment fields and `sponsor_supervisor_assignments` history. Because legal entities bypass the individual letter/gender assignment matrix, Tree assignment is explicitly marked as a manual override so the existing supervisor authorization recognizes it. No database migration or new schema object was added.
 
 The Tree heading, VGM navigation entry and sponsor-register shortcut now use a green tree icon. Source regression coverage and PHP lint are wired into CI; CI and local authenticated browser acceptance are pending.
+
+
+## 2026-11-02 — Preserve Tree supervisor assignment during sponsor edits
+
+Follow-up review found that the ordinary sponsor edit handler recalculated legal-entity supervisor assignment as null, which would silently remove a Tree's assigned follow-up supervisor. The edit handler now preserves a Tree's explicit manual supervisor assignment while the sponsor remains a company/organization, and blocks converting a Tree sponsor into an individual. This is scoped to records present in `sponsor_trees`; non-Tree sponsor assignment behavior is unchanged.
+
+The sponsor profile's Tree action now uses the green tree icon and labels the action as view-only for supervisors. The source contract covers the Tree-specific edit safeguard. No schema or migration change was made. CI and authenticated browser verification remain pending.
