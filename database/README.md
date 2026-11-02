@@ -56,3 +56,5 @@ If a repository snapshot is ever found to contain real organizational data, do n
 - `2026-10-22_ai_assistant_chat_history.sql` — creates persistent AI-assistant conversations and messages, owned by `users.id`; apply explicitly before using the assistant's history features. The application never creates these tables at runtime.
 
 - `2026-10-22_ai_assistant_chat_history.sql` — creates persistent AI-assistant conversations and messages, owned by `users.id`; apply explicitly before using the assistant's history features. The application never creates these tables at runtime.
+
+- `2026-11-02_sponsor_tree_entity_categories.sql` — adds nullable legal-entity classification and custom-description fields to `sponsors` for Tree records. Apply after `2026-11-02_sponsor_trees.sql` and the `2026-10-31_sponsor_legal_entity_contact_details.sql` prerequisite; existing `sponsor_type` values remain unchanged.
