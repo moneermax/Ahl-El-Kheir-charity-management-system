@@ -15,7 +15,7 @@ $allowedStatusFilters = ['new', 'contacted', 'converted', 'lost'];
 if ($forcedStatusFilter !== '' && !in_array($forcedStatusFilter, $allowedStatusFilters, true)) {
     $forcedStatusFilter = '';
 }
-$pageTitle = t('sponsors.requests_title'); $active = 'sponsors';
+$pageTitle = t('sponsors.requests_title'); $active = 'requests';
 $sourceOptions = [
     'تيك توك' => ['icon'=>'fab fa-tiktok text-danger','key'=>'sponsors.request_source_tiktok'],
     'فيسبوك' => ['icon'=>'fab fa-facebook text-primary','key'=>'sponsors.request_source_facebook'],
