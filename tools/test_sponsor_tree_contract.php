@@ -78,7 +78,7 @@ $checks = [
         && str_contains($sources['tree management'], 'id="treeMemberGenderFilter"')
         && str_contains($sources['tree management'], 'id="treeMemberSupervisorFilter"'),
     'member search matches first-name prefixes and sponsor-code text immediately while typing or deleting' =>
-        str_contains($sources['tree management'], "normalize(row.dataset.name).trim().split(/\\\\s+/)[0]")
+        str_contains($sources['tree management'], 'normalize(row.dataset.name).trim().split(/\s+/)[0]')
         && str_contains($sources['tree management'], 'firstName.startsWith(query)')
         && str_contains($sources['tree management'], 'sponsorCode.includes(query)')
         && str_contains($sources['tree management'], 'search.addEventListener(\'input\', updatePicker)')
