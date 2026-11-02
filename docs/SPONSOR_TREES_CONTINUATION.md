@@ -34,13 +34,13 @@ Migration: `database/migrations/2026-11-02_sponsor_trees.sql`
 - `modules/sponsors/view.php`: displays Tree membership context for admin/VGM and provides a management link where permitted.
 - `modules/sponsorships/create.php`: shared sponsorship can be added to an already-sponsored orphan by a different sponsor; duplicate active/paused sponsorship is blocked only for the same sponsor–orphan pair. The orphan row is locked before insertion.
 - `modules/families/orphan_profile.php`: adding a sponsorship marks the orphan matched and rechecks the same sponsor–orphan pair inside the transaction.
-- `modules/sponsorships/view.php`: completion/cancellation locks the sponsorship and orphan, changes only that sponsorship, and recalculates orphan match state from all remaining active/paused sponsorships in the same transaction.
+- `modules/sponsorships/view.php`: completion/cancellation uses the same orphan-first, sponsorship-second row-lock order as creation, changes only that sponsorship, and recalculates orphan match state from all remaining active/paused sponsorships in the same transaction.
 - `tools/test_sponsor_tree_contract.php`: source regression contract.
 - `.github/workflows/php-syntax-check.yml`: lints changed PHP files, runs the source contract, applies the contact-details prerequisite and Tree migration twice on the disposable full-schema MariaDB database, then verifies the two tables, composite membership index and RESTRICT foreign keys.
 
 ## Verification evidence
 
-GitHub Actions run [#41444537899](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41444537899) passed all six jobs on `main` commit `3c1ac328afe95b4ef29fb4702a7a1a4df340605b`.
+GitHub Actions run [#41444537899](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41444537899) passed all six jobs on `main` commit `3c1ac328afe95b4ef29fb4702a7a1a4df340605b`. The follow-up lock-order correction and regression assertion are tracked by subsequent CI runs.
 
 Verified by CI:
 - PHP 8.2 syntax checks for the Tree page and changed sponsor/sponsorship/orphan pages.
