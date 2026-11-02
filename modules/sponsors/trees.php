@@ -133,7 +133,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 db()->beginTransaction();
                 try {
                     $tree = dbFetchOne(
-                        "SELECT st.id, st.tree_type, s.sponsor_type
+                        "SELECT st.id AS tree_id, st.tree_type, s.id AS sponsor_id, s.sponsor_type, s.created_by, s.supervisor_id, s.first_letter_id, s.gender, s.is_manual_override
                          FROM sponsor_trees st JOIN sponsors s ON s.id = st.sponsor_id
                          WHERE st.id = ? FOR UPDATE",
                         [$targetTreeId]
@@ -144,6 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                     if (!$tree || !$member || $tree['sponsor_type'] === 'individual') {
                         throw new RuntimeException('الشجرة أو العضو غير صالح.');
+                    }
+                    if ($role === 'supervisor' && !supervisorCanAccessSponsor($uid, $tree)) {
+                        throw new RuntimeException('ليس لديك صلاحية لإدارة هذه الشجرة.');
                     }
                     if ($role === 'supervisor' && !supervisorCanAccessSponsor($uid, $member)) {
                         throw new RuntimeException('هذا الفرد ليس ضمن نطاق الكفلاء المسموح لك بإدارتهم.');
@@ -183,12 +186,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!in_array($newStatus, ['active', 'inactive'], true)) throw new RuntimeException('حالة العضوية غير صحيحة.');
                 db()->beginTransaction();
                 try {
-                    $tree = dbFetchOne("SELECT id, tree_type FROM sponsor_trees WHERE id = ? FOR UPDATE", [$targetTreeId]);
+                    $tree = dbFetchOne(
+                        "SELECT st.id, st.tree_type, s.id AS sponsor_id, s.sponsor_type, s.created_by, s.supervisor_id, s.first_letter_id, s.gender, s.is_manual_override
+                         FROM sponsor_trees st JOIN sponsors s ON s.id = st.sponsor_id WHERE st.id = ? FOR UPDATE",
+                        [$targetTreeId]
+                    );
                     $membership = dbFetchOne(
                         "SELECT id, status FROM sponsor_tree_members WHERE id = ? AND tree_id = ? FOR UPDATE",
                         [$membershipId, $targetTreeId]
                     );
                     if (!$tree || !$membership) throw new RuntimeException('العضوية غير موجودة.');
+                    if ($role === 'supervisor' && !supervisorCanAccessSponsor($uid, $tree)) {
+                        throw new RuntimeException('ليس لديك صلاحية لإدارة هذه الشجرة.');
+                    }
                     if ($membership['status'] !== $newStatus) {
                         if ($newStatus === 'inactive' && $tree['tree_type'] === 'required_members') {
                             $activeCount = (int) (dbFetchOne(
@@ -329,7 +339,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <div class="col-md-3"><label class="form-label">الوقت المناسب</label><input class="form-control" name="preferred_contact_time"></div>
                 <div class="col-md-3"><label class="form-label">طريقة الدفع المفضلة</label><select class="form-select" name="payment"><option value="cash">نقدي</option><option value="bank_transfer">تحويل بنكي</option><option value="mobile">محفظة إلكترونية</option><option value="other">أخرى</option></select></div>
                 <div class="col-12"><label class="form-label">الأعضاء (يمكن اختيار أكثر من فرد)</label><select class="form-select" name="member_ids[]" multiple size="7"><?php
-                    $people = dbFetchAll("SELECT id, full_name, sponsor_code FROM sponsors WHERE sponsor_type = 'individual' AND status = 'active' ORDER BY full_name LIMIT 500");
+                    $people = dbFetchAll("SELECT id, full_name, sponsor_code, first_letter_id, gender, supervisor_id, is_manual_override, created_by FROM sponsors WHERE sponsor_type = 'individual' AND status = 'active' ORDER BY full_name LIMIT 500");
+                    if ($role === 'supervisor') {
+                        $people = array_values(array_filter($people, static fn(array $person): bool => supervisorCanAccessSponsor($uid, $person)));
+                    }
                     foreach ($people as $person) echo '<option value="' . (int) $person['id'] . '">' . e($person['full_name']) . ' (' . e($person['sponsor_code']) . ')</option>';
                 ?></select><small class="text-muted">الفرد الواحد يمكنه الانضمام إلى أكثر من شجرة. يمكن إدارة العضويات لاحقاً دون حذف سجل الفرد.</small></div>
             </div>
