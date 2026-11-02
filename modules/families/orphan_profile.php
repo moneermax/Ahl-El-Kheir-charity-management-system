@@ -116,6 +116,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf() && isset($_POST['add_
     if (!$errors) {
         try {
             db()->beginTransaction();
+            $childLock = dbFetchOne("SELECT id FROM family_children WHERE id = ? FOR UPDATE", [$childId]);
+            if (!$childLock) throw new RuntimeException('اليتيم غير موجود.');
+            $existingForSponsor = dbFetchOne("SELECT id FROM sponsorships WHERE sponsor_id = ? AND child_id = ? AND status IN ('active','paused') LIMIT 1 FOR UPDATE", [$newSponsorId, $childId]);
+            if ($existingForSponsor) throw new RuntimeException('هذا الكفيل لديه كفالة نشطة أو موقوفة لهذا اليتيم بالفعل.');
             dbExecute("INSERT INTO sponsorships (sponsor_id, child_id, monthly_amount, currency_code, start_date, status, notes, created_by) VALUES (?, ?, ?, 'SDG', ?, 'active', ?, ?)",
                 [$newSponsorId, $childId, $newAmount, $newStartDate, $newNotes, $uid]);
             $newSponsorshipId = (int)dbLastInsertId();
