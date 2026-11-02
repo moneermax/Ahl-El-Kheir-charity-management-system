@@ -8,6 +8,8 @@ $root = dirname(__DIR__);
 $files = [
     'migration' => $root . '/database/migrations/2026-11-02_sponsor_trees.sql',
     'tree management' => $root . '/modules/sponsors/trees.php',
+    'sidebar' => $root . '/includes/sidebar.php',
+    'sponsor register' => $root . '/modules/sponsors/index.php',
     'sponsor profile' => $root . '/modules/sponsors/view.php',
     'sponsorship creation' => $root . '/modules/sponsorships/create.php',
     'sponsorship lifecycle' => $root . '/modules/sponsorships/view.php',
@@ -37,8 +39,20 @@ $checks = [
         str_contains($sources['migration'], "status ENUM('active','inactive')")
         && str_contains($sources['tree management'], "status = ?, ended_at = ?, updated_by = ?")
         && !str_contains($sources['tree management'], 'DELETE FROM sponsor_tree_members'),
-    'Tree creation is restricted to authorized management roles' =>
-        str_contains($sources['tree management'], "['admin', 'vice_general_manager', 'supervisor']"),
+    'VGM owns Tree creation and member administration; assigned supervisors are read-only' =>
+        str_contains($sources['tree management'], "$canManageTrees = in_array($role, ['admin', 'vice_general_manager'], true)")
+        && str_contains($sources['tree management'], "['create_tree', 'add_member', 'set_member_status', 'assign_supervisor']")
+        && str_contains($sources['tree management'], "s.supervisor_id = ? AND s.is_manual_override = 1"),
+    'Tree follow-up supervisor is mandatory and uses normal sponsor assignment history' =>
+        str_contains($sources['tree management'], 'name="supervisor_id" required')
+        && str_contains($sources['tree management'], 'ensureActiveSponsorAssignmentHistory($sponsorId, $supervisorId, $uid)')
+        && str_contains($sources['tree management'], 'recordSponsorAssignment(')
+        && str_contains($sources['tree management'], 'tree_follow_up_reassignment'),
+    'Tree page and navigation expose the green Tree icon' =>
+        str_contains($sources['tree management'], 'fa-tree text-success')
+        && str_contains($sources['sidebar'], "'active' => 'sponsor_trees'")
+        && str_contains($sources['sidebar'], "'icon' => 'fa-tree text-success'")
+        && str_contains($sources['sponsor register'], 'fa-tree text-success'),
     'Tree entity is persisted as a normal legal-entity sponsor' =>
         str_contains($sources['tree management'], "['company', 'organization']")
         && str_contains($sources['tree management'], "INSERT INTO sponsors")
