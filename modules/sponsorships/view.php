@@ -20,15 +20,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
         $today = date('Y-m-d');
         try {
             db()->beginTransaction();
+            $childId = (int) $sp['child_id'];
+            dbFetchOne("SELECT id FROM family_children WHERE id = ? FOR UPDATE", [$childId]);
             $lockedSponsorship = dbFetchOne(
                 "SELECT id, child_id, status FROM sponsorships WHERE id = ? FOR UPDATE",
                 [$id]
             );
-            if (!$lockedSponsorship) {
-                throw new RuntimeException('سجل الكفالة غير موجود.');
+            if (!$lockedSponsorship || (int) $lockedSponsorship['child_id'] !== $childId) {
+                throw new RuntimeException('سجل الكفالة غير موجود أو تغير ارتباطه باليتيم.');
             }
-            $childId = (int) $lockedSponsorship['child_id'];
-            dbFetchOne("SELECT id FROM family_children WHERE id = ? FOR UPDATE", [$childId]);
             $old = (string) $lockedSponsorship['status'];
             $new = $old;
 
