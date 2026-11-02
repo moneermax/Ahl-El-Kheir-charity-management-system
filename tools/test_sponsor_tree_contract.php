@@ -46,7 +46,7 @@ $checks = [
         && str_contains($sources['tree management'], "s.supervisor_id = ? AND s.is_manual_override = 1"),
     'Tree follow-up supervisor is mandatory and uses normal sponsor assignment history' =>
         str_contains($sources['tree management'], 'name="supervisor_id" required')
-        && str_contains($sources['tree management'], "recordSponsorAssignment($sponsorId, $supervisorId, $uid, 'tree_follow_up_assignment', 'permanent')")
+        && str_contains($sources['tree management'], 'recordSponsorAssignment($sponsorId, $supervisorId, $uid, \'tree_follow_up_assignment\', \'permanent\')')
         && str_contains($sources['tree management'], 'recordSponsorAssignment(')
         && str_contains($sources['tree management'], 'tree_follow_up_reassignment')
         && str_contains($sources['tree management'], "NOT IN ('departed', 'archived')"),
