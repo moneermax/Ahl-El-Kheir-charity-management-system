@@ -433,6 +433,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <div class="card fade-in"><div class="card-header">الأشجار المسجلة</div><div class="card-body p-0"><div class="table-responsive"><table class="table table-hover align-middle mb-0"><thead><tr><th>الشجرة</th><th>الكود</th><th>نوع الشجرة</th><th>الأعضاء النشطون</th><th>إجمالي العضويات</th><th>حالة الكفيل</th><th></th></tr></thead><tbody>
 <?php if (!$trees): ?><tr><td colspan="7" class="text-center text-muted py-3">لا توجد أشجار مسجلة.</td></tr><?php else: foreach ($trees as $tree): ?><tr><td><?php echo e($tree['full_name']); ?></td><td><?php echo e($tree['sponsor_code']); ?></td><td><?php echo $tree['tree_type'] === 'required_members' ? 'أعضاء إلزاميون' : 'أعضاء اختياريون'; ?></td><td><?php echo (int) $tree['active_members']; ?></td><td><?php echo (int) $tree['total_members']; ?></td><td><?php echo e($tree['sponsor_status']); ?></td><td><a class="btn btn-sm btn-primary" href="<?php echo APP_URL; ?>modules/sponsors/trees.php?id=<?php echo (int) $tree['id']; ?>">إدارة الأعضاء</a><a class="btn btn-sm btn-outline-secondary ms-1" href="<?php echo APP_URL; ?>modules/sponsors/view.php?id=<?php echo (int) $tree['sponsor_id']; ?>">ملف الكفيل</a></td></tr><?php endforeach; endif; ?>
 </tbody></table></div></div></div>
+<style>
+.tree-member-picker .tree-member-option[hidden] { display: none !important; }
+</style>
 <script>
 (function () {
     const picker = document.querySelector('.tree-member-picker');
@@ -446,7 +449,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     const empty = picker.querySelector('#treeMemberNoResults');
     const normalize = (value) => String(value || '')
         .normalize('NFKD')
-        .replace(/[\\u064B-\\u065F\\u0670]/g, '')
+        .replace(/[\u064B-\u065F\u0670]/g, '')
         .replace(/[أإآ]/g, 'ا')
         .replace(/ى/g, 'ي')
         .toLocaleLowerCase('ar');
