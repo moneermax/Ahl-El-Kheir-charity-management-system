@@ -139,7 +139,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         [$targetTreeId]
                     );
                     $member = dbFetchOne(
-                        "SELECT id, full_name FROM sponsors WHERE id = ? AND sponsor_type = 'individual' AND status = 'active'",
+                        "SELECT id, full_name, sponsor_type, first_letter_id, gender, supervisor_id, is_manual_override, created_by
+                         FROM sponsors WHERE id = ? AND sponsor_type = 'individual' AND status = 'active'",
                         [$memberId]
                     );
                     if (!$tree || !$member || $tree['sponsor_type'] === 'individual') {
