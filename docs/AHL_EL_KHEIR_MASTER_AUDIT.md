@@ -6030,3 +6030,14 @@ The user pulled `main` and confirmed the VGM dashboard action and sidebar link b
 Final GitHub Actions run [#41430741112](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41430741112), run #3725, completed successfully on `main` head `16b82bb7addcbeeb13136940ef739e3a535531a1`. All six jobs passed: `php-lint`, `migration-full-schema`, `hr-job-description-migrations`, `sponsor-request-migration`, `migration-mariadb-10-4`, and `rescheduling-service-tests`.
 
 This closes the VGM navigation/reopen-control correction at its documented acceptance boundary. No schema or migration change was required. Do not repeat the checks or reopen this work without concrete regression evidence. The earlier pending-CI and pending-browser notes in this document are superseded by this final checkpoint.
+
+
+## 2026-11-02 — Sponsor Trees and shared orphan sponsorship
+
+Source/schema inspection found inconsistent shared-sponsorship behavior: orphan-profile creation allowed multiple sponsors, general matching blocked any orphan with an active/paused sponsorship, and completing/cancelling one sponsorship unconditionally overwrote the orphan's aggregate match state.
+
+The correction makes duplicate protection specific to a sponsor–orphan pair, serializes creation and lifecycle transitions on the orphan row, and recalculates the orphan match state from all remaining active/paused sponsorships. Each sponsorship and its transaction history remain separate.
+
+Tree entities are ordinary legal-entity sponsors with independent many-to-many memberships to existing individual sponsors. Type `optional_members` permits zero members; type `required_members` requires an active member and prevents ending the last active membership through the UI. Membership changes do not update individual sponsor status. Foreign keys use RESTRICT for Tree/sponsor relationships.
+
+CI evidence: run [#41444537899](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41444537899), all six jobs passed on `3c1ac328afe95b4ef29fb4702a7a1a4df340605b`. Local Linux/XAMPP browser/runtime acceptance remains pending. Full details and exact acceptance checks: `docs/SPONSOR_TREES_CONTINUATION.md`.
