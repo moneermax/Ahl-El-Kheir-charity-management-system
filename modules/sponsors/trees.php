@@ -3,11 +3,12 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
-if (!in_array($role, ['admin', 'vice_general_manager'], true)) {
+if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
     http_response_code(403);
     exit('ليس لديك صلاحية لإدارة الأشجار.');
 }
@@ -66,10 +67,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($memberIds) {
                     $ph = implode(',', array_fill(0, count($memberIds), '?'));
                     $members = dbFetchAll(
-                        "SELECT id, full_name FROM sponsors WHERE id IN ($ph) AND sponsor_type = 'individual' AND status = 'active'",
+                        "SELECT id, full_name, first_letter_id, gender, supervisor_id, is_manual_override, created_by
+                         FROM sponsors WHERE id IN ($ph) AND sponsor_type = 'individual' AND status = 'active'",
                         $memberIds
                     );
                     if (count($members) !== count($memberIds)) $errors[] = 'تأكد أن جميع الأعضاء المختارين أفراد كفلاء نشطون.';
+                    if ($role === 'supervisor') {
+                        foreach ($members as $member) {
+                            if (!supervisorCanAccessSponsor($uid, $member)) {
+                                $errors[] = 'أحد الأفراد المختارين ليس ضمن نطاق الكفلاء المسموح لك بإدارتهم.';
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 if (!$errors) {
@@ -134,6 +144,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     );
                     if (!$tree || !$member || $tree['sponsor_type'] === 'individual') {
                         throw new RuntimeException('الشجرة أو العضو غير صالح.');
+                    }
+                    if ($role === 'supervisor' && !supervisorCanAccessSponsor($uid, $member)) {
+                        throw new RuntimeException('هذا الفرد ليس ضمن نطاق الكفلاء المسموح لك بإدارتهم.');
                     }
                     $existing = dbFetchOne(
                         "SELECT id, status FROM sponsor_tree_members WHERE tree_id = ? AND member_sponsor_id = ? FOR UPDATE",
@@ -205,23 +218,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 
-$trees = dbFetchAll(
-    "SELECT st.id, st.tree_type, st.created_at, s.id AS sponsor_id, s.full_name, s.sponsor_code, s.sponsor_type, s.status AS sponsor_status,
+$treeSql = "SELECT st.id, st.tree_type, st.created_at, s.id AS sponsor_id, s.full_name, s.sponsor_code, s.sponsor_type, s.status AS sponsor_status,
             COUNT(CASE WHEN tm.status = 'active' THEN 1 END) AS active_members,
             COUNT(tm.id) AS total_members
      FROM sponsor_trees st
      JOIN sponsors s ON s.id = st.sponsor_id
-     LEFT JOIN sponsor_tree_members tm ON tm.tree_id = st.id
-     GROUP BY st.id, st.tree_type, st.created_at, s.id, s.full_name, s.sponsor_code, s.sponsor_type, s.status
-     ORDER BY st.id DESC"
-);
+     LEFT JOIN sponsor_tree_members tm ON tm.tree_id = st.id";
+$treeParams = [];
+if ($role === 'supervisor') {
+    $treeSql .= " WHERE s.created_by = ?";
+    $treeParams[] = $uid;
+}
+$treeSql .= " GROUP BY st.id, st.tree_type, st.created_at, s.id, s.full_name, s.sponsor_code, s.sponsor_type, s.status ORDER BY st.id DESC";
+$trees = dbFetchAll($treeSql, $treeParams);
 $currentTree = $treeId > 0 ? dbFetchOne(
     "SELECT st.*, s.id AS sponsor_id, s.full_name, s.sponsor_code, s.sponsor_type, s.status AS sponsor_status,
+            s.created_by, s.supervisor_id, s.first_letter_id, s.gender, s.is_manual_override,
             s.phone, s.email, s.address, s.contact_person_name, s.contact_person_position,
             s.preferred_contact_method, s.preferred_contact_time
      FROM sponsor_trees st JOIN sponsors s ON s.id = st.sponsor_id WHERE st.id = ?",
     [$treeId]
 ) : null;
+if ($role === 'supervisor' && $currentTree && !supervisorCanAccessSponsor($uid, $currentTree)) {
+    http_response_code(403);
+    exit('ليس لديك صلاحية لإدارة هذه الشجرة.');
+}
 $members = [];
 $availableMembers = [];
 if ($currentTree) {
@@ -233,12 +254,16 @@ if ($currentTree) {
         [$treeId]
     );
     $availableMembers = dbFetchAll(
-        "SELECT s.id, s.full_name, s.sponsor_code FROM sponsors s
+        "SELECT s.id, s.full_name, s.sponsor_code, s.first_letter_id, s.gender, s.supervisor_id, s.is_manual_override, s.created_by
+         FROM sponsors s
          WHERE s.sponsor_type = 'individual' AND s.status = 'active'
            AND NOT EXISTS (SELECT 1 FROM sponsor_tree_members tm WHERE tm.tree_id = ? AND tm.member_sponsor_id = s.id AND tm.status = 'active')
          ORDER BY s.full_name LIMIT 500",
         [$treeId]
     );
+    if ($role === 'supervisor') {
+        $availableMembers = array_values(array_filter($availableMembers, static fn(array $member): bool => supervisorCanAccessSponsor($uid, $member)));
+    }
 }
 $activeMembers = array_values(array_filter($members, static fn(array $m): bool => $m['membership_status'] === 'active'));
 include dirname(__DIR__, 2) . '/includes/header.php';
