@@ -46,7 +46,7 @@ $checks = [
         && str_contains($sources['tree management'], "s.supervisor_id = ? AND s.is_manual_override = 1"),
     'Tree follow-up supervisor is mandatory and uses normal sponsor assignment history' =>
         str_contains($sources['tree management'], 'name="supervisor_id" required')
-        && str_contains($sources['tree management'], 'ensureActiveSponsorAssignmentHistory($sponsorId, $supervisorId, $uid)')
+        && str_contains($sources['tree management'], "recordSponsorAssignment($sponsorId, $supervisorId, $uid, 'tree_follow_up_assignment', 'permanent')")
         && str_contains($sources['tree management'], 'recordSponsorAssignment(')
         && str_contains($sources['tree management'], 'tree_follow_up_reassignment')
         && str_contains($sources['tree management'], "NOT IN ('departed', 'archived')"),
@@ -54,6 +54,8 @@ $checks = [
         str_contains($sources['sponsor edit'], '$isTreeSponsor')
         && str_contains($sources['sponsor edit'], '$isTreeSponsor && in_array($input[\'sponsor_type\'],[\'company\',\'organization\'],true)')
         && str_contains($sources['sponsor edit'], 'لا يمكن تحويل كفيل الشجرة إلى فرد')
+        && str_contains($sources['sponsor edit'], '$assignedBy')
+        && str_contains($sources['sponsor edit'], '$assignedAt')
         && str_contains($sources['sponsor edit'], 'if (!$isTreeSponsor)'),
     'Tree page and navigation expose the green Tree icon' =>
         str_contains($sources['tree management'], 'fa-tree text-success')
