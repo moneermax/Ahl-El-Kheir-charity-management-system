@@ -35,7 +35,7 @@ $checks = [
         && !str_contains($sources['migration'], 'UNIQUE KEY uq_sponsor_tree_member (member_sponsor_id)'),
     'membership rows are retained when ended' =>
         str_contains($sources['migration'], "status ENUM('active','inactive')")
-        && str_contains($sources['tree management'], "SET status = 'inactive'")
+        && str_contains($sources['tree management'], "status = ?, ended_at = ?, updated_by = ?")
         && !str_contains($sources['tree management'], 'DELETE FROM sponsor_tree_members'),
     'Tree creation is restricted to authorized management roles' =>
         str_contains($sources['tree management'], "['admin', 'vice_general_manager']"),
@@ -44,7 +44,7 @@ $checks = [
         && str_contains($sources['tree management'], "INSERT INTO sponsors")
         && str_contains($sources['tree management'], "INSERT INTO sponsor_trees"),
     'optional-member Tree can be created empty' =>
-        str_contains($sources['tree management'], "tree_type === 'required_members' && !$memberIds"),
+        str_contains($sources['tree management'], "$"."treeType === 'required_members' && !$memberIds"),
     'required-member Tree cannot lose its final active membership' =>
         str_contains($sources['tree management'], "tree_type'] === 'required_members'")
         && str_contains($sources['tree management'], '$activeCount <= 1'),
