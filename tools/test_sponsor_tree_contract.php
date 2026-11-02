@@ -48,7 +48,8 @@ $checks = [
         str_contains($sources['tree management'], 'name="supervisor_id" required')
         && str_contains($sources['tree management'], 'ensureActiveSponsorAssignmentHistory($sponsorId, $supervisorId, $uid)')
         && str_contains($sources['tree management'], 'recordSponsorAssignment(')
-        && str_contains($sources['tree management'], 'tree_follow_up_reassignment'),
+        && str_contains($sources['tree management'], 'tree_follow_up_reassignment')
+        && str_contains($sources['tree management'], "NOT IN ('departed', 'archived')"),
     'Tree sponsor edit preserves manual supervisor assignment and legal-entity type' =>
         str_contains($sources['sponsor edit'], '$isTreeSponsor')
         && str_contains($sources['sponsor edit'], '$isTreeSponsor && in_array($input[\'sponsor_type\'],[\'company\',\'organization\'],true)')
