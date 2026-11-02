@@ -78,9 +78,9 @@ $checks = [
         && str_contains($sources['tree management'], "'educational_institution' => 'مؤسسة تعليمية'")
         && str_contains($sources['tree management'], "'endowment' => 'وقف / مؤسسة وقفية'")
         && str_contains($sources['tree management'], "'other' => 'جهة أخرى'")
-        && str_contains($sources['tree management'], "$entityCategory === 'company' ? 'company' : 'organization'")
+        && str_contains($sources['tree management'], "\$entityCategory === 'company' ? 'company' : 'organization'")
         && str_contains($sources['tree management'], "ak_tree_entity_category_label(")
-        && str_contains($sources['tree management'], "$entityCategory === 'other' && $entityCategoryOther === ''"),
+        && str_contains($sources['tree management'], "\$entityCategory === 'other' && \$entityCategoryOther === ''"),
     'Tree entity is persisted as a normal legal-entity sponsor' =>
         str_contains($sources['tree management'], "['company', 'organization']")
         && str_contains($sources['tree management'], "INSERT INTO sponsors")
