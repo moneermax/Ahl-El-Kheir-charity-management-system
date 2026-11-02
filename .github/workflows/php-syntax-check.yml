@@ -176,6 +176,11 @@ jobs:
             modules/sponsors/lib_sponsor_request_conversion.php
             modules/sponsors/edit.php
             modules/sponsors/view.php
+            modules/sponsors/trees.php
+            modules/sponsorships/create.php
+            modules/sponsorships/view.php
+            modules/families/orphan_profile.php
+            tools/test_sponsor_tree_contract.php
             tools/test_sponsor_legal_entity_contact_contract.php
             config/sponsor_assignments.php
             modules/sponsors/requests.php
@@ -249,6 +254,8 @@ jobs:
           php tools/test_sponsor_conversion_toast_contract.php
           php tools/test_sponsor_request_conversion_authorization_contract.php
           php tools/test_sponsor_request_navigation_reopen_contract.php
+          php tools/test_sponsor_tree_contract.php
+          php -l tools/test_sponsor_tree_contract.php
           php -l tools/test_sponsor_request_navigation_reopen_contract.php
           php tools/test_sponsor_non_individual_edit_contract.php
           php -l tools/test_sponsor_non_individual_edit_contract.php
