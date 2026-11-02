@@ -3510,3 +3510,14 @@ The user pulled `main` and confirmed the VGM dashboard action and sidebar link b
 Final GitHub Actions run [#41430741112](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41430741112), run #3725, completed successfully on `main` head `16b82bb7addcbeeb13136940ef739e3a535531a1`. All six jobs passed: `php-lint`, `migration-full-schema`, `hr-job-description-migrations`, `sponsor-request-migration`, `migration-mariadb-10-4`, and `rescheduling-service-tests`.
 
 This closes the VGM navigation/reopen-control correction at its documented acceptance boundary. No schema or migration change was required. Do not repeat the checks or reopen this work without concrete regression evidence. The earlier pending-CI and pending-browser notes in this document are superseded by this final checkpoint.
+
+
+## 2026-11-02 — Sponsor Trees and shared sponsorship isolation: CI VERIFIED
+
+Implemented the Sponsor Tree data model and management page on `main`. Tree entities reuse normal legal-entity sponsor records; optional-member and required-member types have separate creation rules; existing individual sponsors may belong to multiple Trees; memberships are retained and independently activated/deactivated; supervisor access follows existing sponsor ownership/scope.
+
+Shared orphan sponsorship is now consistent across general matching and orphan-profile creation. Different sponsors can maintain independent sponsorship records for one orphan; duplicate active/paused sponsorship is prevented only for the same sponsor–orphan pair. Creation and completion/cancellation serialize on the orphan row; match state remains `matched` while another active/paused sponsorship remains. Payment records remain tied to the individual sponsorship.
+
+Migration: `database/migrations/2026-11-02_sponsor_trees.sql`. Module: `modules/sponsors/trees.php`. Source contract: `tools/test_sponsor_tree_contract.php`. Full implementation and local acceptance checklist: `docs/SPONSOR_TREES_CONTINUATION.md`.
+
+CI run [#41444537899](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41444537899) passed all six jobs on `3c1ac328afe95b4ef29fb4702a7a1a4df340605b`. Local Linux/XAMPP migration/browser acceptance remains pending; do not mark the feature fully accepted until completed.
