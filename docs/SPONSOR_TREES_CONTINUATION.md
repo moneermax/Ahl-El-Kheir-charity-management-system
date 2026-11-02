@@ -117,3 +117,13 @@ The sponsor profile's Tree action now uses the green tree icon and labels the ac
 ## 2026-11-02 — Tree assignment history and supervisor lifecycle refinement
 
 Initial Tree assignment now uses `recordSponsorAssignment(..., 'tree_follow_up_assignment', 'permanent')` rather than the legacy-backfill helper, so the assignment history has the correct operational reason. Supervisor choices and server-side validation exclude supervisors whose lifecycle status is `departed` or `archived`, matching the current-supervisor list. Editing a Tree sponsor preserves the original `assigned_by` and `assigned_at` metadata as well as the supervisor ID. No schema change was introduced. CI and local runtime/browser verification remain pending.
+
+## 2026-11-02 — Sponsor Tree entity classification expansion
+
+The Tree creation form now offers distinct entity categories: company, charity association, local organization, international organization, civil/charitable foundation, government entity, educational institution, endowment, and other. Selecting "other" requires a free-text description (maximum 150 characters).
+
+The selected category is stored separately in `sponsors.legal_entity_category` and `sponsors.legal_entity_category_other`. The existing `sponsors.sponsor_type` contract remains unchanged: only the company category maps to `company`; all other listed categories map to `organization`. Tree sponsorship, supervisor assignment, member relationships, and accounting workflows therefore continue to use the existing legal-entity sponsor model. The Tree detail page displays the specific category and custom description.
+
+Migration: `database/migrations/2026-11-02_sponsor_tree_entity_categories.sql`, applied after the existing legal-entity contact and Tree migrations. It is repeatable on MariaDB 10.4 and performs no runtime DDL. The CI full-schema MariaDB job now applies it twice and checks both new columns plus the unchanged sponsor_type enum. The source regression contract covers the category whitelist, mapping, display, and custom-description validation.
+
+**Verification boundary:** implementation and CI wiring are committed to `main`; GitHub Actions result and local Linux/XAMPP migration plus authenticated browser acceptance remain pending. Do not describe the feature as runtime-verified until those checks pass. Local application order: `2026-10-31_sponsor_legal_entity_contact_details.sql`, `2026-11-02_sponsor_trees.sql`, then `2026-11-02_sponsor_tree_entity_categories.sql`.
