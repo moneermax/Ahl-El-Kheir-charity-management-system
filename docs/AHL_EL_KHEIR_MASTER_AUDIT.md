@@ -6105,3 +6105,10 @@ Migration: `database/migrations/2026-11-02_sponsor_tree_entity_categories.sql`, 
 **Verification boundary:** implementation and CI wiring are committed to `main`; GitHub Actions result and local Linux/XAMPP migration plus authenticated browser acceptance remain pending. Do not describe the feature as runtime-verified until those checks pass. Local application order: `2026-10-31_sponsor_legal_entity_contact_details.sql`, `2026-11-02_sponsor_trees.sql`, then `2026-11-02_sponsor_tree_entity_categories.sql`.
 
 **CI result update — 2026-11-02:** GitHub Actions run [#41482209346](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41482209346) completed **SUCCESS** on commit `0cdd6da3667b8b94431dd1c1507a84d68e38380a`. All six jobs passed. The PHP job passed the expanded Sponsor Tree source contract and PHP syntax checks. The full-schema MariaDB 10.4 job imported the checked-in schema, applied the contact-details prerequisite, Tree migration, and entity-category migration twice, confirmed both new columns, and confirmed the original `sponsor_type` enum remains `individual/company/organization`. This is CI/schema/source evidence only; local authenticated browser acceptance remains pending.
+
+
+## 2026-11-02 — Sponsor Tree entity-category menu: local acceptance
+
+The user confirmed that the expanded entity-category menu is working in the local application. Schema inspection confirmed the legal-entity contact fields and `legal_entity_category` / `legal_entity_category_other` on `sponsors`, the presence of `sponsor_trees`, and preservation of the existing `sponsor_type` enum values (`individual`, `company`, `organization`).
+
+This closes acceptance of the category-menu change only. It is not evidence that all Tree membership, supervisor-scope, reassignment, or shared-sponsorship lifecycle cases have passed. Those remain governed by `docs/SPONSOR_TREES_CONTINUATION.md`.
