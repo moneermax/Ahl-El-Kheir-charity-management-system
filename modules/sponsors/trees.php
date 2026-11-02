@@ -462,8 +462,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         let selected = 0;
 
         rows.forEach((row) => {
-            const text = normalize(row.dataset.name + ' ' + row.dataset.code);
-            const matches = (!query || text.includes(query))
+            const firstName = normalize(row.dataset.name).trim().split(/\\s+/)[0] || '';
+            const sponsorCode = normalize(row.dataset.code);
+            const matches = (!query || firstName.startsWith(query) || sponsorCode.includes(query))
                 && (!selectedGender || row.dataset.gender === selectedGender)
                 && (!selectedSupervisor || row.dataset.supervisor === selectedSupervisor);
             row.hidden = !matches;

@@ -82,3 +82,10 @@ Code commits: `92374f84bad0529aa5292076abad0fb8ad156ded` (page UX), `a168cfffa63
 **CI verification — PASS:** GitHub Actions run [#41461453055](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41461453055) on code/test commit `bed1482f4e61db6d97ffcce1f5ed27c8e1a4809d` passed all six jobs. The PHP 8.2 lint job confirms the expanded Tree source contract, including title contrast, terminology, search/filters, bulk actions, selection retention and removal of the 500-row creation cap. This is source/CI evidence, not local browser verification.
 
 **Remaining local acceptance:** pull `main`, test search by name and code, each filter, bulk select/clear, selection retention while filtering, and a required-member validation error. Do not create real Tree records solely to test the picker. This UI follow-up does not close the broader Sponsor Tree local acceptance checklist.
+
+
+## 2026-11-02 — Sponsor Tree member search matching refinement
+
+The initial Tree-creation member picker now matches typed search text against the **beginning of the first name only**, rather than any substring anywhere in the full name. Sponsor-code matching remains available as a separate alternative. The existing `input` event continues to recalculate results immediately on both typing and deletion; gender/supervisor filters and checked selections remain independent. Arabic normalization remains in place. No schema, migration, POST, permission, membership or sponsorship behavior changed.
+
+A source-contract assertion now guards first-name prefix matching, retained sponsor-code matching, live input-event filtering and removal of full-name substring matching. Local PHP lint/contract execution and authenticated browser confirmation are pending; verify both typing and deleting characters before accepting the picker. No Tree records need to be created for this UI check.
