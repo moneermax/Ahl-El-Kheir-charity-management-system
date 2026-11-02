@@ -63,6 +63,12 @@ if ($childId > 0 && in_array($role, ['admin', 'vice_general_manager', 'superviso
     $availableSponsors = array_values(array_filter($availableSponsors, static fn(array $sponsor): bool => !in_array((int)$sponsor['id'], $activeSponsorIds, true)));
 }
 
+function ak_orphan_profile_refresh_match_status(int $childId, string $fallback): void
+{
+    $hasActive = dbFetchOne("SELECT id FROM sponsorships WHERE child_id = ? AND status IN ('active','paused') LIMIT 1", [$childId]);
+    dbExecute("UPDATE family_children SET match_status = ? WHERE id = ?", [$hasActive ? 'matched' : $fallback, $childId]);
+}
+
 function ak_orphan_profile_save_photo(int $childId): ?string
 {
     if ($childId <= 0 || empty($_FILES['photo']['name'])) return null;
@@ -113,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf() && isset($_POST['add_
             dbExecute("INSERT INTO sponsorships (sponsor_id, child_id, monthly_amount, currency_code, start_date, status, notes, created_by) VALUES (?, ?, ?, 'SDG', ?, 'active', ?, ?)",
                 [$newSponsorId, $childId, $newAmount, $newStartDate, $newNotes, $uid]);
             $newSponsorshipId = (int)dbLastInsertId();
+            dbExecute("UPDATE family_children SET match_status = 'matched' WHERE id = ?", [$childId]);
             $newCode = 'SH-' . str_pad((string)$newSponsorshipId, 6, '0', STR_PAD_LEFT);
             dbExecute("UPDATE sponsorships SET sponsorship_code = ? WHERE id = ?", [$newCode, $newSponsorshipId]);
             try {
