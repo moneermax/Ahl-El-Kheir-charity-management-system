@@ -3441,3 +3441,12 @@ The user pulled `main` and confirmed the VGM dashboard action and sidebar link b
 Final GitHub Actions run [#41430741112](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41430741112), run #3725, completed successfully on `main` head `16b82bb7addcbeeb13136940ef739e3a535531a1`. All six jobs passed: `php-lint`, `migration-full-schema`, `hr-job-description-migrations`, `sponsor-request-migration`, `migration-mariadb-10-4`, and `rescheduling-service-tests`.
 
 This closes the VGM navigation/reopen-control correction at its documented acceptance boundary. No schema or migration change was required. Do not repeat the checks or reopen this work without concrete regression evidence. The earlier pending-CI and pending-browser notes in this document are superseded by this final checkpoint.
+
+
+## Latest Sponsor Trees checkpoint — 2026-11-02
+
+Sponsor Trees are implemented on `main` and CI-verified. Read `docs/SPONSOR_TREES_CONTINUATION.md` before continuing. The entity is an ordinary company/organization sponsor; members are existing individual sponsor records in a many-to-many relationship. Type `optional_members` permits no members; `required_members` requires at least one active member. Membership is independent from individual sponsor status and orphan sponsorship.
+
+Shared orphan sponsorship is now supported consistently across general matching and orphan-profile creation. Duplicate active/paused sponsorship is checked per sponsor–orphan pair. Creation and complete/cancel lifecycle transitions lock the orphan and recalculate aggregate match state from all remaining active/paused relationships. Transactions remain attached to their original sponsorship.
+
+CI run [#41444537899](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41444537899) passed all six jobs on `3c1ac328afe95b4ef29fb4702a7a1a4df340605b`. Do not claim local acceptance: apply the migration and complete the browser/runtime checklist in the Tree continuation document first.
