@@ -6072,3 +6072,12 @@ A source-contract assertion now guards first-name prefix matching, retained spon
 User browser testing found that a valid multi-word name prefix such as `محمد ال` returned zero results. Source inspection identified the cause: the picker compared the full query against only the first name token. The search now compares the normalized full name's beginning with the complete query, so multi-word prefixes work without introducing arbitrary middle-name substring matches. Sponsor-code substring search and live filtering on typing/deletion remain unchanged.
 
 No schema/migration or membership/sponsorship behavior changed. The regression contract now guards full-name prefix matching. PHP lint, contract execution, CI and authenticated browser retest are pending.
+
+
+## 2026-11-02 — Sponsor Tree ownership and follow-up assignment
+
+VGM is the operational owner of Tree creation and membership: VGM creates each Tree, assigns its individual members, and assigns/reassigns the follow-up supervisor. Admin retains technical oversight. Assigned supervisors can view their Trees and member lists and see the Tree in their normal sponsor scope, but cannot create Trees, alter membership, or reassign the Tree. A supervisor is required at creation.
+
+Follow-up assignment reuses the existing sponsor assignment fields and `sponsor_supervisor_assignments` history. Because legal entities bypass the individual letter/gender assignment matrix, Tree assignment is explicitly marked as a manual override so the existing supervisor authorization recognizes it. No database migration or new schema object was added.
+
+The Tree heading, VGM navigation entry and sponsor-register shortcut now use a green tree icon. Source regression coverage and PHP lint are wired into CI; CI and local authenticated browser acceptance are pending.
