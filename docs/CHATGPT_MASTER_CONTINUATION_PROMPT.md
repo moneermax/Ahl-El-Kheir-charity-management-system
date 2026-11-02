@@ -3497,3 +3497,8 @@ The Tree heading, VGM navigation entry and sponsor-register shortcut now use a g
 Follow-up review found that the ordinary sponsor edit handler recalculated legal-entity supervisor assignment as null, which would silently remove a Tree's assigned follow-up supervisor. The edit handler now preserves a Tree's explicit manual supervisor assignment while the sponsor remains a company/organization, and blocks converting a Tree sponsor into an individual. This is scoped to records present in `sponsor_trees`; non-Tree sponsor assignment behavior is unchanged.
 
 The sponsor profile's Tree action now uses the green tree icon and labels the action as view-only for supervisors. The source contract covers the Tree-specific edit safeguard. No schema or migration change was made. CI and authenticated browser verification remain pending.
+
+
+## 2026-11-02 — Tree assignment history and supervisor lifecycle refinement
+
+Initial Tree assignment now uses `recordSponsorAssignment(..., 'tree_follow_up_assignment', 'permanent')` rather than the legacy-backfill helper, so the assignment history has the correct operational reason. Supervisor choices and server-side validation exclude supervisors whose lifecycle status is `departed` or `archived`, matching the current-supervisor list. Editing a Tree sponsor preserves the original `assigned_by` and `assigned_at` metadata as well as the supervisor ID. No schema change was introduced. CI and local runtime/browser verification remain pending.
