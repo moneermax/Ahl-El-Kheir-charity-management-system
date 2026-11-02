@@ -40,7 +40,7 @@ Migration: `database/migrations/2026-11-02_sponsor_trees.sql`
 
 ## Verification evidence
 
-GitHub Actions run [#41444537899](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41444537899) passed all six jobs on `main` commit `3c1ac328afe95b4ef29fb4702a7a1a4df340605b`. The follow-up lock-order correction and regression assertion are tracked by subsequent CI runs.
+GitHub Actions run [#41445182344](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41445182344) passed all six jobs on code/test commit `fcfbea2991d3171b2bb74f015e8d6a943e520ab8`, including the follow-up consistent orphan-first lock-order assertion. The follow-up lock-order correction and regression assertion are tracked by subsequent CI runs.
 
 Verified by CI:
 - PHP 8.2 syntax checks for the Tree page and changed sponsor/sponsorship/orphan pages.
