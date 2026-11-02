@@ -24,7 +24,9 @@ $submittedMemberIds = [];
 $submittedSupervisorId = (int) ($_POST['supervisor_id'] ?? 0);
 $treeSupervisors = dbFetchAll(
     "SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id
-     WHERE r.code = 'supervisor' ORDER BY u.full_name"
+     WHERE r.code = 'supervisor'
+       AND COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) NOT IN ('departed', 'archived')
+     ORDER BY u.full_name"
 );
 
 function ak_tree_gender_label(string $gender): string
@@ -56,7 +58,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $action = (string) ($_POST['action'] ?? '');
         try {
             if (in_array($action, ['create_tree', 'add_member', 'set_member_status', 'assign_supervisor'], true) && !$canManageTrees) {
-                throw new RuntimeException('إدارة الأشجار وعضويتها وتعيين مشرف المتابعة متاحة لنائب المدير العام فقط.');
+                throw new RuntimeException('إدارة الأشجار وعضويتها وتعيين مشرف المتابعة متاحة لنائب المدير العام أو مدير النظام فقط.');
             }
             if ($action === 'create_tree') {
                 $name = trim((string) ($_POST['full_name'] ?? ''));
@@ -81,7 +83,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if (!in_array($contactMethod, ['call', 'whatsapp', 'email', 'any'], true)) $errors[] = 'طريقة التواصل غير صحيحة.';
                 if (!in_array($payment, ['cash', 'bank_transfer', 'credit_card', 'mobile', 'other'], true)) $errors[] = 'طريقة الدفع غير صحيحة.';
                 $validSupervisor = $supervisorId > 0 ? dbFetchOne(
-                    "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND r.code = 'supervisor'",
+                    "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND r.code = 'supervisor'
+                      AND COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) NOT IN ('departed', 'archived')",
                     [$supervisorId]
                 ) : null;
                 if (!$validSupervisor) $errors[] = 'يجب اختيار مشرف متابعة صالح من قائمة المشرفين.';
