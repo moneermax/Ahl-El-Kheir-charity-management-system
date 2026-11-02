@@ -96,3 +96,12 @@ A source-contract assertion now guards first-name prefix matching, retained spon
 Browser feedback showed that searching a valid multi-word prefix such as `محمد ال` returned no results. Root cause: the picker reduced each full name to its first token, then tested that token against the entire query. The search now normalizes the complete name and checks `fullName.startsWith(query)`, preserving prefix-only matching while supporting multiple leading name words. Searching a word that appears only later in the name remains intentionally unsupported. Sponsor-code substring matching, immediate input/deletion filtering, gender/supervisor filters, and checkbox retention are unchanged.
 
 No schema, migration, POST, permission, membership or sponsorship behavior changed. Source-contract coverage now explicitly requires full-name prefix matching and rejects the former first-token-only expression. Local PHP lint, contract execution, CI and authenticated browser confirmation remain pending.
+
+
+## 2026-11-02 — Sponsor Tree ownership and follow-up assignment
+
+VGM is the operational owner of Tree creation and membership: VGM creates each Tree, selects its individual members, and assigns or reassigns its follow-up supervisor. Admin retains technical oversight. Assigned supervisors can view their Trees and member lists and see the Tree in their normal sponsor scope, but cannot create Trees, change membership, or reassign the Tree. A follow-up supervisor is mandatory at Tree creation.
+
+Assignment reuses the existing sponsor fields `supervisor_id`, `assigned_by`, `assigned_at`, and `is_manual_override`, plus the existing `sponsor_supervisor_assignments` history. Legal entities do not use the individual letter/gender assignment matrix, so Tree assignment is explicitly marked as a manual override for the existing supervisor-access helper. Reassignment records the assignment transition and a Tree audit event. No schema or migration change was required.
+
+The Tree page heading, VGM sidebar link and sponsor-register shortcut now use a green Font Awesome tree icon. Source regression coverage and PHP lint are wired into CI. CI and authenticated browser acceptance are pending.
