@@ -3432,3 +3432,12 @@ Added `tools/test_sponsor_request_navigation_reopen_contract.php` and wired it i
 **Verification boundary:** source changes are committed to `main`; GitHub Actions verification is pending. Authenticated local-browser confirmation is also pending. No request was reopened, no real sponsor/request record was changed, and no schema or migration change was made.
 
 Follow-up navigation polish: `modules/sponsors/requests.php` now sets the active sidebar key to `requests`, so the new VGM item (and the existing requests item for other authorized roles) is visibly highlighted on the queue page. The regression contract also asserts this state. Commits: `81e13424a7514716d0f571db9e37d3d82b847605` and `16b82bb7addcbeeb13136940ef739e3a535531a1`. The final CI run for this follow-up is pending.
+
+
+## 2026-11-02 — VGM sponsor-request navigation/reopen correction: browser acceptance CLOSED
+
+The user pulled `main` and confirmed the VGM dashboard action and sidebar link both open the sponsor-request queue, the sidebar item is highlighted while the queue is open, supervisor-assigned online individual requests do not expose the VGM reopen action, and eligible lost requests do expose it. The user did not click the reopen action; no real request or sponsor record was changed.
+
+Final GitHub Actions run [#41430741112](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41430741112), run #3725, completed successfully on `main` head `16b82bb7addcbeeb13136940ef739e3a535531a1`. All six jobs passed: `php-lint`, `migration-full-schema`, `hr-job-description-migrations`, `sponsor-request-migration`, `migration-mariadb-10-4`, and `rescheduling-service-tests`.
+
+This closes the VGM navigation/reopen-control correction at its documented acceptance boundary. No schema or migration change was required. Do not repeat the checks or reopen this work without concrete regression evidence. The earlier pending-CI and pending-browser notes in this document are superseded by this final checkpoint.
