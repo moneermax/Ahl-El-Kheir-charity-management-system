@@ -129,3 +129,16 @@ Migration: `database/migrations/2026-11-02_sponsor_tree_entity_categories.sql`, 
 **Verification boundary:** implementation and CI wiring are committed to `main`; GitHub Actions result and local Linux/XAMPP migration plus authenticated browser acceptance remain pending. Do not describe the feature as runtime-verified until those checks pass. Local application order: `2026-10-31_sponsor_legal_entity_contact_details.sql`, `2026-11-02_sponsor_trees.sql`, then `2026-11-02_sponsor_tree_entity_categories.sql`.
 
 **CI result update — 2026-11-02:** GitHub Actions run [#41482209346](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/41482209346) completed **SUCCESS** on commit `0cdd6da3667b8b94431dd1c1507a84d68e38380a`. All six jobs passed. The PHP job passed the expanded Sponsor Tree source contract and PHP syntax checks. The full-schema MariaDB 10.4 job imported the checked-in schema, applied the contact-details prerequisite, Tree migration, and entity-category migration twice, confirmed both new columns, and confirmed the original `sponsor_type` enum remains `individual/company/organization`. This is CI/schema/source evidence only; local authenticated browser acceptance remains pending.
+
+
+## 2026-11-02 — Entity-category menu locally accepted
+
+The user confirmed that the expanded entity-category menu works in the local application. The local schema inspection confirmed:
+- `sponsors.legal_entity_category` and `sponsors.legal_entity_category_other`;
+- legal-entity contact fields `contact_person_name`, `contact_person_position`, `preferred_contact_method`, and `preferred_contact_time`;
+- `sponsor_trees` and its core columns;
+- the unchanged `sponsors.sponsor_type` enum (`individual`, `company`, `organization`).
+
+The entity-category menu acceptance is **CLOSED**. Do not rerun/reapply the migrations unless a concrete schema regression appears.
+
+**Still open — broader authenticated Tree lifecycle acceptance:** verify VGM creation with optional/required member rules; one individual belonging to multiple Trees; ending/reactivating one membership without changing another Tree or the individual's sponsor status; supervisor view-only access and VGM reassignment; and shared sponsorships remaining independent when one sponsorship is completed/cancelled. Preserve audit/history records; do not delete test records as cleanup.
