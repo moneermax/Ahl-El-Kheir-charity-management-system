@@ -91,6 +91,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($name === '') $errors[] = 'اسم الشجرة مطلوب.';
                 if (!array_key_exists($entityCategory, $treeEntityCategories)) $errors[] = 'اختر نوع الجهة.';
                 if ($entityCategory === 'other' && $entityCategoryOther === '') $errors[] = 'يرجى توضيح نوع الجهة الأخرى.';
+                if ($entityCategory === 'other' && preg_match('/^.{1,150}$/us', $entityCategoryOther) !== 1) $errors[] = 'توضيح نوع الجهة الأخرى يجب ألا يتجاوز 150 حرفاً.';
                 if ($entityCategory !== 'other') $entityCategoryOther = '';
                 if (!in_array($treeType, ['optional_members', 'required_members'], true)) $errors[] = 'اختر نوع الشجرة.';
                 if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'البريد الإلكتروني غير صالح.';
