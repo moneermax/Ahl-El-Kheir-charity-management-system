@@ -2,25 +2,36 @@
 declare(strict_types=1);
 
 $error = '';
+$existingSponsors = $pdo->query('SELECT id, sponsor_name FROM mde_sponsors ORDER BY sponsor_name')->fetchAll();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mde_verify_csrf();
         $sponsorName = trim((string) ($_POST['sponsor_name'] ?? ''));
+        $selectedSponsorId = filter_var($_POST['existing_sponsor_id'] ?? null, FILTER_VALIDATE_INT);
         $entryDate = (string) ($_POST['entry_date'] ?? '');
         $enteredBy = trim((string) ($_POST['entered_by'] ?? ''));
         $supervisor = trim((string) ($_POST['supervisor_name'] ?? ''));
         $notes = trim((string) ($_POST['notes'] ?? ''));
         $families = $_POST['families'] ?? [];
 
-        if ($sponsorName === '' || count($families) < 1) {
-            throw new InvalidArgumentException('أدخل اسم الكفيل وبيانات أسرة واحدة على الأقل.');
+        if ((!$selectedSponsorId && $sponsorName === '') || count($families) < 1) {
+            throw new InvalidArgumentException('اختر كفيلاً موجوداً أو أدخل اسم كفيل جديد، وأضف بيانات أسرة واحدة على الأقل.');
         }
         $month = mde_month_start($entryDate);
         $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare('INSERT INTO mde_sponsors (sponsor_name) VALUES (?)');
-        $stmt->execute([$sponsorName]);
-        $sponsorId = (int) $pdo->lastInsertId();
+        if ($selectedSponsorId) {
+            $sponsorCheck = $pdo->prepare('SELECT id FROM mde_sponsors WHERE id = ?');
+            $sponsorCheck->execute([$selectedSponsorId]);
+            if (!$sponsorCheck->fetch()) {
+                throw new InvalidArgumentException('الكفيل المحدد غير موجود.');
+            }
+            $sponsorId = $selectedSponsorId;
+        } else {
+            $stmt = $pdo->prepare('INSERT INTO mde_sponsors (sponsor_name) VALUES (?)');
+            $stmt->execute([$sponsorName]);
+            $sponsorId = (int) $pdo->lastInsertId();
+        }
 
         $motherStmt = $pdo->prepare('INSERT INTO mde_mothers (mother_name) VALUES (?)');
         $orphanStmt = $pdo->prepare('INSERT INTO mde_orphans (mother_id, orphan_name) VALUES (?, ?)');
@@ -84,7 +95,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <form method="post" class="card p-3 p-md-4">
 <input type="hidden" name="_csrf" value="<?= mde_h(mde_csrf_token()) ?>">
 <div class="row g-3 mb-4">
- <div class="col-md-6"><label class="form-label required">اسم الكفيل</label><input class="form-control" name="sponsor_name" required maxlength="255"></div>
+ <div class="col-md-6"><label class="form-label">إضافة إلى كفيل موجود (اختياري)</label><select class="form-select" name="existing_sponsor_id" id="existingSponsor"><option value="">— تسجيل كفيل جديد —</option><?php foreach ($existingSponsors as $existing): ?><option value="<?= (int)$existing['id'] ?>"><?= mde_h($existing['sponsor_name']) ?></option><?php endforeach; ?></select></div>
+ <div class="col-md-6"><label class="form-label" id="sponsorNameLabel">اسم الكفيل الجديد</label><input class="form-control" name="sponsor_name" id="sponsorName" maxlength="255"></div>
  <div class="col-md-3"><label class="form-label required">تاريخ الانضمام</label><input type="date" class="form-control" name="entry_date" required value="<?= date('Y-m-d') ?>"></div>
  <div class="col-md-3"><label class="form-label">بواسطة</label><input class="form-control" name="entered_by"></div>
  <div class="col-md-6"><label class="form-label">المشرف</label><input class="form-control" name="supervisor_name"></div>
@@ -141,6 +153,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   if(e.target.matches('.remove-orphan')){const block=e.target.closest('.family-block');e.target.closest('.orphan-row').remove();if(!block.querySelector('.orphan-row'))addOrphan(block);reindex();}
   if(e.target.matches('.remove-donation')){e.target.closest('.donation-row').remove();reindex();}
  });
+ const existing=document.getElementById('existingSponsor'), sponsorName=document.getElementById('sponsorName');
+ function syncSponsorMode(){const isExisting=!!existing.value;sponsorName.required=!isExisting;sponsorName.disabled=isExisting;if(isExisting)sponsorName.value='';}
+ existing.addEventListener('change',syncSponsorMode);syncSponsorMode();
  addFamily();
 })();
 </script>
