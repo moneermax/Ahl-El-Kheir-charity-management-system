@@ -7,6 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mde_verify_csrf();
         $sponsorName = trim((string) ($_POST['sponsor_name'] ?? ''));
+        $fileNumber = trim((string) ($_POST['file_number'] ?? ''));
         $selectedSponsorId = filter_var($_POST['existing_sponsor_id'] ?? null, FILTER_VALIDATE_INT);
         $entryDate = (string) ($_POST['entry_date'] ?? '');
         $enteredBy = trim((string) ($_POST['entered_by'] ?? ''));
@@ -27,10 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new InvalidArgumentException('الكفيل المحدد غير موجود.');
             }
             $sponsorId = $selectedSponsorId;
-            $pdo->prepare('UPDATE mde_sponsors SET is_active = 1 WHERE id = ?')->execute([$sponsorId]);
+            $pdo->prepare('UPDATE mde_sponsors SET is_active = 1, file_number = COALESCE(NULLIF(?, \'\'), file_number) WHERE id = ?')->execute([$fileNumber, $sponsorId]);
         } else {
-            $stmt = $pdo->prepare('INSERT INTO mde_sponsors (sponsor_name) VALUES (?)');
-            $stmt->execute([$sponsorName]);
+            $stmt = $pdo->prepare('INSERT INTO mde_sponsors (sponsor_name, file_number) VALUES (?, ?)');
+            $stmt->execute([$sponsorName, $fileNumber ?: null]);
             $sponsorId = (int) $pdo->lastInsertId();
         }
 
@@ -98,6 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <div class="row g-3 mb-4">
  <div class="col-md-6"><label class="form-label">إضافة إلى كفيل موجود (اختياري)</label><select class="form-select" name="existing_sponsor_id" id="existingSponsor"><option value="">— تسجيل كفيل جديد —</option><?php foreach ($existingSponsors as $existing): ?><option value="<?= (int)$existing['id'] ?>"><?= mde_h($existing['sponsor_name']) ?></option><?php endforeach; ?></select></div>
  <div class="col-md-6"><label class="form-label" id="sponsorNameLabel">اسم الكفيل الجديد</label><input class="form-control" name="sponsor_name" id="sponsorName" maxlength="255"></div>
+ <div class="col-md-3"><label class="form-label">رقم الملف (إن وجد)</label><input class="form-control" name="file_number" maxlength="100"></div>
  <div class="col-md-3"><label class="form-label required">تاريخ الانضمام</label><input type="date" class="form-control" name="entry_date" required value="<?= date('Y-m-d') ?>"></div>
  <div class="col-md-3"><label class="form-label">بواسطة</label><input class="form-control" name="entered_by"></div>
  <div class="col-md-6"><label class="form-label">المشرف</label><input class="form-control" name="supervisor_name"></div>
