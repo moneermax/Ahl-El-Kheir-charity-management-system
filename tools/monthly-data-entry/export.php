@@ -49,6 +49,100 @@ $donationsStmt->execute([$monthStart]);
 $donations = $donationsStmt->fetchAll();
 
 $filenameMonth = $monthDate->format('Y-m');
+
+if ($format === 'xlsx') {
+    if (!class_exists(ZipArchive::class)) {
+        http_response_code(503);
+        exit('امتداد ZIP غير مفعل في PHP؛ استخدم تصدير CSV مؤقتاً أو فعّل ZipArchive.');
+    }
+
+    $sheetRows = [];
+    $sheetRows[] = [['التقرير الشهري - ' . $filenameMonth, 's']];
+    $sheetRows[] = [];
+    $sheetRows[] = [['الكفالات والخدمات', 's']];
+    $sheetRows[] = [['الكفيل','s'],['الأم','s'],['اليتيم','s'],['قيمة الكفالة','s'],['الخدمات','s'],['بواسطة','s'],['المشرف','s']];
+    foreach ($rows as $row) {
+        $sheetRows[] = [
+            [$row['sponsor_name'],'s'],[$row['mother_name'],'s'],[$row['orphan_name'],'s'],
+            [(int)$row['sponsorship_amount'],'n'],[(int)$row['services_amount'],'n'],
+            [$row['entered_by'],'s'],[$row['supervisor_name'],'s']
+        ];
+    }
+    $sheetRows[] = [];
+    $sheetRows[] = [['التبرعات الأخرى','s']];
+    $sheetRows[] = [['الكفيل','s'],['نوع التبرع','s'],['التاريخ','s'],['القيمة','s'],['ملاحظات','s']];
+    foreach ($donations as $row) {
+        $sheetRows[] = [
+            [$row['sponsor_name'],'s'],[$row['donation_type'],'s'],[$row['donation_date'],'s'],
+            [(int)$row['amount'],'n'],[$row['notes'],'s']
+        ];
+    }
+    $sheetRows[] = [];
+    $sheetRows[] = [['مغادرات الكفلاء','s']];
+    $sheetRows[] = [['الكفيل','s'],['تاريخ المغادرة','s'],['عدد الأيتام','s'],['قيمة الكفالة','s'],['الخدمات','s'],['آخر سداد','s']];
+    foreach ($departures as $row) {
+        $sheetRows[] = [
+            [$row['sponsor_name'],'s'],[$row['departure_date'],'s'],[(int)$row['orphan_count_snapshot'],'n'],
+            [(int)$row['sponsorship_amount_snapshot'],'n'],[(int)$row['services_amount_snapshot'],'n'],[$row['last_paid_month'],'s']
+        ];
+    }
+
+    $columnName = static function (int $number): string {
+        $name = '';
+        while ($number > 0) {
+            $remainder = ($number - 1) % 26;
+            $name = chr(65 + $remainder) . $name;
+            $number = intdiv($number - 1, 26);
+        }
+        return $name;
+    };
+    $sheetXml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>';
+    $sheetXml .= '<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0" rightToLeft="1"/></sheetViews><sheetFormatPr defaultRowHeight="18"/><sheetData>';
+    foreach ($sheetRows as $rowIndex => $cells) {
+        $excelRow = $rowIndex + 1;
+        $sheetXml .= '<row r="' . $excelRow . '">';
+        foreach ($cells as $columnIndex => $cell) {
+            $reference = $columnName($columnIndex + 1) . $excelRow;
+            $value = $cell[0] ?? '';
+            $type = $cell[1] ?? 's';
+            if ($type === 'n' && $value !== null && $value !== '') {
+                $sheetXml .= '<c r="' . $reference . '"><v>' . (int)$value . '</v></c>';
+            } else {
+                $safe = htmlspecialchars((string)($value ?? ''), ENT_XML1 | ENT_COMPAT, 'UTF-8');
+                $sheetXml .= '<c r="' . $reference . '" t="inlineStr"><is><t xml:space="preserve">' . $safe . '</t></is></c>';
+            }
+        }
+        $sheetXml .= '</row>';
+    }
+    $sheetXml .= '</sheetData></worksheet>';
+
+    $tmpFile = tempnam(sys_get_temp_dir(), 'mde_xlsx_');
+    if ($tmpFile === false) {
+        http_response_code(500);
+        exit('تعذر إنشاء ملف Excel مؤقت.');
+    }
+    $zip = new ZipArchive();
+    if ($zip->open($tmpFile, ZipArchive::OVERWRITE) !== true) {
+        @unlink($tmpFile);
+        http_response_code(500);
+        exit('تعذر تجهيز ملف Excel.');
+    }
+    $zip->addFromString('[Content_Types].xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>');
+    $zip->addFromString('_rels/.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>');
+    $zip->addFromString('xl/workbook.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="التقرير الشهري" sheetId="1" r:id="rId1"/></sheets></workbook>');
+    $zip->addFromString('xl/_rels/workbook.xml.rels', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>');
+    $zip->addFromString('xl/styles.xml', '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="1"><font><sz val="11"/><name val="Arial"/></font></fonts><fills count="1"><fill><patternFill patternType="none"/></fill></fills><borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="1"><xf xfId="0"/></cellXfs></styleSheet>');
+    $zip->addFromString('xl/worksheets/sheet1.xml', $sheetXml);
+    $zip->close();
+
+    header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    header('Content-Disposition: attachment; filename="monthly-report-' . $filenameMonth . '.xlsx"');
+    header('Content-Length: ' . filesize($tmpFile));
+    readfile($tmpFile);
+    @unlink($tmpFile);
+    exit;
+}
+
 if ($format === 'csv') {
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="monthly-report-' . $filenameMonth . '.csv"');
