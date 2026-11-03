@@ -3521,3 +3521,11 @@ Migration: `database/migrations/2026-11-02_sponsor_tree_entity_categories.sql`, 
 The user confirmed the expanded entity-category menu works locally. Schema inspection confirms the contact-person fields, the two legal-entity category fields, and the `sponsor_trees` table are present; the existing sponsor-type enum remains unchanged. Do not rerun/reapply the prerequisite migrations without concrete evidence that the schema is missing.
 
 The category-menu acceptance is closed. Continue only with the remaining Sponsor Tree lifecycle acceptance documented in `docs/SPONSOR_TREES_CONTINUATION.md`; do not infer that member lifecycle, supervisor visibility/reassignment, or shared-sponsorship isolation passed from this menu confirmation.
+
+## 2026-11-03 — Tree native-select popup experiment
+
+User-reported issue: on `modules/sponsors/trees.php`, the entity-category selector, Tree follow-up supervisor selector, and member-picker supervisor filter may close immediately or unexpectedly select an option when reopened. Source inspection found no page JavaScript that assigns values to these selects or programmatically closes their popup. The behavior is therefore not attributed to application logic at this stage.
+
+A narrowly scoped progressive enhancement was added to the affected selectors (including both Tree follow-up supervisor controls): `appearance: base-select` on the select and `::picker(select)`, guarded by `@supports (appearance: base-select)` and the page-only `.tree-page-select` class. Unsupported browsers retain the existing native select UI. No values, event handlers, form behavior, database schema, or other modules were changed.
+
+**Verification boundary:** source change committed; local Linux Mint/Chrome browser acceptance is pending. This is an evidence-based browser-popup workaround experiment, not a proven root-cause fix. Test opening each affected dropdown, dismissing it without selection, reopening it, keyboard navigation, selected value persistence, and form submission. If the symptom persists, do not add JS value-reset/focus hacks; capture the browser/desktop environment and isolate the native popup behavior first.
