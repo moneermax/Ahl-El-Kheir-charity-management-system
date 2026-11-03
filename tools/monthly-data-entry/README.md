@@ -4,13 +4,13 @@ A standalone Arabic RTL data-entry and monthly reporting tool for Ahl El Kheir. 
 
 ## Implemented first pass
 
-- Register a new sponsor or add new sponsorships to an existing sponsor.
+- Register a new sponsor or add new sponsorships to an existing sponsor, with an optional sponsor file number.
 - Enter multiple mother groups for one sponsor, with one or more orphans under each mother.
 - Each orphan is linked to one mother; a mother can have multiple orphans.
 - Each sponsor/orphan relationship is a separate sponsorship record. An orphan can also have multiple sponsors.
 - Store monthly sponsorship and service amounts per sponsorship.
 - Store other donations as separate monthly entries.
-- Record sponsor departure with a dated financial snapshot; end that sponsor's active sponsorships without deleting historical data.
+- Record sponsor departure with file number, last-paid month, orphan count, and dated financial snapshots; end that sponsor's active sponsorships without deleting historical data.
 - Monthly report page with totals and detail lists.
 - Export the selected month as PDF, native XLSX, or Excel-compatible CSV.
 
