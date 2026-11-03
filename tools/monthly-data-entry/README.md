@@ -1,26 +1,33 @@
 # Monthly Data Entry Tool
 
-A standalone data-entry and monthly reporting tool for Ahl El Kheir. It is isolated from the charity management system's operational modules and uses a dedicated database: `ahl_el_kheir_monthly_data`.
+A standalone Arabic RTL data-entry and monthly reporting tool for Ahl El Kheir. It is isolated from the charity management system's operational modules and uses a dedicated database: `ahl_el_kheir_monthly_data`.
 
-## Current scope
+## Implemented first pass
 
-- Record sponsors and their sponsorships.
-- One sponsor can have multiple sponsorships for multiple orphans.
+- Register a new sponsor or add new sponsorships to an existing sponsor.
+- Enter multiple mother groups for one sponsor, with one or more orphans under each mother.
 - Each orphan is linked to one mother; a mother can have multiple orphans.
-- Sponsorships are independent records, allowing an orphan to receive support from multiple sponsors.
-- Store monthly sponsorship and service amounts.
+- Each sponsor/orphan relationship is a separate sponsorship record. An orphan can also have multiple sponsors.
+- Store monthly sponsorship and service amounts per sponsorship.
 - Store other donations as separate monthly entries.
-- Record a sponsorship departure without deleting the sponsor, orphan, sponsorship, or historical monthly entries.
-- Build reports by reporting month.
+- Record sponsor departure with a dated financial snapshot; end that sponsor's active sponsorships without deleting historical data.
+- Monthly report page with totals and detail lists.
+- Export the selected month as PDF, native XLSX, or Excel-compatible CSV.
 
 ## Database installation
 
-1. Create the database by importing `database/schema.sql` into MariaDB/MySQL.
-2. Do not run this SQL from application requests. It is an explicit installation script.
-3. Configure the tool's database connection in the application config (configuration file is not committed).
-4. Use a dedicated database account with access only to `ahl_el_kheir_monthly_data` when the environment is deployed beyond a local development machine.
+1. Import `database/schema.sql` into MariaDB/MySQL. It creates the dedicated database `ahl_el_kheir_monthly_data`.
+2. Copy `config/database.example.php` to `config/database.php` and set the local database credentials.
+3. Open `/tools/monthly-data-entry/` under the repository's local web root.
 
-The schema uses InnoDB, utf8mb4, foreign keys, integer SDG amounts, and restrictive deletes to protect historical records.
+The SQL file is an explicit installation script and is never executed by application requests. The schema uses InnoDB, utf8mb4, foreign keys, integer SDG amounts, and restrictive deletes to protect historical records.
+
+## Requirements
+
+- PHP 8.2+ with PDO MySQL.
+- MariaDB 10.4+ or compatible MySQL.
+- The repository's root `TCPDF/` library for PDF export.
+- PHP `ZipArchive` extension for XLSX export. CSV export remains available if ZipArchive is unavailable.
 
 ## Data model
 
@@ -33,14 +40,16 @@ The schema uses InnoDB, utf8mb4, foreign keys, integer SDG amounts, and restrict
 - `mde_sponsor_departures`: sponsor-level dated departure event and financial snapshot.
 - `mde_schema_version`: installed schema version.
 
-## Important reporting rule
+## Reporting rules
 
-A report month is stored as the first calendar day of that month. Monthly values are attached to that month explicitly. Departure reports use the actual departure date. Historical monthly entries are retained after a sponsorship ends.
+- A report month is stored as the first calendar day of that month.
+- Sponsorship, service, and other-donation values are assigned to an explicit report month.
+- Departures are grouped by the actual departure date.
+- Historical monthly entries remain reportable after a sponsorship ends.
+- Amounts are stored as integer SDG units; no floating-point arithmetic is used.
 
-## Planned application pages
+## Security and deployment status
 
-- Sponsor / mother / orphan / sponsorship entry.
-- Sponsorship departure entry.
-- Monthly reports with PDF and Excel export.
+This is an initial local-development build, not yet safe for public internet deployment: the standalone tool does not yet have its own login or role-based access control. Keep it on localhost or behind trusted network access until authentication and authorization are implemented. Database credentials are ignored by Git, and direct HTTP access to the config and SQL folders is denied by the included Apache rules.
 
-This tool intentionally does not read or write the main application's tables, sessions, permissions, or business workflows.
+The tool intentionally does not read or write the main application's tables, sessions, permissions, or business workflows.
