@@ -19,6 +19,14 @@ $summaryStmt = $pdo->prepare("
 $summaryStmt->execute([$monthStart,$monthStart,$monthStart,$monthStart,$monthStart,$monthEnd,$monthStart]);
 $summary = $summaryStmt->fetch();
 
+$newSponsorsStmt = $pdo->prepare('SELECT COUNT(*) FROM (SELECT sponsor_id, MIN(start_date) AS first_start FROM mde_sponsorships GROUP BY sponsor_id HAVING MIN(start_date) BETWEEN ? AND ?) first_sponsor_dates');
+$newSponsorsStmt->execute([$monthStart, $monthEnd]);
+$newSponsors = (int) $newSponsorsStmt->fetchColumn();
+
+$departureTotalsStmt = $pdo->prepare('SELECT COALESCE(SUM(sponsorship_amount_snapshot),0) AS sponsorship_total, COALESCE(SUM(services_amount_snapshot),0) AS services_total FROM mde_sponsor_departures WHERE departure_date BETWEEN ? AND ?');
+$departureTotalsStmt->execute([$monthStart, $monthEnd]);
+$departureTotals = $departureTotalsStmt->fetch();
+
 $listStmt = $pdo->prepare("
  SELECT sp.sponsor_name, mo.mother_name, o.orphan_name, me.sponsorship_amount, me.services_amount, me.entered_by, me.supervisor_name
  FROM mde_monthly_sponsorship_entries me
@@ -52,12 +60,15 @@ function mde_money(mixed $amount): string { return number_format((int)$amount) .
 </div>
 <div class="row g-3 mb-4">
  <?php foreach([
+  ['الكفلاء الجدد',$newSponsors],
   ['عدد سجلات الكفالة',$summary['sponsorship_rows']],
   ['عدد الأيتام المكفولين',$summary['sponsored_orphans']],
   ['إجمالي الكفالات',mde_money($summary['sponsorship_total'])],
   ['إجمالي الخدمات',mde_money($summary['services_total'])],
   ['التبرعات الأخرى',mde_money($summary['other_donations_total'])],
-  ['مغادرات الكفلاء',$summary['departures']]
+  ['مغادرات الكفلاء',$summary['departures']],
+  ['قيمة الكفالات عند المغادرة',mde_money($departureTotals['sponsorship_total'])],
+  ['الخدمات عند المغادرة',mde_money($departureTotals['services_total'])]
  ] as [$label,$value]): ?>
  <div class="col-6 col-lg-4"><div class="card p-3 h-100"><div class="text-secondary small"><?= mde_h($label) ?></div><div class="h4 mb-0 mt-2"><?= mde_h($value) ?></div></div></div>
  <?php endforeach; ?>
