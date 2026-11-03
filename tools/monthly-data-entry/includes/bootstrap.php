@@ -1,7 +1,12 @@
 <?php
 declare(strict_types=1);
 
+date_default_timezone_set('Africa/Khartoum');
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
+    ini_set('session.use_strict_mode', '1');
+    ini_set('session.cookie_httponly', '1');
+    ini_set('session.cookie_samesite', 'Strict');
     session_start();
 }
 
