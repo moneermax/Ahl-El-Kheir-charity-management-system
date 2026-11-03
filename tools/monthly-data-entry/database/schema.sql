@@ -115,11 +115,12 @@ CREATE TABLE IF NOT EXISTS mde_monthly_other_donations (
     CONSTRAINT chk_mde_donation_month_first_day CHECK (DAYOFMONTH(report_month) = 1)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- A departure is recorded against a specific sponsorship, not by deleting
--- the sponsor/orphan. Historical monthly entries remain reportable.
-CREATE TABLE IF NOT EXISTS mde_sponsorship_departures (
+-- A departure is recorded at sponsor level because the source workflow tracks
+-- one sponsor's overall departure and aggregate orphan/amount snapshots.
+-- This never deletes sponsorships or their historical monthly entries.
+CREATE TABLE IF NOT EXISTS mde_sponsor_departures (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-    sponsorship_id BIGINT UNSIGNED NOT NULL,
+    sponsor_id BIGINT UNSIGNED NOT NULL,
     departure_date DATE NOT NULL,
     last_paid_month DATE NULL,
     orphan_count_snapshot SMALLINT UNSIGNED NULL,
@@ -131,10 +132,10 @@ CREATE TABLE IF NOT EXISTS mde_sponsorship_departures (
     notes TEXT NULL,
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
-    UNIQUE KEY uq_mde_departure_sponsorship (sponsorship_id),
+    KEY idx_mde_departures_sponsor (sponsor_id),
     KEY idx_mde_departures_date (departure_date),
-    CONSTRAINT fk_mde_departures_sponsorship FOREIGN KEY (sponsorship_id)
-      REFERENCES mde_sponsorships(id) ON UPDATE CASCADE ON DELETE RESTRICT
+    CONSTRAINT fk_mde_departures_sponsor FOREIGN KEY (sponsor_id)
+      REFERENCES mde_sponsors(id) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Keeps a small, explicit record of schema installation/version for this tool.
