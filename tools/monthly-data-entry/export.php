@@ -122,7 +122,7 @@ if ($format === 'xlsx') {
         exit('تعذر إنشاء ملف Excel مؤقت.');
     }
     $zip = new ZipArchive();
-    if ($zip->open($tmpFile, ZipArchive::OVERWRITE) !== true) {
+    if ($zip->open($tmpFile, ZipArchive::CREATE | ZipArchive::OVERWRITE) !== true) {
         @unlink($tmpFile);
         http_response_code(500);
         exit('تعذر تجهيز ملف Excel.');
