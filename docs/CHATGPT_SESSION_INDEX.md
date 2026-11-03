@@ -3592,3 +3592,11 @@ Migration: `database/migrations/2026-11-02_sponsor_tree_entity_categories.sql`, 
 The user confirmed that the expanded entity-category menu works in the local application. The local database schema was independently inspected: `sponsors` contains `legal_entity_category`, `legal_entity_category_other`, `contact_person_name`, `contact_person_position`, `preferred_contact_method`, and `preferred_contact_time`; `sponsor_trees` exists with its expected core columns. The existing `sponsor_type` enum remains `individual/company/organization`.
 
 Do not rerun or reapply the three Sponsor Tree prerequisite migrations merely because the session changes. The category-menu acceptance is closed. The broader Tree lifecycle acceptance (VGM ownership, member lifecycle, supervisor visibility/reassignment, and shared-sponsorship isolation) remains a separate open verification gate; do not claim it passed from the menu confirmation alone.
+
+## 2026-11-03 — Tree native-select popup experiment
+
+User-reported issue: on `modules/sponsors/trees.php`, the entity-category selector, Tree follow-up supervisor selector, and member-picker supervisor filter may close immediately or unexpectedly select an option when reopened. Source inspection found no page JavaScript that assigns values to these selects or programmatically closes their popup. The behavior is therefore not attributed to application logic at this stage.
+
+A narrowly scoped progressive enhancement was added to the affected selectors (including both Tree follow-up supervisor controls): `appearance: base-select` on the select and `::picker(select)`, guarded by `@supports (appearance: base-select)` and the page-only `.tree-page-select` class. Unsupported browsers retain the existing native select UI. No values, event handlers, form behavior, database schema, or other modules were changed.
+
+**Verification boundary:** source change committed; local Linux Mint/Chrome browser acceptance is pending. This is an evidence-based browser-popup workaround experiment, not a proven root-cause fix. Test opening each affected dropdown, dismissing it without selection, reopening it, keyboard navigation, selected value persistence, and form submission. If the symptom persists, do not add JS value-reset/focus hacks; capture the browser/desktop environment and isolate the native popup behavior first.
