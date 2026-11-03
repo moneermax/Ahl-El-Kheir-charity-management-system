@@ -30,7 +30,7 @@ The schema uses InnoDB, utf8mb4, foreign keys, integer SDG amounts, and restrict
 - `mde_sponsorships`: sponsor-to-orphan relationship and lifecycle.
 - `mde_monthly_sponsorship_entries`: monthly sponsorship and service values per sponsorship.
 - `mde_monthly_other_donations`: monthly donations outside the regular sponsorship amount.
-- `mde_sponsorship_departures`: dated departure event and financial snapshot.
+- `mde_sponsor_departures`: sponsor-level dated departure event and financial snapshot.
 - `mde_schema_version`: installed schema version.
 
 ## Important reporting rule
