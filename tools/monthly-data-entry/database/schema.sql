@@ -11,6 +11,7 @@ USE ahl_el_kheir_monthly_data;
 CREATE TABLE IF NOT EXISTS mde_sponsors (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     sponsor_name VARCHAR(255) NOT NULL,
+    file_number VARCHAR(100) NULL,
     phone VARCHAR(50) NULL,
     address VARCHAR(500) NULL,
     notes TEXT NULL,
@@ -121,6 +122,7 @@ CREATE TABLE IF NOT EXISTS mde_monthly_other_donations (
 CREATE TABLE IF NOT EXISTS mde_sponsor_departures (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     sponsor_id BIGINT UNSIGNED NOT NULL,
+    file_number_snapshot VARCHAR(100) NULL,
     departure_date DATE NOT NULL,
     last_paid_month DATE NULL,
     orphan_count_snapshot SMALLINT UNSIGNED NULL,
