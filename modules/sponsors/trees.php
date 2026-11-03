@@ -421,7 +421,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <input type="hidden" name="tree_id" value="<?php echo $treeId; ?>">
             <div class="col-md-8">
                 <label class="form-label">مشرف متابعة الشجرة</label>
-                <select class="form-select" name="supervisor_id" required>
+                <select class="form-select tree-page-select" name="supervisor_id" required>
                     <option value="">اختر المشرف المسؤول</option>
                     <?php foreach ($treeSupervisors as $treeSupervisor): ?>
                         <option value="<?php echo (int) $treeSupervisor['id']; ?>" <?php echo (int) $currentTree['supervisor_id'] === (int) $treeSupervisor['id'] ? 'selected' : ''; ?>><?php echo e($treeSupervisor['full_name']); ?></option>
@@ -458,10 +458,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <form method="post"><input type="hidden" name="action" value="create_tree"><?php echo csrf_field(); ?>
             <div class="row g-3">
                 <div class="col-md-6"><label class="form-label">اسم الشجرة *</label><input class="form-control" name="full_name" required></div>
-                <div class="col-md-3"><label class="form-label">نوع الجهة *</label><select class="form-select" name="entity_category" id="treeEntityCategory" required><option value="">اختر</option><?php foreach ($treeEntityCategories as $categoryValue => $categoryLabel): ?><option value="<?php echo e($categoryValue); ?>" <?php echo $submittedEntityCategory === $categoryValue ? 'selected' : ''; ?>><?php echo e($categoryLabel); ?></option><?php endforeach; ?></select></div>
+                <div class="col-md-3"><label class="form-label">نوع الجهة *</label><select class="form-select tree-page-select" name="entity_category" id="treeEntityCategory" required><option value="">اختر</option><?php foreach ($treeEntityCategories as $categoryValue => $categoryLabel): ?><option value="<?php echo e($categoryValue); ?>" <?php echo $submittedEntityCategory === $categoryValue ? 'selected' : ''; ?>><?php echo e($categoryLabel); ?></option><?php endforeach; ?></select></div>
                 <div class="col-md-3" id="treeEntityCategoryOtherWrap" <?php echo $submittedEntityCategory === 'other' ? '' : 'hidden'; ?>><label class="form-label" for="treeEntityCategoryOther">توضيح نوع الجهة *</label><input class="form-control" type="text" name="entity_category_other" id="treeEntityCategoryOther" maxlength="150" value="<?php echo e($submittedEntityCategoryOther); ?>" <?php echo $submittedEntityCategory === 'other' ? 'required' : ''; ?>></div>
                 <div class="col-md-3"><label class="form-label">نوع الشجرة *</label><select class="form-select" name="tree_type" id="treeType" required><option value="">اختر</option><option value="optional_members">أعضاء اختياريون (يمكن الإنشاء دون أعضاء)</option><option value="required_members">أعضاء إلزاميون (عضو واحد على الأقل)</option></select></div>
-                <div class="col-md-6"><label class="form-label">مشرف متابعة الشجرة *</label><select class="form-select" name="supervisor_id" required><option value="">اختر المشرف المسؤول عن المتابعة</option><?php foreach ($treeSupervisors as $treeSupervisor): ?><option value="<?php echo (int) $treeSupervisor['id']; ?>" <?php echo $submittedSupervisorId === (int) $treeSupervisor['id'] ? 'selected' : ''; ?>><?php echo e($treeSupervisor['full_name']); ?></option><?php endforeach; ?></select></div>
+                <div class="col-md-6"><label class="form-label">مشرف متابعة الشجرة *</label><select class="form-select tree-page-select" name="supervisor_id" required><option value="">اختر المشرف المسؤول عن المتابعة</option><?php foreach ($treeSupervisors as $treeSupervisor): ?><option value="<?php echo (int) $treeSupervisor['id']; ?>" <?php echo $submittedSupervisorId === (int) $treeSupervisor['id'] ? 'selected' : ''; ?>><?php echo e($treeSupervisor['full_name']); ?></option><?php endforeach; ?></select></div>
                 <div class="col-md-3"><label class="form-label">الهاتف</label><input class="form-control" name="phone" dir="ltr"></div>
                 <div class="col-md-3"><label class="form-label">البريد الإلكتروني</label><input class="form-control" type="email" name="email" dir="ltr"></div>
                 <div class="col-md-6"><label class="form-label">العنوان</label><input class="form-control" name="address"></div>
@@ -489,7 +489,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             </div>
                             <div class="col-sm-6 col-lg-3">
                                 <label class="form-label" for="treeMemberSupervisorFilter">المشرف</label>
-                                <select class="form-select" id="treeMemberSupervisorFilter">
+                                <select class="form-select tree-page-select" id="treeMemberSupervisorFilter">
                                     <option value="">كل المشرفين</option>
                                     <option value="0">بدون مشرف</option>
                                     <?php foreach ($memberSupervisors as $memberSupervisor): ?>
@@ -540,6 +540,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </tbody></table></div></div></div>
 <style>
 .tree-member-picker .tree-member-option[hidden] { display: none !important; }
+
+/* Progressive enhancement: keep the affected Tree selectors inside the browser's top layer. */
+@supports (appearance: base-select) {
+    .tree-page-select,
+    .tree-page-select::picker(select) {
+        appearance: base-select;
+    }
+}
 </style>
 <script>
 (function () {
