@@ -142,3 +142,11 @@ The user confirmed that the expanded entity-category menu works in the local app
 The entity-category menu acceptance is **CLOSED**. Do not rerun/reapply the migrations unless a concrete schema regression appears.
 
 **Still open — broader authenticated Tree lifecycle acceptance:** verify VGM creation with optional/required member rules; one individual belonging to multiple Trees; ending/reactivating one membership without changing another Tree or the individual's sponsor status; supervisor view-only access and VGM reassignment; and shared sponsorships remaining independent when one sponsorship is completed/cancelled. Preserve audit/history records; do not delete test records as cleanup.
+
+## 2026-11-03 — Tree native-select popup experiment
+
+User-reported issue: on `modules/sponsors/trees.php`, the entity-category selector, Tree follow-up supervisor selector, and member-picker supervisor filter may close immediately or unexpectedly select an option when reopened. Source inspection found no page JavaScript that assigns values to these selects or programmatically closes their popup. The behavior is therefore not attributed to application logic at this stage.
+
+A narrowly scoped progressive enhancement was added to the affected selectors (including both Tree follow-up supervisor controls): `appearance: base-select` on the select and `::picker(select)`, guarded by `@supports (appearance: base-select)` and the page-only `.tree-page-select` class. Unsupported browsers retain the existing native select UI. No values, event handlers, form behavior, database schema, or other modules were changed.
+
+**Verification boundary:** source change committed; local Linux Mint/Chrome browser acceptance is pending. This is an evidence-based browser-popup workaround experiment, not a proven root-cause fix. Test opening each affected dropdown, dismissing it without selection, reopening it, keyboard navigation, selected value persistence, and form submission. If the symptom persists, do not add JS value-reset/focus hacks; capture the browser/desktop environment and isolate the native popup behavior first.
