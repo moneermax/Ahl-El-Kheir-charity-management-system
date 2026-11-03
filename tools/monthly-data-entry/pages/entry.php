@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 throw new InvalidArgumentException('الكفيل المحدد غير موجود.');
             }
             $sponsorId = $selectedSponsorId;
+            $pdo->prepare('UPDATE mde_sponsors SET is_active = 1 WHERE id = ?')->execute([$sponsorId]);
         } else {
             $stmt = $pdo->prepare('INSERT INTO mde_sponsors (sponsor_name) VALUES (?)');
             $stmt->execute([$sponsorName]);
