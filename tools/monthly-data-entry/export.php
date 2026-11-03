@@ -28,7 +28,7 @@ $stmt->execute([$monthStart]);
 $rows = $stmt->fetchAll();
 
 $departuresStmt = $pdo->prepare("
- SELECT sp.sponsor_name, d.departure_date, d.orphan_count_snapshot,
+ SELECT sp.sponsor_name, d.file_number_snapshot, d.departure_date, d.orphan_count_snapshot,
         d.sponsorship_amount_snapshot, d.services_amount_snapshot, d.last_paid_month
  FROM mde_sponsor_departures d
  JOIN mde_sponsors sp ON sp.id=d.sponsor_id
@@ -79,10 +79,10 @@ if ($format === 'xlsx') {
     }
     $sheetRows[] = [];
     $sheetRows[] = [['مغادرات الكفلاء','s']];
-    $sheetRows[] = [['الكفيل','s'],['تاريخ المغادرة','s'],['عدد الأيتام','s'],['قيمة الكفالة','s'],['الخدمات','s'],['آخر سداد','s']];
+    $sheetRows[] = [['الكفيل','s'],['رقم الملف','s'],['تاريخ المغادرة','s'],['عدد الأيتام','s'],['قيمة الكفالة','s'],['الخدمات','s'],['آخر سداد','s']];
     foreach ($departures as $row) {
         $sheetRows[] = [
-            [$row['sponsor_name'],'s'],[$row['departure_date'],'s'],[(int)$row['orphan_count_snapshot'],'n'],
+            [$row['sponsor_name'],'s'],[$row['file_number_snapshot'],'s'],[$row['departure_date'],'s'],[(int)$row['orphan_count_snapshot'],'n'],
             [(int)$row['sponsorship_amount_snapshot'],'n'],[(int)$row['services_amount_snapshot'],'n'],[$row['last_paid_month'],'s']
         ];
     }
@@ -163,9 +163,9 @@ if ($format === 'csv') {
     }
     fputcsv($out, []);
     fputcsv($out, ['مغادرات الكفلاء']);
-    fputcsv($out, ['الكفيل', 'تاريخ المغادرة', 'عدد الأيتام', 'قيمة الكفالة', 'الخدمات', 'آخر سداد']);
+    fputcsv($out, ['الكفيل', 'رقم الملف', 'تاريخ المغادرة', 'عدد الأيتام', 'قيمة الكفالة', 'الخدمات', 'آخر سداد']);
     foreach ($departures as $row) {
-        fputcsv($out, [$row['sponsor_name'], $row['departure_date'], $row['orphan_count_snapshot'], $row['sponsorship_amount_snapshot'], $row['services_amount_snapshot'], $row['last_paid_month']]);
+        fputcsv($out, [$row['sponsor_name'], $row['file_number_snapshot'], $row['departure_date'], $row['orphan_count_snapshot'], $row['sponsorship_amount_snapshot'], $row['services_amount_snapshot'], $row['last_paid_month']]);
     }
     fclose($out);
     exit;
@@ -199,9 +199,9 @@ if ($format === 'pdf') {
     foreach ($donations as $row) {
         $html .= '<tr><td>' . htmlspecialchars((string)$row['sponsor_name'], ENT_QUOTES, 'UTF-8') . '</td><td>' . htmlspecialchars((string)$row['donation_type'], ENT_QUOTES, 'UTF-8') . '</td><td>' . htmlspecialchars((string)$row['donation_date'], ENT_QUOTES, 'UTF-8') . '</td><td>' . number_format((int)$row['amount']) . '</td></tr>';
     }
-    $html .= '</table><h3>مغادرات الكفلاء</h3><table border="1" cellpadding="4"><tr style="font-weight:bold;background-color:#eeeeee"><th>الكفيل</th><th>تاريخ المغادرة</th><th>عدد الأيتام</th><th>قيمة الكفالة</th><th>الخدمات</th><th>آخر سداد</th></tr>';
+    $html .= '</table><h3>مغادرات الكفلاء</h3><table border="1" cellpadding="4"><tr style="font-weight:bold;background-color:#eeeeee"><th>الكفيل</th><th>رقم الملف</th><th>تاريخ المغادرة</th><th>عدد الأيتام</th><th>قيمة الكفالة</th><th>الخدمات</th><th>آخر سداد</th></tr>';
     foreach ($departures as $row) {
-        $html .= '<tr><td>' . htmlspecialchars((string)$row['sponsor_name'], ENT_QUOTES, 'UTF-8') . '</td><td>' . htmlspecialchars((string)$row['departure_date'], ENT_QUOTES, 'UTF-8') . '</td><td>' . (int)$row['orphan_count_snapshot'] . '</td><td>' . number_format((int)$row['sponsorship_amount_snapshot']) . '</td><td>' . number_format((int)$row['services_amount_snapshot']) . '</td><td>' . htmlspecialchars((string)$row['last_paid_month'], ENT_QUOTES, 'UTF-8') . '</td></tr>';
+        $html .= '<tr><td>' . htmlspecialchars((string)$row['sponsor_name'], ENT_QUOTES, 'UTF-8') . '</td><td>' . htmlspecialchars((string)$row['file_number_snapshot'], ENT_QUOTES, 'UTF-8') . '</td><td>' . htmlspecialchars((string)$row['departure_date'], ENT_QUOTES, 'UTF-8') . '</td><td>' . (int)$row['orphan_count_snapshot'] . '</td><td>' . number_format((int)$row['sponsorship_amount_snapshot']) . '</td><td>' . number_format((int)$row['services_amount_snapshot']) . '</td><td>' . htmlspecialchars((string)$row['last_paid_month'], ENT_QUOTES, 'UTF-8') . '</td></tr>';
     }
     $html .= '</table>';
     $pdf->writeHTML($html, true, false, true, false, '');
