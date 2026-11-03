@@ -144,6 +144,10 @@ if ($format === 'xlsx') {
 }
 
 if ($format === 'csv') {
+    $csvText = static function (mixed $value): string {
+        $text = (string)($value ?? '');
+        return preg_match('/^[\\s]*[=+@-]/u', $text) ? "'" . $text : $text;
+    };
     header('Content-Type: text/csv; charset=UTF-8');
     header('Content-Disposition: attachment; filename="monthly-report-' . $filenameMonth . '.csv"');
     echo "\xEF\xBB\xBF";
@@ -153,19 +157,19 @@ if ($format === 'csv') {
     fputcsv($out, ['الكفالات والخدمات']);
     fputcsv($out, ['الكفيل', 'الأم', 'اليتيم', 'قيمة الكفالة', 'الخدمات', 'بواسطة', 'المشرف']);
     foreach ($rows as $row) {
-        fputcsv($out, [$row['sponsor_name'], $row['mother_name'], $row['orphan_name'], $row['sponsorship_amount'], $row['services_amount'], $row['entered_by'], $row['supervisor_name']]);
+        fputcsv($out, [$csvText($row['sponsor_name']), $csvText($row['mother_name']), $csvText($row['orphan_name']), $row['sponsorship_amount'], $row['services_amount'], $csvText($row['entered_by']), $csvText($row['supervisor_name'])]);
     }
     fputcsv($out, []);
     fputcsv($out, ['التبرعات الأخرى']);
     fputcsv($out, ['الكفيل', 'نوع التبرع', 'التاريخ', 'القيمة', 'ملاحظات']);
     foreach ($donations as $row) {
-        fputcsv($out, [$row['sponsor_name'], $row['donation_type'], $row['donation_date'], $row['amount'], $row['notes']]);
+        fputcsv($out, [$csvText($row['sponsor_name']), $csvText($row['donation_type']), $row['donation_date'], $row['amount'], $csvText($row['notes'])]);
     }
     fputcsv($out, []);
     fputcsv($out, ['مغادرات الكفلاء']);
     fputcsv($out, ['الكفيل', 'رقم الملف', 'تاريخ المغادرة', 'عدد الأيتام', 'قيمة الكفالة', 'الخدمات', 'آخر سداد']);
     foreach ($departures as $row) {
-        fputcsv($out, [$row['sponsor_name'], $row['file_number_snapshot'], $row['departure_date'], $row['orphan_count_snapshot'], $row['sponsorship_amount_snapshot'], $row['services_amount_snapshot'], $row['last_paid_month']]);
+        fputcsv($out, [$csvText($row['sponsor_name']), $csvText($row['file_number_snapshot']), $row['departure_date'], $row['orphan_count_snapshot'], $row['sponsorship_amount_snapshot'], $row['services_amount_snapshot'], $row['last_paid_month']]);
     }
     fclose($out);
     exit;
