@@ -2,12 +2,13 @@
 declare(strict_types=1);
 
 $error = '';
-$sponsors = $pdo->query('SELECT id, sponsor_name FROM mde_sponsors ORDER BY sponsor_name')->fetchAll();
+$sponsors = $pdo->query('SELECT id, sponsor_name, file_number FROM mde_sponsors WHERE is_active = 1 ORDER BY sponsor_name')->fetchAll();
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         mde_verify_csrf();
         $sponsorId = filter_var($_POST['sponsor_id'] ?? null, FILTER_VALIDATE_INT);
         $departureDate = (string) ($_POST['departure_date'] ?? '');
+        $fileNumber = trim((string) ($_POST['file_number'] ?? ''));
         $lastPaid = trim((string) ($_POST['last_paid_month'] ?? ''));
         $count = filter_var($_POST['orphan_count'] ?? null, FILTER_VALIDATE_INT);
         $amount = filter_var($_POST['sponsorship_amount'] ?? 0, FILTER_VALIDATE_INT);
@@ -21,9 +22,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!$check->fetch()) {
             throw new InvalidArgumentException('الكفيل المحدد غير موجود.');
         }
-        $stmt = $pdo->prepare('INSERT INTO mde_sponsor_departures (sponsor_id, departure_date, last_paid_month, orphan_count_snapshot, sponsorship_amount_snapshot, services_amount_snapshot, entered_by, supervisor_name, reason, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
+        $stmt = $pdo->prepare('INSERT INTO mde_sponsor_departures (sponsor_id, file_number_snapshot, departure_date, last_paid_month, orphan_count_snapshot, sponsorship_amount_snapshot, services_amount_snapshot, entered_by, supervisor_name, reason, notes) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)');
         $stmt->execute([
-            $sponsorId, $departureDate,
+            $sponsorId, $fileNumber ?: null, $departureDate,
             $lastPaid !== '' ? mde_month_start($lastPaid . '-01') : null,
             $count, $amount, $services,
             trim((string) ($_POST['entered_by'] ?? '')) ?: null,
@@ -33,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ]);
         $end = $pdo->prepare("UPDATE mde_sponsorships SET status = 'ended', end_date = ? WHERE sponsor_id = ? AND status = 'active'");
         $end->execute([$departureDate, $sponsorId]);
-        $pdo->prepare('UPDATE mde_sponsors SET is_active = 0 WHERE id = ?')->execute([$sponsorId]);
+        $pdo->prepare('UPDATE mde_sponsors SET is_active = 0, file_number = COALESCE(NULLIF(?, \'\'), file_number) WHERE id = ?')->execute([$fileNumber, $sponsorId]);
         $pdo->commit();
         mde_flash('success', 'تم تسجيل مغادرة الكفيل وإنهاء كفالاته النشطة مع الاحتفاظ بالسجلات التاريخية.');
         mde_redirect('departures');
@@ -49,7 +50,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <form method="post" class="card p-3 p-md-4">
 <input type="hidden" name="_csrf" value="<?= mde_h(mde_csrf_token()) ?>">
 <div class="row g-3">
- <div class="col-md-6"><label class="form-label required">الكفيل</label><select class="form-select" name="sponsor_id" required><option value="">اختر الكفيل</option><?php foreach($sponsors as $s): ?><option value="<?= (int)$s['id'] ?>"><?= mde_h($s['sponsor_name']) ?></option><?php endforeach; ?></select></div>
+ <div class="col-md-6"><label class="form-label required">الكفيل</label><select class="form-select" name="sponsor_id" id="departureSponsor" required><option value="">اختر الكفيل</option><?php foreach($sponsors as $s): ?><option value="<?= (int)$s['id'] ?>" data-file="<?= mde_h($s['file_number']) ?>"><?= mde_h($s['sponsor_name']) ?></option><?php endforeach; ?></select></div>
+ <div class="col-md-3"><label class="form-label">رقم الملف</label><input class="form-control" name="file_number" id="departureFileNumber" maxlength="100"></div>
  <div class="col-md-3"><label class="form-label required">تاريخ المغادرة</label><input type="date" class="form-control" name="departure_date" value="<?= date('Y-m-d') ?>" required></div>
  <div class="col-md-3"><label class="form-label">آخر سداد (الشهر)</label><input type="month" class="form-control" name="last_paid_month"></div>
  <div class="col-md-4"><label class="form-label">عدد الأيتام</label><input type="number" min="0" class="form-control" name="orphan_count" value="0"></div>
@@ -62,4 +64,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
  <div class="col-12"><button class="btn btn-danger px-5">تسجيل المغادرة</button><p class="form-text mt-2">سيتم إنهاء جميع الكفالات النشطة لهذا الكفيل، دون حذف أي سجل أو مبالغ شهرية سابقة.</p></div>
 </div>
 </form>
+<script>
+(() => {
+ const select=document.getElementById('departureSponsor'), field=document.getElementById('departureFileNumber');
+ select.addEventListener('change',()=>{field.value=select.selectedOptions[0]?.dataset.file || '';});
+})();
+</script>
 <?php endif; ?>
