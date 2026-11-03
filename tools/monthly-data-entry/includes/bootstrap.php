@@ -58,7 +58,7 @@ function mde_verify_csrf(): void
 function mde_redirect(string $page, array $params = []): never
 {
     $query = http_build_query(['page' => $page] + $params);
-    header('Location: ../index.php?' . $query);
+    header('Location: index.php?' . $query);
     exit;
 }
 
