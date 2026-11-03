@@ -10,7 +10,7 @@ $monthEnd = $monthDate->modify('last day of this month')->format('Y-m-d');
 $summaryStmt = $pdo->prepare("
  SELECT
   (SELECT COUNT(*) FROM mde_monthly_sponsorship_entries WHERE report_month = ?) AS sponsorship_rows,
-  (SELECT COUNT(DISTINCT s.id) FROM mde_sponsorships s JOIN mde_monthly_sponsorship_entries me ON me.sponsorship_id=s.id WHERE me.report_month = ?) AS sponsored_orphans,
+  (SELECT COUNT(DISTINCT s.orphan_id) FROM mde_sponsorships s JOIN mde_monthly_sponsorship_entries me ON me.sponsorship_id=s.id WHERE me.report_month = ?) AS sponsored_orphans,
   (SELECT COALESCE(SUM(sponsorship_amount),0) FROM mde_monthly_sponsorship_entries WHERE report_month = ?) AS sponsorship_total,
   (SELECT COALESCE(SUM(services_amount),0) FROM mde_monthly_sponsorship_entries WHERE report_month = ?) AS services_total,
   (SELECT COUNT(*) FROM mde_sponsor_departures WHERE departure_date BETWEEN ? AND ?) AS departures,
