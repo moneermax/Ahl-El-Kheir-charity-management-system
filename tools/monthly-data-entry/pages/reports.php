@@ -36,7 +36,7 @@ $donationStmt = $pdo->prepare('SELECT donation_type, SUM(amount) AS total FROM m
 $donationStmt->execute([$monthStart]);
 $donations = $donationStmt->fetchAll();
 
-$departureStmt = $pdo->prepare('SELECT sp.sponsor_name, d.departure_date, d.orphan_count_snapshot, d.sponsorship_amount_snapshot, d.services_amount_snapshot FROM mde_sponsor_departures d JOIN mde_sponsors sp ON sp.id=d.sponsor_id WHERE d.departure_date BETWEEN ? AND ? ORDER BY d.departure_date, sp.sponsor_name');
+$departureStmt = $pdo->prepare('SELECT sp.sponsor_name, d.file_number_snapshot, d.departure_date, d.orphan_count_snapshot, d.sponsorship_amount_snapshot, d.services_amount_snapshot FROM mde_sponsor_departures d JOIN mde_sponsors sp ON sp.id=d.sponsor_id WHERE d.departure_date BETWEEN ? AND ? ORDER BY d.departure_date, sp.sponsor_name');
 $departureStmt->execute([$monthStart,$monthEnd]);
 $departureRows = $departureStmt->fetchAll();
 
@@ -71,6 +71,6 @@ function mde_money(mixed $amount): string { return number_format((int)$amount) .
 </div>
 <div class="row g-3">
  <div class="col-lg-6"><div class="card p-3 h-100"><h2 class="h5">التبرعات الأخرى</h2><table class="table"><thead><tr><th>النوع</th><th>الإجمالي</th></tr></thead><tbody><?php foreach($donations as $d): ?><tr><td><?=mde_h($d['donation_type'])?></td><td><?=mde_money($d['total'])?></td></tr><?php endforeach; ?><?php if(!$donations): ?><tr><td colspan="2">لا توجد تبرعات أخرى.</td></tr><?php endif; ?></tbody></table></div></div>
- <div class="col-lg-6"><div class="card p-3 h-100"><h2 class="h5">مغادرات الكفلاء</h2><div class="table-responsive"><table class="table"><thead><tr><th>الكفيل</th><th>التاريخ</th><th>الأيتام</th><th>الكفالة</th><th>الخدمات</th></tr></thead><tbody><?php foreach($departureRows as $d): ?><tr><td><?=mde_h($d['sponsor_name'])?></td><td><?=mde_h($d['departure_date'])?></td><td><?=mde_h($d['orphan_count_snapshot'])?></td><td><?=mde_money($d['sponsorship_amount_snapshot'])?></td><td><?=mde_money($d['services_amount_snapshot'])?></td></tr><?php endforeach; ?><?php if(!$departureRows): ?><tr><td colspan="5">لا توجد مغادرات في هذا الشهر.</td></tr><?php endif; ?></tbody></table></div></div></div>
+ <div class="col-lg-6"><div class="card p-3 h-100"><h2 class="h5">مغادرات الكفلاء</h2><div class="table-responsive"><table class="table"><thead><tr><th>الكفيل</th><th>رقم الملف</th><th>التاريخ</th><th>الأيتام</th><th>الكفالة</th><th>الخدمات</th></tr></thead><tbody><?php foreach($departureRows as $d): ?><tr><td><?=mde_h($d['sponsor_name'])?></td><td><?=mde_h($d['file_number_snapshot'])?></td><td><?=mde_h($d['departure_date'])?></td><td><?=mde_h($d['orphan_count_snapshot'])?></td><td><?=mde_money($d['sponsorship_amount_snapshot'])?></td><td><?=mde_money($d['services_amount_snapshot'])?></td></tr><?php endforeach; ?><?php if(!$departureRows): ?><tr><td colspan="6">لا توجد مغادرات في هذا الشهر.</td></tr><?php endif; ?></tbody></table></div></div></div>
 </div>
 <p class="text-secondary small mt-3">تعتمد الأرقام على شهر التقرير المحدد. الكفالات والخدمات والتبرعات مرتبطة بشهر الإدخال، بينما المغادرات مرتبطة بتاريخ المغادرة الفعلي.</p>
