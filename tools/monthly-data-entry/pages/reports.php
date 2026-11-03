@@ -44,7 +44,11 @@ function mde_money(mixed $amount): string { return number_format((int)$amount) .
 ?>
 <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
  <h1 class="h3 mb-0">التقرير الشهري</h1>
- <form method="get" class="d-flex gap-2"><input type="hidden" name="page" value="reports"><input type="month" name="month" class="form-control" value="<?= mde_h($monthInput) ?>"><button class="btn btn-primary">عرض</button></form>
+ <div class="d-flex flex-wrap gap-2">
+  <form method="get" class="d-flex gap-2"><input type="hidden" name="page" value="reports"><input type="month" name="month" class="form-control" value="<?= mde_h($monthInput) ?>"><button class="btn btn-primary">عرض</button></form>
+  <a class="btn btn-outline-success" href="export.php?format=csv&amp;month=<?= mde_h($monthInput) ?>">تصدير Excel (CSV)</a>
+  <a class="btn btn-outline-danger" href="export.php?format=pdf&amp;month=<?= mde_h($monthInput) ?>">تصدير PDF</a>
+ </div>
 </div>
 <div class="row g-3 mb-4">
  <?php foreach([
