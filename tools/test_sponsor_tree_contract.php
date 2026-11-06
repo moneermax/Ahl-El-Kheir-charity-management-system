@@ -15,6 +15,7 @@ $files = [
     'sponsor edit' => $root . '/modules/sponsors/edit.php',
     'sponsorship creation' => $root . '/modules/sponsorships/create.php',
     'sponsorship lifecycle' => $root . '/modules/sponsorships/view.php',
+    'transaction creation' => $root . '/modules/transactions/create.php',
     'orphan profile' => $root . '/modules/families/orphan_profile.php',
 ];
 $sources = [];
@@ -102,6 +103,18 @@ $checks = [
     'shared sponsorship duplicate protection is per sponsor and orphan, not orphan-wide' =>
         str_contains($sources['sponsorship creation'], 'WHERE sponsor_id = ? AND child_id = ? AND status IN (\'active\',\'paused\')')
         && !str_contains($sources['sponsorship creation'], 'SELECT id FROM sponsorships WHERE child_id = ? AND status IN'),
+    'Tree supervisor scope metadata is supplied to sponsorship and payment authorization' =>
+        str_contains($sources['sponsorship creation'], "require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';")
+        && str_contains($sources['sponsorship creation'], 'SELECT id, first_letter_id, gender, supervisor_id, is_manual_override, sponsor_type, created_by FROM sponsors')
+        && str_contains($sources['sponsorship creation'], 'supervisorCanAccessSponsor($uid, $sponsorScopeRow)')
+        && str_contains($sources['sponsorship lifecycle'], 's.sponsor_type,s.created_by,s.is_manual_override')
+        && str_contains($sources['transaction creation'], 'is_manual_override, sponsor_type, created_by')
+        && str_contains($sources['transaction creation'], 'sp.supervisor_id AS payment_supervisor_id')
+        && str_contains($sources['transaction creation'], 's.supervisor_id, s.is_manual_override')
+        && str_contains($sources['orphan profile'], 'supervisor_id, is_manual_override, sponsor_type, created_by'),
+    'Tree supervisor scope metadata is supplied to orphan-profile sponsorship selection and POST validation' =>
+        str_contains($sources['orphan profile'], 'SELECT id, full_name, sponsor_code, phone, gender, first_letter_id, supervisor_id, is_manual_override, sponsor_type, created_by FROM sponsors')
+        && str_contains($sources['orphan profile'], 'SELECT id, full_name, sponsor_code, phone, email, gender, first_letter_id, supervisor_id, is_manual_override, sponsor_type, created_by FROM sponsors WHERE id = ? AND status = \'active\''),
     'shared sponsorship creation locks the orphan row before insert' =>
         str_contains($sources['sponsorship creation'], 'SELECT id FROM family_children WHERE id = ? FOR UPDATE'),
     'sponsorship lifecycle uses the same orphan-first lock order as creation' =>
