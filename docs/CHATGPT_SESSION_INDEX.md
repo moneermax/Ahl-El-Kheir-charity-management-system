@@ -3614,3 +3614,25 @@ Fixed a source-level gap: Tree reassignment POST now rejects supervisors whose e
 Dropdown behavior is working, but height/arrow appearance still differs from neighboring controls (two arrows versus one). User explicitly deferred this; do not change it during current lifecycle work.
 
 **CI result update — 2026-11-06:** GitHub Actions runs [#42165265142](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165265142) (source commit) and [#42165275942](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165275942) (contract commit) both completed **SUCCESS**. All six jobs passed in each run; the PHP lint job passed, including `tools/test_sponsor_tree_contract.php`. This confirms syntax/source-contract and CI migration jobs, not local authenticated runtime behavior.
+
+
+## 2026-11-06 — Assigned Tree supervisor scope in ordinary sponsor workflows
+
+A source audit found that Tree records correctly stored their explicit follow-up supervisor using the existing manual-assignment fields, but several ordinary sponsor workflows passed incomplete sponsor rows to `supervisorCanAccessSponsor()` or rebuilt only the letter/gender matrix. This caused an assigned Tree supervisor to be denied in sponsorship creation/detail, transaction creation/returned-payment editing, and orphan-profile sponsorship selection even though the Tree page itself authorized the supervisor.
+
+A narrow source correction is now committed on `main`:
+- `modules/sponsorships/create.php` now loads `config/sponsor_assignments.php` and derives supervisor-visible sponsors through the shared authoritative `supervisorCanAccessSponsor()` helper, including the existing manual-override assignment fields.
+- `modules/sponsorships/view.php` now supplies the sponsor type, creator, manual-override flag, and supervisor assignment to the same helper.
+- `modules/transactions/create.php` now supplies those fields to sponsor-scope checks, including returned sponsor-payment editing. The payment submitter ID is separately aliased as `payment_supervisor_id` so it cannot be mistaken for the Tree's currently assigned supervisor.
+- `modules/families/orphan_profile.php` now supplies the same scope metadata when listing and validating sponsors for a new shared sponsorship.
+- `tools/test_sponsor_tree_contract.php` now guards these cross-module scope payloads and the separation of payment submitter from sponsor assignment.
+
+Commits: `a523e9370d5aba3fa3bd150503298cf8e5fe35b9`, `3ca97d8a5dab0dcd8866e57e496806f1d6c42b71`, `988f6d6a16ff0cc24e430d9aa40333a44fde63e7`, `ec73a590f74283fe45a1c7a75f834d016a110aa8`, `05394490cb71cd67aac0d8354b8b162c9537d9e3`, plus contract refinement `5ac4a0e3fc1a90592e31dc03e1397d998609cb14`.
+
+No database schema, migration, accounting calculation, membership state, or sponsorship lifecycle transition was changed. No records were created, deleted, or rewritten.
+
+**Verification boundary:** source changes and contract assertions are committed. The latest commit's GitHub combined-status response contained no status entries, so do not claim CI PASS yet. Local PHP lint, contract execution, and authenticated runtime acceptance remain pending. In particular, test as the currently assigned supervisor: Tree read-only page, Tree sponsor profile, sponsorship creation and detail, orphan-profile shared-sponsorship creation, transaction submission, and returned sponsor-payment edit. Also verify reassignment changes access from the old supervisor to the new supervisor without altering the sponsorship or payment history. Do not reapply migrations.
+
+The checked-in schema dump fetch did not return readable SQL content during this audit; no schema inference or DDL change was made. All queried fields above already exist in the inspected application source and Tree assignment implementation.
+
+The Tree dropdown height/arrow appearance TODO remains explicitly deferred and must not be touched during this work.
