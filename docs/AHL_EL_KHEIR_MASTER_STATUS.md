@@ -5875,7 +5875,7 @@ A narrow source correction is now committed on `main`:
 - `modules/families/orphan_profile.php` now supplies the same scope metadata when listing and validating sponsors for a new shared sponsorship.
 - `tools/test_sponsor_tree_contract.php` now guards these cross-module scope payloads and the separation of payment submitter from sponsor assignment.
 
-Commits: `a523e9370d5aba3fa3bd150503298cf8e5fe35b9`, `3ca97d8a5dab0dcd8866e57e496806f1d6c42b71`, `988f6d6a16ff0cc24e430d9aa40333a44fde63e7`, `ec73a590f74283fe45a1c7a75f834d016a110aa8`, `05394490cb71cd67aac0d8354b8b162c9537d9e3`, plus contract refinement `5ac4a0e3fc1a90592e31dc03e1397d998609cb14`.
+Commits: `a523e9370d5aba3fa3bd150503298cf8e5fe35b9`, `3ca97d8a5dab0dcd8866e57e496806f1d6c42b71`, `988f6d6a16ff0cc24e430d9aa40333a44fde63e7`, `ec73a590f74283fe45a1c7a75f834d016a110aa8`, `05394490cb71cd67aac0d8354b8b162c9537d9e3`, plus the query-efficiency refinement `7437faa89917648979e988ad90b7df1abc6b0cbb` and contract refinements `5ac4a0e3fc1a90592e31dc03e1397d998609cb14`, `a5d9b0bc061a8dc4690baf2deb6c15ba545ec415`.
 
 No database schema, migration, accounting calculation, membership state, or sponsorship lifecycle transition was changed. No records were created, deleted, or rewritten.
 
