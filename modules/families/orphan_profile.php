@@ -56,7 +56,7 @@ $activeSponsorships = array_values(array_filter($sponsorships, static fn(array $
 $activeSponsorIds = array_values(array_unique(array_map(static fn(array $row): int => (int)$row['sponsor_id'], $activeSponsorships)));
 $availableSponsors = [];
 if ($childId > 0 && in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
-    $availableSponsors = dbFetchAll("SELECT id, full_name, sponsor_code, phone, gender, first_letter_id FROM sponsors WHERE status = 'active' ORDER BY full_name");
+    $availableSponsors = dbFetchAll("SELECT id, full_name, sponsor_code, phone, gender, first_letter_id, supervisor_id, is_manual_override, sponsor_type, created_by FROM sponsors WHERE status = 'active' ORDER BY full_name");
     if ($role === 'supervisor') {
         $availableSponsors = array_values(array_filter($availableSponsors, static fn(array $sponsor): bool => supervisorCanAccessSponsor($uid, $sponsor)));
     }
@@ -104,7 +104,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf() && isset($_POST['add_
     if (!preg_match('/^\\d{4}-\\d{2}-\\d{2}$/', $newStartDate)) $errors[] = 'تاريخ بداية الكفالة غير صحيح.';
 
     $newSponsor = $newSponsorId > 0
-        ? dbFetchOne("SELECT id, full_name, sponsor_code, phone, email, gender, first_letter_id FROM sponsors WHERE id = ? AND status = 'active'", [$newSponsorId])
+        ? dbFetchOne("SELECT id, full_name, sponsor_code, phone, email, gender, first_letter_id, supervisor_id, is_manual_override, sponsor_type, created_by FROM sponsors WHERE id = ? AND status = 'active'", [$newSponsorId])
         : null;
     if (!$newSponsor) $errors[] = 'الكفيل غير موجود أو غير نشط.';
     elseif ($role === 'supervisor' && !supervisorCanAccessSponsor($uid, $newSponsor)) $errors[] = 'هذا الكفيل ليس من كفلائك.';
