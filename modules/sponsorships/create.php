@@ -4,18 +4,13 @@ require_once dirname(__DIR__, 2) . '/config/config.php';
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
+require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
 if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $pageTitle = 'إنشاء كفالة'; $active = 'sponsorships';
 
-function ak_sp_norm_gender($raw): string {
-    $v = strtolower(trim((string)$raw));
-    if (in_array($v, ['female', 'f', 'أنثى', 'انثى'], true)) return 'female';
-    if (in_array($v, ['male', 'm', 'ذكر'], true)) return 'male';
-    return '';
-}
 $AK_SP_GENDER_LABEL = ['male' => 'ذكور', 'female' => 'إناث'];
 
 /* Auto-matching prioritizes eligible orphan records only. Supervisor scope is
@@ -47,22 +42,16 @@ $oq = trim((string)($_GET['oq'] ?? ''));
 
 /* Supervisor responsibility is determined solely by sponsor first letter + gender. */
 $uid = Session::getUserId();
-$myLetterGenders = [];
-if ($role === 'supervisor') {
-    foreach (dbFetchAll("SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?", [$uid]) as $lr) {
-        $g = ak_sp_norm_gender($lr['gender']);
-        if ($g !== '') $myLetterGenders[(int)$lr['letter_id']][] = $g;
-    }
-}
+
 $mySponsorIds = null;
 if ($role === 'supervisor') {
     $mySponsorIds = [];
-    foreach (dbFetchAll("SELECT id, first_letter_id, gender FROM sponsors") as $s) {
-        $gs = $myLetterGenders[(int)$s['first_letter_id']] ?? [];
-        $sg = ak_sp_norm_gender($s['gender']);
-        if ($sg === '') continue;
-        foreach ($gs as $g) {
-            if ($g === $sg) { $mySponsorIds[] = (int)$s['id']; break; }
+    $sponsorScopeRows = dbFetchAll(
+        "SELECT id, first_letter_id, gender, supervisor_id, is_manual_override, sponsor_type, created_by FROM sponsors"
+    );
+    foreach ($sponsorScopeRows as $sponsorScopeRow) {
+        if (supervisorCanAccessSponsor($uid, $sponsorScopeRow)) {
+            $mySponsorIds[] = (int) $sponsorScopeRow['id'];
         }
     }
     $mySponsorIds = array_values(array_unique($mySponsorIds));
