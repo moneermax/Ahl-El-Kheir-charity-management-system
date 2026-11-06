@@ -543,7 +543,14 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 
 /* Progressive enhancement: keep the affected Tree selectors inside the browser's top layer. */
 @supports (appearance: base-select) {
-    .tree-page-select,
+    .tree-page-select {
+        appearance: base-select;
+        /* Match the shared .form-control height (24px line box + 20px padding + 4px border). */
+        height: 48px;
+        min-height: 48px;
+        line-height: 1.5;
+    }
+
     .tree-page-select::picker(select) {
         appearance: base-select;
     }
