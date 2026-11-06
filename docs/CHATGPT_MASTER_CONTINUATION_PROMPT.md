@@ -3541,3 +3541,5 @@ A source audit found Tree reassignment POST validation accepted departed/archive
 ### Deferred TODO — Tree dropdown appearance (2026-11-06)
 
 The Tree dropdowns work, but their height/arrow appearance still differs from adjacent fields (two arrows versus one). User explicitly deferred this. Do not touch dropdown CSS/picker behavior during the remaining lifecycle work.
+
+**CI result update — 2026-11-06:** GitHub Actions runs [#42165265142](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165265142) (source commit) and [#42165275942](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165275942) (contract commit) both completed **SUCCESS**. All six jobs passed in each run; the PHP lint job passed, including `tools/test_sponsor_tree_contract.php`. This confirms syntax/source-contract and CI migration jobs, not local authenticated runtime behavior.
