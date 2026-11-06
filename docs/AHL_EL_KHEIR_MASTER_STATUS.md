@@ -5856,3 +5856,7 @@ Commit `6991f9e56c5826cdbfa4219af1a648da7bb33025` explicitly sets the enhanced T
 Source audit found that Tree reassignment accepted any user with the supervisor role, even though the selector and creation handler excluded effective lifecycle states `departed` and `archived`. The reassignment POST handler now enforces the same effective-status predicate server-side. Added a dedicated assertion to `tools/test_sponsor_tree_contract.php`.
 
 Commits: `a347feb636215a5490c4343c457f98d0625e4e03` (source), `71b5d435304c8b172cbcb566fe6a28e86ece7658` (contract). PHP lint, contract execution, CI and local authenticated reassignment/history verification remain pending. No database/schema change.
+
+### Deferred TODO — Sponsor Tree dropdown appearance (2026-11-06)
+
+The dropdown popup behavior is working, but the user reports the enhanced controls still do not visually match adjacent fields (height/arrow indicator; two arrows versus one). Explicitly deferred for later. Do not change this styling during the current Tree lifecycle work.
