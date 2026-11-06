@@ -182,7 +182,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $targetTreeId = (int) ($_POST['tree_id'] ?? 0);
                 $supervisorId = (int) ($_POST['supervisor_id'] ?? 0);
                 $validSupervisor = dbFetchOne(
-                    "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND r.code = 'supervisor'",
+                    "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id
+                     WHERE u.id = ? AND r.code = 'supervisor'
+                       AND COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) NOT IN ('departed', 'archived')",
                     [$supervisorId]
                 );
                 if (!$validSupervisor) throw new RuntimeException('اختر مشرفاً صالحاً لمتابعة الشجرة.');
