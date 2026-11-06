@@ -110,6 +110,7 @@ $checks = [
         && str_contains($sources['sponsorship lifecycle'], 's.sponsor_type,s.created_by,s.is_manual_override')
         && str_contains($sources['transaction creation'], 'is_manual_override, sponsor_type, created_by')
         && str_contains($sources['transaction creation'], 'sp.supervisor_id AS payment_supervisor_id')
+        && str_contains($sources['transaction creation'], "payment_supervisor_id']===")
         && str_contains($sources['transaction creation'], 's.supervisor_id, s.is_manual_override')
         && str_contains($sources['orphan profile'], 'supervisor_id, is_manual_override, sponsor_type, created_by'),
     'Tree supervisor scope metadata is supplied to orphan-profile sponsorship selection and POST validation' =>
