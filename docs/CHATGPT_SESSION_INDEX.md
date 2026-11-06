@@ -3600,3 +3600,7 @@ User-reported issue: on `modules/sponsors/trees.php`, the entity-category select
 A narrowly scoped progressive enhancement was added to the affected selectors (including both Tree follow-up supervisor controls): `appearance: base-select` on the select and `::picker(select)`, guarded by `@supports (appearance: base-select)` and the page-only `.tree-page-select` class. Unsupported browsers retain the existing native select UI. No values, event handlers, form behavior, database schema, or other modules were changed.
 
 **Verification boundary:** source change committed; local Linux Mint/Chrome browser acceptance is pending. This is an evidence-based browser-popup workaround experiment, not a proven root-cause fix. Test opening each affected dropdown, dismissing it without selection, reopening it, keyboard navigation, selected value persistence, and form submission. If the symptom persists, do not add JS value-reset/focus hacks; capture the browser/desktop environment and isolate the native popup behavior first.
+
+## 2026-11-06 — Sponsor Tree selector sizing
+
+The user confirmed the native dropdown issue is resolved. A screenshot then exposed that the affected enhanced Tree selects were taller than text inputs. Commit `6991f9e56c5826cdbfa4219af1a648da7bb33025` explicitly aligns those selectors to 48px under the existing `appearance: base-select` support guard. Local browser visual retest is pending; confirm both equal heights and preserved dropdown behavior before closing this follow-up.
