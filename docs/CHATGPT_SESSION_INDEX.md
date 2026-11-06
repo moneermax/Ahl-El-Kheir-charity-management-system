@@ -3608,3 +3608,7 @@ The user confirmed the native dropdown issue is resolved. A screenshot then expo
 ## 2026-11-06 — Sponsor Tree reassignment validation
 
 Fixed a source-level gap: Tree reassignment POST now rejects supervisors whose effective status is `departed` or `archived`, matching the UI and Tree-creation handler. Added a dedicated contract assertion. Commits `a347feb636215a5490c4343c457f98d0625e4e03` and `71b5d435304c8b172cbcb566fe6a28e86ece7658`. CI and local reassignment/history verification pending. Other Tree lifecycle acceptance remains open.
+
+### Deferred TODO — Sponsor Tree dropdown appearance (2026-11-06)
+
+Dropdown behavior is working, but height/arrow appearance still differs from neighboring controls (two arrows versus one). User explicitly deferred this; do not change it during current lifecycle work.
