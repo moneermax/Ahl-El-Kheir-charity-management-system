@@ -3537,3 +3537,7 @@ The user confirmed that the enhanced Tree dropdowns now work, then supplied a sc
 ## 2026-11-06 — Sponsor Tree reassignment validation hardening
 
 A source audit found Tree reassignment POST validation accepted departed/archived supervisors although the UI and creation handler excluded them. Fixed the reassignment query to use the same effective lifecycle predicate and added a dedicated source-contract assertion. Commits: `a347feb636215a5490c4343c457f98d0625e4e03` and `71b5d435304c8b172cbcb566fe6a28e86ece7658`. Await PHP lint, contract, CI and local authenticated verification. This does not close the remaining Tree lifecycle acceptance.
+
+### Deferred TODO — Tree dropdown appearance (2026-11-06)
+
+The Tree dropdowns work, but their height/arrow appearance still differs from adjacent fields (two arrows versus one). User explicitly deferred this. Do not touch dropdown CSS/picker behavior during the remaining lifecycle work.
