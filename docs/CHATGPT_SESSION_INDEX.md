@@ -3604,3 +3604,7 @@ A narrowly scoped progressive enhancement was added to the affected selectors (i
 ## 2026-11-06 — Sponsor Tree selector sizing
 
 The user confirmed the native dropdown issue is resolved. A screenshot then exposed that the affected enhanced Tree selects were taller than text inputs. Commit `6991f9e56c5826cdbfa4219af1a648da7bb33025` explicitly aligns those selectors to 48px under the existing `appearance: base-select` support guard. Local browser visual retest is pending; confirm both equal heights and preserved dropdown behavior before closing this follow-up.
+
+## 2026-11-06 — Sponsor Tree reassignment validation
+
+Fixed a source-level gap: Tree reassignment POST now rejects supervisors whose effective status is `departed` or `archived`, matching the UI and Tree-creation handler. Added a dedicated contract assertion. Commits `a347feb636215a5490c4343c457f98d0625e4e03` and `71b5d435304c8b172cbcb566fe6a28e86ece7658`. CI and local reassignment/history verification pending. Other Tree lifecycle acceptance remains open.
