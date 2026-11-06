@@ -105,8 +105,11 @@ $checks = [
         && !str_contains($sources['sponsorship creation'], 'SELECT id FROM sponsorships WHERE child_id = ? AND status IN'),
     'Tree supervisor scope metadata is supplied to sponsorship and payment authorization' =>
         str_contains($sources['sponsorship creation'], "require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';")
-        && str_contains($sources['sponsorship creation'], 'SELECT id, first_letter_id, gender, supervisor_id, is_manual_override, sponsor_type, created_by FROM sponsors')
-        && str_contains($sources['sponsorship creation'], 'supervisorCanAccessSponsor($uid, $sponsorScopeRow)')
+        && str_contains($sources['sponsorship creation'], 'SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?')
+        && str_contains($sources['sponsorship creation'], 'SELECT id, first_letter_id, gender FROM sponsors')
+        && str_contains($sources['sponsorship creation'], 'SELECT id, supervisor_id, is_manual_override FROM sponsors WHERE supervisor_id = ? AND is_manual_override = 1')
+        && str_contains($sources['sponsorship creation'], 'supervisorCanAccessSponsor($uid, $manualSponsorRow)')
+        && !str_contains($sources['sponsorship creation'], 'foreach ($sponsorScopeRows as $sponsorScopeRow)')
         && str_contains($sources['sponsorship lifecycle'], 's.sponsor_type,s.created_by,s.is_manual_override')
         && str_contains($sources['transaction creation'], 'is_manual_override, sponsor_type, created_by')
         && str_contains($sources['transaction creation'], 'sp.supervisor_id AS payment_supervisor_id')
