@@ -6132,3 +6132,7 @@ Commit `6991f9e56c5826cdbfa4219af1a648da7bb33025` sets the enhanced Tree selects
 Audit compared Tree creation, reassignment UI, and reassignment POST validation. Creation and UI excluded supervisors whose effective status is `departed` or `archived`; reassignment POST checked only `r.code = 'supervisor'`. This was a real server-side validation gap, not merely a UI issue. The POST validation now applies the same COALESCE-based lifecycle predicate. A dedicated source-contract assertion guards the reassignment branch.
 
 Commits: `a347feb636215a5490c4343c457f98d0625e4e03`, `71b5d435304c8b172cbcb566fe6a28e86ece7658`. Runtime behavior, audit-history preservation and CI are not yet reverified. No schema or existing data changed.
+
+### Deferred — Tree dropdown visual mismatch (2026-11-06)
+
+User confirmed the dropdowns function but still differ visually from adjacent controls, including height and arrow-indicator appearance (two arrows versus one). User requested deferral. Exclude from current work; do not make further CSS/picker changes until explicitly resumed.
