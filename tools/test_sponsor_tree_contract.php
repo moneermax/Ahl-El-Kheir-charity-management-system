@@ -51,6 +51,8 @@ $checks = [
         && str_contains($sources['tree management'], 'recordSponsorAssignment(')
         && str_contains($sources['tree management'], 'tree_follow_up_reassignment')
         && str_contains($sources['tree management'], "NOT IN ('departed', 'archived')"),
+    'Tree supervisor reassignment rejects departed and archived supervisors server-side' =>
+        str_contains($sources['tree management'], "WHERE u.id = ? AND r.code = 'supervisor'\n                       AND COALESCE(u.supervisor_status, CASE WHEN u.is_active = 1 THEN 'active' ELSE 'suspended' END) NOT IN ('departed', 'archived')"),
     'Tree sponsor edit preserves manual supervisor assignment and legal-entity type' =>
         str_contains($sources['sponsor edit'], '$isTreeSponsor')
         && str_contains($sources['sponsor edit'], '$isTreeSponsor && in_array($input[\'sponsor_type\'],[\'company\',\'organization\'],true)')
