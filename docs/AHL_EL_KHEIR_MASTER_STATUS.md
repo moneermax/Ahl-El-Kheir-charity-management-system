@@ -5860,3 +5860,5 @@ Commits: `a347feb636215a5490c4343c457f98d0625e4e03` (source), `71b5d435304c8b172
 ### Deferred TODO — Sponsor Tree dropdown appearance (2026-11-06)
 
 The dropdown popup behavior is working, but the user reports the enhanced controls still do not visually match adjacent fields (height/arrow indicator; two arrows versus one). Explicitly deferred for later. Do not change this styling during the current Tree lifecycle work.
+
+**CI result update — 2026-11-06:** GitHub Actions runs [#42165265142](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165265142) (source commit) and [#42165275942](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165275942) (contract commit) both completed **SUCCESS**. All six jobs passed in each run; the PHP lint job passed, including `tools/test_sponsor_tree_contract.php`. This confirms syntax/source-contract and CI migration jobs, not local authenticated runtime behavior.
