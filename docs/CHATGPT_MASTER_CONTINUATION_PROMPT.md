@@ -3533,3 +3533,7 @@ A narrowly scoped progressive enhancement was added to the affected selectors (i
 ## 2026-11-06 — Sponsor Tree selector height follow-up
 
 The user confirmed that the enhanced Tree dropdowns now work, then supplied a screenshot showing the affected select controls taller than adjacent text inputs. The difference is limited to `.tree-page-select` controls using `appearance: base-select`. Commit `6991f9e56c5826cdbfa4219af1a648da7bb33025` adds explicit 48px height/min-height and 1.5 line-height under the existing support guard; this matches the shared form-control box calculation. No JS, form handling, data, schema, or unrelated module changed. Next: user pulls `main`, hard-reloads the Tree page, and confirms equal control heights plus the dropdown open/dismiss/reopen behavior. Do not claim visual acceptance until confirmed.
+
+## 2026-11-06 — Sponsor Tree reassignment validation hardening
+
+A source audit found Tree reassignment POST validation accepted departed/archived supervisors although the UI and creation handler excluded them. Fixed the reassignment query to use the same effective lifecycle predicate and added a dedicated source-contract assertion. Commits: `a347feb636215a5490c4343c457f98d0625e4e03` and `71b5d435304c8b172cbcb566fe6a28e86ece7658`. Await PHP lint, contract, CI and local authenticated verification. This does not close the remaining Tree lifecycle acceptance.
