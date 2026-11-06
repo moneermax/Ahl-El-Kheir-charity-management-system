@@ -150,3 +150,11 @@ User-reported issue: on `modules/sponsors/trees.php`, the entity-category select
 A narrowly scoped progressive enhancement was added to the affected selectors (including both Tree follow-up supervisor controls): `appearance: base-select` on the select and `::picker(select)`, guarded by `@supports (appearance: base-select)` and the page-only `.tree-page-select` class. Unsupported browsers retain the existing native select UI. No values, event handlers, form behavior, database schema, or other modules were changed.
 
 **Verification boundary:** source change committed; local Linux Mint/Chrome browser acceptance is pending. This is an evidence-based browser-popup workaround experiment, not a proven root-cause fix. Test opening each affected dropdown, dismissing it without selection, reopening it, keyboard navigation, selected value persistence, and form submission. If the symptom persists, do not add JS value-reset/focus hacks; capture the browser/desktop environment and isolate the native popup behavior first.
+
+## 2026-11-06 — Tree selector height alignment
+
+The user confirmed that the affected Tree dropdowns now open and remain usable after the native-picker enhancement. Visual review then identified that the enhanced selectors were taller than adjacent text inputs. The cause was isolated to the page-only `.tree-page-select` controls receiving `appearance: base-select` without an explicit control height; ordinary inputs and unaffected selects retain the shared form-control sizing.
+
+The Tree-only enhancement now explicitly sets `height: 48px`, `min-height: 48px`, and `line-height: 1.5` under the same `@supports (appearance: base-select)` guard. The 48px height matches the shared control box calculation (24px line box + 20px vertical padding + 4px border). The popup/top-layer behavior, values, event handlers, form processing, schema, and other modules are unchanged.
+
+**Verification boundary:** source change committed to `main`; local visual confirmation of equal heights is pending. Recheck all affected selectors and verify the popup behavior remains fixed. No database action or form submission is required.
