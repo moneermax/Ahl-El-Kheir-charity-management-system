@@ -3612,3 +3612,5 @@ Fixed a source-level gap: Tree reassignment POST now rejects supervisors whose e
 ### Deferred TODO — Sponsor Tree dropdown appearance (2026-11-06)
 
 Dropdown behavior is working, but height/arrow appearance still differs from neighboring controls (two arrows versus one). User explicitly deferred this; do not change it during current lifecycle work.
+
+**CI result update — 2026-11-06:** GitHub Actions runs [#42165265142](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165265142) (source commit) and [#42165275942](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165275942) (contract commit) both completed **SUCCESS**. All six jobs passed in each run; the PHP lint job passed, including `tools/test_sponsor_tree_contract.php`. This confirms syntax/source-contract and CI migration jobs, not local authenticated runtime behavior.
