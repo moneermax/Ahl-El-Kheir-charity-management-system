@@ -158,3 +158,11 @@ The user confirmed that the affected Tree dropdowns now open and remain usable a
 The Tree-only enhancement now explicitly sets `height: 48px`, `min-height: 48px`, and `line-height: 1.5` under the same `@supports (appearance: base-select)` guard. The 48px height matches the shared control box calculation (24px line box + 20px vertical padding + 4px border). The popup/top-layer behavior, values, event handlers, form processing, schema, and other modules are unchanged.
 
 **Verification boundary:** source change committed to `main`; local visual confirmation of equal heights is pending. Recheck all affected selectors and verify the popup behavior remains fixed. No database action or form submission is required.
+
+## 2026-11-06 — Tree supervisor reassignment lifecycle validation
+
+A focused source audit found a server-side validation mismatch: the Tree reassignment selector and Tree-creation handler excluded supervisors whose effective lifecycle status is `departed` or `archived`, but the reassignment POST handler validated only the user's supervisor role. A crafted or stale POST could therefore assign an ineligible supervisor despite the UI hiding that choice.
+
+The reassignment handler now applies the same effective-status predicate as the creation handler and current supervisor list, using `COALESCE(supervisor_status, CASE WHEN is_active = 1 THEN 'active' ELSE 'suspended' END) NOT IN ('departed', 'archived')`. The database-free Tree source contract now has a dedicated assertion for this reassignment path. Commits: `a347feb636215a5490c4343c457f98d0625e4e03` (source), `71b5d435304c8b172cbcb566fe6a28e86ece7658` (contract).
+
+**Verification boundary:** source and regression assertion are committed to `main`; PHP lint, contract execution and GitHub Actions result are pending. This closes only the validation mismatch at source level; local authenticated reassignment and assignment-history acceptance remain open. No schema/migration or existing records changed.
