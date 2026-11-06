@@ -6126,3 +6126,9 @@ A narrowly scoped progressive enhancement was added to the affected selectors (i
 User browser feedback confirmed the Tree dropdown popup issue is resolved, but the screenshot showed the enhanced selectors taller than neighboring inputs. Source comparison isolated the styling difference to `.tree-page-select` controls using `appearance: base-select`. The shared form controls use a 24px line box, 20px vertical padding and 4px border, yielding a 48px control box.
 
 Commit `6991f9e56c5826cdbfa4219af1a648da7bb33025` sets the enhanced Tree selects to a fixed 48px height/min-height and shared 1.5 line-height, without changing picker behavior or any form/data logic. Local visual retest is pending; do not mark the sizing issue closed until the user confirms alignment and confirms the dropdowns still behave correctly.
+
+## 2026-11-06 — Sponsor Tree reassignment server-side eligibility gap
+
+Audit compared Tree creation, reassignment UI, and reassignment POST validation. Creation and UI excluded supervisors whose effective status is `departed` or `archived`; reassignment POST checked only `r.code = 'supervisor'`. This was a real server-side validation gap, not merely a UI issue. The POST validation now applies the same COALESCE-based lifecycle predicate. A dedicated source-contract assertion guards the reassignment branch.
+
+Commits: `a347feb636215a5490c4343c457f98d0625e4e03`, `71b5d435304c8b172cbcb566fe6a28e86ece7658`. Runtime behavior, audit-history preservation and CI are not yet reverified. No schema or existing data changed.
