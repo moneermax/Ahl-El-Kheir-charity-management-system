@@ -166,3 +166,7 @@ A focused source audit found a server-side validation mismatch: the Tree reassig
 The reassignment handler now applies the same effective-status predicate as the creation handler and current supervisor list, using `COALESCE(supervisor_status, CASE WHEN is_active = 1 THEN 'active' ELSE 'suspended' END) NOT IN ('departed', 'archived')`. The database-free Tree source contract now has a dedicated assertion for this reassignment path. Commits: `a347feb636215a5490c4343c457f98d0625e4e03` (source), `71b5d435304c8b172cbcb566fe6a28e86ece7658` (contract).
 
 **Verification boundary:** source and regression assertion are committed to `main`; PHP lint, contract execution and GitHub Actions result are pending. This closes only the validation mismatch at source level; local authenticated reassignment and assignment-history acceptance remain open. No schema/migration or existing records changed.
+
+## 2026-11-06 — Deferred Tree dropdown appearance TODO
+
+User confirmed the Tree dropdowns now open and work, but the controls still do not visually match neighboring fields: height/shape and arrow-indicator appearance remain inconsistent (the enhanced selectors show a different/two-arrow indicator compared with the single-arrow controls beside them). **Deferred by explicit user request.** Do not modify the Tree picker CSS or appearance behavior during the remaining lifecycle work. Revisit this as a separate visual task later, after the functional Tree lifecycle acceptance.
