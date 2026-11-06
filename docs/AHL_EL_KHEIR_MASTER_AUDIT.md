@@ -6136,3 +6136,5 @@ Commits: `a347feb636215a5490c4343c457f98d0625e4e03`, `71b5d435304c8b172cbcb566fe
 ### Deferred — Tree dropdown visual mismatch (2026-11-06)
 
 User confirmed the dropdowns function but still differ visually from adjacent controls, including height and arrow-indicator appearance (two arrows versus one). User requested deferral. Exclude from current work; do not make further CSS/picker changes until explicitly resumed.
+
+**CI result update — 2026-11-06:** GitHub Actions runs [#42165265142](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165265142) (source commit) and [#42165275942](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42165275942) (contract commit) both completed **SUCCESS**. All six jobs passed in each run; the PHP lint job passed, including `tools/test_sponsor_tree_contract.php`. This confirms syntax/source-contract and CI migration jobs, not local authenticated runtime behavior.
