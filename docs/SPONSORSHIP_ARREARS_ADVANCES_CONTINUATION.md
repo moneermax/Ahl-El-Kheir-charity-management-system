@@ -54,3 +54,47 @@ This is a two-eligible-month threshold, not a requirement for two adjacent calen
 ## Current verification boundary
 
 Source/schema audit only. No application code, migration, database row, or accounting journal has been changed. No PHP, SQL migration, CI, or local runtime test has been run. Continue on main only. Do not reopen closed HR, i18n, salary advance, or Sponsor Tree work.
+
+
+## 2026-11-08 — Month-end recognition and historical backfill approved
+
+The user approved recognition on the **last calendar day of the covered month**, rather than the first day, and approved a historical backfill with append-only journal corrections. The source backup is test data, not live financial data.
+
+### Exact backup evidence
+
+Backup: `database/ahl_el_kheir.sql`, generated 2026-11-08 16:12, MariaDB 10.4.32. The backup was read from Git blob `3255afebaa319cb7c8232f82ceb148f4fefe3b57` at commit `b957c17bebbb646bbfbe7709b109ae03466263b2`.
+
+Seven posted, non-voided `sponsorship_payment` transactions are eligible for the initial monthly-sponsorship backfill:
+
+| Transaction | Payment | Covered month | Monthly commitment | Covered allocation | Unallocated excess | Original journal |
+|---:|---|---|---:|---:|---:|---|
+| 1 | SP-000001 | July 2027 | 11,000 | 11,000 | 0 | JE-000001 |
+| 2 | SP-000002 | August 2026 | 11,000 | 11,000 | 0 | JE-000002 |
+| 17 | SP-000004 | September 2026 | 10,000 | 10,000 | 5,000 | JE-000015 |
+| 18 | SP-000005 | September 2026 | 10,000 | 10,000 | 5,000 | JE-000016 |
+| 27 | SP-000006 | September 2026 | 15,000 | 15,000 | 0 | JE-000028 |
+| 28 | SP-000010 | September 2026 | 10,000 | 10,000 | 0 | JE-000029 |
+| 29 | SP-000011 | September 2026 | 10,000 | 10,000 | 0 | JE-000030 |
+
+All seven have zero recorded administrative fees; gross equals net. The two overpayments are SP-000004 and SP-000005, each with 5,000 excess. No excess is automatically moved to another month.
+
+### Backfill reconciliation target
+
+- Total eligible gross/net receipts: **87,000 SDG**.
+- August 2026 covered allocation: **11,000 SDG**, recognized 2026-08-31.
+- September 2026 covered allocations: **55,000 SDG**, recognized 2026-09-30.
+- Future July 2027 allocation: **11,000 SDG**, remains deferred until 2027-07-31.
+- Unallocated excess: **10,000 SDG**, remains deferred until explicitly allocated.
+- Target balance from these seven receipts after backfill: **4100 revenue = 66,000 SDG; 2200 deferred revenue = 21,000 SDG**.
+
+### Append-only correction rule
+
+Do not update, delete, void, or rewrite the seven original posted journals or their lines. Add separately traceable reclassification journals to move the original 87,000 net credit from 4100 to 2200, linked to each source transaction. Add month-end recognition journals dated 2026-08-31 and 2026-09-30 for 11,000 and 55,000 respectively. Preserve the remaining 21,000 in 2200.
+
+The backup contains 3,560 sponsorships, 22 transactions (16 posted, 5 voided, 1 cancelled), and 11 supervisor submissions (8 approved, 3 returned); all eight approved submissions have linked transactions. Only the seven eligible posted monthly-sponsorship transactions above enter this backfill. Pending, returned, cancelled, and voided records are excluded.
+
+No PAUSE/RESUME audit events exist in this backup. Do not invent historical pause intervals. The relevant sponsorships are active in the backup; imported records use the accepted 2026-08-01 monitoring baseline, while newly created records use their actual start dates.
+
+### Implementation status
+
+Approval and backup reconciliation are complete. **No migration, source code, database row, or journal has yet been changed.** Next: implement the allocation/pause-history schema, atomic posting and month-end recognition path, an idempotent dry-run/apply backfill tool, and rollback-safe verification. Apply only to the local test database after review; never run this backfill against live data.
