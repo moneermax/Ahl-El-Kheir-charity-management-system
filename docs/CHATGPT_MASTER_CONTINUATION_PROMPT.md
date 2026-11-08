@@ -3606,3 +3606,12 @@ This is a source/schema audit only. No application source, schema, or data has b
 
 ## 2026-11-08 — Sponsorship advances and two-month arrears
 Active feature continuation: `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`. Business rule confirmed: two consecutive eligible completed sponsorship months with a positive unpaid balance trigger the arrears threshold; fully paused months are excluded and do not break the sequence; pre-pause arrears persist; counting resumes with the first complete eligible month after resumption. Partial payments reduce but do not clear a month until fully covered. The current checkpoint is still source/schema audit plus business-rule confirmation; implementation and runtime verification remain pending. Continue on `main`, inspect source/schema, and do not alter live data.
+
+
+## 2026-11-08 — Sponsorship accounting backfill approval
+
+Continue the existing Sponsorship Advances / Two-Month Arrears work from `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`. The user approved month-end recognition on the last calendar day of the covered month and append-only historical backfill/journal correction against test data only.
+
+Backup-derived target for seven eligible posted monthly-sponsorship transactions: total 87,000 SDG; August 2026 earned 11,000; September 2026 earned 55,000; future July 2027 deferred 11,000; unallocated excess deferred 10,000 (SP-000004 and SP-000005 each contribute 5,000). Target 4100 = 66,000 SDG and 2200 = 21,000 SDG after backfill. Original journals must remain unchanged.
+
+No code, migration, database row or journal has been changed yet. Next implementation work: explicit allocation and pause-event schema, atomic posting, month-end recognition, append-only correction/void reversal, and an idempotent controlled backfill tool. Never run against live data. Do not ask the user for manual SQL output; inspect the repository backup and actual source/schema first.
