@@ -3636,3 +3636,40 @@ No database schema, migration, accounting calculation, membership state, or spon
 The checked-in schema dump fetch did not return readable SQL content during this audit; no schema inference or DDL change was made. All queried fields above already exist in the inspected application source and Tree assignment implementation.
 
 The Tree dropdown height/arrow appearance TODO remains explicitly deferred and must not be touched during this work.
+
+
+
+## 2026-11-08 — Sponsorship advances and two-month arrears: source/schema audit
+
+The user approved the individual-sponsorship basis, August 2026 imported-data baseline, posted/non-voided payment rule, full-month pause/resumption rule, and proceeding against test data (not live data). This is an active feature; no implementation or runtime acceptance is claimed yet.
+
+### Confirmed business rules
+- Evaluate each individual `sponsorships.id` independently; do not aggregate by sponsor.
+- Imported sponsorships use 2026-08-01 as the tracking baseline; newly created sponsorships use their actual `start_date`.
+- A calendar month is fully eligible only when the sponsorship is active for the entire month. Exclude partial start/end months and any month touched by a pause interval. A full paused month creates no new obligation.
+- Preserve arrears from eligible months before a pause. Resume counting only with the first full eligible month after resumption.
+- A month is cleared only when posted, non-voided monthly-sponsorship allocations for that exact sponsorship/month reach its full monthly commitment. Partial payments accumulate; pending, returned, cancelled, and voided records do not clear a month.
+- Never auto-transfer excess to another month and never automatically deactivate a sponsorship for arrears.
+- Do not ask for another payment when a submission for the same sponsorship/month is already pending FM review; display pending/returned separately from confirmed receipts.
+- The collector/direct-contact employee is the user who collected or recorded the payment, not necessarily the current sponsor supervisor or FM approver.
+- Future-period sponsorship receipts belong in liability account 2200 until earned; earned net sponsorship revenue belongs in 4100; applicable admin fee remains in 4200. Excess not allocated to an obligation remains a liability, not revenue.
+- Approved supervisor submissions must be represented financially by their linked transaction once, not counted twice.
+
+### Source/schema evidence (main at b957c17)
+- `transactions` has `sponsorship_id`, `payment_period`, `amount`, `net_amount`, `status`, `voided_at`, `created_by`, `transaction_type`, and `purpose`; the schema has no per-month allocation table.
+- `sponsor_payments.transaction_id` links an approved supervisor submission to the posted transaction. In `ak_approve_sponsor_payment()`, `transactions.created_by` is set to the FM reviewer, while `sponsor_payments.supervisor_id` is the collector. Direct transaction submissions retain their submitting user in `transactions.created_by`.
+- `ak_post_transaction_journal_prepared()` currently credits 4100 for the sponsorship net amount without testing whether `payment_period` is future. Account 2200 already exists as Deferred Revenue.
+- The approved submission remains in `sponsor_payments` after its linked transaction is created. The sponsor payment history currently UNION ALLs both tables, which can duplicate an approved collection.
+- Backup counts: 3,560 sponsorships; 22 transactions (16 posted, 5 voided, 1 cancelled); 11 supervisor submissions (8 approved, 3 returned); every approved submission in this backup has a linked transaction.
+- Concrete examples: SP-000001 is an 11,000 SDG posted sponsorship transaction received 2026-08-16 for July/2027, currently credited to 4100; SP-000004 is 15,000 SDG for September/2026 against sponsorship IMP-SH-002947 whose current monthly commitment is 10,000 SDG.
+- Pause/resume source records PAUSE/RESUME audit events with timestamps, but this backup contains no such events. One imported active sponsorship has pause_start_date and pause_end_date both 2026-08-10. Do not fabricate missing cycles; use evidenced intervals only. The existing date fields overwrite between cycles, so retain event history for future transitions.
+
+### Implementation order
+1. Add explicit monthly allocation/credit tracking and pause-period history through migrations; no request-time DDL.
+2. Make direct and supervisor approval paths create the same allocation evidence atomically, preserving collector identity and FM approval audit.
+3. Route future earned sponsorship net to 2200 and excess to liability; recognize allocated deferred revenue into 4100 through idempotent, auditable journals, including safe reversal behavior if the source transaction is later voided.
+4. Build separate advance-payment and two-month arrears views with existing supervisor scope checks; show pending/returned submissions separately and deduplicate approved records through their linked transaction.
+5. Add regression tests for partials, overpayments, same-month submissions, future periods, voids, pause boundaries, collector identity, and duplicate protection; then update docs with actual verification evidence.
+
+### Verification boundary
+This is a source/schema audit only. No application source, schema, or data has been changed; no PHP/SQL/runtime test has been run. The checked-in SQL backup was inspected directly. The current task is implementation, not a reopening of completed HR, i18n, or Sponsor Tree work.
