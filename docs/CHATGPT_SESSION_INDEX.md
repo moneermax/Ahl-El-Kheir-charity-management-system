@@ -3677,3 +3677,10 @@ This is a source/schema audit only. No application source, schema, or data has b
 
 ### 2026-11-08 — Sponsorship advances and two-month arrears: arrears threshold confirmed
 The user confirmed the two-month arrears definition: two consecutive eligible completed sponsorship months with a positive unpaid balance. Fully paused months are excluded from the eligible-month sequence and do not break it; pre-pause arrears persist; counting resumes with the first complete eligible month after resumption. Partial payments reduce but do not clear a month until its full commitment is covered. See `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`. Implementation has not yet started; do not claim source/schema/runtime changes.
+
+
+### 2026-11-08 — Sponsorship accounting backfill approved
+
+Month-end recognition is approved for the last calendar day of the covered month. Historical backfill and append-only journal correction are approved for test data only. The exact seven-payment backup reconciliation and target balances are recorded in `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`: 87,000 SDG eligible receipts; 66,000 SDG earned (11,000 August + 55,000 September); 21,000 SDG deferred (11,000 July 2027 + 10,000 unallocated excess). Both SP-000004 and SP-000005 contain 5,000 SDG excess. Original journals must remain untouched.
+
+**Next:** implement explicit monthly allocation and pause-event evidence, atomic deferred-revenue posting, idempotent month-end recognition, source-void reversal handling, and a controlled dry-run/apply historical backfill tool. No code, migration, database row, or journal has been changed yet. Test database only; do not run against live data.
