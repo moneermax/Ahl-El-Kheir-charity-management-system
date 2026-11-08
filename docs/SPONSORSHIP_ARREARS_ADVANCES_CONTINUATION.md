@@ -103,3 +103,20 @@ Approval and backup reconciliation are complete. **No migration, source code, da
 ### Historical commitment evidence limitation
 
 For the six sponsorship records referenced by the seven payments, the backup provides the current `sponsorships.monthly_amount` values shown above. No matching amount-change audit rows were found for those sponsorship IDs. Current application source creates sponsorships with an initial amount and records that amount in the creation audit, but no sponsorship edit route was found that changes `monthly_amount`. Therefore the backfill will snapshot the amount present in this backup as the available commitment evidence; it will not invent a different historical amount. Any manual database-only change outside the application cannot be reconstructed from this backup.
+
+
+### 2026-11-08 — Posting-path and period-format audit
+
+Further inspection of current `main` confirmed both live approval paths converge on `ak_post_transaction_journal_prepared()`:
+- Ordinary direct/supervisor-entered transactions are approved in `modules/accounting/fm_transaction_review.php`, which marks the transaction posted and calls `ak_post_transaction_journal()`.
+- Supervisor submissions are converted to posted transactions in `ak_approve_sponsor_payment()` in `modules/accounting/lib_sponsor_payment_approval.php`, which calls `ak_post_transaction_journal_prepared()` within the caller's open transaction.
+
+Therefore the central prepared posting helper is the correct shared accounting integration point; duplicating allocation logic in the two UI handlers would be unsafe.
+
+The UI stores coverage as English `F/Y` strings (examples: `September/2026`, `July/2027`), not ISO `YYYY-MM`. The existing parser is `DateTime::createFromFormat('!F/Y', $period)`. The implementation must use a strict parser consistent with this stored format and must not silently reinterpret malformed periods.
+
+The transaction-entry workflow also permits a monthly-sponsorship record without a linked `sponsorship_id` in some paths/fixtures. Such receipts cannot be assigned to an individual sponsorship obligation. They must remain fully unallocated/deferred rather than being incorrectly recognized as earned sponsorship revenue or assigned to a guessed sponsorship. The approved seven historical backfill rows all have a concrete `sponsorship_id`.
+
+The existing transaction void helper reverses the original transaction journal by adding a separate reversal journal, but it also writes void metadata to the original journal header. Any new sponsorship recognition/reclassification reversals must integrate atomically with that helper, leave original journal lines unchanged, and avoid leaving recognized revenue or deferred liability behind after a source transaction is voided.
+
+No source code, migration, or database data has been changed in this audit step.
