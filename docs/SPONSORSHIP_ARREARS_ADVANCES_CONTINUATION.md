@@ -17,6 +17,19 @@
 9. Future-period sponsorship net receipts are liabilities in 2200 until earned; earned sponsorship net is 4100; applicable administrative fee remains 4200. Excess not allocated to an obligation remains a liability.
 10. An approved `sponsor_payments` submission is represented by its linked `transactions` record once; never count both.
 
+## Arrears classification — business rule confirmed 2026-11-08
+
+A sponsorship is classified as having reached the two-month arrears threshold when at least two consecutive **eligible completed months** each retain a positive unpaid balance after applying confirmed posted, non-voided allocations for that exact sponsorship/month.
+
+- Partial payment reduces that month's outstanding balance but does not clear the month.
+- A fully paused month is excluded from the eligible-month sequence; it neither creates an obligation nor breaks the sequence of unpaid eligible months.
+- Pre-pause arrears remain outstanding throughout the pause.
+- After resumption, counting continues with the first complete eligible month after the pause.
+- Partial start/end months and any month touched by a pause remain excluded.
+- The classification is informational and must not automatically deactivate, pause, or otherwise change a sponsorship.
+
+This is a two-eligible-month threshold, not a requirement for two adjacent calendar months. Example: unpaid August, paused September, unpaid October reaches the threshold.
+
 ## Audited implementation facts
 
 - `transactions` has `sponsorship_id`, `payment_period`, `amount`, `net_amount`, `status`, `voided_at`, `created_by`, `transaction_type`, and `purpose`. There is no per-month allocation table in the checked-in schema.
