@@ -5934,3 +5934,8 @@ The user approved last-day-of-covered-month revenue recognition and an append-on
 Original journals must remain untouched. Detailed transaction/journal mapping and acceptance boundaries are recorded in `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`.
 
 **Status:** approval and backup analysis complete; implementation not yet started. Next: migration, atomic allocation/posting, month-end recognition, append-only correction and void reversal, plus controlled idempotent backfill tooling. No live database changes.
+
+## 2026-11-08 — Sponsorship accounting schema foundation
+
+Committed migration `database/migrations/2026-11-08_sponsorship_payment_accounting.sql` (`609c1a7ad474e00648096907908eaea010d84c7d`). It adds allocation snapshots, append-only accounting-event references, and pause/resume event history. This is a schema foundation only: **not applied locally**, no source integration or data/journal changes, and no runtime verification. Continue with central posting, pause/resume event writes, month-end recognition, atomic void reversals, and controlled historical backfill. Imported sponsorship identification is grounded in the actual `IMP-SH-` code prefix; new sponsorships use `SH-` and actual start date.
+
