@@ -3673,3 +3673,7 @@ The user approved the individual-sponsorship basis, August 2026 imported-data ba
 
 ### Verification boundary
 This is a source/schema audit only. No application source, schema, or data has been changed; no PHP/SQL/runtime test has been run. The checked-in SQL backup was inspected directly. The current task is implementation, not a reopening of completed HR, i18n, or Sponsor Tree work.
+
+
+### 2026-11-08 — Sponsorship advances and two-month arrears: arrears threshold confirmed
+The user confirmed the two-month arrears definition: two consecutive eligible completed sponsorship months with a positive unpaid balance. Fully paused months are excluded from the eligible-month sequence and do not break it; pre-pause arrears persist; counting resumes with the first complete eligible month after resumption. Partial payments reduce but do not clear a month until its full commitment is covered. See `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`. Implementation has not yet started; do not claim source/schema/runtime changes.
