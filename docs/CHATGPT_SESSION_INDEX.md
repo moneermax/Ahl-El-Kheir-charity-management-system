@@ -3684,3 +3684,8 @@ The user confirmed the two-month arrears definition: two consecutive eligible co
 Month-end recognition is approved for the last calendar day of the covered month. Historical backfill and append-only journal correction are approved for test data only. The exact seven-payment backup reconciliation and target balances are recorded in `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`: 87,000 SDG eligible receipts; 66,000 SDG earned (11,000 August + 55,000 September); 21,000 SDG deferred (11,000 July 2027 + 10,000 unallocated excess). Both SP-000004 and SP-000005 contain 5,000 SDG excess. Original journals must remain untouched.
 
 **Next:** implement explicit monthly allocation and pause-event evidence, atomic deferred-revenue posting, idempotent month-end recognition, source-void reversal handling, and a controlled dry-run/apply historical backfill tool. No code, migration, database row, or journal has been changed yet. Test database only; do not run against live data.
+
+### 2026-11-08 — Sponsorship accounting schema foundation
+
+Migration `2026-11-08_sponsorship_payment_accounting.sql` was committed on main as `609c1a7ad474e00648096907908eaea010d84c7d`. It adds per-transaction allocation snapshots, append-only accounting-event journal links, and append-only sponsorship pause events. **Migration not applied; source integration and runtime verification remain pending.** Imported sponsorships are identified by `IMP-SH-` codes (monitoring baseline 2026-08-01); newly created `SH-` sponsorships use their actual start date. Monthly entry creates one transaction per month line.
+
