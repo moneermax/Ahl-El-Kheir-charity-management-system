@@ -3615,3 +3615,8 @@ Continue the existing Sponsorship Advances / Two-Month Arrears work from `docs/S
 Backup-derived target for seven eligible posted monthly-sponsorship transactions: total 87,000 SDG; August 2026 earned 11,000; September 2026 earned 55,000; future July 2027 deferred 11,000; unallocated excess deferred 10,000 (SP-000004 and SP-000005 each contribute 5,000). Target 4100 = 66,000 SDG and 2200 = 21,000 SDG after backfill. Original journals must remain unchanged.
 
 No code, migration, database row or journal has been changed yet. Next implementation work: explicit allocation and pause-event schema, atomic posting, month-end recognition, append-only correction/void reversal, and an idempotent controlled backfill tool. Never run against live data. Do not ask the user for manual SQL output; inspect the repository backup and actual source/schema first.
+
+## 2026-11-08 — Sponsorship accounting schema foundation committed
+
+Main commit: `609c1a7ad474e00648096907908eaea010d84c7d`. Migration `database/migrations/2026-11-08_sponsorship_payment_accounting.sql` adds per-transaction allocation snapshots, append-only accounting event references, and pause/resume events. It is committed but **not applied**. No PHP source, database rows, or journals changed. Next implement central sponsorship posting, strict F/Y parsing, monthly commitment snapshot/partial and excess allocation, pause event writes in `modules/sponsorships/view.php`, idempotent month-end recognition, append-only void reversals, and dry-run/apply historical backfill. Use `IMP-SH-` as the verified imported-record marker (2026-08-01 monitoring baseline); new `SH-` records use their actual start date. Monthly entry creates one transaction per month line. Test database only; do not apply to live data.
+
