@@ -6201,3 +6201,14 @@ This is a source/schema audit only. No application source, schema, or data has b
 
 ## 2026-11-08 — Sponsorship advances and two-month arrears: threshold confirmed
 The user confirmed the arrears classification rule: at least two consecutive eligible completed sponsorship months each have a positive unpaid balance. A fully paused month is excluded and does not break the eligible-month sequence; pre-pause arrears persist; counting resumes with the first complete eligible month after resumption. Partial payments reduce but do not clear the month until the full commitment is covered. Detailed scope and implementation sequence: `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`. No implementation, migration, test-data mutation, or journal correction has yet occurred.
+
+
+## 2026-11-08 — Sponsorship month-end revenue recognition and historical backfill
+
+The user approved recognition on the last calendar day of the covered month and approved an append-only historical backfill/correction using test data only. The current SQL backup was inspected directly. Seven eligible posted, non-voided monthly-sponsorship transactions total 87,000 SDG. Their covered allocations total 77,000 SDG: August 2026 = 11,000; September 2026 = 55,000; future July 2027 = 11,000. Two overpayments, SP-000004 and SP-000005, each have 5,000 SDG excess that must remain unallocated/deferred. Expected balances after backfill: 4100 = 66,000 SDG recognized; 2200 = 21,000 SDG deferred.
+
+Original posted journals JE-000001, JE-000002, JE-000015, JE-000016, JE-000028, JE-000029 and JE-000030 must not be rewritten or deleted. Add transaction-linked reclassification journals for the original 87,000 SDG 4100 credit to 2200, then recognition journals dated 2026-08-31 (11,000) and 2026-09-30 (55,000). The remaining 21,000 stays in 2200. All seven source transactions have zero administrative fees in the backup.
+
+The backup has no PAUSE/RESUME audit events. Do not fabricate historical pause periods. Pending, returned, cancelled and voided transactions are excluded. Approved supervisor submissions are represented by their linked transactions once, not counted twice.
+
+**Verification boundary:** approval and backup analysis only. No application source, migration, data row or journal has changed. Detailed mapping and next implementation sequence are in `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`.
