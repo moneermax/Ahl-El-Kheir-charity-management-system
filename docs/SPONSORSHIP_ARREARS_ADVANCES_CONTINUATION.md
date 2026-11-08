@@ -120,3 +120,23 @@ The transaction-entry workflow also permits a monthly-sponsorship record without
 The existing transaction void helper reverses the original transaction journal by adding a separate reversal journal, but it also writes void metadata to the original journal header. Any new sponsorship recognition/reclassification reversals must integrate atomically with that helper, leave original journal lines unchanged, and avoid leaving recognized revenue or deferred liability behind after a source transaction is voided.
 
 No source code, migration, or database data has been changed in this audit step.
+
+### 2026-11-08 — Allocation schema foundation committed
+
+Commit: `609c1a7ad474e00648096907908eaea010d84c7d`.
+
+Added migration `database/migrations/2026-11-08_sponsorship_payment_accounting.sql` defining:
+- one immutable monthly allocation snapshot per source transaction;
+- append-only sponsorship accounting event links for historical reclassification, month-end recognition, and void reversal journals;
+- append-only PAUSE/RESUME event history.
+
+The migration is **committed but not applied**. No PHP posting path, pause handler, recognition runner, backfill tool, or database row/journal has been changed. Do not apply the migration as a standalone feature release until the matching source integration is committed.
+
+Additional source facts confirmed:
+- Imported sponsorships are explicitly coded `IMP-SH-xxxxxx`; the import routine sets their original start date to 2025-01-01. Their approved monitoring baseline remains 2026-08-01.
+- New sponsorships receive `SH-xxxxxx` and `start_date = CURDATE()`; their monitoring begins at that actual start date.
+- The transaction-entry form creates a separate transaction for each month/purpose line; monthly lines use `months_covered = 1.00`. There is no multi-month split hidden inside one transaction.
+- The current pause/resume actions are in `modules/sponsorships/view.php`. They update the legacy date fields and audit log in one DB transaction; the new append-only pause-event insert must be added to that same transaction.
+
+The next source change must use the explicit import code prefix to determine the monitoring baseline, snapshot the monthly commitment once per sponsorship/month, serialize allocation with a sponsorship row lock, and keep unassignable/ineligible/excess receipt amounts deferred.
+
