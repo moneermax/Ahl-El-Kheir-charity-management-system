@@ -345,3 +345,16 @@ CI now verifies both calculation rules and database-backed report/duplicate-guar
 - normal existing payment submission and FM approval behavior.
 
 Do not rerun the already-closed sponsorship accounting backfill or rollback harness. Do not claim the advances/arrears feature closed until local XAMPP acceptance is recorded.
+
+
+## 2026-11-09 — Sponsorship report requests blocking logout: source fix committed, runtime pending
+
+The user reported that both sponsorship arrears/advances pages remained loading without rendering, and logout also appeared to hang. Source inspection established a concrete shared-session defect: both report pages called `Session::start()` and then ran all report queries/calculations while retaining PHP's default per-session lock. A second request using the same browser session (including `logout.php`) waits for that lock. The report pages now capture the authenticated user ID, consume/clear the current flash queue, call `session_write_close()` before report work, and restore the request-local flash copy for the existing alerts include. This preserves the stored session's flash-consumption semantics while allowing concurrent logout/navigation requests.
+
+Source commits on `main`:
+- `f2f5159b5a868500f712ef9deb73b6225c0e8f40` — arrears page session-lock release.
+- `a98b99b46c8cf170ec0e2933d59cf3274d19b57e` — advances page session-lock release.
+
+**Verification status:** source-level cause and narrow fix identified; GitHub PHP syntax workflow run `42576565231` was queued at the time of this checkpoint. No local Apache/browser verification has yet been performed. Releasing the session lock explains the logout blockage but does not, by itself, prove why report rendering is slow. If the pages still do not render after this change, the next step is to capture the active MariaDB process/query and PHP/Apache error output while one report request is loading; do not change report calculations or add indexes without that evidence.
+
+Do not rerun the already-passed report runtime harness. The feature remains open pending actual page rendering and workflow acceptance. Preserve unrelated staged Monthly Data Entry files and untracked local backups.
