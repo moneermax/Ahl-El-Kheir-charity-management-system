@@ -41,7 +41,7 @@ include dirname(__DIR__,2).'/includes/header.php';
  <tr><td><code><?php echo e($sp['sponsorship_code']); ?></code> — <?php echo e($sp['child_name']); ?></td><td><?php echo e($sp['sponsor_name']); ?></td><td colspan="6"><span class="text-danger"><?php echo e($item['error']); ?></span></td></tr>
  <?php else: foreach ($item['months'] as $month): ?>
  <tr>
-  <td><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td>
+  <td><?php if (!empty($sp['family_child_record_id'])): ?><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><?php else: ?><code><?php echo e($sp['sponsorship_code']); ?></code><?php endif; ?><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td>
   <td><?php echo e($sp['sponsor_name']); ?></td>
   <td><?php echo e($month['label']); ?></td>
   <td><?php echo number_format($month['commitment'],2); ?> ج.س</td>
