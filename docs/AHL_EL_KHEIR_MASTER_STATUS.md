@@ -6115,3 +6115,7 @@ Source commits:
 - `6bcaed8ab8fc38625a34d851e902941c890d0b65` — database-backed GM scope coverage.
 
 Verification boundary: source and regression tests are committed; CI and local PHP/browser acceptance are pending. No local runtime result is claimed. Next, verify CI, then locally lint the changed PHP files, run the updated search-contract and arrears/advances runtime tests, and log in as GM to open both dashboard links and both direct URLs. Confirm GM sees organization-wide read-only reports and that FM remains denied. Then continue the existing Advances/payment/FM workflow acceptance. Do not rerun the closed accounting backfill or unrelated completed tests.
+
+
+
+**Follow-up refinement — GM report detail and regression coverage:** The GM arrears view also exposes the same supervisor filter/name column already available to Admin and VGM, so executive-wide results can be reviewed by responsible supervisor. The static contract test asserts all four GM supervisor-detail presentation checks. The runtime harness now explicitly calls the GM suggestion loader as well. Commits: `754af0ee93bd90167aa99562630f9afe330fa9bf`, `da4575af3ff584dcf279844ab9531287fb00b430`, `164c7b4cf3e74c0929a5ee2542500591c8579627`. CI/local execution remains pending.
