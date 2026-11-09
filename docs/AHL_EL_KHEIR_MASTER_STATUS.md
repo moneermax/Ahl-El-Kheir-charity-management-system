@@ -6086,3 +6086,32 @@ The VGM dashboard now includes clickable cards for Sponsorship Arrears and Spons
 
 
 **Localization:** the two new card descriptions use stable translation keys present in both authoritative catalogs. Commits: `f8545bc511d0a685270ef301969dd3a65fcbae07` (dashboard keys), `2ecfabb7e5c7f5beb9d75e9f450dc53c0fad99fb` (Arabic), and `60f3c0cff35b8a27bca5c83f9de0bdd641be9375` (English). Source inspection confirms both keys are referenced and defined in both languages.
+
+
+
+## 2026-11-09 — GM sponsorship arrears/advances read-only access (source committed; acceptance pending)
+
+The GM role was being redirected from both existing sponsorship reports because the page guards and shared reporting-helper allowlists admitted only Admin, VGM, and Supervisor. The shared scope implementation already applies a restricted scope only to Supervisor; therefore adding `general_manager` grants GM organization-wide read-only visibility, matching the executive role and the existing Admin/VGM report scope.
+
+Implemented on `main`:
+- Added `general_manager` to the arrears and advances page guards.
+- Added `general_manager` to all three shared helper guards used by initial arrears suggestions, report loading, and role-wide arrears summary.
+- Added two always-visible, read-only links to the GM dashboard's **ما يحتاج انتباه الإدارة** section:
+  - `modules/sponsorships/arrears.php`
+  - `modules/sponsorships/advances.php`
+- The GM sidebar remains executive-level and was not changed.
+- FM remains denied. No payment, approval, posting, editing, accounting, schema, or data permissions were added.
+
+Regression coverage added:
+- Static search-contract assertions for both page guards, all three shared helper guards, and both GM dashboard destinations.
+- Database-backed runtime assertions that GM sees all sponsorships, GM arrears summary equals the organization-wide full report, and GM advances output matches Admin's organization-wide output. Existing Supervisor scope and FM denial assertions remain.
+
+Source commits:
+- `163f4e313ba7bdba6526a02edf11c9454db05d89` — arrears page guard.
+- `1308d0be91504a270d6917f5c85c309d80dbadd4` — advances page guard.
+- `a3bcca546dc1e4495cbe7478e3568ec123227ffd` — shared helper guards.
+- `f3fdea7fe38c567c49a1d325c0bc1871d56f8ce4` — GM dashboard links.
+- `64300b26dba9facbfefa5468776d7558c982e8fc` — static contract coverage.
+- `6bcaed8ab8fc38625a34d851e902941c890d0b65` — database-backed GM scope coverage.
+
+Verification boundary: source and regression tests are committed; CI and local PHP/browser acceptance are pending. No local runtime result is claimed. Next, verify CI, then locally lint the changed PHP files, run the updated search-contract and arrears/advances runtime tests, and log in as GM to open both dashboard links and both direct URLs. Confirm GM sees organization-wide read-only reports and that FM remains denied. Then continue the existing Advances/payment/FM workflow acceptance. Do not rerun the closed accounting backfill or unrelated completed tests.
