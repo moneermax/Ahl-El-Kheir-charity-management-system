@@ -180,6 +180,10 @@ jobs:
             modules/sponsors/index.php
             modules/sponsorships/create.php
             modules/sponsorships/view.php
+            modules/sponsorships/arrears.php
+            modules/sponsorships/advances.php
+            modules/sponsorships/lib_payment_status.php
+            modules/accounting/lib_sponsorship_payment_accounting.php
             modules/families/orphan_profile.php
             tools/test_sponsor_tree_contract.php
             tools/test_sponsor_legal_entity_contact_contract.php
