@@ -41,6 +41,8 @@ $salaryAdvanceWaiverFMItem = ['active' => 'salary_advance_waiver_fm', 'label_key
 $menus = [
     'admin' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/admin_dashboard.php'],
+        ['active' => 'sponsorship_arrears', 'label_key' => 'navigation.sponsorship_arrears', 'icon' => 'fa-triangle-exclamation', 'url' => 'modules/sponsorships/arrears.php'],
+        ['active' => 'sponsorship_advances', 'label_key' => 'navigation.sponsorship_advances', 'icon' => 'fa-calendar-plus', 'url' => 'modules/sponsorships/advances.php'],
     ],
 
     // GM keeps the primary navigation intentionally executive-level.
@@ -60,8 +62,6 @@ $menus = [
         ['active' => 'families', 'label_key' => 'navigation.family_register', 'icon' => 'fa-house-chimney', 'url' => 'modules/families/index.php'],
         ['active' => 'orphan_groups', 'label_key' => 'navigation.orphan_groups', 'icon' => 'fa-people-group', 'url' => 'modules/deputy_gm/groups.php'],
         ['active' => 'sponsorships', 'label_key' => 'navigation.sponsorship_register', 'icon' => 'fa-file-contract', 'url' => 'modules/sponsorships/index.php'],
-        ['active' => 'sponsorship_arrears', 'label_key' => 'navigation.sponsorship_arrears', 'icon' => 'fa-triangle-exclamation', 'url' => 'modules/sponsorships/arrears.php'],
-        ['active' => 'sponsorship_advances', 'label_key' => 'navigation.sponsorship_advances', 'icon' => 'fa-calendar-plus', 'url' => 'modules/sponsorships/advances.php'],
         $suspItem,
         $reportsItem,
     ],
