@@ -35,6 +35,21 @@ $check('page_preserves_pending_card_filter_and_pagination', str_contains($page, 
 $check('page_runs_calculation_only_after_search_submission', str_contains($page, "if (\$searchRequested)") && str_contains($page, 'ak_sar_get_arrears($role, $reportUserId, $hasFilters ? $filters : null)'));
 $check('page_discloses_suggestions_are_not_confirmed_arrears', str_contains($page, 'ظهور الكفالة هنا لا يعني أنها مصنفة كمتأخرة'));
 $check('supervisor_scope_is_rechecked_by_authoritative_helper', str_contains($library, 'supervisorCanAccessSponsor($userId, $sponsor, $letterScope)'));
+$summaryStart = strpos($library, 'function ak_sar_get_arrears_summary(');
+$summaryEnd = strpos($library, 'function ak_sar_filter_arrears_view(', $summaryStart ?: 0);
+$summarySource = ($summaryStart !== false && $summaryEnd !== false)
+    ? substr($library, $summaryStart, $summaryEnd - $summaryStart)
+    : '';
+$statsPosition = strpos($page, 'الكفالات المتأخرة');
+$searchPosition = strpos($page, '<div class="card fade-in mb-3">');
+$check('role_wide_summary_has_a_dedicated_lightweight_loader', $summarySource !== '' && !str_contains($summarySource, 'ak_sar_load_report_data') && !str_contains($summarySource, 'family_children'));
+$check('dashboard_summary_reuses_authoritative_month_eligibility', str_contains($summarySource, 'ak_sar_month_rows(') && str_contains($summarySource, 'ak_sar_has_two_consecutive_unpaid_months('));
+$check('dashboard_summary_rechecks_supervisor_authorization', str_contains($summarySource, 'supervisorCanAccessSponsor($userId'));
+$check('dashboard_cards_are_rendered_before_the_search_section', $statsPosition !== false && $searchPosition !== false && $statsPosition < $searchPosition);
+$check('dashboard_cards_open_unfiltered_role_wide_report', str_contains($page, '$buildAllArrearsUrl') && str_contains($page, "'all'=>'1'"));
+$check('role_wide_summary_runs_on_initial_get', str_contains($page, 'ak_sar_get_arrears_summary($role, $reportUserId)') && str_contains($page, 'if (!$canReuseAllReportSummary)'));
+$check('search_results_do_not_replace_role_wide_dashboard_totals', str_contains($page, 'if (!$hasFilters) $summary = ak_sar_summarize_arrears($allRows)'));
+
 
 echo 'PASS | ' . implode(' | ', array_map(
     static fn(string $name, bool $passed): string => $name . '=' . ($passed ? 'PASS' : 'FAIL'),
