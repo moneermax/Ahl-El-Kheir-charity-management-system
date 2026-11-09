@@ -501,3 +501,16 @@ GitHub Actions run 42642522337 for commit e655f7318e97acb4d0fef3bdf057b29eb3c62b
 The test measured the Admin summary-only calculation at 297.88 ms in this CI run. A prior successful run measured 111.34 ms, so treat the CI evidence as sub-second in the checked-in test database, not as a guarantee of local browser latency. The earlier CI attempts exposed and then fixed the stale search-contract expectation and a MariaDB collation mismatch in a UNION across the two pending-payment sources.
 
 **Still pending:** local XAMPP PHP/runtime execution and browser acceptance. CI does not prove the user's local DB response time or actual role-account browser behavior.
+
+
+## 2026-11-09 — VGM dashboard navigation consolidation
+
+The VGM dashboard now exposes the Sponsorship Arrears and Sponsorship Advances pages as two additional clickable action cards beside the existing dashboard cards. The six cards are rendered in two balanced rows of three, retaining the existing card styling and dimensions.
+
+The two corresponding links were removed from the **vice_general_manager** sidebar menu only. The Supervisor sidebar entries remain unchanged. The destination pages' own role checks and report logic were not modified; no accounting logic, schema, or data was changed.
+
+Source commits:
+- `2b113e2e7b5b7050ddd28e65347b1bc4a52ba708` — VGM dashboard cards.
+- `f1b96f190ceae9e36dbf7419029a29dc334bd84b` — VGM sidebar cleanup.
+
+**Verification boundary:** source edits are committed to main. PHP syntax and local browser acceptance are still required. Verify that both cards navigate correctly, the VGM sidebar no longer lists either page, and the Supervisor sidebar still lists both pages. This is a navigation-only change; do not rerun the arrears accounting/runtime harnesses without regression evidence.
