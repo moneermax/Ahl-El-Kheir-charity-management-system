@@ -3747,3 +3747,16 @@ Important data finding: the checked-in database contains 3,560 sponsorship rows;
 User pulled `main` through `0d78c02e2c9ba20b0fe5e49da3d7e8a11579c701` and ran `/opt/lampp/bin/php tools/test_sponsorship_arrears_advances_runtime.php`. Exact result: `PASS | pending_duplicate_rejected_December_2026=PASS | pending_duplicate_rejected_January_2027=PASS | admin_scope_returns_all_sponsorships=PASS | vgm_scope_returns_all_sponsorships=PASS | admin_scope_retains_sponsorships_without_child_links=PASS | supervisor_scope_contains_only_authorized_sponsors=PASS | arrears_report_query_executes=PASS | advances_report_query_executes=PASS | unapproved_role_denied=PASS`. Synthetic pending rows were rolled back. This confirms local database-backed report queries, role/scope checks, unlinked-child coverage, and sequential duplicate rejection in both submission paths.
 
 **Still open:** manual UI/workflow acceptance under Admin, VGM, and supervisor accounts; inspect pending/returned/future-credit presentation; confirm normal payment submission and FM approval remain unaffected. True two-process concurrency is untested. Do not close the feature until remaining checks are accepted. Details: `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`.
+
+
+## 2026-11-09 — Sponsorship report requests blocking logout: source fix committed, runtime pending
+
+The user reported that both sponsorship arrears/advances pages remained loading without rendering, and logout also appeared to hang. Source inspection established a concrete shared-session defect: both report pages called `Session::start()` and then ran all report queries/calculations while retaining PHP's default per-session lock. A second request using the same browser session (including `logout.php`) waits for that lock. The report pages now capture the authenticated user ID, consume/clear the current flash queue, call `session_write_close()` before report work, and restore the request-local flash copy for the existing alerts include. This preserves the stored session's flash-consumption semantics while allowing concurrent logout/navigation requests.
+
+Source commits on `main`:
+- `f2f5159b5a868500f712ef9deb73b6225c0e8f40` — arrears page session-lock release.
+- `a98b99b46c8cf170ec0e2933d59cf3274d19b57e` — advances page session-lock release.
+
+**Verification status:** source-level cause and narrow fix identified; GitHub PHP syntax workflow run `42576565231` was queued at the time of this checkpoint. No local Apache/browser verification has yet been performed. Releasing the session lock explains the logout blockage but does not, by itself, prove why report rendering is slow. If the pages still do not render after this change, the next step is to capture the active MariaDB process/query and PHP/Apache error output while one report request is loading; do not change report calculations or add indexes without that evidence.
+
+Do not rerun the already-passed report runtime harness. The feature remains open pending actual page rendering and workflow acceptance. Preserve unrelated staged Monthly Data Entry files and untracked local backups.
