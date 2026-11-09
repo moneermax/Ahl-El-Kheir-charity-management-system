@@ -35,7 +35,7 @@ include dirname(__DIR__,2).'/includes/header.php';
  <table class="table table-hover align-middle mb-0">
  <thead class="table-light"><tr><th>الكفالة / اليتيم</th><th>الكفيل</th><th>الشهر المغطى</th><th>الالتزام</th><th>المخصص المدفوع</th><th>المتبقي من الالتزام</th><th>حالة المراجعة</th><th>الرصيد الزائد غير المخصص</th></tr></thead>
  <tbody>
- <?php if (!$rows): ?><tr><td colspan="7" class="text-center text-muted py-4">لا توجد دفعات مستقبلية مخصصة أو أرصدة زائدة غير مخصصة.</td></tr>
+ <?php if (!$rows): ?><tr><td colspan="8" class="text-center text-muted py-4">لا توجد دفعات مستقبلية مخصصة أو أرصدة زائدة غير مخصصة.</td></tr>
  <?php else: foreach ($rows as $item): $sp=$item['sponsorship']; $first=true; ?>
  <?php foreach ($item['future'] as $future): ?>
  <tr>
