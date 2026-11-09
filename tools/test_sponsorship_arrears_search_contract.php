@@ -28,6 +28,7 @@ $check('gm_arrears_page_exposes_supervisor_filter_and_column', substr_count($pag
 $check('gm_role_allowed_by_advances_page', str_contains($advancesPage, "['admin','general_manager','vice_general_manager','supervisor']"));
 $check('gm_role_allowed_by_all_shared_report_guards', substr_count($library, "['admin', 'general_manager', 'vice_general_manager', 'supervisor']") === 3);
 $check('gm_dashboard_exposes_both_sponsorship_monitoring_links', str_contains($gmDashboard, 'modules/sponsorships/arrears.php') && str_contains($gmDashboard, 'modules/sponsorships/advances.php'));
+$check('gm_monitoring_cards_have_no_redundant_report_prompt_or_arrow', !str_contains($gmDashboard, 'فتح التقرير') && !str_contains($gmDashboard, 'fa-arrow-left ms-1'));
 
 $check('initial_candidates_do_not_load_payment_history', !str_contains($candidateSource, 'ak_sar_load_report_data'));
 $check('arrears_loader_supports_optional_filters', str_contains($library, 'function ak_sar_get_arrears(string $role, int $userId, ?array $filters = null)'));
