@@ -5963,3 +5963,8 @@ Approved historical target:
 **Verification:** MariaDB 10.4.32 full-schema CI passed the migration (including repeat application) and rollback-only integration/backfill simulation at commit `28483dcd7329406a0b2cb3651b2c08ce9af3951e`. The latest CI also includes a public CLI dry-run step. This does not prove local XAMPP runtime behavior.
 
 **Not yet done:** do not mark the accounting work closed; the local migration has not been applied, the backfill has not been applied, and local runtime verification has not been performed.
+
+
+### 2026-11-09 — Final CI confirmation for sponsorship accounting source milestone
+
+Latest main commit `69e6768f9bd0ee6d90de21ff9fa938c296d23b66` passed workflow run `42569957570` (success). The full-schema MariaDB 10.4.32 job passed the sponsorship migration twice, the public backfill CLI dry-run, and the rollback-only integration harness. PHP lint and the remaining workflow jobs also passed. The local XAMPP database migration and historical backfill remain unapplied; local runtime acceptance is still pending.

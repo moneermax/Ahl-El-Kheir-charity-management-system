@@ -3650,3 +3650,8 @@ Next:
 7. Verify the resulting 4100/2200 balances and preserve the original seven journal entries.
 
 Do not rerun Attendance↔Payroll, GM Salary Advance Waiver, i18n, or other closed modules. Do not apply any migration or backfill outside the local test database. Do not claim local runtime success until the commands above are actually executed and their output inspected.
+
+
+### 2026-11-09 — Final CI confirmation for sponsorship accounting source milestone
+
+Latest main commit `69e6768f9bd0ee6d90de21ff9fa938c296d23b66` passed workflow run `42569957570` (success). The full-schema MariaDB 10.4.32 job passed the sponsorship migration twice, the public backfill CLI dry-run, and the rollback-only integration harness. PHP lint and the remaining workflow jobs also passed. The local XAMPP database migration and historical backfill remain unapplied; local runtime acceptance is still pending.

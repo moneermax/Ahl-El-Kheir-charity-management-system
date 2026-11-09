@@ -244,3 +244,8 @@ The full-schema MariaDB job now also runs `php tools/backfill_sponsorship_paymen
 ### Rollback harness repeatability
 
 The rollback-only harness now accepts either a fresh historical backfill state or an already-applied state. It can therefore be run before or after the local backfill without assuming that the seven approved allocation rows are absent. All harness changes remain inside its outer transaction and are rolled back.
+
+
+### Latest CI result — 2026-11-09
+
+Commit `69e6768f9bd0ee6d90de21ff9fa938c296d23b66`, workflow run `42569957570`, completed successfully. Confirmed: PHP lint; migration application and repeatability; the public historical backfill dry-run against the exact seven backup rows; rollback-only live posting, allocation, pause, month-end recognition, void reversal, backfill apply/idempotency, dry-run no-mutation, and 66,000/21,000 SDG target reconciliation. All test mutations were rolled back in CI. **Local migration and local backfill remain unapplied.**

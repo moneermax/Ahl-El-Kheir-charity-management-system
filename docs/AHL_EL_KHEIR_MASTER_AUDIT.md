@@ -6235,3 +6235,8 @@ CI evidence:
 - Migration test applies `2026-11-08_sponsorship_payment_accounting.sql` twice and checks three tables, three unique indexes, and ten foreign keys.
 
 **Acceptance boundary:** CI only. The migration remains unapplied in the local XAMPP database; the backfill has not been applied there. Local rollback harness, CLI dry-run output, and explicit `--apply` remain pending. Do not describe the accounting task as closed until those local checks pass.
+
+
+### 2026-11-09 — Final CI confirmation for sponsorship accounting source milestone
+
+Latest main commit `69e6768f9bd0ee6d90de21ff9fa938c296d23b66` passed workflow run `42569957570` (success). The full-schema MariaDB 10.4.32 job passed the sponsorship migration twice, the public backfill CLI dry-run, and the rollback-only integration harness. PHP lint and the remaining workflow jobs also passed. The local XAMPP database migration and historical backfill remain unapplied; local runtime acceptance is still pending.

@@ -3694,3 +3694,8 @@ Migration `2026-11-08_sponsorship_payment_accounting.sql` was committed on main 
 ## 2026-11-09 — Sponsorship payment accounting implementation
 
 Continued the approved sponsorship accounting audit. Implemented the shared live allocation/posting path, supervisor collector identity handoff, append-only pause/resume event logging with legacy-date compatibility, transaction-void event-effect reversal, month-end recognition, and the fixed seven-transaction historical backfill. Added a MariaDB 10.4.32 migration check and rollback-only integration coverage. The local XAMPP migration and backfill remain unapplied; see `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md` for the exact state and next steps.
+
+
+### 2026-11-09 — Final CI confirmation for sponsorship accounting source milestone
+
+Latest main commit `69e6768f9bd0ee6d90de21ff9fa938c296d23b66` passed workflow run `42569957570` (success). The full-schema MariaDB 10.4.32 job passed the sponsorship migration twice, the public backfill CLI dry-run, and the rollback-only integration harness. PHP lint and the remaining workflow jobs also passed. The local XAMPP database migration and historical backfill remain unapplied; local runtime acceptance is still pending.
