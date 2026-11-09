@@ -85,7 +85,7 @@ function ak_sar_supervisor_scope_sql(): string
 {
     return "(
         (s.is_manual_override = 1 AND s.supervisor_id = ?)
-        OR (s.sponsor_type IN ('company','organization') AND s.created_by = ?)
+        OR (COALESCE(s.is_manual_override, 0) <> 1 AND s.sponsor_type IN ('company','organization') AND s.created_by = ?)
         OR (
             COALESCE(s.is_manual_override, 0) <> 1
             AND COALESCE(s.sponsor_type, 'individual') NOT IN ('company','organization')
