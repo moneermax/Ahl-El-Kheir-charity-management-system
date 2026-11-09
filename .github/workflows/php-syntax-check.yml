@@ -187,6 +187,7 @@ jobs:
             lang/ar.php
             lang/en.php
             tools/test_sponsorship_arrears_calculations.php
+            tools/test_sponsorship_arrears_advances_runtime.php
             modules/accounting/lib_sponsorship_payment_accounting.php
             modules/families/orphan_profile.php
             tools/test_sponsor_tree_contract.php
