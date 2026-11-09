@@ -183,6 +183,9 @@ jobs:
             modules/sponsorships/arrears.php
             modules/sponsorships/advances.php
             modules/sponsorships/lib_payment_status.php
+            modules/transactions/create.php
+            lang/ar.php
+            lang/en.php
             tools/test_sponsorship_arrears_calculations.php
             modules/accounting/lib_sponsorship_payment_accounting.php
             modules/families/orphan_profile.php
@@ -257,7 +260,7 @@ jobs:
           for file in "${files[@]}"; do
             php -l "$file"
           done
-          if grep -nE 'CREATE[[:space:]]+TABLE|ALTER[[:space:]]+TABLE' modules/accounting/lib.php modules/accounting/lib_admin_fee_policy.php modules/accounting/lib_outflows.php modules/users/profile.php modules/system/import_sponsors.php modules/system/sync_sponsors.php modules/transactions/receipt_file.php modules/hr/payroll_reversal.php; then
+          if grep -nE 'CREATE[[:space:]]+TABLE|ALTER[[:space:]]+TABLE' modules/accounting/lib.php modules/accounting/lib_admin_fee_policy.php modules/accounting/lib_outflows.php modules/sponsorships/lib_payment_status.php modules/users/profile.php modules/system/import_sponsors.php modules/system/sync_sponsors.php modules/transactions/receipt_file.php modules/hr/payroll_reversal.php; then
             echo "Runtime schema DDL found in migrated PHP helpers/pages" >&2
             exit 1
           fi
