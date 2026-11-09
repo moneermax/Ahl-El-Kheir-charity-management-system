@@ -3809,3 +3809,6 @@ The always-visible role-scoped dashboard implementation passed GitHub Actions ru
 ### 2026-11-09 — VGM sponsorship navigation moved to dashboard cards
 
 Added clickable dashboard cards for Sponsorship Arrears (`modules/sponsorships/arrears.php`) and Sponsorship Advances (`modules/sponsorships/advances.php`) to `dashboard/vgm_dashboard.php`, arranged with the existing cards in two rows of three. Removed those two entries from the VGM sidebar only; Supervisor navigation remains unchanged. Source commits: `2b113e2e7b5b7050ddd28e65347b1bc4a52ba708`, `f1b96f190ceae9e36dbf7419029a29dc334bd84b`. Local PHP lint and browser acceptance are pending. See docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
+
+
+**Sidebar scope verification:** follow-up commit `8d04baecca5663fae536e7b39eac49481bf91efe` scopes the removal strictly to `vice_general_manager`; it restores/preserves both links in the Admin menu and preserves both links in the Supervisor menu. Source inspection confirms the final role-specific menus.
