@@ -3689,3 +3689,8 @@ Month-end recognition is approved for the last calendar day of the covered month
 
 Migration `2026-11-08_sponsorship_payment_accounting.sql` was committed on main as `609c1a7ad474e00648096907908eaea010d84c7d`. It adds per-transaction allocation snapshots, append-only accounting-event journal links, and append-only sponsorship pause events. **Migration not applied; source integration and runtime verification remain pending.** Imported sponsorships are identified by `IMP-SH-` codes (monitoring baseline 2026-08-01); newly created `SH-` sponsorships use their actual start date. Monthly entry creates one transaction per month line.
 
+
+
+## 2026-11-09 — Sponsorship payment accounting implementation
+
+Continued the approved sponsorship accounting audit. Implemented the shared live allocation/posting path, supervisor collector identity handoff, append-only pause/resume event logging with legacy-date compatibility, transaction-void event-effect reversal, month-end recognition, and the fixed seven-transaction historical backfill. Added a MariaDB 10.4.32 migration check and rollback-only integration coverage. The local XAMPP migration and backfill remain unapplied; see `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md` for the exact state and next steps.

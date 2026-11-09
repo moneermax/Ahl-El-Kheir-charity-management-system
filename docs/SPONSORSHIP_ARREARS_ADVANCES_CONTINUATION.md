@@ -234,3 +234,8 @@ The tool defaults to a read-only dry run; `--apply` is required. Apply appends s
 At commit `28483dcd7329406a0b2cb3651b2c08ce9af3951e`, the full-schema MariaDB 10.4.32 job passed the rollback-only sponsorship accounting integration step, including the approved seven-transaction historical backfill, append-only reclassification, August/September recognition, repeat execution, and the 66,000 SDG earned / 21,000 SDG deferred reconciliation. The entire batch was rolled back by the harness; the CI database was not left with backfill records.
 
 The harness was then tightened to explicitly assert that a backfill dry-run creates zero allocation rows before the apply simulation. This additional assertion is in the next CI run.
+
+
+### Backfill CLI dry-run CI coverage
+
+The full-schema MariaDB job now also runs `php tools/backfill_sponsorship_payment_accounting.php --dry-run` against the imported backup after applying the migration. This validates the exact seven-row manifest through the public CLI entry point before the rollback-only apply/idempotency harness runs.

@@ -5939,3 +5939,27 @@ Original journals must remain untouched. Detailed transaction/journal mapping an
 
 Committed migration `database/migrations/2026-11-08_sponsorship_payment_accounting.sql` (`609c1a7ad474e00648096907908eaea010d84c7d`). It adds allocation snapshots, append-only accounting-event references, and pause/resume event history. This is a schema foundation only: **not applied locally**, no source integration or data/journal changes, and no runtime verification. Continue with central posting, pause/resume event writes, month-end recognition, atomic void reversals, and controlled historical backfill. Imported sponsorship identification is grounded in the actual `IMP-SH-` code prefix; new sponsorships use `SH-` and actual start date.
 
+
+
+## 2026-11-09 status addendum — Sponsorship payment accounting
+
+**Implementation status:** source implementation is on `main`; local runtime acceptance is still pending.
+
+Implemented:
+- Live sponsorship receipt net amount initially posts to deferred revenue 2200, with a per-transaction allocation snapshot capped at the sponsorship/month commitment.
+- Supervisor collector ID is explicitly passed from the approval record; direct entry falls back to `transactions.created_by`.
+- Pause/resume transitions append events. Legacy pause dates are used only as bounded evidence; ambiguous histories fail closed.
+- Transaction void reverses residual append-only sponsorship accounting event effects in the same transaction as the original void.
+- Month-end recognition posts Dr 2200 / Cr 4100 on the last day of the covered month.
+- A CLI backfill is restricted to the exact approved historical transaction IDs 1, 2, 17, 18, 27, 28, and 29.
+
+Approved historical target:
+- Original receipts: 87,000 SDG (original journals preserved)
+- Allocated: 77,000 SDG
+- Unallocated excess: 10,000 SDG
+- Earned revenue 4100: 66,000 SDG
+- Deferred revenue 2200: 21,000 SDG
+
+**Verification:** MariaDB 10.4.32 full-schema CI passed the migration (including repeat application) and rollback-only integration/backfill simulation at commit `28483dcd7329406a0b2cb3651b2c08ce9af3951e`. The latest CI also includes a public CLI dry-run step. This does not prove local XAMPP runtime behavior.
+
+**Not yet done:** do not mark the accounting work closed; the local migration has not been applied, the backfill has not been applied, and local runtime verification has not been performed.

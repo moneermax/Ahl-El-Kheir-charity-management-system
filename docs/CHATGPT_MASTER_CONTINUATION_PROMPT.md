@@ -3620,3 +3620,33 @@ No code, migration, database row or journal has been changed yet. Next implement
 
 Main commit: `609c1a7ad474e00648096907908eaea010d84c7d`. Migration `database/migrations/2026-11-08_sponsorship_payment_accounting.sql` adds per-transaction allocation snapshots, append-only accounting event references, and pause/resume events. It is committed but **not applied**. No PHP source, database rows, or journals changed. Next implement central sponsorship posting, strict F/Y parsing, monthly commitment snapshot/partial and excess allocation, pause event writes in `modules/sponsorships/view.php`, idempotent month-end recognition, append-only void reversals, and dry-run/apply historical backfill. Use `IMP-SH-` as the verified imported-record marker (2026-08-01 monitoring baseline); new `SH-` records use their actual start date. Monthly entry creates one transaction per month line. Test database only; do not apply to live data.
 
+
+
+## Current continuation — Sponsorship payment accounting (2026-11-09)
+
+Continue from the current `main` repository state. Do not restart the audit or alter unrelated modules.
+
+Source implementation now includes:
+- `modules/accounting/lib_sponsorship_payment_accounting.php`
+- live posting integration in `modules/accounting/lib.php` and supervisor approval
+- pause/resume event recording in `modules/sponsorships/view.php`
+- append-only event reversal in `modules/accounting/lib_transaction_void.php`
+- month-end recognition CLI: `tools/recognize_sponsorship_revenue_month_end.php`
+- approved historical backfill CLI: `tools/backfill_sponsorship_payment_accounting.php`
+- rollback-only integration harness: `tools/test_sponsorship_payment_accounting_rollback.php`
+- migration: `database/migrations/2026-11-08_sponsorship_payment_accounting.sql`
+
+Approved historical set is exactly transaction IDs `1,2,17,18,27,28,29`. Expected final balances attributable to those seven: account 4100 earned revenue 66,000 SDG; account 2200 deferred revenue 21,000 SDG. Original seven journals must remain unchanged.
+
+CI has verified the migration on MariaDB 10.4.32, repeat application, live posting to deferred revenue, allocation/void/recognition behavior, and rollback-only historical backfill/idempotency. The local XAMPP migration is **not applied** and the local backfill is **not applied**.
+
+Next:
+1. Verify the latest CI run and current `main` SHA.
+2. Sync the Linux Mint checkout at `/opt/lampp/htdocs/AhlElKheir`.
+3. Apply `database/migrations/2026-11-08_sponsorship_payment_accounting.sql` to the local test database.
+4. Run `/opt/lampp/bin/php tools/test_sponsorship_payment_accounting_rollback.php`.
+5. Run `/opt/lampp/bin/php tools/backfill_sponsorship_payment_accounting.php --dry-run`; verify exactly 7 transactions, 87,000 gross, 77,000 allocated, 10,000 excess, 66,000 earned target, 21,000 deferred target.
+6. Only after that dry-run matches, run the same tool with `--apply`.
+7. Verify the resulting 4100/2200 balances and preserve the original seven journal entries.
+
+Do not rerun Attendance↔Payroll, GM Salary Advance Waiver, i18n, or other closed modules. Do not apply any migration or backfill outside the local test database. Do not claim local runtime success until the commands above are actually executed and their output inspected.
