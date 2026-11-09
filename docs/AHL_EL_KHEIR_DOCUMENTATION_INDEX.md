@@ -178,3 +178,7 @@ Read `SPONSOR_REQUEST_CONVERSION_CONTINUATION.md` before continuing the sponsor 
 
 Sponsor Trees:
 - SPONSOR_TREES_CONTINUATION.md — Tree/member model, shared orphan sponsorship isolation, implementation and local acceptance checklist.
+
+## Sponsorship arrears and advances
+
+- SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md — sponsorship allocation/reporting rules, two-month arrears eligibility, advances, pending-duplicate protection, full-result arrears dashboard, test evidence and local acceptance gates.
