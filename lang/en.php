@@ -91,4 +91,6 @@ return [
     "hr.payroll_entry" => "Entry",
     "hr.payroll_save_short" => "Save",
     'navigation.sponsorship_arrears' => 'Two-Month Sponsorship Arrears', 'navigation.sponsorship_advances' => 'Sponsorship Advances',
+    'dashboard.sponsorship_arrears_card_desc' => 'Sponsorships with two consecutive eligible unpaid months.',
+    'dashboard.sponsorship_advances_card_desc' => 'Future coverage and unallocated excess balances.',
 ];
