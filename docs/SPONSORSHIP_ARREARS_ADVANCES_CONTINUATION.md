@@ -559,3 +559,9 @@ Verification boundary: source and regression tests are committed; CI and local P
 
 
 **Follow-up refinement — GM report detail and regression coverage:** The GM arrears view also exposes the same supervisor filter/name column already available to Admin and VGM, so executive-wide results can be reviewed by responsible supervisor. The static contract test asserts all four GM supervisor-detail presentation checks. The runtime harness now explicitly calls the GM suggestion loader as well. Commits: `754af0ee93bd90167aa99562630f9afe330fa9bf`, `da4575af3ff584dcf279844ab9531287fb00b430`, `164c7b4cf3e74c0929a5ee2542500591c8579627`. CI/local execution remains pending.
+
+
+
+## 2026-11-09 — GM monitoring cards: browser acceptance and presentation refinement
+
+**GM browser acceptance — confirmed by the user:** Both dashboard cards appear in the correct **ما يحتاج انتباه الإدارة** section, and both report pages open and display data. A small presentation refinement removes the redundant “فتح التقرير” label and left-arrow from both cards; the full card remains the link. Regression coverage asserts that this prompt/arrow is absent.
