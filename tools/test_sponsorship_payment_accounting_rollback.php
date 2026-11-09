@@ -260,7 +260,13 @@ try {
     }
     spaTestAssert($malformedRejected,'Malformed payment period was not rejected.');
 
-    // Approved historical backfill: exact seven transactions, append-only journals, and month-end recognition.
+    // Approved historical backfill: dry-run must remain read-only before the atomic apply.
+    $backfillDryRun = ak_sp_backfill_historical_payments_prepared(false,$actorId);
+    spaTestAssert($backfillDryRun['state'] === 'ready','Historical backfill dry-run did not report the expected ready state.');
+    $preApplyCount = (int)dbFetchOne("SELECT COUNT(*) AS c FROM sponsorship_payment_allocations WHERE transaction_id IN (1,2,17,18,27,28,29)")['c'];
+    spaTestAssert($preApplyCount === 0,'Historical backfill dry-run created allocation rows.');
+
+    // Apply the exact seven transactions, append-only journals, and month-end recognition.
     $backfill = ak_sp_backfill_historical_payments_prepared(true,$actorId);
     spaTestAssert($backfill['state'] === 'applied','Historical backfill did not apply as a fresh atomic batch.');
     spaTestAssert((int)$backfill['transaction_count'] === 7,'Historical backfill transaction count is incorrect.');

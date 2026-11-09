@@ -227,3 +227,10 @@ Expected reconciliation for those seven:
 - Deferred sponsorship revenue: 21,000 SDG
 
 The tool defaults to a read-only dry run; `--apply` is required. Apply appends seven allocation snapshots, seven reclassification journals/events, and six month-end recognition journals/events. July 2027 remains deferred. The rollback-only integration harness now exercises the backfill twice and checks idempotency and the 66,000/21,000 account reconciliation. Migration application and local XAMPP verification are still separate gates.
+
+
+### 2026-11-09 — Historical backfill and target reconciliation passed in CI
+
+At commit `28483dcd7329406a0b2cb3651b2c08ce9af3951e`, the full-schema MariaDB 10.4.32 job passed the rollback-only sponsorship accounting integration step, including the approved seven-transaction historical backfill, append-only reclassification, August/September recognition, repeat execution, and the 66,000 SDG earned / 21,000 SDG deferred reconciliation. The entire batch was rolled back by the harness; the CI database was not left with backfill records.
+
+The harness was then tightened to explicitly assert that a backfill dry-run creates zero allocation rows before the apply simulation. This additional assertion is in the next CI run.
