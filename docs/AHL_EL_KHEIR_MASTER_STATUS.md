@@ -6083,3 +6083,6 @@ The VGM dashboard now includes clickable cards for Sponsorship Arrears and Spons
 
 
 **Sidebar scope verification:** follow-up commit `8d04baecca5663fae536e7b39eac49481bf91efe` scopes the removal strictly to `vice_general_manager`; it restores/preserves both links in the Admin menu and preserves both links in the Supervisor menu. Source inspection confirms the final role-specific menus.
+
+
+**Localization:** the two new card descriptions use stable translation keys present in both authoritative catalogs. Commits: `f8545bc511d0a685270ef301969dd3a65fcbae07` (dashboard keys), `2ecfabb7e5c7f5beb9d75e9f450dc53c0fad99fb` (Arabic), and `60f3c0cff35b8a27bca5c83f9de0bdd641be9375` (English). Source inspection confirms both keys are referenced and defined in both languages.
