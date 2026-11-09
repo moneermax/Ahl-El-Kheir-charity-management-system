@@ -225,6 +225,7 @@ jobs:
             modules/accounting/lib_transaction_void.php
             modules/accounting/lib_sponsorship_payment_accounting.php
             tools/recognize_sponsorship_revenue_month_end.php
+            tools/backfill_sponsorship_payment_accounting.php
             tools/test_sponsorship_payment_accounting_rollback.php
             modules/accounting/lib_outflows.php
             modules/accounting/fm_review_queue.php

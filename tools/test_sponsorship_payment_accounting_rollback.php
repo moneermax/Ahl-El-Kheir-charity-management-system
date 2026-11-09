@@ -260,8 +260,23 @@ try {
     }
     spaTestAssert($malformedRejected,'Malformed payment period was not rejected.');
 
+    // Approved historical backfill: exact seven transactions, append-only journals, and month-end recognition.
+    $backfill = ak_sp_backfill_historical_payments_prepared(true,$actorId);
+    spaTestAssert($backfill['state'] === 'applied','Historical backfill did not apply as a fresh atomic batch.');
+    spaTestAssert((int)$backfill['transaction_count'] === 7,'Historical backfill transaction count is incorrect.');
+    spaTestAssert(round((float)$backfill['gross_total'],2) === 87000.00,'Historical backfill gross total is incorrect.');
+    spaTestAssert(round((float)$backfill['allocated_total'],2) === 77000.00,'Historical backfill allocated total is incorrect.');
+    spaTestAssert(round((float)$backfill['unallocated_total'],2) === 10000.00,'Historical backfill excess total is incorrect.');
+    spaTestAssert(round((float)$backfill['earned_revenue_target'],2) === 66000.00,'Historical backfill earned revenue target is incorrect.');
+    spaTestAssert(round((float)$backfill['deferred_revenue_target'],2) === 21000.00,'Historical backfill deferred revenue target is incorrect.');
+    $backfillRepeat = ak_sp_backfill_historical_payments_prepared(true,$actorId);
+    spaTestAssert($backfillRepeat['state'] === 'already_applied','Historical backfill is not idempotent on repeat execution.');
+    spaTestAssert((int)$backfillRepeat['recognition_august']['already_recognized_count'] === 1
+        && (int)$backfillRepeat['recognition_september']['already_recognized_count'] === 5,
+        'Historical month-end recognition was not idempotent on repeat execution.');
+
     $pdo->rollBack();
-    echo "PASS | sponsorship_allocation=PASS | partial_accumulation=PASS | excess_deferred=PASS | pause_month_excluded=PASS | unlinked_deferred=PASS | strict_period=PASS | month_end_recognition=PASS | recognition_idempotency=PASS | void_event_reversal=PASS | rollback=PASS\n";
+    echo "PASS | sponsorship_allocation=PASS | live_posting_deferred=PASS | partial_accumulation=PASS | excess_deferred=PASS | pause_month_excluded=PASS | unlinked_deferred=PASS | strict_period=PASS | month_end_recognition=PASS | recognition_idempotency=PASS | void_event_reversal=PASS | historical_backfill=PASS | backfill_idempotency=PASS | target_reconciliation=66000/21000 | rollback=PASS\n";
 } catch (Throwable $error) {
     if ($pdo->inTransaction()) $pdo->rollBack();
     fwrite(STDERR, "FAIL | sponsorship accounting rollback tests | " . $error->getMessage() . "\n");

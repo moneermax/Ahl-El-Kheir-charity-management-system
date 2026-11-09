@@ -213,3 +213,17 @@ The harness creates no fixtures permanently and performs no DDL. Local XAMPP run
 ### 2026-11-09 — First rollback-only integration run passed in CI
 
 At commit `06a5bde0620a52ce207129b187ebbeba40661a04`, the full-schema MariaDB 10.4.32 workflow completed the new sponsorship accounting rollback-only integration step successfully, after applying the sponsorship accounting migration twice. The harness found an existing eligible sponsorship in the checked-in backup and exercised allocation, partial accumulation, excess deferral, pause-month exclusion, unlinked receipts, strict period parsing, month-end recognition/idempotency, append-only event reversal on void, per-account zero residual, and rollback. No local XAMPP database was modified.
+
+
+### 2026-11-09 — Approved historical backfill tool added
+
+Added `tools/backfill_sponsorship_payment_accounting.php`. It is intentionally restricted to the seven source transactions verified in the checked-in backup (IDs 1, 2, 17, 18, 27, 28, 29), and fails closed if transaction, supervisor submission, sponsorship commitment, original journal, or pause evidence differs from the approved manifest.
+
+Expected reconciliation for those seven:
+- Original receipts: 87,000 SDG, preserved unchanged
+- Allocations to covered months: 77,000 SDG
+- Unallocated excess: 10,000 SDG
+- Earned revenue after August/September month-end recognition: 66,000 SDG
+- Deferred sponsorship revenue: 21,000 SDG
+
+The tool defaults to a read-only dry run; `--apply` is required. Apply appends seven allocation snapshots, seven reclassification journals/events, and six month-end recognition journals/events. July 2027 remains deferred. The rollback-only integration harness now exercises the backfill twice and checks idempotency and the 66,000/21,000 account reconciliation. Migration application and local XAMPP verification are still separate gates.
