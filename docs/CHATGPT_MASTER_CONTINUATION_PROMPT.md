@@ -3760,3 +3760,8 @@ The user confirmed organization-wide arrears cards for Admin and VGM, and author
 ## 2026-11-09 — Arrears dashboard CI passed; local acceptance remains
 
 GitHub Actions run 42642522337 passed all six jobs on commit e655f7318e97acb4d0fef3bdf057b29eb3c62bbc. Full-schema MariaDB runtime assertions prove the summary-only calculations match full arrears results for Admin (organization-wide), VGM (organization-wide), and Supervisor (authorized scope only). CI summary calculation was 297.88 ms (another successful run: 111.34 ms). This does not replace local XAMPP/browser acceptance. Next ask the user to inspect the local working tree, pull main safely, lint the changed PHP files, run the updated arrears search-contract and database-backed runtime tests, record dashboard_summary_ms, and test cards above search under Admin/VGM/Supervisor. Preserve unrelated staged files and backups. Do not claim completion until local evidence is supplied.
+
+
+## 2026-11-09 — VGM sponsorship dashboard navigation
+
+The VGM dashboard now has clickable action cards for Sponsorship Arrears and Sponsorship Advances, displayed with the existing actions in two rows of three. Remove neither page from Supervisor navigation: only the VGM sidebar entries were removed. Destination-page role checks and report logic were untouched. Commits: `2b113e2e7b5b7050ddd28e65347b1bc4a52ba708`, `f1b96f190ceae9e36dbf7419029a29dc334bd84b`. Next gate: local PHP lint and browser acceptance of both cards and both role-specific sidebars. Do not rerun accounting/report calculation tests for this navigation-only change absent regression evidence. Details: docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
