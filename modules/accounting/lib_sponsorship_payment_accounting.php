@@ -16,11 +16,15 @@ function ak_sp_parse_payment_period(?string $period): ?string {
 }
 
 if (!function_exists('ak_sp_month_is_pause_affected')) {
-function ak_sp_month_is_pause_affected(int $sponsorshipId, string $monthStart, string $monthEnd, array $sponsorship): bool {
-    $events = dbFetchAll(
-        "SELECT event_type, effective_date FROM sponsorship_pause_events WHERE sponsorship_id=? ORDER BY effective_date ASC, id ASC",
-        [$sponsorshipId]
-    );
+function ak_sp_month_is_pause_affected(int $sponsorshipId, string $monthStart, string $monthEnd, array $sponsorship, ?array $events = null): bool {
+    // Report pages may preload pause history in one query; existing posting callers
+    // omit this argument and retain the original per-sponsorship lookup.
+    if ($events === null) {
+        $events = dbFetchAll(
+            "SELECT event_type, effective_date FROM sponsorship_pause_events WHERE sponsorship_id=? ORDER BY effective_date ASC, id ASC",
+            [$sponsorshipId]
+        );
+    }
     if (!$events && (string)$sponsorship['status'] === 'paused') {
         throw new RuntimeException('الكفالة موقوفة دون سجل إيقاف تاريخي موثوق؛ تعذر تخصيص الدفعة بأمان.');
     }
