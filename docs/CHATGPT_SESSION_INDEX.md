@@ -3773,3 +3773,8 @@ Correction on main:
 Commits: a538c2491da526452b146529ef57ea97c91a6675 (source), c04e98e26b286252ccf979d90d8585115175646c (test), f14513e8688547aa1dec7c599163981efa1c2acc (CI wiring).
 
 Verification boundary: source change and regression test are committed; GitHub Actions is running. This fixes the confirmed quadratic restoration path, but the local Apache page-rendering acceptance has not yet been independently verified. The earlier session-lock change remains separate and is responsible only for allowing navigation/logout while report requests run. Do not rerun the already-passed database/runtime harnesses or accounting backfill. Next inspect the CI result, then have the user pull the commit and perform one final browser acceptance of the arrears report; if it still fails, capture the new exact PHP fatal location before changing anything else.
+
+
+## 2026-11-09 — Active: arrears report search-driven loading
+
+Continue the sponsorship arrears report performance work from `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`. Initial page load now shows ten newest authorized sponsorship identity suggestions only; the user must submit a filter before arrears calculations and historical payment/pause/pending data are loaded. Filters run in SQL; at most 100 authorized sponsorships are calculated per search, with broader searches rejected for refinement. Full history per selected sponsorship and supervisor authorization checks are preserved. The suggestions are not confirmed arrears results. CI and local browser acceptance are pending. Advances and accounting/backfill behavior are unchanged.
