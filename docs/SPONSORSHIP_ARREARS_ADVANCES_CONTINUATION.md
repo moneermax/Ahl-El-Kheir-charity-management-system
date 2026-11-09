@@ -523,3 +523,6 @@ Source commits:
 
 
 **2026-11-09 — PHP rendering hotfix:** The first single-row renderer commit accidentally retained the old outer `endforeach`, leaving an unmatched PHP loop terminator and causing HTTP 500 on the VGM dashboard. Commit `27256b3146aee6eb42833daecbe3a79dffbb0200` removes the extra terminator. Source inspection confirms the card loop now closes once. Local PHP lint and browser confirmation remain pending; do not treat the page as runtime-verified until the user pulls and tests it.
+
+
+**2026-11-09 — VGM dashboard card alignment:** The horizontal action-card row now centers its contents when the available dashboard width is sufficient, while retaining a content-sized row and horizontal scrolling when the cards exceed the viewport. No card dimensions, destinations, role access, or business logic changed.
