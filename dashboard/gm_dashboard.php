@@ -72,6 +72,10 @@ if ((int)$kpi['open_sponsor_requests'] > 0) {
     $attention[] = ['primary','fa-bullhorn','طلبات رعاية قيد المتابعة',(int)$kpi['open_sponsor_requests'],'modules/sponsors/requests.php','مراجعة مسار الطلبات'];
 }
 
+// Read-only executive monitoring links; report pages enforce GM authorization.
+$attention[] = ['info','fa-triangle-exclamation','متأخرات الكفالات',null,'modules/sponsorships/arrears.php','متابعة الكفالات التي بلغت حد الشهرين'];
+$attention[] = ['primary','fa-calendar-plus','الدفعات المقدمة للكفالات',null,'modules/sponsorships/advances.php','مراجعة التغطيات المستقبلية والأرصدة غير المخصصة'];
+
 $coveragePopulation = (int)$kpi['active_families'] + (int)$kpi['pending_families'];
 $coveragePct = $coveragePopulation > 0
     ? round(max(0, (($coveragePopulation - (int)$kpi['uncovered_families']) / $coveragePopulation) * 100))
@@ -163,7 +167,11 @@ foreach($cards as $c):
                             <a class="gm-attention" href="<?php echo APP_URL.$a[4]; ?>">
                                 <span class="ico"><i class="fas <?php echo e($a[1]); ?> text-<?php echo e($a[0]); ?>"></i></span>
                                 <span class="flex-grow-1"><strong class="d-block"><?php echo e($a[2]); ?></strong><small class="text-muted"><?php echo e($a[5]); ?></small></span>
-                                <span class="badge text-bg-<?php echo e($a[0]); ?>"><?php echo (int)$a[3]; ?></span>
+                                <?php if ($a[3] !== null): ?>
+                                    <span class="badge text-bg-<?php echo e($a[0]); ?>"><?php echo (int)$a[3]; ?></span>
+                                <?php else: ?>
+                                    <span class="small text-primary fw-bold">فتح التقرير <i class="fas fa-arrow-left ms-1"></i></span>
+                                <?php endif; ?>
                             </a>
                         </div>
                     <?php endforeach; ?>
