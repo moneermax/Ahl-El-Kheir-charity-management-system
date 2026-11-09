@@ -18,7 +18,7 @@ $check = static function (string $name, bool $passed) use (&$checks): void {
 };
 
 $active = dbFetchOne(
-    "SELECT sp.id, sp.sponsor_id
+    "SELECT sp.id, sp.sponsor_id, sp.sponsorship_code
      FROM sponsorships sp
      WHERE sp.status='active'
      ORDER BY sp.id
@@ -168,7 +168,7 @@ foreach ($supervisorData['sponsorships'] as $row) {
 }
 $check('supervisor_scope_contains_only_authorized_sponsors', $supervisorScopeValid);
 
-$arrears = ak_sar_get_arrears('admin', 0);
+$arrears = ak_sar_get_arrears('admin', 0, ['code'=>(string)$active['sponsorship_code']]);
 $advances = ak_sar_get_advances('admin', 0);
 $check('arrears_report_query_executes', is_array($arrears));
 $check('advances_report_query_executes', is_array($advances));
