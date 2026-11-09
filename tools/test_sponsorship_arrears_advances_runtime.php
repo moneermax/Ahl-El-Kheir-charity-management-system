@@ -117,6 +117,7 @@ try {
 
 $adminData = ak_sar_load_report_data('admin', 0);
 $vgmData = ak_sar_load_report_data('vice_general_manager', 0);
+$gmData = ak_sar_load_report_data('general_manager', 0);
 $joinDiagnostics = dbFetchOne(
     "SELECT COUNT(*) AS total,
             SUM(s.id IS NULL) AS missing_sponsor,
@@ -128,16 +129,18 @@ $joinDiagnostics = dbFetchOne(
 $totalSponsorships = (int)($joinDiagnostics['total'] ?? 0);
 $adminCount = count($adminData['sponsorships']);
 $vgmCount = count($vgmData['sponsorships']);
-if ($adminCount !== $totalSponsorships || $vgmCount !== $totalSponsorships) {
+$gmCount = count($gmData['sponsorships']);
+if ($adminCount !== $totalSponsorships || $vgmCount !== $totalSponsorships || $gmCount !== $totalSponsorships) {
     throw new RuntimeException(
         'Admin/VGM scope count mismatch: total=' . $totalSponsorships
-        . ', admin=' . $adminCount . ', vgm=' . $vgmCount
+        . ', admin=' . $adminCount . ', vgm=' . $vgmCount . ', gm=' . $gmCount
         . ', missing_sponsor=' . (int)($joinDiagnostics['missing_sponsor'] ?? 0)
         . ', missing_child=' . (int)($joinDiagnostics['missing_child'] ?? 0)
     );
 }
 $check('admin_scope_returns_all_sponsorships', $adminCount === $totalSponsorships);
 $check('vgm_scope_returns_all_sponsorships', $vgmCount === $totalSponsorships);
+$check('gm_scope_returns_all_sponsorships', $gmCount === $totalSponsorships);
 $unlinkedChildCount = (int)(dbFetchOne(
     "SELECT COUNT(*) AS total
      FROM sponsorships sp
@@ -184,13 +187,17 @@ $dashboardSummaryStartedAt = microtime(true);
 $adminDashboardSummary = ak_sar_get_arrears_summary('admin', 0);
 $dashboardSummaryElapsedMs = round((microtime(true) - $dashboardSummaryStartedAt) * 1000, 2);
 $vgmDashboardSummary = ak_sar_get_arrears_summary('vice_general_manager', 0);
+$gmDashboardSummary = ak_sar_get_arrears_summary('general_manager', 0);
 $supervisorDashboardSummary = ak_sar_get_arrears_summary('supervisor', $supervisorId);
 $supervisorFullSummary = ak_sar_summarize_arrears(ak_sar_get_arrears('supervisor', $supervisorId));
 $check('admin_dashboard_summary_matches_full_report', $adminDashboardSummary === $allArrearsSummary);
 $check('vgm_dashboard_summary_is_organization_wide', $vgmDashboardSummary === $allArrearsSummary);
+$check('gm_dashboard_summary_is_organization_wide', $gmDashboardSummary === $allArrearsSummary);
 $check('supervisor_dashboard_summary_matches_only_authorized_sponsors', $supervisorDashboardSummary === $supervisorFullSummary);
 
 $advances = ak_sar_get_advances('admin', 0);
+$gmAdvances = ak_sar_get_advances('general_manager', 0);
+$check('gm_advances_report_matches_organization_wide_admin_scope', $gmAdvances === $advances);
 $check('arrears_report_query_executes', is_array($arrears));
 $check('all_scope_arrears_report_executes_without_100_record_cap', is_array($allArrears));
 $check(
