@@ -6080,3 +6080,6 @@ The role-scoped, always-visible arrears dashboard passed GitHub Actions run 4264
 ## 2026-11-09 — VGM sponsorship navigation consolidation
 
 The VGM dashboard now includes clickable cards for Sponsorship Arrears and Sponsorship Advances, arranged as two rows of three alongside the existing action cards. Their sidebar entries were removed from the VGM role only; Supervisor sidebar access is preserved. Commits: `2b113e2e7b5b7050ddd28e65347b1bc4a52ba708`, `f1b96f190ceae9e36dbf7419029a29dc334bd84b`. PHP lint and local browser acceptance remain pending. No report logic, authorization, accounting, or schema was changed. See docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
+
+
+**Sidebar scope verification:** follow-up commit `8d04baecca5663fae536e7b39eac49481bf91efe` scopes the removal strictly to `vice_general_manager`; it restores/preserves both links in the Admin menu and preserves both links in the Supervisor menu. Source inspection confirms the final role-specific menus.
