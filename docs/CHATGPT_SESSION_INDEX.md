@@ -3804,3 +3804,8 @@ The arrears dashboard requirement is clarified: Admin and VGM see organization-w
 ### 2026-11-09 — Arrears dashboard CI checkpoint
 
 The always-visible role-scoped dashboard implementation passed GitHub Actions run 42642522337 (commit e655f7318e97acb4d0fef3bdf057b29eb3c62bbc), all six jobs. The MariaDB full-schema harness proved Admin and VGM summaries match organization-wide full-report totals and Supervisor summaries match the supervisor-scoped full report. CI measured the Admin summary-only calculation at 297.88 ms in this run (111.34 ms in a prior run). Local XAMPP timing and browser acceptance remain pending; continue from docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
+
+
+### 2026-11-09 — VGM sponsorship navigation moved to dashboard cards
+
+Added clickable dashboard cards for Sponsorship Arrears (`modules/sponsorships/arrears.php`) and Sponsorship Advances (`modules/sponsorships/advances.php`) to `dashboard/vgm_dashboard.php`, arranged with the existing cards in two rows of three. Removed those two entries from the VGM sidebar only; Supervisor navigation remains unchanged. Source commits: `2b113e2e7b5b7050ddd28e65347b1bc4a52ba708`, `f1b96f190ceae9e36dbf7419029a29dc334bd84b`. Local PHP lint and browser acceptance are pending. See docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
