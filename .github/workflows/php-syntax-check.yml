@@ -183,6 +183,7 @@ jobs:
             modules/sponsorships/arrears.php
             modules/sponsorships/advances.php
             modules/sponsorships/lib_payment_status.php
+            tools/test_sponsorship_arrears_calculations.php
             modules/accounting/lib_sponsorship_payment_accounting.php
             modules/families/orphan_profile.php
             tools/test_sponsor_tree_contract.php
@@ -265,6 +266,8 @@ jobs:
           php tools/test_sponsor_request_conversion_authorization_contract.php
           php tools/test_sponsor_request_navigation_reopen_contract.php
           php tools/test_sponsor_tree_contract.php
+          php tools/test_sponsorship_arrears_calculations.php
+          php -l tools/test_sponsorship_arrears_calculations.php
           php -l tools/test_sponsor_tree_contract.php
           php -l tools/test_sponsor_request_navigation_reopen_contract.php
           php tools/test_sponsor_non_individual_edit_contract.php
