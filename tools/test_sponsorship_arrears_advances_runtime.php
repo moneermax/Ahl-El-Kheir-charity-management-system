@@ -180,6 +180,14 @@ $check('supervisor_scope_contains_only_authorized_sponsors', $supervisorScopeVal
 $arrears = ak_sar_get_arrears('admin', 0, ['code'=>(string)$active['sponsorship_code']]);
 $allArrears = ak_sar_get_arrears('admin', 0, null);
 $allArrearsSummary = ak_sar_summarize_arrears($allArrears);
+$adminDashboardSummary = ak_sar_get_arrears_summary('admin', 0);
+$vgmDashboardSummary = ak_sar_get_arrears_summary('vice_general_manager', 0);
+$supervisorDashboardSummary = ak_sar_get_arrears_summary('supervisor', $supervisorId);
+$supervisorFullSummary = ak_sar_summarize_arrears(ak_sar_get_arrears('supervisor', $supervisorId));
+$check('admin_dashboard_summary_matches_full_report', $adminDashboardSummary === $allArrearsSummary);
+$check('vgm_dashboard_summary_is_organization_wide', $vgmDashboardSummary === $allArrearsSummary);
+$check('supervisor_dashboard_summary_matches_only_authorized_sponsors', $supervisorDashboardSummary === $supervisorFullSummary);
+
 $advances = ak_sar_get_advances('admin', 0);
 $check('arrears_report_query_executes', is_array($arrears));
 $check('all_scope_arrears_report_executes_without_100_record_cap', is_array($allArrears));
