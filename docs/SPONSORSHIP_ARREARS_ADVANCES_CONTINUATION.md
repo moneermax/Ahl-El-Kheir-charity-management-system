@@ -1,6 +1,6 @@
 # Sponsorship Advances and Two-Month Arrears — Continuation
 
-**Status:** Active — search-driven arrears UI committed; CI verified; local browser acceptance pending.
+**Status:** Active — search-driven arrears report locally accepted; advances report and payment-workflow acceptance remain open.
 **Baseline:** imported sponsorship monitoring starts 2026-08-01; newly created sponsorships use their actual start date.
 **Repository:** main only. Test database/data, not live organizational data.
 
@@ -389,3 +389,24 @@ The final search-driven implementation is on `main` at `20462f507890d025d64e3cbe
 Relevant implementation commits: `21338cc9c3f11a5064725e3ec1e88048685f44b5` (SQL-side scoped search/history loading), `7d805a624a5bfb18c99bdff392c5e1a8944342cf` (search-first page and ten suggestions), `8c190884de6b3d6cd945feea15514ffea0ca80e9` and `24c987078465bc96ca370bbe1a5b365fd43b53f1` (input hardening), `20462f507890d025d64e3cbe76ebc32dfdca804d` (exact supervisor prefilter precedence). Regression coverage and CI wiring are in `a6b039ee9fec46e5a1623b09d7afc5d97c8348e4`, `85fb0ffe4f7cf92330096bc7eced72b37ff84e53`, `8cac0d0ab67a7dc4992a671d2d9d240cad161555`, `43001206de63629991f20ee5861f21b72b0c854c`, `cfb40df510c7b89fead64ccd3f8cd45ad2530797`, and `f4107aea8deee7eab149c1217c0efb467ebba6cc`.
 
 **Remaining acceptance:** local Apache/browser UI verification only. Pull the latest `main`, open the arrears page, confirm it renders promptly with ten suggestions and no arrears results before search, then search one known sponsorship by code and confirm the result. Also confirm a broad filter is rejected with a refine-search message. No database migration or data mutation is required. Do not rerun the already-passed accounting backfill or closed report runtime tests unless a regression is found.
+
+
+## 2026-11-09 — Search-driven arrears report: local browser acceptance CLOSED
+
+The user completed local browser acceptance of the search-driven arrears report.
+
+Verified from the user's actual page results:
+- Searching for `SH-003559` returned one qualifying sponsorship with two eligible completed months: September 2026 and October 2026.
+- Each month showed a 5,000 SDG commitment, 0.00 SDG paid, and 5,000 SDG outstanding; no pending collection request was shown for either month.
+- The user also tested the available filter/search methods. The search result for `SH-003559` confirms that the code filter reaches the arrears calculation and returns the qualifying record.
+- The earlier `SH-003560` search correctly returned no arrears: the backup record was cancelled on its start date (2026-09-19), so it had no complete eligible month. Its presence in the ten newest suggestions was not a claim that it had arrears.
+
+**Disposition:** search-driven arrears UI and its local browser acceptance are CLOSED at this evidence boundary. Do not weaken the two-consecutive-eligible-month rule or reopen the search implementation without concrete regression evidence.
+
+**Next open work unit:** complete local acceptance of the remaining Sponsorship Advances / Two-Month Arrears workflow, beginning with the Advances report:
+1. Verify the page renders and the locally applied accounting data is presented correctly: future allocations, unallocated excess, and any pending/returned future submissions that actually exist in the test database.
+2. Verify the existing monthly sponsorship payment submission path and FM approval/posting path remain functional and that approved submissions are represented once through their linked transaction.
+3. Verify the report pages and payment actions under their documented Admin, VGM, Supervisor, and FM role boundaries. Do not invent test records or alter the arrears eligibility rules to manufacture a result.
+4. Preserve the explicit evidence gap: sequential duplicate rejection is verified; true two-process concurrent execution is not.
+
+Do not rerun the completed sponsorship accounting migration, historical backfill, or rollback-only accounting harness. No production source or database changes were made in this browser-acceptance checkpoint.
