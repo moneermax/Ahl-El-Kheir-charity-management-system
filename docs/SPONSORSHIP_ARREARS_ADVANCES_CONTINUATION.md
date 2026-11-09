@@ -174,3 +174,8 @@ If event evidence is unbalanced or the generated reversal is incomplete, the exi
 ### 2026-11-09 — Migration CI coverage added
 
 The full-schema MariaDB 10.4.32 CI job now applies `2026-11-08_sponsorship_payment_accounting.sql` twice against the checked-in database schema and asserts all three tables, all three unique indexes, and all ten foreign-key constraints. This verifies clean-install compatibility and repeatability in CI; it does not apply the migration to the local XAMPP database.
+
+
+### Legacy pause/resume compatibility hardening
+
+The pause allocator now fails closed for a currently paused sponsorship with no open event history. For an active/completed/cancelled sponsorship, it also considers only the exact bounded legacy `pause_start_date`/`pause_end_date` interval when both dates are present. The resume handler does not create an unmatched `resume` event for a pause that predates event logging; it retains the legacy date evidence instead. New pause/resume cycles continue to append paired events. This avoids inventing historical intervals or creating malformed event sequences.

@@ -33,6 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
             $new = $old;
 
             if ($action === 'pause' && $old === 'active') {
+                $latestPauseEvent = dbFetchOne("SELECT event_type FROM sponsorship_pause_events WHERE sponsorship_id=? ORDER BY effective_date DESC,id DESC LIMIT 1 FOR UPDATE", [$id]);
+                if ($latestPauseEvent && $latestPauseEvent['event_type'] === 'pause') {
+                    throw new RuntimeException('سجل الإيقاف يحتوي بالفعل على إيقاف مفتوح رغم أن حالة الكفالة نشطة.');
+                }
                 $new = 'paused';
                 dbExecute("INSERT INTO sponsorship_pause_events (sponsorship_id,event_type,effective_date,reason,actor_user_id) VALUES (?,'pause',?,?,?)", [$id,$today,trim((string)($_POST['pause_reason'] ?? '')) ?: null,Session::getUserId()]);
                 dbExecute(
@@ -40,8 +44,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
                     [trim((string) ($_POST['pause_reason'] ?? '')) ?: null, $today, Session::getUserId(), $id]
                 );
             } elseif ($action === 'resume' && $old === 'paused') {
+                $latestPauseEvent = dbFetchOne("SELECT event_type FROM sponsorship_pause_events WHERE sponsorship_id=? ORDER BY effective_date DESC,id DESC LIMIT 1 FOR UPDATE", [$id]);
                 $new = 'active';
-                dbExecute("INSERT INTO sponsorship_pause_events (sponsorship_id,event_type,effective_date,reason,actor_user_id) VALUES (?,'resume',?,NULL,?)", [$id,$today,Session::getUserId()]);
+                // A pre-migration pause has no pause event. Do not invent an unmatched
+                // resume event; the exact legacy pause dates remain the evidence.
+                if ($latestPauseEvent && $latestPauseEvent['event_type'] === 'pause') {
+                    dbExecute("INSERT INTO sponsorship_pause_events (sponsorship_id,event_type,effective_date,reason,actor_user_id) VALUES (?,'resume',?,NULL,?)", [$id,$today,Session::getUserId()]);
+                }
                 dbExecute(
                     "UPDATE sponsorships SET status='active', pause_end_date=?, updated_by=? WHERE id=?",
                     [$today, Session::getUserId(), $id]

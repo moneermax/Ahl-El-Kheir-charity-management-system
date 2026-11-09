@@ -21,20 +21,8 @@ function ak_sp_month_is_pause_affected(int $sponsorshipId, string $monthStart, s
         "SELECT event_type, effective_date FROM sponsorship_pause_events WHERE sponsorship_id=? ORDER BY effective_date ASC, id ASC",
         [$sponsorshipId]
     );
-    if (!$events) {
-        // Legacy fields are evidence only for their recorded dates. Never infer a longer interval.
-        $legacyStart = $sponsorship['pause_start_date'] ?? null;
-        $legacyEnd = $sponsorship['pause_end_date'] ?? null;
-        if ($legacyStart === null && $legacyEnd === null) {
-            if ((string)$sponsorship['status'] === 'paused') {
-                throw new RuntimeException('الكفالة موقوفة دون سجل إيقاف تاريخي موثوق؛ تعذر تخصيص الدفعة بأمان.');
-            }
-            return false;
-        }
-        if ($legacyStart === null || $legacyEnd === null || (string)$legacyEnd < (string)$legacyStart) {
-            throw new RuntimeException('تواريخ الإيقاف القديمة غير مكتملة؛ تعذر تخصيص الدفعة بأمان.');
-        }
-        return (string)$legacyStart <= $monthEnd && (string)$legacyEnd >= $monthStart;
+    if (!$events && (string)$sponsorship['status'] === 'paused') {
+        throw new RuntimeException('الكفالة موقوفة دون سجل إيقاف تاريخي موثوق؛ تعذر تخصيص الدفعة بأمان.');
     }
 
     $openPause = null;
@@ -63,6 +51,17 @@ function ak_sp_month_is_pause_affected(int $sponsorshipId, string $monthStart, s
         }
     } elseif ((string)$sponsorship['status'] === 'paused') {
         throw new RuntimeException('حالة الكفالة موقوفة لكن سجل الإيقاف لا يحتوي على حدث إيقاف مفتوح.');
+    } else {
+        // Keep legacy pause dates as bounded evidence too. This covers a pause
+        // that began before event logging was introduced, including its later resume.
+        $legacyStart = $sponsorship['pause_start_date'] ?? null;
+        $legacyEnd = $sponsorship['pause_end_date'] ?? null;
+        if ($legacyStart !== null || $legacyEnd !== null) {
+            if ($legacyStart === null || $legacyEnd === null || (string)$legacyEnd < (string)$legacyStart) {
+                throw new RuntimeException('تواريخ الإيقاف القديمة غير مكتملة؛ تعذر تخصيص الدفعة بأمان.');
+            }
+            if ((string)$legacyStart <= $monthEnd && (string)$legacyEnd >= $monthStart) $affected = true;
+        }
     }
     return $affected;
 }
