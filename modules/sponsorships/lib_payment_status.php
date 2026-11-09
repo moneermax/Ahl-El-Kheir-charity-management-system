@@ -79,15 +79,15 @@ function ak_sar_load_report_data(string $role, int $userId): array
         }
     }
 
-    $sql = "SELECT sp.id, sp.sponsorship_code, sp.monthly_amount, sp.status, sp.start_date,
+    $sql = "SELECT sp.id, sp.child_id, sp.sponsorship_code, sp.monthly_amount, sp.status, sp.start_date,
                    sp.end_date, sp.pause_start_date, sp.pause_end_date,
                    s.id AS sponsor_id, s.full_name AS sponsor_name, s.sponsor_code,
+                   fc.id AS family_child_record_id, COALESCE(fc.child_name, 'سجل اليتيم غير مرتبط') AS child_name,
                    s.supervisor_id, s.first_letter_id, s.gender, s.is_manual_override,
-                   s.sponsor_type, s.created_by AS sponsor_created_by,
-                   fc.child_name
+                   s.sponsor_type, s.created_by AS sponsor_created_by
             FROM sponsorships sp
             JOIN sponsors s ON s.id = sp.sponsor_id
-            JOIN family_children fc ON fc.id = sp.child_id";
+            LEFT JOIN family_children fc ON fc.id = sp.child_id";
     $params = [];
     if ($allowedSponsorIds !== null) {
         $sql .= " WHERE s.id IN (" . implode(',', array_fill(0, count($allowedSponsorIds), '?')) . ")";
