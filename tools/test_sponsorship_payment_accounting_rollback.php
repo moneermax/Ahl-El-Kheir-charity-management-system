@@ -262,13 +262,18 @@ try {
 
     // Approved historical backfill: dry-run must remain read-only before the atomic apply.
     $backfillDryRun = ak_sp_backfill_historical_payments_prepared(false,$actorId);
-    spaTestAssert($backfillDryRun['state'] === 'ready','Historical backfill dry-run did not report the expected ready state.');
+    spaTestAssert(in_array($backfillDryRun['state'],['ready','already_applied'],true),'Historical backfill dry-run returned an unexpected state.');
     $preApplyCount = (int)dbFetchOne("SELECT COUNT(*) AS c FROM sponsorship_payment_allocations WHERE transaction_id IN (1,2,17,18,27,28,29)")['c'];
-    spaTestAssert($preApplyCount === 0,'Historical backfill dry-run created allocation rows.');
+    if ($backfillDryRun['state'] === 'ready') {
+        spaTestAssert($preApplyCount === 0,'Historical backfill dry-run created allocation rows.');
+    } else {
+        spaTestAssert($preApplyCount === 7,'Existing historical backfill state is incomplete.');
+    }
 
     // Apply the exact seven transactions, append-only journals, and month-end recognition.
     $backfill = ak_sp_backfill_historical_payments_prepared(true,$actorId);
-    spaTestAssert($backfill['state'] === 'applied','Historical backfill did not apply as a fresh atomic batch.');
+    $expectedBackfillState = $backfillDryRun['state'] === 'ready' ? 'applied' : 'already_applied';
+    spaTestAssert($backfill['state'] === $expectedBackfillState,'Historical backfill apply result did not match the dry-run state.');
     spaTestAssert((int)$backfill['transaction_count'] === 7,'Historical backfill transaction count is incorrect.');
     spaTestAssert(round((float)$backfill['gross_total'],2) === 87000.00,'Historical backfill gross total is incorrect.');
     spaTestAssert(round((float)$backfill['allocated_total'],2) === 77000.00,'Historical backfill allocated total is incorrect.');

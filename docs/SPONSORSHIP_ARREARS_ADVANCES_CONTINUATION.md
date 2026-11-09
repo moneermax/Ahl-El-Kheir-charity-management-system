@@ -239,3 +239,8 @@ The harness was then tightened to explicitly assert that a backfill dry-run crea
 ### Backfill CLI dry-run CI coverage
 
 The full-schema MariaDB job now also runs `php tools/backfill_sponsorship_payment_accounting.php --dry-run` against the imported backup after applying the migration. This validates the exact seven-row manifest through the public CLI entry point before the rollback-only apply/idempotency harness runs.
+
+
+### Rollback harness repeatability
+
+The rollback-only harness now accepts either a fresh historical backfill state or an already-applied state. It can therefore be run before or after the local backfill without assuming that the seven approved allocation rows are absent. All harness changes remain inside its outer transaction and are rolled back.
