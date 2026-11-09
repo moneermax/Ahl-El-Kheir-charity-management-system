@@ -6070,3 +6070,8 @@ Implementation and regression-test commits are documented in docs/SPONSORSHIP_AR
 ## 2026-11-09 — Sponsorship arrears dashboard scope and implementation checkpoint
 
 Admin and VGM dashboard totals are organization-wide. Supervisor dashboard totals are restricted to that supervisor's authorized sponsor scope, with the existing authoritative supervisorCanAccessSponsor() check retained. Four always-visible cards now precede the search section; their values are independent of specific search filters. A summary-only helper reuses the exact arrears month, posted-allocation, pause and two-consecutive-eligible-month logic without constructing detailed sponsor/child report rows. Source and tests are committed on main; CI, local timing, and Admin/VGM/Supervisor browser acceptance are pending. See docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
+
+
+## 2026-11-09 — Arrears dashboard CI verification
+
+The role-scoped, always-visible arrears dashboard passed GitHub Actions run 42642522337 on commit e655f7318e97acb4d0fef3bdf057b29eb3c62bbc (all six jobs). The full-schema MariaDB runtime harness confirmed Admin/VGM organization-wide summary equality and Supervisor summary equality against the supervisor-authorized full report. CI summary-only timing was 297.88 ms (prior run 111.34 ms). Local XAMPP runtime/timing and browser acceptance remain pending; see docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
