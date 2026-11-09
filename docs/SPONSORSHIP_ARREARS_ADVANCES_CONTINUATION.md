@@ -505,7 +505,7 @@ The test measured the Admin summary-only calculation at 297.88 ms in this CI run
 
 ## 2026-11-09 — VGM dashboard navigation consolidation
 
-The VGM dashboard now exposes the Sponsorship Arrears and Sponsorship Advances pages as two additional clickable action cards beside the existing dashboard cards. The six cards are rendered in two balanced rows of three, retaining the existing card styling and dimensions.
+The VGM dashboard exposes the Sponsorship Arrears and Sponsorship Advances pages as clickable action cards beside the existing dashboard cards. All six cards are rendered in one horizontal row; on narrow screens the row remains unwrapped and scrolls horizontally. Existing card styling and dimensions are retained.
 
 The two corresponding links were removed from the **vice_general_manager** sidebar menu only. The Supervisor sidebar entries remain unchanged. The destination pages' own role checks and report logic were not modified; no accounting logic, schema, or data was changed.
 
@@ -520,3 +520,6 @@ Source commits:
 
 
 **Localization:** the two new card descriptions use stable translation keys present in both authoritative catalogs. Commits: `f8545bc511d0a685270ef301969dd3a65fcbae07` (dashboard keys), `2ecfabb7e5c7f5beb9d75e9f450dc53c0fad99fb` (Arabic), and `60f3c0cff35b8a27bca5c83f9de0bdd641be9375` (English). Source inspection confirms both keys are referenced and defined in both languages.
+
+
+**2026-11-09 — PHP rendering hotfix:** The first single-row renderer commit accidentally retained the old outer `endforeach`, leaving an unmatched PHP loop terminator and causing HTTP 500 on the VGM dashboard. Commit `27256b3146aee6eb42833daecbe3a79dffbb0200` removes the extra terminator. Source inspection confirms the card loop now closes once. Local PHP lint and browser confirmation remain pending; do not treat the page as runtime-verified until the user pulls and tests it.
