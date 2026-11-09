@@ -6065,3 +6065,8 @@ Relevant implementation commits: `21338cc9c3f11a5064725e3ec1e88048685f44b5` (SQL
 The existing sponsorship arrears report now has an explicit all-report action, four statistics cards, and 25-sponsorship display pagination. Complete totals are calculated before display pagination, and the former 100-sponsorship result cap is removed. Initial page load remains lightweight and does not calculate arrears. Only posted, non-voided allocation rows reduce outstanding balances; pending/returned collection submissions remain separate and are surfaced by the pending card.
 
 Implementation and regression-test commits are documented in docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md. No schema/accounting changes were made. CI status and local full-report PHP/browser acceptance remain pending. The all-report request's response time and memory use must be measured locally before acceptance; if slow, inspect exact MariaDB/PHP evidence before optimization.
+
+
+## 2026-11-09 — Sponsorship arrears dashboard scope and implementation checkpoint
+
+Admin and VGM dashboard totals are organization-wide. Supervisor dashboard totals are restricted to that supervisor's authorized sponsor scope, with the existing authoritative supervisorCanAccessSponsor() check retained. Four always-visible cards now precede the search section; their values are independent of specific search filters. A summary-only helper reuses the exact arrears month, posted-allocation, pause and two-consecutive-eligible-month logic without constructing detailed sponsor/child report rows. Source and tests are committed on main; CI, local timing, and Admin/VGM/Supervisor browser acceptance are pending. See docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
