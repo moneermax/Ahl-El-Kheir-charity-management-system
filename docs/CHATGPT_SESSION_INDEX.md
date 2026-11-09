@@ -3799,3 +3799,8 @@ Read docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md for implementation detail
 ### 2026-11-09 — Sponsorship arrears role-wide dashboard continuation
 
 The arrears dashboard requirement is clarified: Admin and VGM see organization-wide totals; each Supervisor sees only sponsors authorized by the existing sponsor assignment rules, with supervisorCanAccessSponsor() remaining authoritative. The four cards are now placed above the search form and are intended to remain role-wide when specific searches are performed. A dedicated summary-only loader reuses the established month eligibility/allocation/pause rules without loading child/sponsor display details or constructing the full report table. Source and regression-test changes are committed, but CI and local browser/performance acceptance remain pending. Continue from docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md; measure the initial summary response before calling it fast or complete.
+
+
+### 2026-11-09 — Arrears dashboard CI checkpoint
+
+The always-visible role-scoped dashboard implementation passed GitHub Actions run 42642522337 (commit e655f7318e97acb4d0fef3bdf057b29eb3c62bbc), all six jobs. The MariaDB full-schema harness proved Admin and VGM summaries match organization-wide full-report totals and Supervisor summaries match the supervisor-scoped full report. CI measured the Admin summary-only calculation at 297.88 ms in this run (111.34 ms in a prior run). Local XAMPP timing and browser acceptance remain pending; continue from docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
