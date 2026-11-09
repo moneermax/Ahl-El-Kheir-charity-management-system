@@ -49,11 +49,12 @@ function ak_sar_assert_no_pending_month_payment(int $sponsorshipId, string $paym
 
 function ak_sar_normalize_arrears_filters(array $filters): array
 {
+    $scalar = static fn($value): string => is_scalar($value) ? trim((string)$value) : '';
     $normalized = [
-        'code' => trim((string)($filters['code'] ?? '')),
-        'sponsor' => trim((string)($filters['sponsor'] ?? '')),
-        'child' => trim((string)($filters['child'] ?? '')),
-        'supervisor_id' => max(0, (int)($filters['supervisor_id'] ?? 0))
+        'code' => $scalar($filters['code'] ?? ''),
+        'sponsor' => $scalar($filters['sponsor'] ?? ''),
+        'child' => $scalar($filters['child'] ?? ''),
+        'supervisor_id' => max(0, is_scalar($filters['supervisor_id'] ?? null) ? (int)$filters['supervisor_id'] : 0)
     ];
     foreach (['code', 'sponsor', 'child'] as $field) {
         if (strlen($normalized[$field]) > 150) {
