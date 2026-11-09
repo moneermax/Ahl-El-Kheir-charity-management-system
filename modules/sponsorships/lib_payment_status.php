@@ -22,8 +22,11 @@ function ak_sar_assert_no_pending_month_payment(int $sponsorshipId, string $paym
     // Both submission paths lock the same sponsorship row before checking and inserting.
     // This serializes concurrent submissions even though the legacy schema has no
     // unique constraint covering the two separate pending-entry tables.
-    $locked = dbFetchOne("SELECT id FROM sponsorships WHERE id=? FOR UPDATE", [$sponsorshipId]);
+    $locked = dbFetchOne("SELECT id, status FROM sponsorships WHERE id=? FOR UPDATE", [$sponsorshipId]);
     if (!$locked) throw new RuntimeException('الكفالة المحددة غير موجودة.');
+    if ((string)$locked['status'] !== 'active') {
+        throw new RuntimeException('لا يمكن تسجيل تحصيل شهري إلا لكفالة نشطة.');
+    }
 
     $direct = dbFetchOne(
         "SELECT id FROM transactions
