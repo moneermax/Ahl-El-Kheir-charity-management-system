@@ -318,6 +318,25 @@ The first runtime assertion exposed 1,745 sponsorship rows with no matching `fam
 
 The duplicate tests prove sequential rejection through both entry tables while holding the sponsorship row lock. A true two-process concurrent execution test has **not** been run and must not be described as proven.
 
+
+## 2026-11-09 — Local XAMPP database-backed runtime harness: PASS
+
+The user pulled `main` through commit `0d78c02e2c9ba20b0fe5e49da3d7e8a11579c701` and ran:
+
+```bash
+/opt/lampp/bin/php tools/test_sponsorship_arrears_advances_runtime.php
+```
+
+Exact local output:
+
+```
+PASS | pending_duplicate_rejected_December_2026=PASS | pending_duplicate_rejected_January_2027=PASS | admin_scope_returns_all_sponsorships=PASS | vgm_scope_returns_all_sponsorships=PASS | admin_scope_retains_sponsorships_without_child_links=PASS | supervisor_scope_contains_only_authorized_sponsors=PASS | arrears_report_query_executes=PASS | advances_report_query_executes=PASS | unapproved_role_denied=PASS
+```
+
+This confirms the database-backed report queries, Admin/VGM all-sponsorship scope, retention of sponsorships without linked child rows, supervisor authorization filtering, denial of an unapproved role, and sequential pending-duplicate rejection through both supervisor-submission and direct FM-review transaction tables. The harness uses transactions and rolls synthetic pending rows back.
+
+**Acceptance boundary:** this is local XAMPP database-backed harness verification, not yet full UI/workflow acceptance. Still manually verify both pages under Admin, VGM, and supervisor accounts; inspect the pending/returned/future-credit presentation; and confirm normal payment submission and FM approval remain unaffected. True two-process concurrency remains untested. Do not mark the feature closed until these remaining checks are accepted.
+
 ### Remaining acceptance boundary
 
 CI now verifies both calculation rules and database-backed report/duplicate-guard behavior. The user's local XAMPP application/database still needs verification of:
