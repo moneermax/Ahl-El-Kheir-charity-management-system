@@ -28,17 +28,17 @@ function spaTestAssert(bool $condition, string $message): void
     if (!$condition) throw new RuntimeException($message);
 }
 
-function spaTestCreateTransaction(int $sponsorshipId, float $amount, string $period, int $actorId, string $suffix): array
+function spaTestCreateTransaction(int $sponsorshipId, float $amount, string $period, int $actorId, string $suffix, ?int $feePolicyId = null): array
 {
     $code = 'TEST-SPA-' . $suffix . '-' . bin2hex(random_bytes(3));
     dbExecute(
         "INSERT INTO transactions
          (sponsorship_id,amount,currency_code,payment_method,transaction_date,receipt_number,description,
           months_covered,payment_period,purpose,admin_fee_percent,admin_fee_amount,net_amount,status,
-          created_by,transaction_code,transaction_type,sponsor_id,admin_fee_method,admin_fee_value)
+          created_by,transaction_code,transaction_type,sponsor_id,admin_fee_method,admin_fee_value,admin_fee_policy_id)
          VALUES (?,?, 'SDG','cash',CURDATE(),NULL,?,1.00,?,'monthly_sponsorship',0.00,0.00,?,'posted',?,
-                 ?,'sponsorship_payment',NULL,'none',0.00)",
-        [$sponsorshipId > 0 ? $sponsorshipId : null,round($amount,2),'rollback-only sponsorship accounting test',$period,round($amount,2),$actorId,$code]
+                 ?,'sponsorship_payment',NULL,'none',0.00,?)",
+        [$sponsorshipId > 0 ? $sponsorshipId : null,round($amount,2),'rollback-only sponsorship accounting test',$period,round($amount,2),$actorId,$code,$feePolicyId]
     );
     $id = (int)dbLastInsertId();
     if ($id <= 0) throw new RuntimeException('Could not create rollback-only sponsorship test transaction.');
@@ -113,6 +113,9 @@ if (!$fixture) {
 $sponsorshipId = (int)$fixture['id'];
 $commitment = round((float)$fixture['monthly_amount'],2);
 if ($commitment <= 0.02) throw new RuntimeException('Test sponsorship monthly commitment is too small.');
+
+$feePolicyRow = dbFetchOne("SELECT id FROM accounting_admin_fee_policies ORDER BY id DESC LIMIT 1");
+$feePolicyId = $feePolicyRow ? (int)$feePolicyRow['id'] : null;
 
 $pdo->beginTransaction();
 try {
@@ -206,10 +209,17 @@ try {
     // November: two partial receipts fill one commitment; a third receipt remains excess.
     $firstPart = round($commitment / 2,2);
     $secondPart = round($commitment - $firstPart,2);
-    $novemberOne = spaTestCreateTransaction($sponsorshipId,$firstPart,'November/2026',$actorId,'NOV1');
+    $novemberOne = spaTestCreateTransaction($sponsorshipId,$firstPart,'November/2026',$actorId,'NOV1',$feePolicyId);
     $novemberTwo = spaTestCreateTransaction($sponsorshipId,$secondPart,'November/2026',$actorId,'NOV2');
     $novemberThree = spaTestCreateTransaction($sponsorshipId,25.00,'November/2026',$actorId,'NOV3');
-    $a1 = ak_sp_create_payment_allocation_prepared($novemberOne,$firstPart,$actorId,$actorId);
+    $novemberJournalId = ak_post_transaction_journal_prepared((int)$novemberOne['id'],$actorId,$actorId);
+    spaTestAssert($novemberJournalId > 0,'Shared transaction posting did not create a journal.');
+    $postedRevenueLine = dbFetchOne("SELECT jl.debit,jl.credit,a.code FROM journal_lines jl JOIN accounts a ON a.id=jl.account_id WHERE jl.entry_id=? AND a.code='2200'",[$novemberJournalId]);
+    spaTestAssert($postedRevenueLine && round((float)$postedRevenueLine['credit'],2) === $firstPart && round((float)$postedRevenueLine['debit'],2) === 0.00,'Live sponsorship receipt did not credit deferred revenue account 2200.');
+    $firstAllocationRow = dbFetchOne("SELECT collector_user_id,commitment_amount,allocated_amount,unallocated_amount FROM sponsorship_payment_allocations WHERE transaction_id=?",[(int)$novemberOne['id']]);
+    spaTestAssert($firstAllocationRow && (int)$firstAllocationRow['collector_user_id'] === $actorId,'Collector identity was not preserved in the allocation snapshot.');
+    spaTestAssert(round((float)$firstAllocationRow['commitment_amount'],2) === $commitment,'Monthly commitment snapshot is incorrect.');
+    $a1 = ['allocated_amount'=>(float)$firstAllocationRow['allocated_amount'],'unallocated_amount'=>(float)$firstAllocationRow['unallocated_amount']];
     $a2 = ak_sp_create_payment_allocation_prepared($novemberTwo,$secondPart,$actorId,$actorId);
     $a3 = ak_sp_create_payment_allocation_prepared($novemberThree,25.00,$actorId,$actorId);
     spaTestAssert(round((float)$a1['allocated_amount'],2) === $firstPart,'First partial payment allocation is incorrect.');

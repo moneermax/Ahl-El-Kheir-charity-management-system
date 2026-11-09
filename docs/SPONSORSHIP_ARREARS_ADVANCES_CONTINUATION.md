@@ -208,3 +208,8 @@ Added `tools/test_sponsorship_payment_accounting_rollback.php` and wired it into
 - per-account zero residual after void and full rollback.
 
 The harness creates no fixtures permanently and performs no DDL. Local XAMPP runtime verification remains a separate acceptance gate.
+
+
+### 2026-11-09 — First rollback-only integration run passed in CI
+
+At commit `06a5bde0620a52ce207129b187ebbeba40661a04`, the full-schema MariaDB 10.4.32 workflow completed the new sponsorship accounting rollback-only integration step successfully, after applying the sponsorship accounting migration twice. The harness found an existing eligible sponsorship in the checked-in backup and exercised allocation, partial accumulation, excess deferral, pause-month exclusion, unlinked receipts, strict period parsing, month-end recognition/idempotency, append-only event reversal on void, per-account zero residual, and rollback. No local XAMPP database was modified.

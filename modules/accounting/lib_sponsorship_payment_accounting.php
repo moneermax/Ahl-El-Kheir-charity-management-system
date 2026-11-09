@@ -103,6 +103,9 @@ function ak_sp_create_payment_allocation_prepared(array $transaction, float $net
         $monitoringStart = str_starts_with((string)$sponsorship['sponsorship_code'], 'IMP-SH-')
             ? '2026-08-01'
             : (string)$sponsorship['start_date'];
+        if (in_array((string)$sponsorship['status'], ['completed','cancelled'], true) && empty($sponsorship['end_date'])) {
+            throw new RuntimeException('الكفالة المكتملة أو الملغاة لا تحتوي على تاريخ انتهاء موثوق؛ تعذر تخصيص الدفعة.');
+        }
         $dateEligible = $monitoringStart <= $monthStart
             && (string)$sponsorship['start_date'] <= $monthStart
             && (empty($sponsorship['end_date']) || (string)$sponsorship['end_date'] >= $monthEnd);
@@ -319,7 +322,7 @@ function ak_sp_recognize_month_end_prepared(string $coveredMonth, ?int $createdB
                 throw new RuntimeException('حدث إثبات سابق لا يطابق تخصيص الكفالة؛ تم إيقاف العملية.');
             }
             $journal = dbFetchOne(
-                "SELECT id,status,voided_at FROM journal_entries WHERE id=? LIMIT 1 FOR UPDATE",
+                "SELECT id,status,voided_at,entry_date,reference_type,reference_id FROM journal_entries WHERE id=? LIMIT 1 FOR UPDATE",
                 [(int)$existing['journal_entry_id']]
             );
             $lines = dbFetchAll(
@@ -327,6 +330,9 @@ function ak_sp_recognize_month_end_prepared(string $coveredMonth, ?int $createdB
                 [(int)$existing['journal_entry_id']]
             );
             if (!$journal || $journal['status'] !== 'posted' || $journal['voided_at'] !== null
+                || (string)$journal['entry_date'] !== $monthEnd
+                || $journal['reference_type'] !== 'sponsorship_month_end_recognition'
+                || (int)$journal['reference_id'] !== $allocationId
                 || count($lines) !== 2
                 || $lines[0]['code'] === $lines[1]['code']) {
                 throw new RuntimeException('قيد إثبات الإيراد السابق غير صالح أو غير مكتمل.');
