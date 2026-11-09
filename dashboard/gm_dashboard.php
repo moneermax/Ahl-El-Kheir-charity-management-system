@@ -169,8 +169,6 @@ foreach($cards as $c):
                                 <span class="flex-grow-1"><strong class="d-block"><?php echo e($a[2]); ?></strong><small class="text-muted"><?php echo e($a[5]); ?></small></span>
                                 <?php if ($a[3] !== null): ?>
                                     <span class="badge text-bg-<?php echo e($a[0]); ?>"><?php echo (int)$a[3]; ?></span>
-                                <?php else: ?>
-                                    <span class="small text-primary fw-bold">فتح التقرير <i class="fas fa-arrow-left ms-1"></i></span>
                                 <?php endif; ?>
                             </a>
                         </div>
