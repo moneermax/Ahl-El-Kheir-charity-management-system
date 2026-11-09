@@ -6240,3 +6240,29 @@ CI evidence:
 ### 2026-11-09 — Final CI confirmation for sponsorship accounting source milestone
 
 Latest main commit `69e6768f9bd0ee6d90de21ff9fa938c296d23b66` passed workflow run `42569957570` (success). The full-schema MariaDB 10.4.32 job passed the sponsorship migration twice, the public backfill CLI dry-run, and the rollback-only integration harness. PHP lint and the remaining workflow jobs also passed. The local XAMPP database migration and historical backfill remain unapplied; local runtime acceptance is still pending.
+
+## 2026-11-09 — Local XAMPP sponsorship accounting acceptance: PASS
+
+The previously pending local acceptance gates have now passed against the user's Linux Mint XAMPP MariaDB 10.4.32 test database.
+
+Environment and backup:
+- XAMPP MariaDB 10.4.32 was confirmed on TCP port 3306 using `/opt/lampp/var/mysql/`.
+- Database `ahl_el_kheir` was confirmed present.
+- Pre-migration dump created at `backups/pre_sponsorship_accounting/ahl_el_kheir_before_migration.sql` (5.9 MB).
+- Migration `database/migrations/2026-11-08_sponsorship_payment_accounting.sql` applied without SQL errors; all three new tables were confirmed present.
+
+Local rollback-only integration:
+```
+PASS | sponsorship_allocation=PASS | live_posting_deferred=PASS | partial_accumulation=PASS | excess_deferred=PASS | pause_month_excluded=PASS | unlinked_deferred=PASS | strict_period=PASS | month_end_recognition=PASS | recognition_idempotency=PASS | void_event_reversal=PASS | historical_backfill=PASS | backfill_idempotency=PASS | target_reconciliation=66000/21000 | rollback=PASS
+```
+The harness rolled back its synthetic test mutations.
+
+Historical backfill:
+- Dry-run returned `state=ready` and exactly 7 transactions, gross 87,000 SDG, allocated 77,000 SDG, excess deferred 10,000 SDG, earned target 66,000 SDG, deferred target 21,000 SDG. It reported no data changed.
+- The explicitly approved `--apply` completed with `state=applied`: 7 transactions; 87,000 gross; 77,000 allocated; 10,000 excess deferred; 66,000 earned; 21,000 deferred; 6 new month-end recognition events; 0 existing.
+- Subsequent repeated dry-runs returned `state=already_applied` with the identical reconciliation and `No data was changed`, confirming repeat-run idempotency.
+- The backfill implementation validates the seven source transactions and their original posted journals, appends separate reclassification/recognition journals and events, and verifies the 4100/2200 ledger targets before commit. Original source journals are not rewritten.
+
+**Acceptance boundary:** local migration, rollback-only integration, historical apply, target reconciliation, and repeat-run idempotency are verified. This closes the sponsorship payment accounting/backfill acceptance gate for the approved seven-row historical set. It does not close the broader Sponsorship Advances / Two-Month Arrears feature: the advance-payment and arrears user workflows remain a separate next implementation/verification phase. Do not rerun the migration, backfill apply, or rollback harness without concrete regression evidence.
+
+Next work: continue the existing Sponsorship Advances / Two-Month Arrears feature by auditing the current source/schema for the advance-payment and arrears views, then implement the smallest justified UI/workflow slice. Preserve the agreed eligibility, pause, pending-submission, partial-payment, and two-consecutive-eligible-month rules. Do not reopen unrelated closed modules.
