@@ -39,7 +39,7 @@ include dirname(__DIR__,2).'/includes/header.php';
  <?php else: foreach ($rows as $item): $sp=$item['sponsorship']; $first=true; ?>
  <?php foreach ($item['future'] as $future): ?>
  <tr>
-  <td><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td>
+  <td><?php if (!empty($sp['family_child_record_id'])): ?><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><?php else: ?><code><?php echo e($sp['sponsorship_code']); ?></code><?php endif; ?><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td>
   <td><?php echo e($sp['sponsor_name']); ?></td>
   <td><?php echo e($future['month']); ?></td>
   <?php if ($future['error'] !== null): ?><td colspan="3" class="text-danger"><?php echo e($future['error']); ?></td><td>—</td>
@@ -58,7 +58,7 @@ include dirname(__DIR__,2).'/includes/header.php';
   <?php if ($first): ?><td rowspan="<?php echo max(1,count($item['future'])); ?>"><?php echo number_format($item['unallocated'],2); ?> ج.س</td><?php $first=false; endif; ?>
  </tr>
  <?php endforeach; ?>
- <?php if (!$item['future']): ?><tr><td><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td><td><?php echo e($sp['sponsor_name']); ?></td><td colspan="5" class="text-muted">لا توجد تغطية مستقبلية مخصصة أو طلب مستقبلي</td><td><?php echo number_format($item['unallocated'],2); ?> ج.س</td></tr><?php endif; ?>
+ <?php if (!$item['future']): ?><tr><td><?php if (!empty($sp['family_child_record_id'])): ?><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><?php else: ?><code><?php echo e($sp['sponsorship_code']); ?></code><?php endif; ?><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td><td><?php echo e($sp['sponsor_name']); ?></td><td colspan="5" class="text-muted">لا توجد تغطية مستقبلية مخصصة أو طلب مستقبلي</td><td><?php echo number_format($item['unallocated'],2); ?> ج.س</td></tr><?php endif; ?>
  <?php endforeach; endif; ?>
  </tbody></table></div></div></div>
 <?php endif; ?>
