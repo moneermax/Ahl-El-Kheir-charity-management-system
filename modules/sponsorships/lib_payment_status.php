@@ -47,36 +47,117 @@ function ak_sar_assert_no_pending_month_payment(int $sponsorshipId, string $paym
     }
 }
 
-function ak_sar_load_report_data(string $role, int $userId): array
+function ak_sar_normalize_arrears_filters(array $filters): array
+{
+    $normalized = [
+        'code' => trim((string)($filters['code'] ?? '')),
+        'sponsor' => trim((string)($filters['sponsor'] ?? '')),
+        'child' => trim((string)($filters['child'] ?? '')),
+        'supervisor_id' => max(0, (int)($filters['supervisor_id'] ?? 0))
+    ];
+    foreach (['code', 'sponsor', 'child'] as $field) {
+        if (strlen($normalized[$field]) > 150) {
+            throw new InvalidArgumentException('قيمة البحث طويلة أكثر من اللازم.');
+        }
+    }
+    return $normalized;
+}
+
+function ak_sar_has_arrears_filter(array $filters): bool
+{
+    return $filters['code'] !== ''
+        || $filters['sponsor'] !== ''
+        || $filters['child'] !== ''
+        || $filters['supervisor_id'] > 0;
+}
+
+function ak_sar_like_value(string $value): string
+{
+    return '%' . strtr($value, ['!' => '!!', '%' => '!%', '_' => '!_']) . '%';
+}
+
+/**
+ * SQL prefilter matching the same sponsor responsibility cases that are
+ * subsequently rechecked by supervisorCanAccessSponsor().
+ */
+function ak_sar_supervisor_scope_sql(): string
+{
+    return "(
+        (s.is_manual_override = 1 AND s.supervisor_id = ?)
+        OR (s.sponsor_type IN ('company','organization') AND s.created_by = ?)
+        OR (
+            COALESCE(s.is_manual_override, 0) <> 1
+            AND COALESCE(s.sponsor_type, 'individual') NOT IN ('company','organization')
+            AND EXISTS (
+                SELECT 1
+                FROM supervisor_letters sl
+                WHERE sl.supervisor_id = ?
+                  AND sl.letter_id = s.first_letter_id
+                  AND (
+                    LOWER(TRIM(sl.gender)) IN ('both','all','كلاهما','الكل')
+                    OR (
+                        LOWER(TRIM(s.gender)) IN ('m','male','ذكر')
+                        AND LOWER(TRIM(sl.gender)) IN ('m','male','ذكر')
+                    )
+                    OR (
+                        LOWER(TRIM(s.gender)) IN ('f','female','أنثى','انثى')
+                        AND LOWER(TRIM(sl.gender)) IN ('f','female','أنثى','انثى')
+                    )
+                  )
+            )
+        )
+    )";
+}
+
+/**
+ * Lightweight initial-page suggestions. These are the ten newest sponsorship
+ * records in the user's authorized scope, not a pre-calculated arrears result.
+ */
+function ak_sar_get_arrears_candidates(string $role, int $userId): array
 {
     if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
         throw new RuntimeException('ليس لديك صلاحية عرض تقارير المتأخرات أو الدفعات المقدمة.');
     }
 
-    $allowedSponsorIds = null;
+    $sql = "SELECT sp.id, sp.sponsorship_code, s.full_name AS sponsor_name,
+                   s.supervisor_id, s.first_letter_id, s.gender,
+                   s.is_manual_override, s.sponsor_type, s.created_by,
+                   fc.child_name, u.full_name AS supervisor_name
+            FROM sponsorships sp
+            JOIN sponsors s ON s.id = sp.sponsor_id
+            LEFT JOIN family_children fc ON fc.id = sp.child_id
+            LEFT JOIN users u ON u.id = s.supervisor_id";
+    $params = [];
+    if ($role === 'supervisor') {
+        $sql .= " WHERE " . ak_sar_supervisor_scope_sql();
+        $params = [$userId, $userId, $userId];
+    }
+    $sql .= " ORDER BY sp.id DESC LIMIT 100";
+    $candidates = dbFetchAll($sql, $params);
+
     if ($role === 'supervisor') {
         $letterScope = dbFetchAll(
             "SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?",
             [$userId]
         );
-        $candidates = dbFetchAll(
-            "SELECT id, supervisor_id, first_letter_id, gender, is_manual_override, sponsor_type, created_by
-             FROM sponsors
-             WHERE first_letter_id IN (SELECT letter_id FROM supervisor_letters WHERE supervisor_id = ?)
-                OR (is_manual_override = 1 AND supervisor_id = ?)
-                OR (sponsor_type IN ('company','organization') AND created_by = ?)",
-            [$userId, $userId, $userId]
-        );
-        $allowedSponsorIds = [];
-        foreach ($candidates as $candidate) {
-            if (supervisorCanAccessSponsor($userId, $candidate, $letterScope)) {
-                $allowedSponsorIds[] = (int)$candidate['id'];
-            }
-        }
-        $allowedSponsorIds = array_values(array_unique($allowedSponsorIds));
-        if (!$allowedSponsorIds) {
-            return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[]];
-        }
+        $candidates = array_values(array_filter(
+            $candidates,
+            static fn(array $candidate): bool => supervisorCanAccessSponsor($userId, $candidate, $letterScope)
+        ));
+    }
+
+    return array_slice($candidates, 0, 10);
+}
+
+function ak_sar_load_report_data(string $role, int $userId, ?array $filters = null): array
+{
+    if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
+        throw new RuntimeException('ليس لديك صلاحية عرض تقارير المتأخرات أو الدفعات المقدمة.');
+    }
+
+    $filters = $filters === null ? null : ak_sar_normalize_arrears_filters($filters);
+    if ($filters !== null && !ak_sar_has_arrears_filter($filters)) {
+        throw new InvalidArgumentException('أدخل معيار بحث واحداً على الأقل قبل عرض المتأخرات.');
     }
 
     $sql = "SELECT sp.id, sp.child_id, sp.sponsorship_code, sp.monthly_amount, sp.status, sp.start_date,
@@ -88,15 +169,71 @@ function ak_sar_load_report_data(string $role, int $userId): array
             FROM sponsorships sp
             JOIN sponsors s ON s.id = sp.sponsor_id
             LEFT JOIN family_children fc ON fc.id = sp.child_id";
+    $where = [];
     $params = [];
-    if ($allowedSponsorIds !== null) {
-        $sql .= " WHERE s.id IN (" . implode(',', array_fill(0, count($allowedSponsorIds), '?')) . ")";
-        $params = $allowedSponsorIds;
+
+    if ($role === 'supervisor') {
+        $where[] = ak_sar_supervisor_scope_sql();
+        $params = array_merge($params, [$userId, $userId, $userId]);
     }
+
+    if ($filters !== null) {
+        if ($filters['code'] !== '') {
+            $where[] = "sp.sponsorship_code LIKE ? ESCAPE '!'";
+            $params[] = ak_sar_like_value($filters['code']);
+        }
+        if ($filters['sponsor'] !== '') {
+            $where[] = "s.full_name LIKE ? ESCAPE '!'";
+            $params[] = ak_sar_like_value($filters['sponsor']);
+        }
+        if ($filters['child'] !== '') {
+            $where[] = "fc.child_name LIKE ? ESCAPE '!'";
+            $params[] = ak_sar_like_value($filters['child']);
+        }
+        if ($filters['supervisor_id'] > 0) {
+            $where[] = "s.supervisor_id = ?";
+            $params[] = $filters['supervisor_id'];
+        }
+    }
+
+    if ($where) $sql .= " WHERE " . implode(' AND ', $where);
     $sql .= " ORDER BY s.full_name, fc.child_name, sp.id";
+    // Never calculate an unbounded report. Broad searches must be refined.
+    if ($filters !== null) $sql .= " LIMIT 501";
+
     $sponsorships = dbFetchAll($sql, $params);
+    if ($filters !== null && count($sponsorships) > 500) {
+        return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[], 'limit_exceeded'=>true];
+    }
+
+    if ($role === 'supervisor' && $sponsorships) {
+        $letterScope = dbFetchAll(
+            "SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?",
+            [$userId]
+        );
+        $sponsorships = array_values(array_filter(
+            $sponsorships,
+            static function (array $sponsorship) use ($userId, $letterScope): bool {
+                $sponsor = [
+                    'id' => $sponsorship['sponsor_id'],
+                    'supervisor_id' => $sponsorship['supervisor_id'],
+                    'first_letter_id' => $sponsorship['first_letter_id'],
+                    'gender' => $sponsorship['gender'],
+                    'is_manual_override' => $sponsorship['is_manual_override'],
+                    'sponsor_type' => $sponsorship['sponsor_type'],
+                    'created_by' => $sponsorship['sponsor_created_by']
+                ];
+                return supervisorCanAccessSponsor($userId, $sponsor, $letterScope);
+            }
+        ));
+    }
+
+    if ($filters !== null && count($sponsorships) > 100) {
+        return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[], 'limit_exceeded'=>true];
+    }
+
     if (!$sponsorships) {
-        return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[]];
+        return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[], 'limit_exceeded'=>false];
     }
 
     $ids = array_values(array_unique(array_map(static fn(array $r): int => (int)$r['id'], $sponsorships)));
@@ -185,7 +322,8 @@ function ak_sar_load_report_data(string $role, int $userId): array
         'allocations'=>$allocations,
         'unallocated_totals'=>$unallocatedTotals,
         'pause_events'=>$pauseEvents,
-        'pending'=>$pending
+        'pending'=>$pending,
+        'limit_exceeded'=>false
     ];
 }
 
@@ -261,9 +399,12 @@ function ak_sar_has_two_consecutive_unpaid_months(array $eligibleMonths): bool
     return false;
 }
 
-function ak_sar_get_arrears(string $role, int $userId): array
+function ak_sar_get_arrears(string $role, int $userId, array $filters): array
 {
-    $data = ak_sar_load_report_data($role, $userId);
+    $data = ak_sar_load_report_data($role, $userId, $filters);
+    if (!empty($data['limit_exceeded'])) {
+        throw new RuntimeException('نتائج البحث أكثر من 100 كفالة. أضف معياراً آخر أو اجعل البحث أكثر تحديداً.');
+    }
     $result = [];
     foreach ($data['sponsorships'] as $sponsorship) {
         try {
