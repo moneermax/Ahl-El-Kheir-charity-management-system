@@ -96,10 +96,6 @@ function ak_sar_load_report_data(string $role, int $userId): array
         return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[]];
     }
 
-    if (!$sponsorships) {
-        return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[]];
-    }
-
     $ids = array_values(array_unique(array_map(static fn(array $r): int => (int)$r['id'], $sponsorships)));
     $marks = implode(',', array_fill(0, count($ids), '?'));
 
@@ -116,6 +112,20 @@ function ak_sar_load_report_data(string $role, int $userId): array
          GROUP BY a.sponsorship_id, a.covered_month",
         $ids
     );
+
+    $unallocatedRows = dbFetchAll(
+        "SELECT a.sponsorship_id, SUM(a.unallocated_amount) AS unallocated_amount
+         FROM sponsorship_payment_allocations a
+         JOIN transactions t ON t.id = a.transaction_id
+         WHERE a.sponsorship_id IN ($marks)
+           AND t.status = 'posted' AND t.voided_at IS NULL
+         GROUP BY a.sponsorship_id",
+        $ids
+    );
+    $unallocatedTotals = [];
+    foreach ($unallocatedRows as $row) {
+        $unallocatedTotals[(int)$row['sponsorship_id']] = round((float)$row['unallocated_amount'], 2);
+    }
     $allocations = [];
     foreach ($allocationRows as $row) {
         $sid = (int)$row['sponsorship_id'];
@@ -170,6 +180,7 @@ function ak_sar_load_report_data(string $role, int $userId): array
     return [
         'sponsorships'=>$sponsorships,
         'allocations'=>$allocations,
+        'unallocated_totals'=>$unallocatedTotals,
         'pause_events'=>$pauseEvents,
         'pending'=>$pending
     ];
@@ -280,10 +291,9 @@ function ak_sar_get_advances(string $role, int $userId): array
     foreach ($data['sponsorships'] as $sponsorship) {
         $sid = (int)$sponsorship['id'];
         $future = [];
-        $unallocated = 0.00;
+        $unallocated = (float)($data['unallocated_totals'][$sid] ?? 0.00);
         $seenFutureMonths = [];
         foreach ($data['allocations'][$sid] ?? [] as $month => $allocation) {
-            $unallocated += round((float)$allocation['unallocated_amount'], 2);
             if ($month > $currentMonth && (float)$allocation['allocated_amount'] > 0) {
                 $seenFutureMonths[$month] = true;
                 if ((int)$allocation['commitment_versions'] > 1) {
