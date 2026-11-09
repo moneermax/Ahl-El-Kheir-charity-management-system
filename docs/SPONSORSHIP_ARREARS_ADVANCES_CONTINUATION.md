@@ -1,6 +1,6 @@
 # Sponsorship Advances and Two-Month Arrears — Continuation
 
-**Status:** Active — first implementation slice committed; local runtime acceptance pending.
+**Status:** Active — search-driven arrears UI committed; CI verified; local browser acceptance pending.
 **Baseline:** imported sponsorship monitoring starts 2026-08-01; newly created sponsorships use their actual start date.
 **Repository:** main only. Test database/data, not live organizational data.
 
@@ -380,3 +380,12 @@ The arrears page no longer calculates the report on initial page load. The initi
 The explicit search supports sponsorship code, sponsor name, orphan name, and (for Admin/VGM) the operational supervisor recorded on the sponsor. Filters are applied in SQL before report history is fetched. Searches are capped at 100 matching authorized sponsorships; broad searches are rejected with a request to refine the criteria rather than silently returning a partial report. For each selected sponsorship, the calculation still receives its full relevant allocation and pause history, preserving the consecutive eligible-month rule. Supervisor records are prefiltered in SQL and rechecked with `supervisorCanAccessSponsor()`.
 
 No schema/data/accounting changes were made. The advances report and its all-scope behavior remain unchanged. Added pure filter tests and a source-contract regression test, wired into the existing PHP workflow. CI and local browser acceptance are pending; do not claim runtime acceptance until the user tests the page after pulling main.
+
+
+## 2026-11-09 — Search-driven arrears report CI verification
+
+The final search-driven implementation is on `main` at `20462f507890d025d64e3cbe76ebc32dfdca804d`. GitHub Actions workflow run `42587929222` completed **success** across all six jobs. The PHP job linted the changed PHP files and passed both the arrears calculation/filter tests and the new search-flow contract test. The full-schema MariaDB 10.4.32 job passed the arrears/advances runtime harness, including the new checks that the initial suggestion query returns no more than ten rows and that an exact sponsorship-code filter retrieves only the requested sponsorship. Existing supervisor-scope and duplicate-pending checks also passed.
+
+Relevant implementation commits: `21338cc9c3f11a5064725e3ec1e88048685f44b5` (SQL-side scoped search/history loading), `7d805a624a5bfb18c99bdff392c5e1a8944342cf` (search-first page and ten suggestions), `8c190884de6b3d6cd945feea15514ffea0ca80e9` and `24c987078465bc96ca370bbe1a5b365fd43b53f1` (input hardening), `20462f507890d025d64e3cbe76ebc32dfdca804d` (exact supervisor prefilter precedence). Regression coverage and CI wiring are in `a6b039ee9fec46e5a1623b09d7afc5d97c8348e4`, `85fb0ffe4f7cf92330096bc7eced72b37ff84e53`, `8cac0d0ab67a7dc4992a671d2d9d240cad161555`, `43001206de63629991f20ee5861f21b72b0c854c`, `cfb40df510c7b89fead64ccd3f8cd45ad2530797`, and `f4107aea8deee7eab149c1217c0efb467ebba6cc`.
+
+**Remaining acceptance:** local Apache/browser UI verification only. Pull the latest `main`, open the arrears page, confirm it renders promptly with ten suggestions and no arrears results before search, then search one known sponsorship by code and confirm the result. Also confirm a broad filter is rejected with a refine-search message. No database migration or data mutation is required. Do not rerun the already-passed accounting backfill or closed report runtime tests unless a regression is found.
