@@ -34,12 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $canManage) {
 
             if ($action === 'pause' && $old === 'active') {
                 $new = 'paused';
+                dbExecute("INSERT INTO sponsorship_pause_events (sponsorship_id,event_type,effective_date,reason,actor_user_id) VALUES (?,'pause',?,?,?)", [$id,$today,trim((string)($_POST['pause_reason'] ?? '')) ?: null,Session::getUserId()]);
                 dbExecute(
                     "UPDATE sponsorships SET status='paused', pause_reason=?, pause_start_date=?, updated_by=? WHERE id=?",
                     [trim((string) ($_POST['pause_reason'] ?? '')) ?: null, $today, Session::getUserId(), $id]
                 );
             } elseif ($action === 'resume' && $old === 'paused') {
                 $new = 'active';
+                dbExecute("INSERT INTO sponsorship_pause_events (sponsorship_id,event_type,effective_date,reason,actor_user_id) VALUES (?,'resume',?,NULL,?)", [$id,$today,Session::getUserId()]);
                 dbExecute(
                     "UPDATE sponsorships SET status='active', pause_end_date=?, updated_by=? WHERE id=?",
                     [$today, Session::getUserId(), $id]

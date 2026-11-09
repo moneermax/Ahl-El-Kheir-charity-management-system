@@ -140,3 +140,18 @@ Additional source facts confirmed:
 
 The next source change must use the explicit import code prefix to determine the monitoring baseline, snapshot the monthly commitment once per sponsorship/month, serialize allocation with a sponsorship row lock, and keep unassignable/ineligible/excess receipt amounts deferred.
 
+
+
+### 2026-11-09 — Live allocation and pause-event source integration
+
+The first live-path source slice is implemented on `main`:
+- Monthly `sponsorship_payment` posting now records one immutable allocation snapshot inside the same DB transaction as the receipt journal.
+- The receipt's net amount initially credits deferred revenue account 2200; administrative fees remain credited to 4200. Month-end recognition is a separate not-yet-implemented step.
+- Supervisor collector identity comes from the linked approved `sponsor_payments.supervisor_id`; direct transaction entry uses `transactions.created_by`.
+- Allocation is capped at the remaining monthly commitment for the exact sponsorship/month. Excess, unlinked receipts, and ineligible months remain unallocated/deferred.
+- Imported sponsorship monitoring begins 2026-08-01; new sponsorship monitoring uses the actual start date. Partial start/end months and months touched by pause periods are not allocated.
+- Existing commitment snapshots are reused for subsequent payments in the same sponsorship/month. Prior allocations from voided transactions are excluded from the paid total.
+- The sponsorship pause/resume handler appends an explicit event in its existing DB transaction only when the status actually transitions.
+- Legacy pause dates are not converted into invented event rows; they are used only as bounded date evidence when both dates exist. Ambiguous legacy pause state fails closed.
+
+**Verification boundary:** source implementation only. Migration remains unapplied. The repository PHP syntax workflow was extended to lint the new helper; its run result and local XAMPP/MariaDB runtime verification are still pending. Transaction-void reversal integration, month-end recognition, and the historical backfill tool remain unimplemented. Do not apply the migration or run the backfill yet.
