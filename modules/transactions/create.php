@@ -199,6 +199,7 @@ if (!$errors) {
     }
 }
 }
+}
 $history=[];if($currentSponsor)$history=dbFetchAll("SELECT 'transaction' AS src, id, transaction_date AS dt, amount, transaction_type AS type, status, receipt_path, unified_receipt_path, payment_period, purpose_note, purpose, admin_fee_percent, created_by FROM transactions WHERE sponsor_id = ? UNION ALL SELECT 'pending' AS src, id, created_at AS dt, amount, payment_type AS type, status, receipt_file_path AS receipt_path, unified_receipt_path, payment_period, purpose_note, payment_type AS purpose, 0.00 AS admin_fee_percent, supervisor_id AS created_by FROM sponsor_payments WHERE sponsor_id = ? ORDER BY dt DESC LIMIT 50",[$currentSponsor['id'],$currentSponsor['id']]);
 include dirname(__DIR__,2).'/includes/header.php'; ?>
 <style>input[type=number]::-webkit-inner-spin-button,input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none;margin:0;}input[type=number]{-moz-appearance:textfield;appearance:textfield;}.pay-line{background:#fbfcff;}</style>
