@@ -132,7 +132,7 @@ $vgmCount = count($vgmData['sponsorships']);
 $gmCount = count($gmData['sponsorships']);
 if ($adminCount !== $totalSponsorships || $vgmCount !== $totalSponsorships || $gmCount !== $totalSponsorships) {
     throw new RuntimeException(
-        'Admin/VGM scope count mismatch: total=' . $totalSponsorships
+        'Admin/VGM/GM scope count mismatch: total=' . $totalSponsorships
         . ', admin=' . $adminCount . ', vgm=' . $vgmCount . ', gm=' . $gmCount
         . ', missing_sponsor=' . (int)($joinDiagnostics['missing_sponsor'] ?? 0)
         . ', missing_child=' . (int)($joinDiagnostics['missing_child'] ?? 0)
@@ -153,6 +153,8 @@ $adminUnlinkedCount = count(array_filter(
 ));
 $check('admin_scope_retains_sponsorships_without_child_links', $adminUnlinkedCount === $unlinkedChildCount);
 
+$gmSuggestions = ak_sar_get_arrears_candidates('general_manager', 0);
+$check('gm_initial_suggestions_are_available', count($gmSuggestions) <= 10);
 $suggestions = ak_sar_get_arrears_candidates('admin', 0);
 $check('initial_arrears_suggestions_are_bounded_to_ten', count($suggestions) <= 10);
 $filteredData = ak_sar_load_report_data('admin', 0, ['code'=>(string)$active['sponsorship_code']]);
