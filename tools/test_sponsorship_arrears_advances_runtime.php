@@ -117,9 +117,27 @@ try {
 
 $adminData = ak_sar_load_report_data('admin', 0);
 $vgmData = ak_sar_load_report_data('vice_general_manager', 0);
-$totalSponsorships = (int)(dbFetchOne("SELECT COUNT(*) AS total FROM sponsorships")['total'] ?? 0);
-$check('admin_scope_returns_all_sponsorships', count($adminData['sponsorships']) === $totalSponsorships);
-$check('vgm_scope_returns_all_sponsorships', count($vgmData['sponsorships']) === $totalSponsorships);
+$joinDiagnostics = dbFetchOne(
+    "SELECT COUNT(*) AS total,
+            SUM(s.id IS NULL) AS missing_sponsor,
+            SUM(fc.id IS NULL) AS missing_child
+     FROM sponsorships sp
+     LEFT JOIN sponsors s ON s.id=sp.sponsor_id
+     LEFT JOIN family_children fc ON fc.id=sp.child_id"
+);
+$totalSponsorships = (int)($joinDiagnostics['total'] ?? 0);
+$adminCount = count($adminData['sponsorships']);
+$vgmCount = count($vgmData['sponsorships']);
+if ($adminCount !== $totalSponsorships || $vgmCount !== $totalSponsorships) {
+    throw new RuntimeException(
+        'Admin/VGM scope count mismatch: total=' . $totalSponsorships
+        . ', admin=' . $adminCount . ', vgm=' . $vgmCount
+        . ', missing_sponsor=' . (int)($joinDiagnostics['missing_sponsor'] ?? 0)
+        . ', missing_child=' . (int)($joinDiagnostics['missing_child'] ?? 0)
+    );
+}
+$check('admin_scope_returns_all_sponsorships', $adminCount === $totalSponsorships);
+$check('vgm_scope_returns_all_sponsorships', $vgmCount === $totalSponsorships);
 
 $supervisorData = ak_sar_load_report_data('supervisor', $supervisorId);
 $supervisorScopeValid = true;
