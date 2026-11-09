@@ -225,6 +225,7 @@ jobs:
             modules/accounting/lib_transaction_void.php
             modules/accounting/lib_sponsorship_payment_accounting.php
             tools/recognize_sponsorship_revenue_month_end.php
+            tools/test_sponsorship_payment_accounting_rollback.php
             modules/accounting/lib_outflows.php
             modules/accounting/fm_review_queue.php
             modules/accounting/lib_sponsor_payment_approval.php
@@ -521,6 +522,16 @@ jobs:
           DB_USERNAME: root
           DB_PASSWORD: root
         run: php tools/test_salary_advance_rescheduling_full_schema.php
+
+      - name: Run rollback-only sponsorship accounting integration
+        env:
+          AHL_ENV: development
+          AHL_DB_HOST: 127.0.0.1
+          AHL_DB_PORT: '3306'
+          AHL_DB_NAME: salary_advance_migration_test
+          AHL_DB_USER: root
+          AHL_DB_PASS: root
+        run: php tools/test_sponsorship_payment_accounting_rollback.php
 
       - name: Run rollback-only Stage 5 payroll regressions and account 1410 reconciliation
         env:

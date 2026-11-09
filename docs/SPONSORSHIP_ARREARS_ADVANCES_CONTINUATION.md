@@ -194,3 +194,17 @@ Added `tools/recognize_sponsorship_revenue_month_end.php` and the shared recogni
 - creates no tables and performs no runtime DDL.
 
 This runner does not perform the historical backfill. It must not be used until the migration and full rollback-only integration harness are verified.
+
+
+### 2026-11-09 — Rollback-only sponsorship accounting integration harness
+
+Added `tools/test_sponsorship_payment_accounting_rollback.php` and wired it into the full-schema MariaDB CI job after the migration is applied. It uses an existing eligible sponsorship and rolls back every test mutation. Coverage includes:
+- exact sponsorship/month allocation and commitment cap;
+- partial-payment accumulation and excess retention;
+- pause-touched month exclusion;
+- unlinked receipt deferral and malformed period rejection;
+- month-end recognition date, amount, and idempotency;
+- append-only historical reclassification + recognition effects reversed atomically with the original transaction void;
+- per-account zero residual after void and full rollback.
+
+The harness creates no fixtures permanently and performs no DDL. Local XAMPP runtime verification remains a separate acceptance gate.
