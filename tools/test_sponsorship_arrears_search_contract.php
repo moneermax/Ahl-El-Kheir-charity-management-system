@@ -32,7 +32,8 @@ $check('page_calculates_summary_before_display_pagination', strpos($page, 'ak_sa
 $check('page_uses_twenty_five_sponsorships_per_page', str_contains($page, '$pageSize = 25'));
 $check('page_exposes_four_operational_stat_cards', str_contains($page, 'الكفالات المتأخرة') && str_contains($page, 'إجمالي المتأخرات') && str_contains($page, 'الأشهر غير المسددة') && str_contains($page, 'طلبات التحصيل المعلقة / المعادة'));
 $check('page_preserves_pending_card_filter_and_pagination', str_contains($page, 'ak_sar_filter_arrears_view($allRows, $view)') && str_contains($page, 'pagination'));
-$check('page_runs_calculation_only_after_search_submission', str_contains($page, "if (\$searchRequested)") && str_contains($page, 'ak_sar_get_arrears($role, $reportUserId, $hasFilters ? $filters : null)'));
+$check('full_report_calculation_runs_only_after_search_submission', str_contains($page, 'if ($searchRequested && $loadError === null)') && str_contains($page, 'ak_sar_get_arrears($role, $reportUserId, $hasFilters ? $filters : null)'));
+$check('summary_only_calculation_runs_independently_of_search', str_contains($page, 'ak_sar_get_arrears_summary($role, $reportUserId)'));
 $check('page_discloses_suggestions_are_not_confirmed_arrears', str_contains($page, 'ظهور الكفالة هنا لا يعني أنها مصنفة كمتأخرة'));
 $check('supervisor_scope_is_rechecked_by_authoritative_helper', str_contains($library, 'supervisorCanAccessSponsor($userId, $sponsor, $letterScope)'));
 $summaryStart = strpos($library, 'function ak_sar_get_arrears_summary(');
