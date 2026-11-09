@@ -1,6 +1,6 @@
 # Sponsorship Advances and Two-Month Arrears — Continuation
 
-**Status:** Active — source/schema audit completed; implementation not yet started.
+**Status:** Active — first implementation slice committed; local runtime acceptance pending.
 **Baseline:** imported sponsorship monitoring starts 2026-08-01; newly created sponsorships use their actual start date.
 **Repository:** main only. Test database/data, not live organizational data.
 
@@ -275,3 +275,40 @@ Historical backfill:
 **Acceptance boundary:** local migration, rollback-only integration, historical apply, target reconciliation, and repeat-run idempotency are verified. This closes the sponsorship payment accounting/backfill acceptance gate for the approved seven-row historical set. It does not close the broader Sponsorship Advances / Two-Month Arrears feature: the advance-payment and arrears user workflows remain a separate next implementation/verification phase. Do not rerun the migration, backfill apply, or rollback harness without concrete regression evidence.
 
 Next work: continue the existing Sponsorship Advances / Two-Month Arrears feature by auditing the current source/schema for the advance-payment and arrears views, then implement the smallest justified UI/workflow slice. Preserve the agreed eligibility, pause, pending-submission, partial-payment, and two-consecutive-eligible-month rules. Do not reopen unrelated closed modules.
+
+## 2026-11-09 — Arrears/advance report and pending-duplicate guard implementation
+
+The first implementation slice for the approved Sponsorship Advances / Two-Month Arrears feature is now committed on `main`.
+
+Implemented:
+- `modules/sponsorships/lib_payment_status.php`: read-only report calculations sourced only from posted, non-voided `sponsorship_payment_allocations`. Allocations are aggregated per sponsorship and covered month; zero commitment snapshots are ignored as non-obligation snapshots; unallocated balances are separately aggregated, including allocations without a covered month.
+- `modules/sponsorships/arrears.php`: reports sponsorships that reach two consecutive eligible completed months with a positive unpaid balance. Partial allocations reduce outstanding without clearing a month. Fully paused/touched months are excluded and do not break the eligible-month sequence. Partial first/last months are excluded.
+- `modules/sponsorships/advances.php`: reports future-month allocations and unallocated deferred credits separately. Pending/returned future submissions are displayed as review states, not as paid allocations. Excess is never automatically carried into another month.
+- Both pages enforce server-side access: Admin and VGM can see all sponsorships; supervisors are filtered through the existing `supervisorCanAccessSponsor()` authorization rules, including letter/gender scope, manual overrides, and legal-entity ownership. No additional roles are authorized.
+- `modules/transactions/create.php`: both supervisor submission and direct FM-review entry paths lock the sponsorship row, revalidate that it is active, and reject a second pending monthly-sponsorship submission for the same sponsorship/month across both `sponsor_payments` and `transactions`. Supervisor multi-line submission is now atomic; notifications are sent after commit.
+- `config/sponsor_assignments.php` accepts an optional preloaded letter scope while retaining the existing authorization function and backward-compatible two-argument calls. The reports bulk-load supervisor letter scope to avoid a per-sponsor authorization query.
+- Sidebar navigation and Arabic/English navigation labels were added for Admin, VGM, and supervisors.
+- No schema migration, runtime DDL, or data mutation was introduced.
+
+### CI verification
+
+Commit `404930f6633e34d055f81e6dac00765a51bec15d`, workflow run `42574481700`: all six jobs passed, including `php-lint` and the full MariaDB migration workflow.
+
+New pure calculation contract test:
+`tools/test_sponsorship_arrears_calculations.php`
+
+Exact result:
+```
+PASS | imported_baseline_starts_august_2026=PASS | partial_payment_reduces_outstanding=PASS | two_consecutive_unpaid_eligible_months=PASS | fully_paused_month_is_excluded=PASS | paused_month_does_not_break_unpaid_sequence=PASS | fully_paid_month_resets_unpaid_sequence=PASS | partial_first_month_is_excluded=PASS | partial_final_month_is_excluded=PASS | legacy_pause_interval_excludes_touched_month=PASS | unknown_end_date_fails_closed=PASS
+```
+
+### Remaining acceptance boundary
+
+This is a CI-verified source implementation, not yet a locally runtime-accepted feature. The user's local XAMPP application/database still needs verification of:
+- both report pages and their real SQL result sets;
+- Admin/VGM all-record scope and supervisor-only assigned scope;
+- future allocations, unallocated credits, pending and returned states;
+- duplicate prevention for both direct and supervisor submission paths, including a second concurrent submission;
+- normal existing payment submission and FM approval behavior.
+
+Do not rerun the already-closed sponsorship accounting backfill or rollback harness. Do not claim the advances/arrears feature closed until local runtime verification is recorded.
