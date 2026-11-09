@@ -249,7 +249,8 @@ function ak_translate_page(string $html): string {
     $html = preg_replace_callback('/<(script|style|pre|code|textarea)\b[^>]*>.*?<\/\1\s*>/is', static function($m) use (&$protected) { $token = '__AK_I18N_PROTECTED_' . count($protected) . '__'; $protected[$token] = $m[0]; return $token; }, $html) ?? $html;
     $html = preg_replace_callback('/>([^<>]+)</u', static function($m) use ($legacy, $coreIndex, $patterns) { $translated = ak_translate_text($m[1], $legacy, $coreIndex, $patterns); if ($translated === null) return $m[0]; $leading = preg_match('/^\s*/u', $m[1], $lm) ? $lm[0] : ''; $trailing = preg_match('/\s*$/u', $m[1], $tm) ? $tm[0] : ''; return '>' . $leading . $translated . $trailing . '<'; }, $html) ?? $html;
     $html = preg_replace_callback('/\b(placeholder|title|aria-label|aria-description|data-bs-title|alt|data-confirm|data-reassign-confirm)=([' . "\"'" . '])(.*?)\2/iu', static function($m) use ($legacy, $coreIndex, $patterns) { $translated = ak_translate_text($m[3], $legacy, $coreIndex, $patterns); if ($translated === null) return $m[0]; return $m[1] . '=' . $m[2] . htmlspecialchars($translated, ENT_QUOTES | ENT_HTML5, 'UTF-8') . $m[2]; }, $html) ?? $html;
-    foreach ($protected as $token => $original) $html = str_replace($token, $original, $html);
+    // Restore all protected blocks in one pass instead of rescanning the full page per token.
+    $html = $protected ? strtr($html, $protected) : $html;
     return $html;
 }
 if (!defined('AK_OB_STARTED')) { define('AK_OB_STARTED', true); ob_start('ak_translate_page'); }
