@@ -23,6 +23,7 @@ $allRows = [];
 $candidates = [];
 $supervisors = [];
 $loadError = null;
+$summaryError = null;
 $summary = [
     'sponsorship_count'=>0,
     'outstanding_total'=>0.00,
@@ -41,11 +42,11 @@ $totalPages = 1;
 $totalVisible = 0;
 $filters = ['code'=>'', 'sponsor'=>'', 'child'=>'', 'supervisor_id'=>0];
 
-try {
-    $filters = ak_sar_normalize_arrears_filters($_GET);
-    // Identity-only suggestions: no payment history or arrears calculations.
-    $candidates = ak_sar_get_arrears_candidates($role, $reportUserId);
+$filters = ak_sar_normalize_arrears_filters($_GET);
 
+try {
+    // Identity-only suggestions remain bounded and do not imply arrears.
+    $candidates = ak_sar_get_arrears_candidates($role, $reportUserId);
     if (in_array($role, ['admin','vice_general_manager'], true)) {
         $supervisors = dbFetchAll(
             "SELECT u.id, u.full_name
@@ -55,23 +56,37 @@ try {
              ORDER BY u.full_name"
         );
     }
+} catch (Throwable $e) {
+    $loadError = $e->getMessage();
+}
 
-    if ($searchRequested) {
-        $hasFilters = ak_sar_has_arrears_filter($filters);
-        if (!$hasFilters && !$allMode) {
-            $loadError = 'استخدم أحد حقول البحث أو اضغط «عرض جميع المتأخرات» لبدء التقرير الشامل.';
-        } else {
+// The role-wide cards are independent of the search form and its filters.
+// An unfiltered all-report request can reuse its complete calculation.
+if (!$allMode || !$searchRequested) {
+    try {
+        $summary = ak_sar_get_arrears_summary($role, $reportUserId);
+    } catch (Throwable $e) {
+        $summaryError = $e->getMessage();
+    }
+}
+
+if ($searchRequested && $loadError === null) {
+    $hasFilters = ak_sar_has_arrears_filter($filters);
+    if (!$hasFilters && !$allMode) {
+        $loadError = 'استخدم أحد حقول البحث أو اضغط إحدى بطاقات المؤشرات لعرض التقرير الشامل.';
+    } else {
+        try {
             $allRows = ak_sar_get_arrears($role, $reportUserId, $hasFilters ? $filters : null);
-            $summary = ak_sar_summarize_arrears($allRows);
+            if (!$hasFilters) $summary = ak_sar_summarize_arrears($allRows);
             $displayRows = ak_sar_filter_arrears_view($allRows, $view);
             $totalVisible = count($displayRows);
             $totalPages = max(1, (int)ceil($totalVisible / $pageSize));
             $page = min($page, $totalPages);
             $rows = array_slice($displayRows, ($page - 1) * $pageSize, $pageSize);
+        } catch (Throwable $e) {
+            $loadError = $e->getMessage();
         }
     }
-} catch (Throwable $e) {
-    $loadError = $e->getMessage();
 }
 
 $buildArrearsUrl = static function (string $targetView = 'all', int $targetPage = 1) use ($filters, $allMode): string {
@@ -85,6 +100,11 @@ $buildArrearsUrl = static function (string $targetView = 'all', int $targetPage 
     if ($targetPage > 1) $params['page'] = $targetPage;
     return APP_URL . 'modules/sponsorships/arrears.php?' . http_build_query($params);
 };
+$buildAllArrearsUrl = static function (string $targetView = 'all'): string {
+    return APP_URL . 'modules/sponsorships/arrears.php?' . http_build_query([
+        'search'=>'1', 'all'=>'1', 'view'=>$targetView
+    ]);
+};
 
 include dirname(__DIR__,2).'/includes/header.php';
 ?>
@@ -97,6 +117,18 @@ include dirname(__DIR__,2).'/includes/header.php';
   </div>
 </div>
 <?php include dirname(__DIR__,2).'/includes/alerts.php'; ?>
+
+<?php if ($summaryError !== null): ?>
+<div class="alert alert-warning"><i class="fas fa-triangle-exclamation me-1"></i>تعذر تحديث المؤشرات: <?php echo e($summaryError); ?></div>
+<?php endif; ?>
+<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-3 fade-in">
+ <div class="col"><a href="<?php echo e($buildAllArrearsUrl('all')); ?>" class="card h-100 text-decoration-none border-danger <?php echo $view==='all'?'border-2':''; ?>"><div class="card-body"><div class="d-flex justify-content-between"><span class="text-muted">الكفالات المتأخرة</span><i class="fas fa-triangle-exclamation text-danger"></i></div><div class="fs-3 fw-bold text-danger"><?php echo number_format($summary['sponsorship_count']); ?></div><small class="text-muted">كفالات بلغت حد الشهرين</small></div></a></div>
+ <div class="col"><a href="<?php echo e($buildAllArrearsUrl('all')); ?>" class="card h-100 text-decoration-none border-warning"><div class="card-body"><div class="d-flex justify-content-between"><span class="text-muted">إجمالي المتأخرات</span><i class="fas fa-wallet text-warning"></i></div><div class="fs-3 fw-bold text-warning"><?php echo number_format($summary['outstanding_total'],2); ?></div><small class="text-muted">جنيه سوداني — الرصيد غير المسدد</small></div></a></div>
+ <div class="col"><a href="<?php echo e($buildAllArrearsUrl('months')); ?>" class="card h-100 text-decoration-none border-primary <?php echo $view==='months'?'border-2':''; ?>"><div class="card-body"><div class="d-flex justify-content-between"><span class="text-muted">الأشهر غير المسددة</span><i class="fas fa-calendar-days text-primary"></i></div><div class="fs-3 fw-bold text-primary"><?php echo number_format($summary['unpaid_month_count']); ?></div><small class="text-muted">الأشهر المؤهلة ذات الرصيد المتبقي</small></div></a></div>
+ <div class="col"><a href="<?php echo e($buildAllArrearsUrl('pending')); ?>" class="card h-100 text-decoration-none border-info <?php echo $view==='pending'?'border-2':''; ?>"><div class="card-body"><div class="d-flex justify-content-between"><span class="text-muted">طلبات التحصيل المعلقة / المعادة</span><i class="fas fa-hourglass-half text-info"></i></div><div class="fs-3 fw-bold text-info"><?php echo number_format($summary['pending_request_count']); ?></div><small class="text-muted">لا تُخصم من المتأخرات قبل الترحيل</small></div></a></div>
+</div>
+
+<?php if ($summary['calculation_error_count'] > 0): ?><div class="alert alert-warning">تعذر حساب <?php echo number_format($summary['calculation_error_count']); ?> كفالة بسبب بيانات غير مكتملة أو متعارضة؛ لم تُدرج في الإجماليات.</div><?php endif; ?>
 
 <div class="card fade-in mb-3">
  <div class="card-header"><strong><i class="fas fa-filter me-1"></i>تصفية الكفالات</strong></div>
@@ -173,15 +205,8 @@ include dirname(__DIR__,2).'/includes/header.php';
 <?php if ($loadError !== null): ?>
 <div class="alert alert-danger"><?php echo e($loadError); ?></div>
 <?php elseif (!$searchRequested): ?>
-<div class="alert alert-info"><i class="fas fa-circle-info me-1"></i>الصفحة جاهزة. لن يتم تحميل سجل المدفوعات أو حساب المؤشرات قبل طلب البحث أو التقرير الشامل.</div>
+<div class="alert alert-info"><i class="fas fa-circle-info me-1"></i>المؤشرات أعلاه محسوبة وفق نطاق صلاحيتك. لن يتم تحميل تفاصيل الكفالات أو إنشاء جدول النتائج حتى تستخدم البحث أو تختار إحدى البطاقات.</div>
 <?php else: ?>
-<div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3 mb-3 fade-in">
- <div class="col"><a href="<?php echo e($buildArrearsUrl('all')); ?>" class="card h-100 text-decoration-none border-danger <?php echo $view==='all'?'border-2':''; ?>"><div class="card-body"><div class="d-flex justify-content-between"><span class="text-muted">الكفالات المتأخرة</span><i class="fas fa-triangle-exclamation text-danger"></i></div><div class="fs-3 fw-bold text-danger"><?php echo number_format($summary['sponsorship_count']); ?></div><small class="text-muted">كفالات بلغت حد الشهرين</small></div></a></div>
- <div class="col"><a href="<?php echo e($buildArrearsUrl('all')); ?>" class="card h-100 text-decoration-none border-warning"><div class="card-body"><div class="d-flex justify-content-between"><span class="text-muted">إجمالي المتأخرات</span><i class="fas fa-wallet text-warning"></i></div><div class="fs-3 fw-bold text-warning"><?php echo number_format($summary['outstanding_total'],2); ?></div><small class="text-muted">جنيه سوداني — الرصيد غير المسدد</small></div></a></div>
- <div class="col"><a href="<?php echo e($buildArrearsUrl('months')); ?>" class="card h-100 text-decoration-none border-primary <?php echo $view==='months'?'border-2':''; ?>"><div class="card-body"><div class="d-flex justify-content-between"><span class="text-muted">الأشهر غير المسددة</span><i class="fas fa-calendar-days text-primary"></i></div><div class="fs-3 fw-bold text-primary"><?php echo number_format($summary['unpaid_month_count']); ?></div><small class="text-muted">الأشهر المؤهلة ذات الرصيد المتبقي</small></div></a></div>
- <div class="col"><a href="<?php echo e($buildArrearsUrl('pending')); ?>" class="card h-100 text-decoration-none border-info <?php echo $view==='pending'?'border-2':''; ?>"><div class="card-body"><div class="d-flex justify-content-between"><span class="text-muted">طلبات التحصيل المعلقة / المعادة</span><i class="fas fa-hourglass-half text-info"></i></div><div class="fs-3 fw-bold text-info"><?php echo number_format($summary['pending_request_count']); ?></div><small class="text-muted">لا تُخصم من المتأخرات قبل الترحيل</small></div></a></div>
-</div>
-<?php if ($summary['calculation_error_count'] > 0): ?><div class="alert alert-warning">تعذر حساب <?php echo number_format($summary['calculation_error_count']); ?> كفالة بسبب بيانات غير مكتملة أو متعارضة. راجع رسائل الخطأ في الجدول.</div><?php endif; ?>
 <div class="card fade-in">
  <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2"><strong>تفاصيل المتأخرات</strong><span class="badge bg-warning text-dark"><?php echo number_format($totalVisible); ?> كفالة — الصفحة <?php echo $page; ?> من <?php echo $totalPages; ?></span></div>
  <div class="card-body p-0"><div class="table-responsive">
