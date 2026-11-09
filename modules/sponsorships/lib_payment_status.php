@@ -193,7 +193,7 @@ function ak_sar_first_full_month(string $date): DateTimeImmutable
     return $start->format('d') === '01' ? $first : $first->modify('+1 month');
 }
 
-function ak_sar_month_rows(array $sponsorship, array $allocations, array $pauseEvents): array
+function ak_sar_month_rows(array $sponsorship, array $allocations, array $pauseEvents, ?DateTimeImmutable $asOf = null): array
 {
     $id = (int)$sponsorship['id'];
     $monitoringStart = str_starts_with((string)$sponsorship['sponsorship_code'], 'IMP-SH-')
@@ -207,7 +207,7 @@ function ak_sar_month_rows(array $sponsorship, array $allocations, array $pauseE
     }
 
     $month = ak_sar_first_full_month($monitoringStart);
-    $currentMonth = new DateTimeImmutable('first day of this month');
+    $currentMonth = ($asOf ?? new DateTimeImmutable('today'))->modify('first day of this month');
     $lastCompleted = $currentMonth->modify('-1 month');
     $rows = [];
     while ($month <= $lastCompleted) {
@@ -244,6 +244,20 @@ function ak_sar_month_rows(array $sponsorship, array $allocations, array $pauseE
     return $rows;
 }
 
+function ak_sar_has_two_consecutive_unpaid_months(array $eligibleMonths): bool
+{
+    $streak = 0;
+    foreach ($eligibleMonths as $month) {
+        if ((float)$month['outstanding'] > 0.009) {
+            $streak++;
+            if ($streak >= 2) return true;
+        } else {
+            $streak = 0;
+        }
+    }
+    return false;
+}
+
 function ak_sar_get_arrears(string $role, int $userId): array
 {
     $data = ak_sar_load_report_data($role, $userId);
@@ -259,18 +273,8 @@ function ak_sar_get_arrears(string $role, int $userId): array
             $result[] = ['sponsorship'=>$sponsorship, 'months'=>[], 'threshold'=>false, 'error'=>$e->getMessage()];
             continue;
         }
-        $streak = 0;
-        $threshold = false;
-        $unpaid = [];
-        foreach ($months as $month) {
-            if ($month['outstanding'] > 0.009) {
-                $streak++;
-                $unpaid[] = $month;
-                if ($streak >= 2) $threshold = true;
-            } else {
-                $streak = 0;
-            }
-        }
+        $threshold = ak_sar_has_two_consecutive_unpaid_months($months);
+        $unpaid = array_values(array_filter($months, static fn(array $month): bool => $month['outstanding'] > 0.009));
         if ($threshold) {
             $sid = (int)$sponsorship['id'];
             foreach ($unpaid as &$month) {
