@@ -23,7 +23,9 @@ $candidateSource = ($candidateStart !== false && $candidateEnd !== false)
 $check('initial_candidates_use_bounded_identity_query', str_contains($candidateSource, 'ORDER BY sp.id DESC LIMIT 100'));
 $check('initial_candidates_do_not_load_payment_history', !str_contains($candidateSource, 'ak_sar_load_report_data'));
 $check('arrears_loader_requires_explicit_filters', str_contains($library, 'function ak_sar_get_arrears(string $role, int $userId, array $filters)'));
-$check('broad_search_is_bounded_before_allocations', strpos($library, 'LIMIT 501') < strpos($library, '$allocationRows = dbFetchAll('));
+$limitPosition = strpos($library, 'LIMIT 501');
+$allocationPosition = strpos($library, '$allocationRows = dbFetchAll(');
+$check('broad_search_is_bounded_before_allocations', $limitPosition !== false && $allocationPosition !== false && $limitPosition < $allocationPosition);
 $check('broad_search_is_rejected_above_100_results', str_contains($library, "count(\$sponsorships) > 100"));
 $check('page_runs_calculation_only_after_search_submission', str_contains($page, "if (\$searchRequested)") && str_contains($page, 'ak_sar_get_arrears($role, $reportUserId, $filters)'));
 $check('page_discloses_suggestions_are_not_confirmed_arrears', str_contains($page, 'ظهور الكفالة هنا لا يعني أنها مصنفة كمتأخرة'));
