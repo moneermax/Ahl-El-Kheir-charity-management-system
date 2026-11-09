@@ -38,7 +38,7 @@ function resolveSponsorSupervisorId(string $fullName, string $gender): ?int
  * sponsor.supervisor_id remains an operational assignment/history field. It
  * is intentionally NOT an independent authorization grant.
  */
-function supervisorCanAccessSponsor(int $supervisorId, array $sponsor): bool
+function supervisorCanAccessSponsor(int $supervisorId, array $sponsor, ?array $preloadedLetterScope = null): bool
 {
     if ($supervisorId <= 0) return false;
 
@@ -66,10 +66,18 @@ function supervisorCanAccessSponsor(int $supervisorId, array $sponsor): bool
         : (in_array($gender, ['f', 'female', 'أنثى', 'انثى'], true) ? 'female' : 'other');
     if ($gender === 'other') return false;
 
-    $rows = dbFetchAll(
-        "SELECT gender FROM supervisor_letters WHERE supervisor_id = ? AND letter_id = ?",
-        [$supervisorId, $letterId]
-    );
+    $rows = $preloadedLetterScope;
+    if ($rows === null) {
+        $rows = dbFetchAll(
+            "SELECT gender FROM supervisor_letters WHERE supervisor_id = ? AND letter_id = ?",
+            [$supervisorId, $letterId]
+        );
+    } else {
+        $rows = array_values(array_filter(
+            $rows,
+            static fn(array $row): bool => (int)($row['letter_id'] ?? 0) === $letterId
+        ));
+    }
     foreach ($rows as $row) {
         $scopeGender = strtolower(trim((string)($row['gender'] ?? '')));
         $scopeGender = in_array($scopeGender, ['m', 'male', 'ذكر'], true)
