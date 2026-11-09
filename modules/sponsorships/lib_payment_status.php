@@ -577,22 +577,26 @@ function ak_sar_get_arrears_summary(string $role, int $userId): array
 
     $arrearsIds = array_keys($unpaidMonthKeys);
     $arrearsMarks = implode(',', array_fill(0, count($arrearsIds), '?'));
-    $pendingRows = dbFetchAll(
+    // Read the two legacy sources separately. Their payment_period columns
+    // use different collations in some supported schemas, so UNION is unsafe.
+    $directPendingRows = dbFetchAll(
         "SELECT sponsorship_id, payment_period
          FROM transactions
          WHERE sponsorship_id IN ($arrearsMarks)
            AND transaction_type = 'sponsorship_payment'
-           AND status IN ('pending_fm_review','returned')
-         UNION ALL
-         SELECT sponsorship_id, payment_period
+           AND status IN ('pending_fm_review','returned')",
+        $arrearsIds
+    );
+    $submissionPendingRows = dbFetchAll(
+        "SELECT sponsorship_id, payment_period
          FROM sponsor_payments
          WHERE sponsorship_id IN ($arrearsMarks)
            AND payment_type = 'monthly_sponsorship'
            AND status IN ('pending','returned')
            AND transaction_id IS NULL",
-        array_merge($arrearsIds, $arrearsIds)
+        $arrearsIds
     );
-    foreach ($pendingRows as $row) {
+    foreach (array_merge($directPendingRows, $submissionPendingRows) as $row) {
         try {
             $month = ak_sp_parse_payment_period((string)($row['payment_period'] ?? ''));
         } catch (Throwable $e) {
