@@ -459,3 +459,32 @@ Source and test changes are committed to main. No CI result or local PHP/browser
 8. Do not create fake payment/accounting records merely to make the cards look realistic. With no posted sponsorship payments, many qualifying arrears are expected; confirm the actual figures from the local report.
 
 The existing two-consecutive-eligible-month, pause/resume, partial-payment, partial-first/final-month, and posted-allocation rules remain authoritative. Do not reopen the completed sponsorship accounting backfill or unrelated modules.
+
+
+## 2026-11-09 — Always-visible role-scoped arrears dashboard (source committed; acceptance pending)
+
+The user clarified the dashboard visibility boundary:
+- Admin: organization-wide arrears.
+- VGM: organization-wide arrears, not limited to sponsors assigned to the VGM or supervisors.
+- Supervisor: only arrears for sponsors authorized by the existing sponsor assignment rules. The SQL prefilter remains only a prefilter; supervisorCanAccessSponsor() remains the authoritative recheck.
+
+Implemented on main:
+- Added ak_sar_get_arrears_summary(), a summary-only loader that fetches the sponsorship fields, posted allocation aggregates, pause events and relevant pending/returned period references needed by the existing month calculation. It does not load child/sponsor display details or build full report rows.
+- The helper reuses ak_sar_month_rows() and ak_sar_has_two_consecutive_unpaid_months(). It does not approximate arrears from active sponsorship counts or raw monthly amounts.
+- The four cards now render before the search form on initial page load and remain role-wide when the user runs a filtered search.
+- Each card opens the full role-scoped arrears report in its corresponding view, with no search filters carried into the all-record view.
+- If the summary calculation fails, the cards show an em dash rather than misleading zero values.
+- The database-backed runtime test now compares Admin and VGM summary results with the full organization-wide report, compares Supervisor summary results with the full supervisor-scoped report, and prints the initial Admin summary duration.
+
+No schema migration, accounting mutation, financial write, or runtime DDL was introduced.
+
+Verification boundary: source and regression-test changes are committed. CI and local runtime/browser acceptance are still pending. The summary avoids detailed display joins and full result construction, but it still evaluates the exact eligibility rules across the user's full authorized sponsorship scope; its actual local response time must be measured. Do not claim it is fast until the timing result is observed.
+
+### Exact next acceptance
+1. Verify the latest main CI run passes PHP syntax, calculation/search contract tests, and the database-backed arrears/advances runtime harness.
+2. On local XAMPP, inspect the working tree before pulling; preserve unrelated staged files and backups.
+3. Run PHP lint on modules/sponsorships/arrears.php, modules/sponsorships/lib_payment_status.php, and the updated test files.
+4. Run tools/test_sponsorship_arrears_search_contract.php and tools/test_sponsorship_arrears_advances_runtime.php; record dashboard_summary_ms.
+5. In browser, confirm cards appear above search for Admin, VGM and Supervisor; Admin/VGM totals are organization-wide and Supervisor totals include only authorized sponsors; clicking each card opens the appropriate full result view; a specific search changes only the table, not the role-wide card totals.
+6. If the initial page is slow, capture exact MariaDB/PHP timing and active query evidence before optimization. Do not change the eligibility algorithm or add schema/index changes speculatively.
+7. Do not rerun the closed sponsorship accounting backfill or unrelated closed modules.
