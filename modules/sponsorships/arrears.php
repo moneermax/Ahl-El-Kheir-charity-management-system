@@ -23,9 +23,10 @@ $candidates = [];
 $supervisors = [];
 $loadError = null;
 $searchRequested = ($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'GET' && (($_GET['search'] ?? '') === '1');
-$filters = ak_sar_normalize_arrears_filters($_GET);
+$filters = ['code'=>'', 'sponsor'=>'', 'child'=>'', 'supervisor_id'=>0];
 
 try {
+    $filters = ak_sar_normalize_arrears_filters($_GET);
     // This is a bounded identity-only query; it does not load payment history
     // or calculate arrears for the suggested sponsorships.
     $candidates = ak_sar_get_arrears_candidates($role, $reportUserId);
