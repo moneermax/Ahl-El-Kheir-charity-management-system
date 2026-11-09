@@ -262,3 +262,146 @@ function ak_sp_reverse_accounting_events_for_void_prepared(int $transactionId, s
     return $journalId;
 }
 }
+
+
+if (!function_exists('ak_sp_recognize_month_end_prepared')) {
+function ak_sp_recognize_month_end_prepared(string $coveredMonth, ?int $createdByUserId = null): array {
+    if (!db()->inTransaction()) throw new LogicException('إثبات إيراد الكفالة يتطلب معاملة قاعدة بيانات مفتوحة.');
+    $monthDate = DateTimeImmutable::createFromFormat('!Y-m-d', $coveredMonth);
+    $dateErrors = DateTimeImmutable::getLastErrors();
+    if (!$monthDate || ($dateErrors !== false && ($dateErrors['warning_count'] > 0 || $dateErrors['error_count'] > 0))
+        || $monthDate->format('Y-m-d') !== $coveredMonth
+        || $monthDate->format('d') !== '01') {
+        throw new InvalidArgumentException('الشهر المطلوب غير صالح؛ استخدم أول يوم من الشهر بصيغة YYYY-MM-01.');
+    }
+    $monthEnd = $monthDate->modify('last day of this month')->format('Y-m-d');
+    if ($monthEnd > date('Y-m-d')) throw new RuntimeException('لا يمكن إثبات إيراد شهر لم ينتهِ بعد.');
+
+    $allocations = dbFetchAll(
+        "SELECT a.id AS allocation_id, a.transaction_id, a.allocated_amount, a.covered_month
+         FROM sponsorship_payment_allocations a
+         JOIN transactions t ON t.id=a.transaction_id
+         WHERE a.covered_month=? AND a.allocated_amount>0
+           AND t.status='posted' AND t.voided_at IS NULL
+         ORDER BY a.id
+         FOR UPDATE",
+        [$coveredMonth]
+    );
+    $recognizedCount = 0;
+    $alreadyCount = 0;
+    $recognizedAmount = 0.00;
+    $alreadyAmount = 0.00;
+    $accountDeferred = dbFetchOne("SELECT id FROM accounts WHERE code='2200' AND is_active=1 LIMIT 1");
+    $accountRevenue = dbFetchOne("SELECT id FROM accounts WHERE code='4100' AND is_active=1 LIMIT 1");
+    if ($allocations && (!$accountDeferred || !$accountRevenue)) {
+        throw new RuntimeException('حساب الإيرادات المؤجلة 2200 أو إيرادات الكفالات 4100 غير موجود أو غير نشط.');
+    }
+
+    foreach ($allocations as $allocation) {
+        $allocationId = (int)$allocation['allocation_id'];
+        $transactionId = (int)$allocation['transaction_id'];
+        $amount = round((float)$allocation['allocated_amount'], 2);
+        if ($allocationId <= 0 || $transactionId <= 0 || $amount <= 0) {
+            throw new RuntimeException('بيانات تخصيص الكفالة غير صالحة لإثبات الإيراد.');
+        }
+        $eventKey = 'month-end-recognition:allocation:' . $allocationId;
+        $existing = dbFetchOne(
+            "SELECT id,event_type,transaction_id,allocation_id,journal_entry_id,event_date,amount
+             FROM sponsorship_accounting_events WHERE event_key=? LIMIT 1 FOR UPDATE",
+            [$eventKey]
+        );
+        if ($existing) {
+            if ($existing['event_type'] !== 'month_end_recognition'
+                || (int)$existing['transaction_id'] !== $transactionId
+                || (int)$existing['allocation_id'] !== $allocationId
+                || (string)$existing['event_date'] !== $monthEnd
+                || round((float)$existing['amount'], 2) !== $amount) {
+                throw new RuntimeException('حدث إثبات سابق لا يطابق تخصيص الكفالة؛ تم إيقاف العملية.');
+            }
+            $journal = dbFetchOne(
+                "SELECT id,status,voided_at FROM journal_entries WHERE id=? LIMIT 1 FOR UPDATE",
+                [(int)$existing['journal_entry_id']]
+            );
+            $lines = dbFetchAll(
+                "SELECT a.code,jl.debit,jl.credit FROM journal_lines jl JOIN accounts a ON a.id=jl.account_id WHERE jl.entry_id=? ORDER BY jl.id",
+                [(int)$existing['journal_entry_id']]
+            );
+            if (!$journal || $journal['status'] !== 'posted' || $journal['voided_at'] !== null
+                || count($lines) !== 2
+                || $lines[0]['code'] === $lines[1]['code']) {
+                throw new RuntimeException('قيد إثبات الإيراد السابق غير صالح أو غير مكتمل.');
+            }
+            $validDeferred = false;
+            $validRevenue = false;
+            foreach ($lines as $line) {
+                if ($line['code'] === '2200'
+                    && round((float)$line['debit'],2) === $amount
+                    && round((float)$line['credit'],2) === 0.00) $validDeferred = true;
+                if ($line['code'] === '4100'
+                    && round((float)$line['debit'],2) === 0.00
+                    && round((float)$line['credit'],2) === $amount) $validRevenue = true;
+            }
+            if (!$validDeferred || !$validRevenue) throw new RuntimeException('أسطر قيد إثبات الإيراد السابق لا تطابق الحسابات أو المبلغ المتوقع.');
+            $alreadyCount++;
+            $alreadyAmount += $amount;
+            continue;
+        }
+
+        $otherRecognition = dbFetchOne(
+            "SELECT id FROM sponsorship_accounting_events WHERE allocation_id=? AND event_type='month_end_recognition' LIMIT 1 FOR UPDATE",
+            [$allocationId]
+        );
+        if ($otherRecognition) throw new RuntimeException('يوجد حدث إثبات آخر مرتبط بتخصيص الكفالة.');
+        $voidEvent = dbFetchOne(
+            "SELECT id FROM sponsorship_accounting_events WHERE transaction_id=? AND event_type='transaction_void_reversal' LIMIT 1 FOR UPDATE",
+            [$transactionId]
+        );
+        if ($voidEvent) throw new RuntimeException('المعاملة لها حدث إبطال محاسبي؛ لا يمكن إثبات إيرادها.');
+
+        $entryCode = 'JE-SP-RECOG-' . $allocationId;
+        if (dbFetchOne("SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1 FOR UPDATE", [$entryCode])) {
+            throw new RuntimeException('رمز قيد إثبات الإيراد مستخدم مسبقاً دون حدث مطابق.');
+        }
+        dbExecute(
+            "INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by)
+             VALUES (?,?,?,'sponsorship_month_end_recognition',?,'posted',?)",
+            [$entryCode,$monthEnd,'إثبات إيراد الكفالة عن شهر ' . $monthDate->format('m/Y'),$allocationId,$createdByUserId]
+        );
+        $journalId = (int)dbLastInsertId();
+        if ($journalId <= 0) throw new RuntimeException('تعذر إنشاء قيد إثبات إيراد الكفالة.');
+        dbExecute(
+            "INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,0,?)",
+            [$journalId,(int)$accountDeferred['id'],$amount,'إيراد مؤجل مستحق عن شهر ' . $monthDate->format('m/Y')]
+        );
+        dbExecute(
+            "INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,0,?,?)",
+            [$journalId,(int)$accountRevenue['id'],$amount,'إيراد كفالة مستحق عن شهر ' . $monthDate->format('m/Y')]
+        );
+        $check = dbFetchOne(
+            "SELECT COALESCE(SUM(debit),0) AS total_debit,COALESCE(SUM(credit),0) AS total_credit,COUNT(*) AS line_count
+             FROM journal_lines WHERE entry_id=?",
+            [$journalId]
+        );
+        if ((int)($check['line_count'] ?? 0) !== 2
+            || round((float)$check['total_debit'],2) !== $amount
+            || round((float)$check['total_credit'],2) !== $amount) {
+            throw new RuntimeException('قيد إثبات إيراد الكفالة غير متوازن أو غير مكتمل.');
+        }
+        dbExecute(
+            "INSERT INTO sponsorship_accounting_events
+             (event_key,event_type,transaction_id,allocation_id,journal_entry_id,event_date,amount,created_by)
+             VALUES (?,'month_end_recognition',?,?,?,?,?,?)",
+            [$eventKey,$transactionId,$allocationId,$journalId,$monthEnd,$amount,$createdByUserId]
+        );
+        $recognizedCount++;
+        $recognizedAmount += $amount;
+    }
+    return [
+        'recognized_count'=>$recognizedCount,
+        'already_recognized_count'=>$alreadyCount,
+        'recognized_amount'=>round($recognizedAmount,2),
+        'already_recognized_amount'=>round($alreadyAmount,2),
+        'month_end'=>$monthEnd
+    ];
+}
+}

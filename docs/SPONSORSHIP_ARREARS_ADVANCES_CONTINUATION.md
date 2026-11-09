@@ -179,3 +179,18 @@ The full-schema MariaDB 10.4.32 CI job now applies `2026-11-08_sponsorship_payme
 ### Legacy pause/resume compatibility hardening
 
 The pause allocator now fails closed for a currently paused sponsorship with no open event history. For an active/completed/cancelled sponsorship, it also considers only the exact bounded legacy `pause_start_date`/`pause_end_date` interval when both dates are present. The resume handler does not create an unmatched `resume` event for a pause that predates event logging; it retains the legacy date evidence instead. New pause/resume cycles continue to append paired events. This avoids inventing historical intervals or creating malformed event sequences.
+
+
+### 2026-11-09 — Month-end recognition runner added
+
+Added `tools/recognize_sponsorship_revenue_month_end.php` and the shared recognition operation:
+- accepts one covered month in `YYYY-MM` format;
+- refuses future or not-yet-ended months;
+- defaults to a read-only dry run; `--apply` is required to post;
+- recognizes only allocated amounts from posted, non-voided transactions;
+- posts Dr 2200 / Cr 4100 dated on the covered month's last calendar day;
+- records one idempotent event/journal per allocation, retaining transaction-level traceability;
+- verifies any existing event/journal before treating a repeat run as already complete;
+- creates no tables and performs no runtime DDL.
+
+This runner does not perform the historical backfill. It must not be used until the migration and full rollback-only integration harness are verified.
