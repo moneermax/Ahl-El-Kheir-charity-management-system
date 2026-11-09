@@ -3733,3 +3733,11 @@ Committed the first source slice for Sponsorship Advances / Two-Month Arrears. A
 CI commit `404930f6633e34d055f81e6dac00765a51bec15d`, run `42574481700`: all six jobs passed. The new calculation contract test passed all ten checks (imported baseline, partial payment, two-month threshold, pause exclusion/continuity, paid-month reset, partial first/final months, legacy pause interval, and fail-closed unknown end date).
 
 **Still open:** local XAMPP runtime acceptance of both pages, role scopes, pending/returned display, and both duplicate-prevention paths. Do not mark the feature closed or rerun the closed accounting backfill/rollback harness. Detailed evidence and remaining checks are in `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`.
+
+## 2026-11-09 — Sponsorship report database runtime verification
+
+The full-schema MariaDB 10.4.32 CI runtime harness now passes. Latest source/test commit `41c93536a08c546c0517adf27c75f3d142593a68`, workflow run `42575136850`: all six jobs passed. The new rollback-only database test executed both report queries, verified all 3,560 sponsorship rows are retained for Admin/VGM, verified supervisor-only sponsor scope, denied an unapproved role, and rejected duplicate pending supervisor submissions and direct FM-review transactions. Synthetic duplicate rows were rolled back.
+
+Important data finding: the checked-in database contains 3,560 sponsorship rows; 1,745 have no matching `family_children` record, while all have a matching sponsor. The report now retains these rows via a left join, labels the unlinked child record, and omits broken detail links. The sequential duplicate tests pass under the sponsorship row lock; true two-process concurrency remains unproven.
+
+**Still open:** local XAMPP visual/runtime acceptance of both pages, role-specific access, pending/returned and future-credit display, and normal payment submission/FM approval. The feature is not closed until that local acceptance is recorded. Detailed evidence: `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`.
