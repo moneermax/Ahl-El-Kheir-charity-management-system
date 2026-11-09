@@ -150,6 +150,15 @@ $adminUnlinkedCount = count(array_filter(
 ));
 $check('admin_scope_retains_sponsorships_without_child_links', $adminUnlinkedCount === $unlinkedChildCount);
 
+$suggestions = ak_sar_get_arrears_candidates('admin', 0);
+$check('initial_arrears_suggestions_are_bounded_to_ten', count($suggestions) <= 10);
+$filteredData = ak_sar_load_report_data('admin', 0, ['code'=>(string)$active['sponsorship_code']]);
+$check(
+    'arrears_search_prefilters_to_requested_sponsorship',
+    count($filteredData['sponsorships']) === 1
+        && (int)$filteredData['sponsorships'][0]['id'] === $sponsorshipId
+);
+
 $supervisorData = ak_sar_load_report_data('supervisor', $supervisorId);
 $supervisorScopeValid = true;
 foreach ($supervisorData['sponsorships'] as $row) {
