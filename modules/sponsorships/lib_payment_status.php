@@ -101,8 +101,8 @@ function ak_sar_load_report_data(string $role, int $userId): array
 
     $allocationRows = dbFetchAll(
         "SELECT a.sponsorship_id, a.covered_month,
-                COUNT(DISTINCT a.commitment_amount) AS commitment_versions,
-                MIN(a.commitment_amount) AS commitment_amount,
+                COUNT(DISTINCT NULLIF(a.commitment_amount,0)) AS commitment_versions,
+                MIN(NULLIF(a.commitment_amount,0)) AS commitment_amount,
                 SUM(a.allocated_amount) AS allocated_amount,
                 SUM(a.unallocated_amount) AS unallocated_amount
          FROM sponsorship_payment_allocations a
