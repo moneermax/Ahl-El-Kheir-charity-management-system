@@ -116,7 +116,7 @@ function ak_sar_supervisor_scope_sql(): string
  */
 function ak_sar_get_arrears_candidates(string $role, int $userId): array
 {
-    if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
+    if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'supervisor'], true)) {
         throw new RuntimeException('ليس لديك صلاحية عرض تقارير المتأخرات أو الدفعات المقدمة.');
     }
 
@@ -152,7 +152,7 @@ function ak_sar_get_arrears_candidates(string $role, int $userId): array
 
 function ak_sar_load_report_data(string $role, int $userId, ?array $filters = null): array
 {
-    if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
+    if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'supervisor'], true)) {
         throw new RuntimeException('ليس لديك صلاحية عرض تقارير المتأخرات أو الدفعات المقدمة.');
     }
 
@@ -461,7 +461,7 @@ function ak_sar_summarize_arrears(array $items): array
  */
 function ak_sar_get_arrears_summary(string $role, int $userId): array
 {
-    if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
+    if (!in_array($role, ['admin', 'general_manager', 'vice_general_manager', 'supervisor'], true)) {
         throw new RuntimeException('ليس لديك صلاحية عرض تقارير المتأخرات أو الدفعات المقدمة.');
     }
 
