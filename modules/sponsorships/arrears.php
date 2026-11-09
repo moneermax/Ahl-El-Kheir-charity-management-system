@@ -46,7 +46,7 @@ try {
     $filters = ak_sar_normalize_arrears_filters($_GET);
     // Identity-only suggestions remain bounded and do not imply arrears.
     $candidates = ak_sar_get_arrears_candidates($role, $reportUserId);
-    if (in_array($role, ['admin','vice_general_manager'], true)) {
+    if (in_array($role, ['admin','general_manager','vice_general_manager'], true)) {
         $supervisors = dbFetchAll(
             "SELECT u.id, u.full_name
              FROM users u
@@ -149,7 +149,7 @@ include dirname(__DIR__,2).'/includes/header.php';
     <label class="form-label">اسم اليتيم</label>
     <input type="text" name="child" class="form-control" value="<?php echo e($filters['child']); ?>" placeholder="اكتب جزءاً من اسم اليتيم">
    </div>
-   <?php if (in_array($role, ['admin','vice_general_manager'], true)): ?>
+   <?php if (in_array($role, ['admin','general_manager','vice_general_manager'], true)): ?>
    <div class="col-md-3">
     <label class="form-label">المشرف المسجل على الكفيل</label>
     <select name="supervisor_id" class="form-select">
@@ -186,14 +186,14 @@ include dirname(__DIR__,2).'/includes/header.php';
   <?php else: ?>
    <div class="table-responsive">
     <table class="table table-sm table-hover align-middle mb-0">
-     <thead class="table-light"><tr><th>كود الكفالة</th><th>اليتيم</th><th>الكفيل</th><?php if (in_array($role, ['admin','vice_general_manager'], true)): ?><th>المشرف المسجل</th><?php endif; ?><th>اختيار</th></tr></thead>
+     <thead class="table-light"><tr><th>كود الكفالة</th><th>اليتيم</th><th>الكفيل</th><?php if (in_array($role, ['admin','general_manager','vice_general_manager'], true)): ?><th>المشرف المسجل</th><?php endif; ?><th>اختيار</th></tr></thead>
      <tbody>
       <?php foreach ($candidates as $candidate): ?>
        <tr>
         <td><code><?php echo e($candidate['sponsorship_code']); ?></code></td>
         <td><?php echo e($candidate['child_name'] ?: 'سجل اليتيم غير مرتبط'); ?></td>
         <td><?php echo e($candidate['sponsor_name']); ?></td>
-        <?php if (in_array($role, ['admin','vice_general_manager'], true)): ?><td><?php echo e($candidate['supervisor_name'] ?: '—'); ?></td><?php endif; ?>
+        <?php if (in_array($role, ['admin','general_manager','vice_general_manager'], true)): ?><td><?php echo e($candidate['supervisor_name'] ?: '—'); ?></td><?php endif; ?>
         <td><a class="btn btn-sm btn-outline-primary" href="<?php echo APP_URL; ?>modules/sponsorships/arrears.php?<?php echo e(http_build_query(['search'=>'1','code'=>$candidate['sponsorship_code']])); ?>">استخدم الكود</a></td>
        </tr>
       <?php endforeach; ?>
