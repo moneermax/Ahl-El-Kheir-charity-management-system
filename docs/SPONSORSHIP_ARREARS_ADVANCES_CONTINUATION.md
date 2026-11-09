@@ -410,3 +410,52 @@ Verified from the user's actual page results:
 4. Preserve the explicit evidence gap: sequential duplicate rejection is verified; true two-process concurrent execution is not.
 
 Do not rerun the completed sponsorship accounting migration, historical backfill, or rollback-only accounting harness. No production source or database changes were made in this browser-acceptance checkpoint.
+
+
+## 2026-11-09 — Arrears statistics dashboard and full-result pagination (source committed; acceptance pending)
+
+The user approved adding operational statistics cards and an explicit **عرض جميع المتأخرات** action. The latest implementation extends the existing search-driven arrears page; it does not replace the sponsorship accounting/allocation model.
+
+### Implemented on main
+
+- Initial GET remains lightweight: it loads only the ten newest authorized identity suggestions and does not load payment/pause history or calculate arrears.
+- A filtered search or explicit all-report action is required before calculation. The all-report action uses the search=1 and all=1 query flags; it is not triggered automatically on page open.
+- The former 100-sponsorship calculation cap and 501-row probe have been removed. The report calculates every sponsorship matching the supplied filters and the user's authoritative scope; it does not silently truncate the totals.
+- Four cards summarize the complete result set:
+  1. qualifying arrears sponsorship count;
+  2. total outstanding amount across the unpaid eligible months shown by this report;
+  3. count of eligible completed months with a positive outstanding balance;
+  4. pending/returned collection submissions associated with those unpaid months.
+- Summary totals are calculated before the page slices the visible result set.
+- The table displays 25 sponsorships per page. Pagination preserves the search filters and selected card view.
+- The pending/returned card filters the table to unpaid months with pending/returned collection submissions. Those submissions remain separate workflow states and never reduce confirmed arrears; only posted, non-voided allocation rows count as paid.
+- Calculation-error records are shown separately in the table and excluded from confirmed arrears count/amount totals.
+- Admin/VGM scope and the Supervisor SQL prefilter plus authoritative supervisorCanAccessSponsor() recheck remain unchanged.
+- No schema migration, accounting change, financial write, or runtime DDL was introduced. The advances page is unchanged.
+
+### Source and test commits
+
+- 54775f28d18a595150a24ae60b2cd9408952eff3 — complete arrears report calculation and summary/filter helpers.
+- 2ff6181b68fe8ff37e2c8fbbdc9922ab74160da5 — four-card dashboard, explicit all-report action, and 25-sponsorship display pagination.
+- b58d08703d6570e7481dfda683ccf2419d9f86fe, af3840f23a151c03eb9cdbbed61ec89c957bd23b, fc0447ebba36f2e7ebd8486acdaf22acf4bba9c1, e459460ef513ecef34c276db6fa5c20e334e48f4 — regression-contract and calculation tests.
+- 91bb22a208013e36accd8b930283096a2d3c5e97 — extends the database-backed runtime harness to exercise the unfiltered full arrears report and summary.
+
+### Verification boundary
+
+Source and test changes are committed to main. No CI result or local PHP/browser runtime result is asserted yet for this new dashboard slice. The full-result calculation deliberately occurs only after explicit user action; however, its response time and memory use against the local 3,560-sponsorship database must be measured before acceptance. Display pagination does not imply that database calculation itself is paginated.
+
+### Next local acceptance
+
+1. Pull latest main; inspect the working tree first and preserve unrelated local files.
+2. PHP-lint the arrears page, report helper, and three sponsorship arrears tests.
+3. Run:
+   - php tools/test_sponsorship_arrears_calculations.php
+   - php tools/test_sponsorship_arrears_search_contract.php
+   - php tools/test_sponsorship_arrears_advances_runtime.php
+4. In the browser, verify initial load remains lightweight; the explicit all-report action produces all four totals; clicking each card preserves the full totals; pending/returned view filters only the displayed rows; and pagination reaches the final page without losing filters.
+5. Verify a known sponsorship-code search still works and broad searches are no longer rejected merely for exceeding 100 matches.
+6. Verify Admin, VGM and Supervisor record scopes. Do not grant FM access to this operational report.
+7. If the explicit all-report request is still slow, capture the exact active MariaDB query/process and Apache/PHP error evidence before changing query strategy or adding indexes. Do not guess at optimization.
+8. Do not create fake payment/accounting records merely to make the cards look realistic. With no posted sponsorship payments, many qualifying arrears are expected; confirm the actual figures from the local report.
+
+The existing two-consecutive-eligible-month, pause/resume, partial-payment, partial-first/final-month, and posted-allocation rules remain authoritative. Do not reopen the completed sponsorship accounting backfill or unrelated modules.
