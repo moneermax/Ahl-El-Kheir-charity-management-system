@@ -488,3 +488,16 @@ Verification boundary: source and regression-test changes are committed. CI and 
 5. In browser, confirm cards appear above search for Admin, VGM and Supervisor; Admin/VGM totals are organization-wide and Supervisor totals include only authorized sponsors; clicking each card opens the appropriate full result view; a specific search changes only the table, not the role-wide card totals.
 6. If the initial page is slow, capture exact MariaDB/PHP timing and active query evidence before optimization. Do not change the eligibility algorithm or add schema/index changes speculatively.
 7. Do not rerun the closed sponsorship accounting backfill or unrelated closed modules.
+
+
+### 2026-11-09 — Dashboard summary CI verification
+
+GitHub Actions run 42642522337 for commit e655f7318e97acb4d0fef3bdf057b29eb3c62bbc completed successfully across all six jobs. PHP lint and the arrears calculation/search-contract tests passed. The MariaDB 10.4.32 full-schema runtime job passed the arrears/advances harness, including:
+- Admin dashboard summary exactly matches the full Admin arrears report.
+- VGM dashboard summary exactly matches the full organization-wide arrears report.
+- Supervisor dashboard summary exactly matches the full Supervisor-scoped arrears report.
+- Existing Admin/VGM full-scope and Supervisor authorization checks pass.
+
+The test measured the Admin summary-only calculation at 297.88 ms in this CI run. A prior successful run measured 111.34 ms, so treat the CI evidence as sub-second in the checked-in test database, not as a guarantee of local browser latency. The earlier CI attempts exposed and then fixed the stale search-contract expectation and a MariaDB collation mismatch in a UNION across the two pending-payment sources.
+
+**Still pending:** local XAMPP PHP/runtime execution and browser acceptance. CI does not prove the user's local DB response time or actual role-account browser behavior.
