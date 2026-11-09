@@ -33,7 +33,7 @@ include dirname(__DIR__,2).'/includes/header.php';
  <div class="card-header"><strong>التغطية المستقبلية والرصيد غير المخصص</strong> <span class="badge bg-info text-dark"><?php echo count($rows); ?></span></div>
  <div class="card-body p-0"><div class="table-responsive">
  <table class="table table-hover align-middle mb-0">
- <thead class="table-light"><tr><th>الكفالة / اليتيم</th><th>الكفيل</th><th>الشهر المغطى</th><th>الالتزام</th><th>المخصص المدفوع</th><th>المتبقي من الالتزام</th><th>الرصيد الزائد غير المخصص</th></tr></thead>
+ <thead class="table-light"><tr><th>الكفالة / اليتيم</th><th>الكفيل</th><th>الشهر المغطى</th><th>الالتزام</th><th>المخصص المدفوع</th><th>المتبقي من الالتزام</th><th>حالة المراجعة</th><th>الرصيد الزائد غير المخصص</th></tr></thead>
  <tbody>
  <?php if (!$rows): ?><tr><td colspan="7" class="text-center text-muted py-4">لا توجد دفعات مستقبلية مخصصة أو أرصدة زائدة غير مخصصة.</td></tr>
  <?php else: foreach ($rows as $item): $sp=$item['sponsorship']; $first=true; ?>
@@ -42,16 +42,23 @@ include dirname(__DIR__,2).'/includes/header.php';
   <td><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td>
   <td><?php echo e($sp['sponsor_name']); ?></td>
   <td><?php echo e($future['month']); ?></td>
-  <?php if ($future['error'] !== null): ?><td colspan="3" class="text-danger"><?php echo e($future['error']); ?></td>
+  <?php if ($future['error'] !== null): ?><td colspan="3" class="text-danger"><?php echo e($future['error']); ?></td><td>—</td>
   <?php else: ?>
   <td><?php echo number_format($future['commitment'],2); ?> ج.س</td>
   <td><?php echo number_format($future['allocated'],2); ?> ج.س</td>
   <td><?php echo number_format($future['remaining'],2); ?> ج.س</td>
   <?php endif; ?>
+  <td>
+   <?php if (empty($future['pending'])): ?><span class="text-muted">—</span>
+   <?php else: foreach ($future['pending'] as $pending): ?>
+    <span class="badge <?php echo in_array($pending['status'],['pending','pending_fm_review'],true)?'bg-warning text-dark':'bg-danger'; ?>"><?php echo in_array($pending['status'],['pending','pending_fm_review'],true)?'بانتظار المراجعة':'مُعاد للتعديل'; ?></span>
+    <small class="d-block"><?php echo number_format((float)$pending['amount'],2); ?> ج.س</small>
+   <?php endforeach; endif; ?>
+  </td>
   <?php if ($first): ?><td rowspan="<?php echo max(1,count($item['future'])); ?>"><?php echo number_format($item['unallocated'],2); ?> ج.س</td><?php $first=false; endif; ?>
  </tr>
  <?php endforeach; ?>
- <?php if (!$item['future']): ?><tr><td><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td><td><?php echo e($sp['sponsor_name']); ?></td><td colspan="4" class="text-muted">لا توجد تغطية مستقبلية مخصصة</td><td><?php echo number_format($item['unallocated'],2); ?> ج.س</td></tr><?php endif; ?>
+ <?php if (!$item['future']): ?><tr><td><a href="<?php echo APP_URL; ?>modules/sponsorships/view.php?id=<?php echo (int)$sp['id']; ?>"><code><?php echo e($sp['sponsorship_code']); ?></code></a><div class="small text-muted"><?php echo e($sp['child_name']); ?></div></td><td><?php echo e($sp['sponsor_name']); ?></td><td colspan="5" class="text-muted">لا توجد تغطية مستقبلية مخصصة أو طلب مستقبلي</td><td><?php echo number_format($item['unallocated'],2); ?> ج.س</td></tr><?php endif; ?>
  <?php endforeach; endif; ?>
  </tbody></table></div></div></div>
 <?php endif; ?>
