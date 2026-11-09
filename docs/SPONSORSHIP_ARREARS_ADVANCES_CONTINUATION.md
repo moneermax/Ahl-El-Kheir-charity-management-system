@@ -169,3 +169,8 @@ The transaction void helper now calls a sponsorship-accounting reversal helper i
 If event evidence is unbalanced or the generated reversal is incomplete, the existing outer transaction rolls back the entire void operation. The PHP syntax workflow now includes the transaction void helper.
 
 **Verification boundary:** PHP syntax CI and repository migration CI are required after this commit; no local database runtime test has been run. Month-end recognition and the historical backfill runner are still pending. The migration remains unapplied.
+
+
+### 2026-11-09 — Migration CI coverage added
+
+The full-schema MariaDB 10.4.32 CI job now applies `2026-11-08_sponsorship_payment_accounting.sql` twice against the checked-in database schema and asserts all three tables, all three unique indexes, and all ten foreign-key constraints. This verifies clean-install compatibility and repeatability in CI; it does not apply the migration to the local XAMPP database.

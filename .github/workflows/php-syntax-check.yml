@@ -441,6 +441,22 @@ jobs:
           MYSQL_PWD: root
         run: |
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/ahl_el_kheir.sql
+      - name: Verify sponsorship payment accounting migration
+        env:
+          MYSQL_PWD: root
+        shell: bash
+        run: |
+          set -euo pipefail
+          mysql=(mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test)
+          "${mysql[@]}" < database/migrations/2026-11-08_sponsorship_payment_accounting.sql
+          "${mysql[@]}" < database/migrations/2026-11-08_sponsorship_payment_accounting.sql
+          accounting_tables=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name IN ('sponsorship_payment_allocations','sponsorship_accounting_events','sponsorship_pause_events')")
+          accounting_unique_indexes=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(DISTINCT index_name) FROM information_schema.statistics WHERE table_schema = DATABASE() AND ((table_name = 'sponsorship_payment_allocations' AND index_name = 'uq_spa_transaction') OR (table_name = 'sponsorship_accounting_events' AND index_name IN ('uq_sae_event_key','uq_sae_journal')))")
+          accounting_foreign_keys=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.referential_constraints WHERE constraint_schema = DATABASE() AND constraint_name IN ('fk_spa_transaction','fk_spa_sponsorship','fk_spa_collector','fk_spa_creator','fk_sae_transaction','fk_sae_allocation','fk_sae_journal','fk_sae_creator','fk_spe_sponsorship','fk_spe_actor')")
+          test "$accounting_tables" = "3"
+          test "$accounting_unique_indexes" = "3"
+          test "$accounting_foreign_keys" = "10"
+
           # Legal-entity contact fields are a prerequisite for Tree sponsor records.
           mysql --host=127.0.0.1 --port=3306 --user=root --database=salary_advance_migration_test < database/migrations/2026-10-31_sponsor_legal_entity_contact_details.sql
           # Tree schema must be repeatable and preserve the many-to-many membership contract.
