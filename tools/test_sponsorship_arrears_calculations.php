@@ -76,6 +76,23 @@ try {
     $check('unknown_end_date_fails_closed', true);
 }
 
+$filters = ak_sar_normalize_arrears_filters([
+    'code' => '  IMP-SH-000001  ',
+    'sponsor' => '  علي  ',
+    'child' => ['malformed'],
+    'supervisor_id' => '19'
+]);
+$check('arrears_filters_trim_and_reject_non_scalar', $filters === [
+    'code'=>'IMP-SH-000001',
+    'sponsor'=>'علي',
+    'child'=>'',
+    'supervisor_id'=>19
+]);
+$emptyFilters = ak_sar_normalize_arrears_filters([]);
+$check('empty_arrears_filter_does_not_trigger_search', !ak_sar_has_arrears_filter($emptyFilters));
+$check('supervisor_filter_is_a_valid_search_criterion', ak_sar_has_arrears_filter(['code'=>'','sponsor'=>'','child'=>'','supervisor_id'=>19]));
+$check('arrears_like_wildcards_are_escaped', ak_sar_like_value('A%_!B') === '%A!%!_!!B%');
+
 echo 'PASS | ' . implode(' | ', array_map(
     static fn(string $name, bool $passed): string => $name . '=' . ($passed ? 'PASS' : 'FAIL'),
     array_keys($checks),
