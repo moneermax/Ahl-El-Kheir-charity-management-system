@@ -6342,3 +6342,8 @@ Source/test implementation is committed on main; CI and local runtime/browser ac
 ## 2026-11-09 — Arrears dashboard role-scope audit update
 
 The dashboard scope has been explicitly confirmed by the user: Admin and VGM are organization-wide; Supervisor is limited to sponsors authorized by the existing assignment matrix. The summary-only loader applies the same SQL supervisor prefilter and authoritative supervisorCanAccessSponsor() recheck, then uses the existing eligibility, allocation and pause calculation. The cards are independent of search filters and appear before the search section. This is a source-level checkpoint only: CI and local timing/browser verification remain open. No schema or accounting changes were made. Details and acceptance gates are in docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
+
+
+## 2026-11-09 — Arrears dashboard CI evidence
+
+GitHub Actions run 42642522337 completed successfully across all six jobs for commit e655f7318e97acb4d0fef3bdf057b29eb3c62bbc. The MariaDB full-schema test proved the summary-only results match the established full arrears calculations for Admin, VGM, and Supervisor scope. CI timing for the Admin summary-only calculation was 297.88 ms; this is not local XAMPP performance evidence. Local role-based browser verification remains open. No database schema or accounting mutation was introduced by this dashboard work.
