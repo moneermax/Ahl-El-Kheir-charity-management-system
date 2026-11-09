@@ -476,7 +476,6 @@ function ak_sar_get_arrears_summary(string $role, int $userId): array
         $sql .= " WHERE " . ak_sar_supervisor_scope_sql();
         $params = [$userId, $userId, $userId];
     }
-    $sql .= " ORDER BY sp.id";
     $sponsorships = dbFetchAll($sql, $params);
 
     // Keep the authoritative permission helper as the final supervisor gate.
