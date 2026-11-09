@@ -182,13 +182,13 @@ $allArrears = ak_sar_get_arrears('admin', 0, null);
 $allArrearsSummary = ak_sar_summarize_arrears($allArrears);
 $dashboardSummaryStartedAt = microtime(true);
 $adminDashboardSummary = ak_sar_get_arrears_summary('admin', 0);
+$dashboardSummaryElapsedMs = round((microtime(true) - $dashboardSummaryStartedAt) * 1000, 2);
 $vgmDashboardSummary = ak_sar_get_arrears_summary('vice_general_manager', 0);
 $supervisorDashboardSummary = ak_sar_get_arrears_summary('supervisor', $supervisorId);
 $supervisorFullSummary = ak_sar_summarize_arrears(ak_sar_get_arrears('supervisor', $supervisorId));
 $check('admin_dashboard_summary_matches_full_report', $adminDashboardSummary === $allArrearsSummary);
 $check('vgm_dashboard_summary_is_organization_wide', $vgmDashboardSummary === $allArrearsSummary);
 $check('supervisor_dashboard_summary_matches_only_authorized_sponsors', $supervisorDashboardSummary === $supervisorFullSummary);
-$dashboardSummaryElapsedMs = round((microtime(true) - $dashboardSummaryStartedAt) * 1000, 2);
 
 $advances = ak_sar_get_advances('admin', 0);
 $check('arrears_report_query_executes', is_array($arrears));
