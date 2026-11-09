@@ -10,6 +10,40 @@ require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_sponsorship_payment_accounting.php';
 
+function ak_sar_assert_no_pending_month_payment(int $sponsorshipId, string $paymentPeriod): void
+{
+    if (!db()->inTransaction()) {
+        throw new LogicException('فحص تكرار التحصيل يتطلب معاملة قاعدة بيانات مفتوحة.');
+    }
+    if ($sponsorshipId <= 0) throw new InvalidArgumentException('رقم الكفالة غير صالح.');
+    $month = ak_sp_parse_payment_period($paymentPeriod);
+    if ($month === null) throw new InvalidArgumentException('شهر التحصيل غير صالح.');
+
+    // Both submission paths lock the same sponsorship row before checking and inserting.
+    // This serializes concurrent submissions even though the legacy schema has no
+    // unique constraint covering the two separate pending-entry tables.
+    $locked = dbFetchOne("SELECT id FROM sponsorships WHERE id=? FOR UPDATE", [$sponsorshipId]);
+    if (!$locked) throw new RuntimeException('الكفالة المحددة غير موجودة.');
+
+    $direct = dbFetchOne(
+        "SELECT id FROM transactions
+         WHERE sponsorship_id=? AND payment_period=? AND purpose='monthly_sponsorship'
+           AND transaction_type='sponsorship_payment' AND status='pending_fm_review'
+         LIMIT 1",
+        [$sponsorshipId, $paymentPeriod]
+    );
+    $supervisor = dbFetchOne(
+        "SELECT id FROM sponsor_payments
+         WHERE sponsorship_id=? AND payment_period=? AND payment_type='monthly_sponsorship'
+           AND status='pending' AND transaction_id IS NULL
+         LIMIT 1",
+        [$sponsorshipId, $paymentPeriod]
+    );
+    if ($direct || $supervisor) {
+        throw new RuntimeException('يوجد تحصيل لهذا الشهر بانتظار المراجعة المالية؛ لا يمكن تسجيل طلب مكرر.');
+    }
+}
+
 function ak_sar_load_report_data(string $role, int $userId): array
 {
     if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
