@@ -90,4 +90,5 @@ return [
     "hr.payroll_error_prefix" => "خطأ:",
     "hr.payroll_entry" => "قيد",
     "hr.payroll_save_short" => "حفظ",
+    'navigation.sponsorship_arrears'=>'متأخرات الكفالات لشهرين','navigation.sponsorship_advances'=>'الدفعات المقدمة للكفالات',
 ];
