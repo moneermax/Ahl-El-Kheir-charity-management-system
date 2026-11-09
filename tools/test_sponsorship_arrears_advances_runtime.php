@@ -178,8 +178,21 @@ foreach ($supervisorData['sponsorships'] as $row) {
 $check('supervisor_scope_contains_only_authorized_sponsors', $supervisorScopeValid);
 
 $arrears = ak_sar_get_arrears('admin', 0, ['code'=>(string)$active['sponsorship_code']]);
+$allArrears = ak_sar_get_arrears('admin', 0, null);
+$allArrearsSummary = ak_sar_summarize_arrears($allArrears);
 $advances = ak_sar_get_advances('admin', 0);
 $check('arrears_report_query_executes', is_array($arrears));
+$check('all_scope_arrears_report_executes_without_100_record_cap', is_array($allArrears));
+$check(
+    'all_scope_summary_covers_every_calculated_or_error_record',
+    $allArrearsSummary['sponsorship_count'] + $allArrearsSummary['calculation_error_count'] === count($allArrears)
+);
+$check(
+    'all_scope_summary_amount_and_month_counts_are_non_negative',
+    $allArrearsSummary['outstanding_total'] >= 0
+        && $allArrearsSummary['unpaid_month_count'] >= 0
+        && $allArrearsSummary['pending_request_count'] >= 0
+);
 $check('advances_report_query_executes', is_array($advances));
 
 $denied = false;
