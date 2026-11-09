@@ -6029,3 +6029,16 @@ Source commits on `main`:
 **Verification status:** source-level cause and narrow fix identified; GitHub PHP syntax workflow run `42576565231` was queued at the time of this checkpoint. No local Apache/browser verification has yet been performed. Releasing the session lock explains the logout blockage but does not, by itself, prove why report rendering is slow. If the pages still do not render after this change, the next step is to capture the active MariaDB process/query and PHP/Apache error output while one report request is loading; do not change report calculations or add indexes without that evidence.
 
 Do not rerun the already-passed report runtime harness. The feature remains open pending actual page rendering and workflow acceptance. Preserve unrelated staged Monthly Data Entry files and untracked local backups.
+
+## 2026-11-09 — Sponsorship arrears report large-HTML rendering bottleneck: source fix + regression test
+
+A source-level performance defect was identified in the global HTML translation output handler (config/lang.php). The handler protects every <code> element by replacing it with a unique placeholder, then previously restored placeholders with one str_replace() over the entire HTML document per protected element. The arrears report can render thousands of sponsorship-code <code> elements, making restoration work scale with both page size and protected-element count. The smaller advances report does not expose the same scale problem.
+
+Correction on main:
+- config/lang.php now restores the protected-block map with strtr($html, $protected), a single mapped replacement pass. This also avoids recursive replacement of newly inserted protected content.
+- Added tools/test_large_html_translation_performance.php, which runs the actual translator against a synthetic 3,560-row sponsorship table and verifies all protected code blocks are restored without placeholder leakage.
+- Added the regression test to .github/workflows/php-syntax-check.yml.
+
+Commits: a538c2491da526452b146529ef57ea97c91a6675 (source), c04e98e26b286252ccf979d90d8585115175646c (test), f14513e8688547aa1dec7c599163981efa1c2acc (CI wiring).
+
+Verification boundary: source change and regression test are committed; GitHub Actions is running. This fixes the confirmed quadratic restoration path, but the local Apache page-rendering acceptance has not yet been independently verified. The earlier session-lock change remains separate and is responsible only for allowing navigation/logout while report requests run. Do not rerun the already-passed database/runtime harnesses or accounting backfill. Next inspect the CI result, then have the user pull the commit and perform one final browser acceptance of the arrears report; if it still fails, capture the new exact PHP fatal location before changing anything else.
