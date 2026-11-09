@@ -6266,3 +6266,11 @@ Historical backfill:
 **Acceptance boundary:** local migration, rollback-only integration, historical apply, target reconciliation, and repeat-run idempotency are verified. This closes the sponsorship payment accounting/backfill acceptance gate for the approved seven-row historical set. It does not close the broader Sponsorship Advances / Two-Month Arrears feature: the advance-payment and arrears user workflows remain a separate next implementation/verification phase. Do not rerun the migration, backfill apply, or rollback harness without concrete regression evidence.
 
 Next work: continue the existing Sponsorship Advances / Two-Month Arrears feature by auditing the current source/schema for the advance-payment and arrears views, then implement the smallest justified UI/workflow slice. Preserve the agreed eligibility, pause, pending-submission, partial-payment, and two-consecutive-eligible-month rules. Do not reopen unrelated closed modules.
+
+## 2026-11-09 — Sponsorship arrears/advances first implementation slice
+
+Committed the first source slice for Sponsorship Advances / Two-Month Arrears. Added read-only arrears and advance reports backed by posted, non-voided monthly allocation snapshots; complete eligible-month and pause handling; separate pending/returned review states; supervisor scope through `supervisorCanAccessSponsor()`; Admin/VGM all-record access; and serialized duplicate-pending checks in both supervisor and direct payment submission paths. Supervisor multi-line submission is atomic and notifications are post-commit. No migration or database mutation was added.
+
+CI commit `404930f6633e34d055f81e6dac00765a51bec15d`, run `42574481700`: all six jobs passed. The new calculation contract test passed all ten checks (imported baseline, partial payment, two-month threshold, pause exclusion/continuity, paid-month reset, partial first/final months, legacy pause interval, and fail-closed unknown end date).
+
+**Still open:** local XAMPP runtime acceptance of both pages, role scopes, pending/returned display, and both duplicate-prevention paths. Do not mark the feature closed or rerun the closed accounting backfill/rollback harness. Detailed evidence and remaining checks are in `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`.
