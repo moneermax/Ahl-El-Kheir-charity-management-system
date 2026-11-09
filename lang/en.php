@@ -90,4 +90,5 @@ return [
     "hr.payroll_error_prefix" => "Error:",
     "hr.payroll_entry" => "Entry",
     "hr.payroll_save_short" => "Save",
+    'navigation.sponsorship_arrears' => 'Two-Month Sponsorship Arrears', 'navigation.sponsorship_advances' => 'Sponsorship Advances',
 ];
