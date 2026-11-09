@@ -42,18 +42,18 @@ This is a two-eligible-month threshold, not a requirement for two adjacent calen
 - SP-000004: 15,000 SDG received for September/2026 against sponsorship IMP-SH-002947 with a 10,000 SDG monthly commitment.
 - The pause handler records PAUSE/RESUME audit events with timestamps, but the inspected backup has no PAUSE/RESUME rows. One imported active sponsorship has both pause dates set to 2026-08-10. Do not fabricate missing historical pause intervals. Preserve every future pause/resume event.
 
-## Implementation sequence
+## Implementation sequence and current status
 
-1. Design and migrate explicit per-payment monthly allocation/credit evidence and pause-period history. No runtime CREATE/ALTER.
-2. Integrate the allocation operation atomically into both direct FM approval and supervisor payment approval; preserve the actual collector identity.
-3. Correct posting: future allocated net and unallocated excess to liability 2200; earned allocated net to 4100; fee to 4200. Add idempotent monthly recognition journals and reversal handling for later transaction voids.
-4. Build separate advance-payment and two-month arrears pages. Reuse existing supervisor authorization. Approved submissions are read through linked transactions; pending/returned submissions remain visible separately.
-5. Add regression harness coverage for exact sponsorship/month, partial accumulation, overpayment, pending duplicates, future periods, voids, pause/resumption month boundaries, collector identity, and journal balance/idempotency.
-6. Run PHP syntax checks, CI migration tests, and runtime verification against the local test database; update this document and all canonical project documents with exact evidence.
+1. **Complete:** per-payment allocation snapshots and append-only pause history migration; no runtime DDL.
+2. **Complete:** atomic allocation/posting for direct FM approval and supervisor payment approval, with collector identity preserved.
+3. **Complete:** future/unallocated net deferred to 2200, earned net recognized to 4100 at covered-month end, append-only void reversal, and approved seven-row historical backfill. Local XAMPP acceptance is recorded below.
+4. **Implemented; local runtime pending:** separate arrears and advances reports, using existing supervisor authorization; pending/returned submissions remain separate from posted collections and linked approved submissions are not double-counted.
+5. **Partially verified:** the new pure calculation contract test passes ten rule checks. Duplicate-pending serialization is implemented but still needs local database/runtime verification, including concurrency.
+6. **CI passed; local feature acceptance pending:** PHP lint, calculation contract test, and all six jobs passed in workflow run 42574481700. Verify the two pages, real SQL result sets, role scope, pending/returned display, and both payment-entry paths against local XAMPP before closure.
 
 ## Current verification boundary
 
-Source/schema audit only. No application code, migration, database row, or accounting journal has been changed. No PHP, SQL migration, CI, or local runtime test has been run. Continue on main only. Do not reopen closed HR, i18n, salary advance, or Sponsor Tree work.
+The sponsorship accounting migration and seven-row historical backfill have passed local XAMPP acceptance as documented below. The new arrears/advances source implementation has passed CI, but the report pages and duplicate-pending guard have **not** yet passed local runtime verification. No new schema migration or database mutation was introduced for the report feature. Continue on main only. Do not reopen closed HR, i18n, salary advance, Sponsor Tree, or the accepted sponsorship accounting backfill without concrete regression evidence.
 
 
 ## 2026-11-08 — Month-end recognition and historical backfill approved
