@@ -41,8 +41,6 @@ $salaryAdvanceWaiverFMItem = ['active' => 'salary_advance_waiver_fm', 'label_key
 $menus = [
     'admin' => [
         ['active' => 'dashboard', 'label_key' => 'navigation.dashboard', 'icon' => 'fa-gauge-high', 'url' => 'dashboard/admin_dashboard.php'],
-        ['active' => 'sponsorship_arrears', 'label_key' => 'navigation.sponsorship_arrears', 'icon' => 'fa-triangle-exclamation', 'url' => 'modules/sponsorships/arrears.php'],
-        ['active' => 'sponsorship_advances', 'label_key' => 'navigation.sponsorship_advances', 'icon' => 'fa-calendar-plus', 'url' => 'modules/sponsorships/advances.php'],
     ],
 
     // GM keeps the primary navigation intentionally executive-level.
