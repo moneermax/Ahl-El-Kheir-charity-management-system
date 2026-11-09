@@ -545,6 +545,16 @@ jobs:
           AHL_DB_PASS: root
         run: php tools/backfill_sponsorship_payment_accounting.php --dry-run
 
+      - name: Verify sponsorship arrears and advances runtime queries and duplicate guards
+        env:
+          AHL_ENV: development
+          AHL_DB_HOST: 127.0.0.1
+          AHL_DB_PORT: '3306'
+          AHL_DB_NAME: salary_advance_migration_test
+          AHL_DB_USER: root
+          AHL_DB_PASS: root
+        run: php tools/test_sponsorship_arrears_advances_runtime.php
+
       - name: Run rollback-only sponsorship accounting integration
         env:
           AHL_ENV: development
