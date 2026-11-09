@@ -199,13 +199,9 @@ function ak_sar_load_report_data(string $role, int $userId, ?array $filters = nu
 
     if ($where) $sql .= " WHERE " . implode(' AND ', $where);
     $sql .= " ORDER BY s.full_name, fc.child_name, sp.id";
-    // Never calculate an unbounded report. Broad searches must be refined.
-    if ($filters !== null) $sql .= " LIMIT 501";
-
+    // This query runs only after an explicit search or "show all arrears" action.
+    // The caller paginates rendered sponsorships after calculating complete totals.
     $sponsorships = dbFetchAll($sql, $params);
-    if ($filters !== null && count($sponsorships) > 500) {
-        return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[], 'limit_exceeded'=>true];
-    }
 
     if ($role === 'supervisor' && $sponsorships) {
         $letterScope = dbFetchAll(
@@ -227,10 +223,6 @@ function ak_sar_load_report_data(string $role, int $userId, ?array $filters = nu
                 return supervisorCanAccessSponsor($userId, $sponsor, $letterScope);
             }
         ));
-    }
-
-    if ($filters !== null && count($sponsorships) > 100) {
-        return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[], 'limit_exceeded'=>true];
     }
 
     if (!$sponsorships) {
@@ -400,12 +392,9 @@ function ak_sar_has_two_consecutive_unpaid_months(array $eligibleMonths): bool
     return false;
 }
 
-function ak_sar_get_arrears(string $role, int $userId, array $filters): array
+function ak_sar_get_arrears(string $role, int $userId, ?array $filters = null): array
 {
     $data = ak_sar_load_report_data($role, $userId, $filters);
-    if (!empty($data['limit_exceeded'])) {
-        throw new RuntimeException('نتائج البحث أكثر من 100 كفالة. أضف معياراً آخر أو اجعل البحث أكثر تحديداً.');
-    }
     $result = [];
     foreach ($data['sponsorships'] as $sponsorship) {
         try {
@@ -430,6 +419,62 @@ function ak_sar_get_arrears(string $role, int $userId, array $filters): array
         }
     }
     return $result;
+}
+
+
+/**
+ * Complete arrears totals are calculated from every qualifying sponsorship,
+ * before the page applies its display pagination or a card-specific view.
+ */
+function ak_sar_summarize_arrears(array $items): array
+{
+    $summary = [
+        'sponsorship_count' => 0,
+        'outstanding_total' => 0.00,
+        'unpaid_month_count' => 0,
+        'pending_request_count' => 0,
+        'calculation_error_count' => 0
+    ];
+
+    foreach ($items as $item) {
+        if (($item['error'] ?? null) !== null) {
+            $summary['calculation_error_count']++;
+            continue;
+        }
+
+        $summary['sponsorship_count']++;
+        foreach (($item['months'] ?? []) as $month) {
+            $summary['outstanding_total'] += (float)($month['outstanding'] ?? 0);
+            $summary['unpaid_month_count']++;
+            $summary['pending_request_count'] += count($month['pending'] ?? []);
+        }
+    }
+
+    $summary['outstanding_total'] = round($summary['outstanding_total'], 2);
+    return $summary;
+}
+
+/**
+ * The pending card is a presentation filter only. Pending/returned requests
+ * never reduce the posted-allocation arrears calculation.
+ */
+function ak_sar_filter_arrears_view(array $items, string $view): array
+{
+    if ($view !== 'pending') return $items;
+
+    $filtered = [];
+    foreach ($items as $item) {
+        if (($item['error'] ?? null) !== null) continue;
+        $months = array_values(array_filter(
+            $item['months'] ?? [],
+            static fn(array $month): bool => !empty($month['pending'])
+        ));
+        if ($months) {
+            $item['months'] = $months;
+            $filtered[] = $item;
+        }
+    }
+    return $filtered;
 }
 
 function ak_sar_get_advances(string $role, int $userId): array
