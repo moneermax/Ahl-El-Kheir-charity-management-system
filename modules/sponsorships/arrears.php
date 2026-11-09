@@ -9,11 +9,18 @@ Session::start();
 if (!Session::isLoggedIn()) { header('Location: '.APP_URL.'index.php'); exit(); }
 $role = Session::getUserRole();
 if (!in_array($role, ['admin','vice_general_manager','supervisor'], true)) { header('Location: '.APP_URL.'index.php'); exit(); }
+$reportUserId = Session::getUserId();
+// Release PHP's per-session lock before the report's potentially long read-only queries.
+// Preserve flash consumption semantics: clear it in the stored session, then expose this request's copy.
+$reportFlashes = $_SESSION['flash'] ?? [];
+unset($_SESSION['flash']);
+session_write_close();
+$_SESSION['flash'] = $reportFlashes;
 $pageTitle = 'متأخرات الكفالات لشهرين';
 $active = 'sponsorship_arrears';
 $rows = [];
 $loadError = null;
-try { $rows = ak_sar_get_arrears($role, Session::getUserId()); }
+try { $rows = ak_sar_get_arrears($role, $reportUserId); }
 catch (Throwable $e) { $loadError = $e->getMessage(); }
 include dirname(__DIR__,2).'/includes/header.php';
 ?>
