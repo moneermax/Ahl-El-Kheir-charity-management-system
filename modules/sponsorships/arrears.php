@@ -42,9 +42,8 @@ $totalPages = 1;
 $totalVisible = 0;
 $filters = ['code'=>'', 'sponsor'=>'', 'child'=>'', 'supervisor_id'=>0];
 
-$filters = ak_sar_normalize_arrears_filters($_GET);
-
 try {
+    $filters = ak_sar_normalize_arrears_filters($_GET);
     // Identity-only suggestions remain bounded and do not imply arrears.
     $candidates = ak_sar_get_arrears_candidates($role, $reportUserId);
     if (in_array($role, ['admin','vice_general_manager'], true)) {
@@ -62,7 +61,9 @@ try {
 
 // The role-wide cards are independent of the search form and its filters.
 // An unfiltered all-report request can reuse its complete calculation.
-if (!$allMode || !$searchRequested) {
+$hasSearchFilters = ak_sar_has_arrears_filter($filters);
+$canReuseAllReportSummary = $searchRequested && $allMode && !$hasSearchFilters;
+if (!$canReuseAllReportSummary) {
     try {
         $summary = ak_sar_get_arrears_summary($role, $reportUserId);
     } catch (Throwable $e) {
