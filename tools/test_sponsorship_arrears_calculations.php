@@ -93,6 +93,25 @@ $check('empty_arrears_filter_does_not_trigger_search', !ak_sar_has_arrears_filte
 $check('supervisor_filter_is_a_valid_search_criterion', ak_sar_has_arrears_filter(['code'=>'','sponsor'=>'','child'=>'','supervisor_id'=>19]));
 $check('arrears_like_wildcards_are_escaped', ak_sar_like_value('A%_!B') === '%A!%!_!!B%');
 
+
+$summaryFixture = [
+    ['error'=>null, 'months'=>[
+        ['outstanding'=>500.00, 'pending'=>[['id'=>11]]],
+        ['outstanding'=>250.00, 'pending'=>[]]
+    ]],
+    ['error'=>null, 'months'=>[
+        ['outstanding'=>100.00, 'pending'=>[['id'=>12],['id'=>13]]]
+    ]],
+    ['error'=>'بيانات غير مكتملة', 'months'=>[]]
+];
+$summary = ak_sar_summarize_arrears($summaryFixture);
+$check('summary_counts_only_calculated_arrears_sponsorships', $summary['sponsorship_count'] === 2 && $summary['calculation_error_count'] === 1);
+$check('summary_totals_cover_all_unpaid_months', $summary['outstanding_total'] === 850.00 && $summary['unpaid_month_count'] === 3);
+$check('summary_counts_pending_requests_without_treating_them_as_paid', $summary['pending_request_count'] === 3);
+$pendingView = ak_sar_filter_arrears_view($summaryFixture, 'pending');
+$check('pending_card_view_shows_only_months_with_pending_requests', count($pendingView) === 2 && count($pendingView[0]['months']) === 1 && count($pendingView[1]['months']) === 1);
+$check('non_pending_views_preserve_all_qualifying_rows', count(ak_sar_filter_arrears_view($summaryFixture, 'all')) === 3);
+
 echo 'PASS | ' . implode(' | ', array_map(
     static fn(string $name, bool $passed): string => $name . '=' . ($passed ? 'PASS' : 'FAIL'),
     array_keys($checks),
