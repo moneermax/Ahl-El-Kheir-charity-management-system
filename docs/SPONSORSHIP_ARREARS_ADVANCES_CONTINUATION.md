@@ -292,7 +292,7 @@ Implemented:
 
 ### CI verification
 
-Commit `404930f6633e34d055f81e6dac00765a51bec15d`, workflow run `42574481700`: all six jobs passed, including `php-lint` and the full MariaDB migration workflow.
+Latest source/test commit `41c93536a08c546c0517adf27c75f3d142593a68`, workflow run `42575136850`: all six jobs passed, including `php-lint`, the full MariaDB migration workflow, and the new database-backed report/duplicate-guard runtime step.
 
 New pure calculation contract test:
 `tools/test_sponsorship_arrears_calculations.php`
@@ -302,13 +302,27 @@ Exact result:
 PASS | imported_baseline_starts_august_2026=PASS | partial_payment_reduces_outstanding=PASS | two_consecutive_unpaid_eligible_months=PASS | fully_paused_month_is_excluded=PASS | paused_month_does_not_break_unpaid_sequence=PASS | fully_paid_month_resets_unpaid_sequence=PASS | partial_first_month_is_excluded=PASS | partial_final_month_is_excluded=PASS | legacy_pause_interval_excludes_touched_month=PASS | unknown_end_date_fails_closed=PASS
 ```
 
+### Database-backed CI runtime evidence and data finding
+
+The new rollback-only runtime harness, `tools/test_sponsorship_arrears_advances_runtime.php`, ran successfully in the full-schema MariaDB 10.4.32 CI job. It verified:
+- report SQL execution for arrears and advances;
+- Admin and VGM each receive all 3,560 sponsorship rows;
+- supervisor results contain only sponsors accepted by the existing authorization function;
+- an unapproved role is denied;
+- duplicate pending supervisor submissions are rejected;
+- duplicate pending direct FM-review transactions are rejected.
+
+The test inserts its synthetic pending rows inside transactions and rolls both transactions back. No persistent test rows remain.
+
+The first runtime assertion exposed 1,745 sponsorship rows with no matching `family_children` record (3,560 total, 1,815 with a child match, zero missing sponsor records). The report query now uses a left join for the child relation, keeps all sponsorship rows for Admin/VGM, keeps supervisor filtering tied to the sponsor record, labels unlinked child records, and does not render a broken detail link for them.
+
+The duplicate tests prove sequential rejection through both entry tables while holding the sponsorship row lock. A true two-process concurrent execution test has **not** been run and must not be described as proven.
+
 ### Remaining acceptance boundary
 
-This is a CI-verified source implementation, not yet a locally runtime-accepted feature. The user's local XAMPP application/database still needs verification of:
-- both report pages and their real SQL result sets;
-- Admin/VGM all-record scope and supervisor-only assigned scope;
-- future allocations, unallocated credits, pending and returned states;
-- duplicate prevention for both direct and supervisor submission paths, including a second concurrent submission;
+CI now verifies both calculation rules and database-backed report/duplicate-guard behavior. The user's local XAMPP application/database still needs verification of:
+- visual behavior and actual page access for Admin, VGM, and assigned supervisors;
+- future allocations, unallocated credits, pending and returned states in the local test data;
 - normal existing payment submission and FM approval behavior.
 
-Do not rerun the already-closed sponsorship accounting backfill or rollback harness. Do not claim the advances/arrears feature closed until local runtime verification is recorded.
+Do not rerun the already-closed sponsorship accounting backfill or rollback harness. Do not claim the advances/arrears feature closed until local XAMPP acceptance is recorded.
