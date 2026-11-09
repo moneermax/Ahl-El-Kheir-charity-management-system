@@ -147,7 +147,7 @@ The next source change must use the explicit import code prefix to determine the
 The first live-path source slice is implemented on `main`:
 - Monthly `sponsorship_payment` posting now records one immutable allocation snapshot inside the same DB transaction as the receipt journal.
 - The receipt's net amount initially credits deferred revenue account 2200; administrative fees remain credited to 4200. Month-end recognition is a separate not-yet-implemented step.
-- Supervisor collector identity comes from the linked approved `sponsor_payments.supervisor_id`; direct transaction entry uses `transactions.created_by`.
+- Supervisor approval passes `sponsor_payments.supervisor_id` directly into the posting helper because the transaction link/status is updated only after journal posting; direct transaction entry uses `transactions.created_by`.
 - Allocation is capped at the remaining monthly commitment for the exact sponsorship/month. Excess, unlinked receipts, and ineligible months remain unallocated/deferred.
 - Imported sponsorship monitoring begins 2026-08-01; new sponsorship monitoring uses the actual start date. Partial start/end months and months touched by pause periods are not allocated.
 - Existing commitment snapshots are reused for subsequent payments in the same sponsorship/month. Prior allocations from voided transactions are excluded from the paid total.

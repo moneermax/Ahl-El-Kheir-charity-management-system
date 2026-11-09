@@ -25,7 +25,7 @@ function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,
     dbExecute($sql,[$sp['sponsorship_id'],$amount,$sp['currency_code']?:'SDG',$sp['payment_method']?:'cash',date('Y-m-d',strtotime((string)$sp['created_at'])),$transactionCode,$description,1.00,$transactionType,$sp['receipt_file_path'],$sp['unified_receipt_path'],'posted',$reviewerUserId,$transactionCode,$sp['sponsor_id'],$sp['project_id'],$sp['payment_period'],$sp['purpose_note'],$sp['payment_type'],0.00,$calc['amount'],$calc['net_amount'],$calc['method'],$calc['value'],$calc['policy_id']]);
     $transactionId=(int)dbLastInsertId();
     if($transactionId<=0) throw new RuntimeException('تعذر إنشاء المعاملة المحاسبية.');
-    $journalId=ak_post_transaction_journal_prepared($transactionId,$reviewerUserId);
+    $journalId=ak_post_transaction_journal_prepared($transactionId,$reviewerUserId,(int)$sp['supervisor_id']);
     if($journalId<=0) throw new RuntimeException('فشل إنشاء القيد المحاسبي.');
     $affected=dbExecute("UPDATE sponsor_payments SET status='approved',reviewed_by_user_id=?,reviewed_at=NOW(),transaction_id=? WHERE id=? AND status='pending'",[$reviewerUserId,$transactionId,$paymentId]);
     if($affected!==1) throw new RuntimeException('تعذر اعتماد الدفعة.');

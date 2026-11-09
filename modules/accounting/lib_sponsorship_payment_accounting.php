@@ -69,7 +69,7 @@ function ak_sp_month_is_pause_affected(int $sponsorshipId, string $monthStart, s
 }
 
 if (!function_exists('ak_sp_create_payment_allocation_prepared')) {
-function ak_sp_create_payment_allocation_prepared(array $transaction, float $netReceived, ?int $createdByUserId = null): array {
+function ak_sp_create_payment_allocation_prepared(array $transaction, float $netReceived, ?int $createdByUserId = null, ?int $collectorUserId = null): array {
     if (!db()->inTransaction()) {
         throw new LogicException('تخصيص دفعة الكفالة يتطلب معاملة قاعدة بيانات مفتوحة.');
     }
@@ -84,14 +84,12 @@ function ak_sp_create_payment_allocation_prepared(array $transaction, float $net
     $commitment = 0.00;
     $allocated = 0.00;
 
-    // The actual collector is the Supervisor on an approved sponsor_payments row.
-    // For directly entered transactions, the collector is transactions.created_by.
-    $submission = dbFetchAll(
-        "SELECT supervisor_id FROM sponsor_payments WHERE transaction_id=? AND status='approved' ORDER BY id ASC LIMIT 2",
-        [$transactionId]
-    );
-    if (count($submission) > 1) throw new RuntimeException('ترتبط المعاملة بأكثر من طلب تحصيل مشرف معتمد.');
-    $collectorId = $submission ? (int)$submission[0]['supervisor_id'] : (int)($transaction['created_by'] ?? 0);
+    // Supervisor approval passes sponsor_payments.supervisor_id explicitly because
+    // the transaction link/status is written only after the journal is posted.
+    // Direct entry falls back to transactions.created_by.
+    $collectorId = $collectorUserId !== null && $collectorUserId > 0
+        ? $collectorUserId
+        : (int)($transaction['created_by'] ?? 0);
     if ($collectorId <= 0) $collectorId = null;
 
     if ($sponsorshipId > 0 && $coveredMonth !== null && $netReceived > 0) {

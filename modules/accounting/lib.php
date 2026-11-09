@@ -52,7 +52,7 @@ function ak_cash_code(string $method): string { return ['cash'=>'1100','bank_tra
 }
 
 if (!function_exists('ak_post_transaction_journal_prepared')) {
-function ak_post_transaction_journal_prepared(int $txnId, ?int $createdByUserId = null): int {
+function ak_post_transaction_journal_prepared(int $txnId, ?int $createdByUserId = null, ?int $collectorUserId = null): int {
     $t = dbFetchOne("SELECT * FROM transactions WHERE id = ?", [$txnId]);
     if (!$t || $t['status'] !== 'posted') return 0;
     $ex = dbFetchOne("SELECT id FROM journal_entries WHERE reference_type='transaction' AND reference_id=? AND status='posted'", [$txnId]);
@@ -60,7 +60,7 @@ function ak_post_transaction_journal_prepared(int $txnId, ?int $createdByUserId 
     $snapshot = ak_apply_admin_fee_snapshot_prepared($txnId);
     $t = dbFetchOne("SELECT * FROM transactions WHERE id = ?", [$txnId]);
     $amount = round((float)$t['amount'], 2); $fee = round((float)$snapshot['amount'], 2); $net = round((float)$snapshot['net_amount'], 2); $type = (string)($t['transaction_type'] ?? 'sponsorship_payment');
-    if ($type === 'sponsorship_payment') ak_sp_create_payment_allocation_prepared($t, $net, $createdByUserId);
+    if ($type === 'sponsorship_payment') ak_sp_create_payment_allocation_prepared($t, $net, $createdByUserId, $collectorUserId);
     if ($amount <= 0 || $fee < 0 || $net < 0 || round($fee + $net,2) !== $amount) throw new RuntimeException('تفاصيل الرسوم الإدارية للمعاملة غير متوافقة مع إجمالي التحصيل.');
     $lines = [[ak_cash_code((string)$t['payment_method']), $amount, 0.0, 'تحصيل ' . $t['transaction_code']]];
     if ($type === 'general_donation') { $lines[] = ['4300', 0.0, $amount, 'تبرع عام ' . $t['transaction_code']]; }
