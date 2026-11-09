@@ -257,9 +257,11 @@ function ak_sar_get_advances(string $role, int $userId): array
         $sid = (int)$sponsorship['id'];
         $future = [];
         $unallocated = 0.00;
+        $seenFutureMonths = [];
         foreach ($data['allocations'][$sid] ?? [] as $month => $allocation) {
             $unallocated += round((float)$allocation['unallocated_amount'], 2);
             if ($month > $currentMonth && (float)$allocation['allocated_amount'] > 0) {
+                $seenFutureMonths[$month] = true;
                 if ((int)$allocation['commitment_versions'] > 1) {
                     $future[] = ['month'=>$month, 'error'=>'توجد قيم التزام متعارضة لهذا الشهر.'];
                 } else {
@@ -274,6 +276,20 @@ function ak_sar_get_advances(string $role, int $userId): array
                 }
             }
         }
+        // Pending/returned future submissions are visible but never count as paid.
+        foreach ($data['pending'][$sid] ?? [] as $month => $items) {
+            if ($month <= $currentMonth || isset($seenFutureMonths[$month])) continue;
+            $future[] = [
+                'month'=>$month,
+                'commitment'=>round((float)$sponsorship['monthly_amount'],2),
+                'allocated'=>0.00,
+                'remaining'=>round((float)$sponsorship['monthly_amount'],2),
+                'pending'=>$items,
+                'error'=>null
+            ];
+            $seenFutureMonths[$month] = true;
+        }
+        usort($future, static fn(array $a, array $b): int => strcmp($a['month'], $b['month']));
         if ($future || $unallocated > 0.009) {
             $result[] = ['sponsorship'=>$sponsorship, 'future'=>$future, 'unallocated'=>$unallocated];
         }
