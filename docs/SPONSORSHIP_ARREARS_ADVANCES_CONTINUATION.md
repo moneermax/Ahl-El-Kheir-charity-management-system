@@ -514,3 +514,6 @@ Source commits:
 - `f1b96f190ceae9e36dbf7419029a29dc334bd84b` — VGM sidebar cleanup.
 
 **Verification boundary:** source edits are committed to main. PHP syntax and local browser acceptance are still required. Verify that both cards navigate correctly, the VGM sidebar no longer lists either page, and the Supervisor sidebar still lists both pages. This is a navigation-only change; do not rerun the arrears accounting/runtime harnesses without regression evidence.
+
+
+**Sidebar scope verification:** follow-up commit `8d04baecca5663fae536e7b39eac49481bf91efe` scopes the removal strictly to `vice_general_manager`; it restores/preserves both links in the Admin menu and preserves both links in the Supervisor menu. Source inspection confirms the final role-specific menus.
