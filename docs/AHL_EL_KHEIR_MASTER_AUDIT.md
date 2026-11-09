@@ -6337,3 +6337,8 @@ A new user-approved UI slice extends modules/sponsorships/arrears.php. The page 
 The four metrics are qualifying arrears sponsorships, total unpaid balance, unpaid eligible months, and pending/returned collection submissions attached to unpaid months. Pending/returned submissions do not reduce arrears; the posted, non-voided sponsorship allocation ledger remains the only confirmed-paid source. Calculation-error rows are excluded from confirmed arrears totals and surfaced separately. Existing role scope and sponsor authorization checks are preserved. No schema or accounting changes were made.
 
 Source/test implementation is committed on main; CI and local runtime/browser acceptance are not yet verified. See docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md for exact commits and the remaining acceptance gate. Do not describe this dashboard slice as complete until the unfiltered full-report runtime test and local browser/performance checks pass.
+
+
+## 2026-11-09 — Arrears dashboard role-scope audit update
+
+The dashboard scope has been explicitly confirmed by the user: Admin and VGM are organization-wide; Supervisor is limited to sponsors authorized by the existing assignment matrix. The summary-only loader applies the same SQL supervisor prefilter and authoritative supervisorCanAccessSponsor() recheck, then uses the existing eligibility, allocation and pause calculation. The cards are independent of search filters and appear before the search section. This is a source-level checkpoint only: CI and local timing/browser verification remain open. No schema or accounting changes were made. Details and acceptance gates are in docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
