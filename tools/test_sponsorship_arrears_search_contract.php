@@ -24,6 +24,7 @@ $candidateSource = ($candidateStart !== false && $candidateEnd !== false)
 
 $check('initial_candidates_use_bounded_identity_query', str_contains($candidateSource, 'ORDER BY sp.id DESC LIMIT 100'));
 $check('gm_role_allowed_by_arrears_page', str_contains($page, "['admin','general_manager','vice_general_manager','supervisor']"));
+$check('gm_arrears_page_exposes_supervisor_filter_and_column', substr_count($page, "['admin','general_manager','vice_general_manager']") === 4);
 $check('gm_role_allowed_by_advances_page', str_contains($advancesPage, "['admin','general_manager','vice_general_manager','supervisor']"));
 $check('gm_role_allowed_by_all_shared_report_guards', substr_count($library, "['admin', 'general_manager', 'vice_general_manager', 'supervisor']") === 3);
 $check('gm_dashboard_exposes_both_sponsorship_monitoring_links', str_contains($gmDashboard, 'modules/sponsorships/arrears.php') && str_contains($gmDashboard, 'modules/sponsorships/advances.php'));
