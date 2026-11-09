@@ -4,7 +4,9 @@ declare(strict_types=1);
 $root = dirname(__DIR__);
 $library = file_get_contents($root . '/modules/sponsorships/lib_payment_status.php');
 $page = file_get_contents($root . '/modules/sponsorships/arrears.php');
-if ($library === false || $page === false) {
+$advancesPage = file_get_contents($root . '/modules/sponsorships/advances.php');
+$gmDashboard = file_get_contents($root . '/dashboard/gm_dashboard.php');
+if ($library === false || $page === false || $advancesPage === false || $gmDashboard === false) {
     throw new RuntimeException('Unable to read arrears report source.');
 }
 
@@ -21,6 +23,11 @@ $candidateSource = ($candidateStart !== false && $candidateEnd !== false)
     : '';
 
 $check('initial_candidates_use_bounded_identity_query', str_contains($candidateSource, 'ORDER BY sp.id DESC LIMIT 100'));
+$check('gm_role_allowed_by_arrears_page', str_contains($page, "['admin','general_manager','vice_general_manager','supervisor']"));
+$check('gm_role_allowed_by_advances_page', str_contains($advancesPage, "['admin','general_manager','vice_general_manager','supervisor']"));
+$check('gm_role_allowed_by_all_shared_report_guards', substr_count($library, "['admin', 'general_manager', 'vice_general_manager', 'supervisor']") === 3);
+$check('gm_dashboard_exposes_both_sponsorship_monitoring_links', str_contains($gmDashboard, 'modules/sponsorships/arrears.php') && str_contains($gmDashboard, 'modules/sponsorships/advances.php'));
+
 $check('initial_candidates_do_not_load_payment_history', !str_contains($candidateSource, 'ak_sar_load_report_data'));
 $check('arrears_loader_supports_optional_filters', str_contains($library, 'function ak_sar_get_arrears(string $role, int $userId, ?array $filters = null)'));
 $check('all_authorized_matches_are_not_silently_truncated', !str_contains($library, 'LIMIT 501') && !str_contains($library, 'count($sponsorships) > 100'));
