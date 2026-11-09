@@ -8,7 +8,7 @@ require_once __DIR__.'/lib_payment_status.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: '.APP_URL.'index.php'); exit(); }
 $role = Session::getUserRole();
-if (!in_array($role, ['admin','vice_general_manager','supervisor'], true)) { header('Location: '.APP_URL.'index.php'); exit(); }
+if (!in_array($role, ['admin','general_manager','vice_general_manager','supervisor'], true)) { header('Location: '.APP_URL.'index.php'); exit(); }
 $reportUserId = Session::getUserId();
 // Release PHP's per-session lock before any report query.
 $reportFlashes = $_SESSION['flash'] ?? [];
