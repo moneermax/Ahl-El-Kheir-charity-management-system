@@ -371,3 +371,12 @@ Correction on main:
 Commits: a538c2491da526452b146529ef57ea97c91a6675 (source), c04e98e26b286252ccf979d90d8585115175646c (test), f14513e8688547aa1dec7c599163981efa1c2acc (CI wiring).
 
 Verification boundary: source change and regression test are committed; GitHub Actions is running. This fixes the confirmed quadratic restoration path, but the local Apache page-rendering acceptance has not yet been independently verified. The earlier session-lock change remains separate and is responsible only for allowing navigation/logout while report requests run. Do not rerun the already-passed database/runtime harnesses or accounting backfill. Next inspect the CI result, then have the user pull the commit and perform one final browser acceptance of the arrears report; if it still fails, capture the new exact PHP fatal location before changing anything else.
+
+
+## 2026-11-09 — Arrears report changed to search-driven loading
+
+The arrears page no longer calculates the report on initial page load. The initial GET performs only a bounded identity query for the ten newest sponsorship records in the user's authorized scope. These are search suggestions only; they are **not** represented as confirmed arrears candidates. No payment allocations, pause history, pending submissions, or month-by-month arrears calculations are loaded until the user submits at least one filter.
+
+The explicit search supports sponsorship code, sponsor name, orphan name, and (for Admin/VGM) the operational supervisor recorded on the sponsor. Filters are applied in SQL before report history is fetched. Searches are capped at 100 matching authorized sponsorships; broad searches are rejected with a request to refine the criteria rather than silently returning a partial report. For each selected sponsorship, the calculation still receives its full relevant allocation and pause history, preserving the consecutive eligible-month rule. Supervisor records are prefiltered in SQL and rechecked with `supervisorCanAccessSponsor()`.
+
+No schema/data/accounting changes were made. The advances report and its all-scope behavior remain unchanged. Added pure filter tests and a source-contract regression test, wired into the existing PHP workflow. CI and local browser acceptance are pending; do not claim runtime acceptance until the user tests the page after pulling main.
