@@ -455,6 +455,159 @@ function ak_sar_summarize_arrears(array $items): array
 }
 
 /**
+ * Calculate the role-wide dashboard totals without loading sponsor/child detail
+ * rows or constructing the full report result. The eligibility and payment
+ * rules deliberately reuse the same month calculator as the detailed report.
+ */
+function ak_sar_get_arrears_summary(string $role, int $userId): array
+{
+    if (!in_array($role, ['admin', 'vice_general_manager', 'supervisor'], true)) {
+        throw new RuntimeException('ليس لديك صلاحية عرض تقارير المتأخرات أو الدفعات المقدمة.');
+    }
+
+    $sql = "SELECT sp.id, sp.sponsorship_code, sp.monthly_amount, sp.status,
+                   sp.start_date, sp.end_date, sp.pause_start_date, sp.pause_end_date,
+                   s.id AS sponsor_id, s.supervisor_id, s.first_letter_id, s.gender,
+                   s.is_manual_override, s.sponsor_type, s.created_by AS sponsor_created_by
+            FROM sponsorships sp
+            JOIN sponsors s ON s.id = sp.sponsor_id";
+    $params = [];
+    if ($role === 'supervisor') {
+        $sql .= " WHERE " . ak_sar_supervisor_scope_sql();
+        $params = [$userId, $userId, $userId];
+    }
+    $sql .= " ORDER BY sp.id";
+    $sponsorships = dbFetchAll($sql, $params);
+
+    // Keep the authoritative permission helper as the final supervisor gate.
+    if ($role === 'supervisor' && $sponsorships) {
+        $letterScope = dbFetchAll(
+            "SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?",
+            [$userId]
+        );
+        $sponsorships = array_values(array_filter(
+            $sponsorships,
+            static function (array $row) use ($userId, $letterScope): bool {
+                return supervisorCanAccessSponsor($userId, [
+                    'id' => $row['sponsor_id'],
+                    'supervisor_id' => $row['supervisor_id'],
+                    'first_letter_id' => $row['first_letter_id'],
+                    'gender' => $row['gender'],
+                    'is_manual_override' => $row['is_manual_override'],
+                    'sponsor_type' => $row['sponsor_type'],
+                    'created_by' => $row['sponsor_created_by']
+                ], $letterScope);
+            }
+        ));
+    }
+
+    $summary = [
+        'sponsorship_count' => 0,
+        'outstanding_total' => 0.00,
+        'unpaid_month_count' => 0,
+        'pending_request_count' => 0,
+        'calculation_error_count' => 0
+    ];
+    if (!$sponsorships) return $summary;
+
+    $ids = array_values(array_unique(array_map(
+        static fn(array $row): int => (int)$row['id'],
+        $sponsorships
+    )));
+    $marks = implode(',', array_fill(0, count($ids), '?'));
+
+    $allocationRows = dbFetchAll(
+        "SELECT a.sponsorship_id, a.covered_month,
+                COUNT(DISTINCT NULLIF(a.commitment_amount,0)) AS commitment_versions,
+                MIN(NULLIF(a.commitment_amount,0)) AS commitment_amount,
+                SUM(a.allocated_amount) AS allocated_amount,
+                SUM(a.unallocated_amount) AS unallocated_amount
+         FROM sponsorship_payment_allocations a
+         JOIN transactions t ON t.id = a.transaction_id
+         WHERE a.sponsorship_id IN ($marks)
+           AND t.status = 'posted' AND t.voided_at IS NULL
+         GROUP BY a.sponsorship_id, a.covered_month",
+        $ids
+    );
+    $allocations = [];
+    foreach ($allocationRows as $row) {
+        $sid = (int)$row['sponsorship_id'];
+        $month = (string)($row['covered_month'] ?? '');
+        if ($month !== '') $allocations[$sid][$month] = $row;
+    }
+
+    $pauseRows = dbFetchAll(
+        "SELECT sponsorship_id, event_type, effective_date
+         FROM sponsorship_pause_events
+         WHERE sponsorship_id IN ($marks)
+         ORDER BY sponsorship_id, effective_date, id",
+        $ids
+    );
+    $pauseEvents = [];
+    foreach ($pauseRows as $row) $pauseEvents[(int)$row['sponsorship_id']][] = $row;
+
+    // Keep only the exact unpaid sponsorship/month pairs needed by the pending
+    // counter. Pending/returned requests never reduce confirmed arrears.
+    $unpaidMonthKeys = [];
+    foreach ($sponsorships as $sponsorship) {
+        $sid = (int)$sponsorship['id'];
+        try {
+            $months = ak_sar_month_rows(
+                $sponsorship,
+                $allocations[$sid] ?? [],
+                $pauseEvents[$sid] ?? []
+            );
+        } catch (Throwable $e) {
+            $summary['calculation_error_count']++;
+            continue;
+        }
+
+        if (!ak_sar_has_two_consecutive_unpaid_months($months)) continue;
+        $summary['sponsorship_count']++;
+        foreach ($months as $month) {
+            if ((float)$month['outstanding'] <= 0.009) continue;
+            $summary['outstanding_total'] += (float)$month['outstanding'];
+            $summary['unpaid_month_count']++;
+            $unpaidMonthKeys[$sid][(string)$month['month']] = true;
+        }
+    }
+
+    $summary['outstanding_total'] = round($summary['outstanding_total'], 2);
+    if (!$unpaidMonthKeys) return $summary;
+
+    $arrearsIds = array_keys($unpaidMonthKeys);
+    $arrearsMarks = implode(',', array_fill(0, count($arrearsIds), '?'));
+    $pendingRows = dbFetchAll(
+        "SELECT sponsorship_id, payment_period
+         FROM transactions
+         WHERE sponsorship_id IN ($arrearsMarks)
+           AND transaction_type = 'sponsorship_payment'
+           AND status IN ('pending_fm_review','returned')
+         UNION ALL
+         SELECT sponsorship_id, payment_period
+         FROM sponsor_payments
+         WHERE sponsorship_id IN ($arrearsMarks)
+           AND payment_type = 'monthly_sponsorship'
+           AND status IN ('pending','returned')
+           AND transaction_id IS NULL",
+        array_merge($arrearsIds, $arrearsIds)
+    );
+    foreach ($pendingRows as $row) {
+        try {
+            $month = ak_sp_parse_payment_period((string)($row['payment_period'] ?? ''));
+        } catch (Throwable $e) {
+            continue;
+        }
+        $sid = (int)$row['sponsorship_id'];
+        if ($month !== null && isset($unpaidMonthKeys[$sid][$month])) {
+            $summary['pending_request_count']++;
+        }
+    }
+
+    return $summary;
+}
+
+/**
  * The pending card is a presentation filter only. Pending/returned requests
  * never reduce the posted-allocation arrears calculation.
  */
