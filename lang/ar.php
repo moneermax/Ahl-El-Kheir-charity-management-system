@@ -91,4 +91,6 @@ return [
     "hr.payroll_entry" => "قيد",
     "hr.payroll_save_short" => "حفظ",
     'navigation.sponsorship_arrears'=>'متأخرات الكفالات لشهرين','navigation.sponsorship_advances'=>'الدفعات المقدمة للكفالات',
+    'dashboard.sponsorship_arrears_card_desc'=>'الكفالات التي تأخر سداد شهرين مستحقين متتاليين.',
+    'dashboard.sponsorship_advances_card_desc'=>'التغطية المستقبلية والرصيد الزائد غير المخصص.',
 ];
