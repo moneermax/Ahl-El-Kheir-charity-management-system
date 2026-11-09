@@ -52,6 +52,10 @@ function ak_sar_load_report_data(string $role, int $userId): array
 
     $allowedSponsorIds = null;
     if ($role === 'supervisor') {
+        $letterScope = dbFetchAll(
+            "SELECT letter_id, gender FROM supervisor_letters WHERE supervisor_id = ?",
+            [$userId]
+        );
         $candidates = dbFetchAll(
             "SELECT id, supervisor_id, first_letter_id, gender, is_manual_override, sponsor_type, created_by
              FROM sponsors
@@ -62,7 +66,7 @@ function ak_sar_load_report_data(string $role, int $userId): array
         );
         $allowedSponsorIds = [];
         foreach ($candidates as $candidate) {
-            if (supervisorCanAccessSponsor($userId, $candidate)) {
+            if (supervisorCanAccessSponsor($userId, $candidate, $letterScope)) {
                 $allowedSponsorIds[] = (int)$candidate['id'];
             }
         }
@@ -92,20 +96,6 @@ function ak_sar_load_report_data(string $role, int $userId): array
         return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[]];
     }
 
-    // Re-check each supervisor-visible sponsor with the canonical authorization function.
-    if ($role === 'supervisor') {
-        $sponsorships = array_values(array_filter($sponsorships, static function(array $row) use ($userId): bool {
-            return supervisorCanAccessSponsor($userId, [
-                'id'=>$row['sponsor_id'],
-                'supervisor_id'=>$row['supervisor_id'],
-                'first_letter_id'=>$row['first_letter_id'],
-                'gender'=>$row['gender'],
-                'is_manual_override'=>$row['is_manual_override'],
-                'sponsor_type'=>$row['sponsor_type'],
-                'created_by'=>$row['sponsor_created_by']
-            ]);
-        }));
-    }
     if (!$sponsorships) {
         return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[]];
     }
