@@ -153,3 +153,113 @@ function ak_sp_create_payment_allocation_prepared(array $transaction, float $net
     return ['allocated_amount'=>$allocated, 'unallocated_amount'=>$unallocated, 'covered_month'=>$coveredMonth];
 }
 }
+
+
+if (!function_exists('ak_sp_reverse_accounting_events_for_void_prepared')) {
+function ak_sp_reverse_accounting_events_for_void_prepared(int $transactionId, string $entryDate): int {
+    if (!db()->inTransaction()) throw new LogicException('عكس آثار محاسبة الكفالة يتطلب معاملة قاعدة بيانات مفتوحة.');
+    if ($transactionId <= 0) throw new InvalidArgumentException('رقم معاملة الكفالة غير صالح.');
+
+    $eventKey = 'transaction-void-reversal:' . $transactionId;
+    if (dbFetchOne("SELECT id FROM sponsorship_accounting_events WHERE event_key=? LIMIT 1 FOR UPDATE", [$eventKey])) {
+        throw new RuntimeException('يوجد عكس محاسبي سابق لأحداث الكفالة لهذه المعاملة.');
+    }
+
+    $eventTotals = dbFetchAll(
+        "SELECT sae.journal_entry_id, COALESCE(SUM(jl.debit),0) AS total_debit,
+                COALESCE(SUM(jl.credit),0) AS total_credit, COUNT(jl.id) AS line_count
+         FROM sponsorship_accounting_events sae
+         JOIN journal_entries je ON je.id=sae.journal_entry_id
+         LEFT JOIN journal_lines jl ON jl.entry_id=je.id
+         WHERE sae.transaction_id=?
+           AND sae.event_type IN ('historical_reclassification','month_end_recognition')
+           AND je.status='posted' AND je.voided_at IS NULL
+         GROUP BY sae.id, sae.journal_entry_id
+         ORDER BY sae.id",
+        [$transactionId]
+    );
+    if (!$eventTotals) return 0;
+    foreach ($eventTotals as $event) {
+        if ((int)$event['line_count'] < 2
+            || round((float)$event['total_debit'], 2) <= 0
+            || round((float)$event['total_debit'], 2) !== round((float)$event['total_credit'], 2)) {
+            throw new RuntimeException('أحد قيود أحداث محاسبة الكفالة غير متوازن؛ تم إيقاف إبطال المعاملة.');
+        }
+    }
+
+    $movements = dbFetchAll(
+        "SELECT jl.account_id, COALESCE(SUM(jl.debit),0) AS total_debit,
+                COALESCE(SUM(jl.credit),0) AS total_credit
+         FROM sponsorship_accounting_events sae
+         JOIN journal_entries je ON je.id=sae.journal_entry_id
+         JOIN journal_lines jl ON jl.entry_id=je.id
+         WHERE sae.transaction_id=?
+           AND sae.event_type IN ('historical_reclassification','month_end_recognition')
+           AND je.status='posted' AND je.voided_at IS NULL
+         GROUP BY jl.account_id
+         ORDER BY jl.account_id",
+        [$transactionId]
+    );
+
+    $lines = [];
+    $totalDebit = 0.00;
+    $totalCredit = 0.00;
+    $netAcrossAccounts = 0.00;
+    foreach ($movements as $movement) {
+        $net = round((float)$movement['total_debit'] - (float)$movement['total_credit'], 2);
+        $netAcrossAccounts += $net;
+        if ($net > 0) {
+            $lines[] = [(int)$movement['account_id'], 0.00, $net, 'عكس أثر حدث محاسبة الكفالة للمعاملة ' . $transactionId];
+            $totalCredit += $net;
+        } elseif ($net < 0) {
+            $lines[] = [(int)$movement['account_id'], abs($net), 0.00, 'عكس أثر حدث محاسبة الكفالة للمعاملة ' . $transactionId];
+            $totalDebit += abs($net);
+        }
+    }
+    if (round($netAcrossAccounts, 2) !== 0.00
+        || round($totalDebit, 2) !== round($totalCredit, 2)) {
+        throw new RuntimeException('صافي أحداث محاسبة الكفالة غير متوازن؛ تم إيقاف إبطال المعاملة.');
+    }
+    if (!$lines) return 0;
+
+    $code = 'JE-SP-VOID-TXN-' . $transactionId;
+    if (dbFetchOne("SELECT id FROM journal_entries WHERE entry_code=? LIMIT 1 FOR UPDATE", [$code])) {
+        throw new RuntimeException('رمز قيد عكس أحداث الكفالة موجود مسبقاً.');
+    }
+    dbExecute(
+        "INSERT INTO journal_entries (entry_code,entry_date,description,reference_type,reference_id,status,created_by)
+         VALUES (?,?,?,'sponsorship_accounting_void',?,'posted',?)",
+        [$code,$entryDate,'عكس أحداث محاسبة الكفالة بسبب إبطال المعاملة ' . $transactionId,$transactionId,Session::getUserId()]
+    );
+    $journalId = (int)dbLastInsertId();
+    if ($journalId <= 0) throw new RuntimeException('تعذر إنشاء قيد عكس أحداث محاسبة الكفالة.');
+    foreach ($lines as $line) {
+        dbExecute(
+            "INSERT INTO journal_lines (entry_id,account_id,debit,credit,description) VALUES (?,?,?,?,?)",
+            [$journalId,$line[0],$line[1],$line[2],$line[3]]
+        );
+    }
+    $check = dbFetchOne(
+        "SELECT COALESCE(SUM(debit),0) AS total_debit, COALESCE(SUM(credit),0) AS total_credit, COUNT(*) AS line_count
+         FROM journal_lines WHERE entry_id=?",
+        [$journalId]
+    );
+    if ((int)($check['line_count'] ?? 0) !== count($lines)
+        || round((float)$check['total_debit'], 2) !== round((float)$check['total_credit'], 2)
+        || round((float)$check['total_debit'], 2) <= 0) {
+        throw new RuntimeException('قيد عكس أحداث محاسبة الكفالة غير متوازن أو غير مكتمل.');
+    }
+
+    $allocation = dbFetchOne(
+        "SELECT id FROM sponsorship_payment_allocations WHERE transaction_id=? LIMIT 1 FOR UPDATE",
+        [$transactionId]
+    );
+    dbExecute(
+        "INSERT INTO sponsorship_accounting_events
+         (event_key,event_type,transaction_id,allocation_id,journal_entry_id,event_date,amount,created_by)
+         VALUES (?,'transaction_void_reversal',?,?,?,?,?,?)",
+        [$eventKey,$transactionId,$allocation ? (int)$allocation['id'] : null,$journalId,$entryDate,round($totalDebit,2),(int)Session::getUserId()]
+    );
+    return $journalId;
+}
+}

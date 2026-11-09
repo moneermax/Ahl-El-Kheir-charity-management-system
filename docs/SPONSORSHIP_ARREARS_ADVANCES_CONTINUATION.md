@@ -155,3 +155,17 @@ The first live-path source slice is implemented on `main`:
 - Legacy pause dates are not converted into invented event rows; they are used only as bounded date evidence when both dates exist. Ambiguous legacy pause state fails closed.
 
 **Verification boundary:** source implementation only. Migration remains unapplied. The repository PHP syntax workflow was extended to lint the new helper; its run result and local XAMPP/MariaDB runtime verification are still pending. Transaction-void reversal integration, month-end recognition, and the historical backfill tool remain unimplemented. Do not apply the migration or run the backfill yet.
+
+
+### 2026-11-09 — Append-only event effects included in transaction void
+
+The transaction void helper now calls a sponsorship-accounting reversal helper inside its existing DB transaction. It:
+- reads only posted, non-voided historical-reclassification and month-end-recognition event journals linked to the source transaction;
+- verifies each source event journal is balanced;
+- aggregates the event effect by account and reverses only the residual net movement (so a fully reclassified-and-recognized month nets to zero);
+- creates a separate traceable `transaction_void_reversal` event and journal without changing original event journals or lines;
+- uses the same entry date as the existing transaction-void journal convention.
+
+If event evidence is unbalanced or the generated reversal is incomplete, the existing outer transaction rolls back the entire void operation. The PHP syntax workflow now includes the transaction void helper.
+
+**Verification boundary:** PHP syntax CI and repository migration CI are required after this commit; no local database runtime test has been run. Month-end recognition and the historical backfill runner are still pending. The migration remains unapplied.

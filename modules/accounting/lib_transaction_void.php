@@ -1,5 +1,6 @@
 <?php
 // modules/accounting/lib_transaction_void.php - Atomic transaction void/reversal helper
+require_once __DIR__ . '/lib_sponsorship_payment_accounting.php';
 
 if (!function_exists('ak_void_transaction_journal_atomic')) {
 function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
@@ -129,5 +130,8 @@ function ak_void_transaction_journal_atomic(int $txnId, string $reason): void {
         || round((float)$reversalTotals['total_debit'], 2) <= 0) {
         throw new RuntimeException('قيد الإلغاء للمعاملة ' . $txnId . ' غير متوازن أو غير مكتمل.');
     }
+
+    // Reverse only the residual net effect of append-only sponsorship accounting events.
+    ak_sp_reverse_accounting_events_for_void_prepared($txnId, (string)$original['entry_date']);
 }
 }
