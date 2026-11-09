@@ -24,7 +24,7 @@ $check('initial_candidates_use_bounded_identity_query', str_contains($candidateS
 $check('initial_candidates_do_not_load_payment_history', !str_contains($candidateSource, 'ak_sar_load_report_data'));
 $check('arrears_loader_supports_optional_filters', str_contains($library, 'function ak_sar_get_arrears(string $role, int $userId, ?array $filters = null)'));
 $check('all_authorized_matches_are_not_silently_truncated', !str_contains($library, 'LIMIT 501') && !str_contains($library, 'count($sponsorships) > 100'));
-$check('arrears_loader_supports_explicit_unfiltered_report', str_contains($library, 'function ak_sar_get_arrears(string $role, int $userId, ?array $filters = null)'));
+$check('arrears_loader_accepts_explicit_all_scope', str_contains($library, 'ak_sar_load_report_data($role, $userId, $filters)'));
 $check('complete_summary_is_calculated_before_pagination', str_contains($library, 'function ak_sar_summarize_arrears(array $items)'));
 $check('pending_view_does_not_change_paid_calculation', str_contains($library, 'function ak_sar_filter_arrears_view(array $items, string $view)'));
 $check('page_requires_explicit_all_action_for_unfiltered_report', str_contains($page, "\$allMode = \$searchRequested") && str_contains($page, 'search=1&amp;all=1'));
