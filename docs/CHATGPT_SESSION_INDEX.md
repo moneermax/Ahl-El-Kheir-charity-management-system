@@ -3848,3 +3848,9 @@ Verification boundary: source and regression tests are committed; CI and local P
 
 
 **Follow-up refinement — GM report detail and regression coverage:** The GM arrears view also exposes the same supervisor filter/name column already available to Admin and VGM, so executive-wide results can be reviewed by responsible supervisor. The static contract test asserts all four GM supervisor-detail presentation checks. The runtime harness now explicitly calls the GM suggestion loader as well. Commits: `754af0ee93bd90167aa99562630f9afe330fa9bf`, `da4575af3ff584dcf279844ab9531287fb00b430`, `164c7b4cf3e74c0929a5ee2542500591c8579627`. CI/local execution remains pending.
+
+
+
+## 2026-11-09 — GM sponsorship monitoring cards accepted
+
+The user confirmed both GM dashboard cards appear in the intended **ما يحتاج انتباه الإدارة** section and both report pages open and display data. The redundant “فتح التقرير” text and adjacent arrow were removed from both cards; the complete card remains clickable. A static regression assertion covers the absence of the prompt/arrow. See docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md for the active advances/payment workflow continuation.
