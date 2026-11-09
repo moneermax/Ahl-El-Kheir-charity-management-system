@@ -6347,3 +6347,8 @@ The dashboard scope has been explicitly confirmed by the user: Admin and VGM are
 ## 2026-11-09 — Arrears dashboard CI evidence
 
 GitHub Actions run 42642522337 completed successfully across all six jobs for commit e655f7318e97acb4d0fef3bdf057b29eb3c62bbc. The MariaDB full-schema test proved the summary-only results match the established full arrears calculations for Admin, VGM, and Supervisor scope. CI timing for the Admin summary-only calculation was 297.88 ms; this is not local XAMPP performance evidence. Local role-based browser verification remains open. No database schema or accounting mutation was introduced by this dashboard work.
+
+
+## 2026-11-09 — VGM dashboard navigation adjustment
+
+Two existing VGM navigation destinations—Sponsorship Arrears and Sponsorship Advances—were moved from the VGM sidebar to clickable dashboard action cards. Both cards link to their existing pages. Only the `vice_general_manager` menu entries were removed; Supervisor menu entries and destination-page authorization checks remain intact. Commits: `2b113e2e7b5b7050ddd28e65347b1bc4a52ba708`, `f1b96f190ceae9e36dbf7419029a29dc334bd84b`. This is a source-only navigation change; local lint/browser acceptance is pending. No database or accounting behavior changed.
