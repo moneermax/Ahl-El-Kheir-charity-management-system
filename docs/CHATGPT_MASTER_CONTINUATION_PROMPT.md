@@ -3765,3 +3765,6 @@ GitHub Actions run 42642522337 passed all six jobs on commit e655f7318e97acb4d0f
 ## 2026-11-09 — VGM sponsorship dashboard navigation
 
 The VGM dashboard now has clickable action cards for Sponsorship Arrears and Sponsorship Advances, displayed with the existing actions in two rows of three. Remove neither page from Supervisor navigation: only the VGM sidebar entries were removed. Destination-page role checks and report logic were untouched. Commits: `2b113e2e7b5b7050ddd28e65347b1bc4a52ba708`, `f1b96f190ceae9e36dbf7419029a29dc334bd84b`. Next gate: local PHP lint and browser acceptance of both cards and both role-specific sidebars. Do not rerun accounting/report calculation tests for this navigation-only change absent regression evidence. Details: docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md.
+
+
+**Sidebar scope verification:** follow-up commit `8d04baecca5663fae536e7b39eac49481bf91efe` scopes the removal strictly to `vice_general_manager`; it restores/preserves both links in the Admin menu and preserves both links in the Supervisor menu. Source inspection confirms the final role-specific menus.
