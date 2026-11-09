@@ -138,6 +138,17 @@ if ($adminCount !== $totalSponsorships || $vgmCount !== $totalSponsorships) {
 }
 $check('admin_scope_returns_all_sponsorships', $adminCount === $totalSponsorships);
 $check('vgm_scope_returns_all_sponsorships', $vgmCount === $totalSponsorships);
+$unlinkedChildCount = (int)(dbFetchOne(
+    "SELECT COUNT(*) AS total
+     FROM sponsorships sp
+     LEFT JOIN family_children fc ON fc.id=sp.child_id
+     WHERE fc.id IS NULL"
+)['total'] ?? 0);
+$adminUnlinkedCount = count(array_filter(
+    $adminData['sponsorships'],
+    static fn(array $row): bool => empty($row['family_child_record_id'])
+));
+$check('admin_scope_retains_sponsorships_without_child_links', $adminUnlinkedCount === $unlinkedChildCount);
 
 $supervisorData = ak_sar_load_report_data('supervisor', $supervisorId);
 $supervisorScopeValid = true;
