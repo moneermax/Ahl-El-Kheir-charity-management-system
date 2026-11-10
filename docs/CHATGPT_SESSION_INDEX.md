@@ -3888,3 +3888,18 @@ Local FM login exposed a fatal undefined-function call at `modules/accounting/fm
 ### 2026-11-10 — Sponsorship payment history duplicate-row correction
 
 The payment form history now omits an approved `sponsor_payments` submission when `transaction_id` is populated, leaving its linked transaction as the single displayed record. Pending/returned submissions and approved legacy rows without a transaction link remain visible. Presentation-only; no financial or schema change. Commits: `481af1e3df891bfde610f57625a8267331e603f4`, `97bc6f36f1c765be5e53603571ec697848beb6b3`, `cb70e7a9df4a0db3f7ae8546b55b5c280e89723e`. CI and local acceptance pending; see `docs/SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md`.
+
+
+## 2026-11-10 — Payment-history deduplication root cause and helper correction
+
+The initial page-level exclusion was correct but ineffective because `dbFetchAll()` in `config/database.php` rewrites this known UNION query to normalize incompatible utf8mb4 collations. The replacement query accidentally omitted the caller's `NOT (status='approved' AND transaction_id IS NOT NULL)` predicate, so the approved submission was reintroduced by the helper. This is the confirmed cause of the duplicate row.
+
+Correction on `main`:
+- The helper now detects whether the original query contains the linked-approved exclusion and carries that exact predicate into the normalized `sponsor_payments` branch.
+- The behavior remains conditional: queries that did not request the exclusion are not silently changed.
+- The existing regression contract now checks both the page-level rule and its preservation through the collation-normalization rewrite. The test is already wired into `.github/workflows/php-syntax-check.yml`.
+- No payment, transaction, journal, schema, migration, or existing database record was changed.
+
+Commits: `1b6b7b238f6e0234048308bf574c1b7a3d1daec2`, `3ca3d8f3f832378576c8a082f100016c87621a3b` (helper correction); `3f5ef74ff92b09f901a8b6ce09070718b9ced543`, `9142cc4ca2ce0bf540367169a2a30bf8750863be` (regression contract).
+
+**Verification boundary:** source and contract are committed. GitHub Actions and local PHP/browser verification are pending. After CI passes, pull `main`, lint `config/database.php` and `tools/test_sponsor_payment_history_dedup_contract.php`, run the contract, and reopen the same VGM payment form. The linked September 2026 collection must appear only once as `مرحّل`; pending/returned rows must remain visible. Do not submit, approve, post, edit, or otherwise mutate any payment during acceptance.
