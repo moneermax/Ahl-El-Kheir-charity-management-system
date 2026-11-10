@@ -8,8 +8,7 @@ require_once dirname(__DIR__, 3) . '/modules/accounting/lib_transaction_review.p
 ak_api_require_method('POST');
 $user = ak_api_authenticated_user();
 $userId = (int)$user['id'];
-$allowedRoles = ['financial_manager', 'fm', 'finance', 'admin', 'sudo', 'general_manager'];
-if (!in_array((string)$user['role_code'], $allowedRoles, true)) {
+if (!ak_sponsor_payment_can_review((string)$user['role_code'])) {
     ak_api_json(403, ['ok' => false, 'error' => [
         'code' => 'forbidden',
         'message' => 'Financial review actions are not allowed for this account.',
