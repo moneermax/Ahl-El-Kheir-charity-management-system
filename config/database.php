@@ -52,6 +52,9 @@ function dbFetchAll(string $sql, array $params = []): array
      * this known history query instead of changing table/database
      * collations globally.
      */
+    $linkedApprovedFilter = " AND NOT (status='approved' AND transaction_id IS NOT NULL)";
+    $excludeLinkedApproved = str_contains($sql, $linkedApprovedFilter);
+
     if (
         strpos($sql, "SELECT 'transaction' AS src") !== false &&
         strpos($sql, 'FROM transactions WHERE sponsor_id = ? UNION ALL') !== false &&
@@ -87,7 +90,7 @@ function dbFetchAll(string $sql, array $params = []): array
                        0.00 AS admin_fee_percent,
                        supervisor_id AS created_by
                 FROM sponsor_payments
-                WHERE sponsor_id = ?
+                WHERE sponsor_id = ?' . ($excludeLinkedApproved ? $linkedApprovedFilter : '') . '
                 ORDER BY dt DESC
                 LIMIT 50";
     }
