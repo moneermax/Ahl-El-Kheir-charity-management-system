@@ -54,6 +54,7 @@ jobs:
         run: |
           set -euo pipefail
           files=(
+            config/database.php
             api/v1/_bootstrap.php
             api/v1/auth/login.php
             api/v1/auth/logout.php
