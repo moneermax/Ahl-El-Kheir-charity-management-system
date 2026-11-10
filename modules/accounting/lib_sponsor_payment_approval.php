@@ -3,6 +3,12 @@ declare(strict_types=1);
 /** FM sponsor-payment approval operation. No DDL; caller owns transaction boundaries. */
 require_once __DIR__ . '/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
+if (!function_exists('ak_sponsor_payment_can_review')) {
+function ak_sponsor_payment_can_review(string $role): bool {
+    return in_array($role, ['financial_manager', 'fm', 'finance', 'admin', 'sudo'], true);
+}
+}
+
 if (!function_exists('ak_approve_sponsor_payment')) {
 function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,?callable $newSponsorRecorder=null): array {
     if (!$pdo->inTransaction()) throw new LogicException('اعتماد التحصيل يتطلب معاملة قاعدة بيانات مفتوحة.');
