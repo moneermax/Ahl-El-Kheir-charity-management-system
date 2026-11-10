@@ -242,6 +242,8 @@ jobs:
             modules/accounting/lib_outflows.php
             modules/accounting/fm_review_queue.php
             modules/accounting/lib_sponsor_payment_approval.php
+            tools/test_sponsor_payment_review_role_contract.php
+            modules/accounting/lib_sponsor_payment_approval.php
             modules/ai_assistant/chat.php
             includes/ai_assistant_widget.php
             tools/run_hr_fm_sponsor_payment_approval_integration_tests.php
@@ -269,6 +271,7 @@ jobs:
             exit 1
           fi
           php tools/test_mobile_api_role_normalization.php
+          php tools/test_sponsor_payment_review_role_contract.php
           php tools/test_sponsor_conversion_toast_contract.php
           php tools/test_sponsor_request_conversion_authorization_contract.php
           php tools/test_sponsor_request_navigation_reopen_contract.php
