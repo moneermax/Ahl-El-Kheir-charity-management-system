@@ -22,7 +22,7 @@ $apiAction = $read('api/v1/accounting/fm_review_queue_action.php');
 $mobile = $read('mobile/ahl_el_kheir_app/lib/fm_review_queue_page.dart');
 
 $assert(
-    str_contains($approval, "return in_array($role, ['financial_manager', 'fm', 'finance', 'admin', 'sudo'], true);"),
+    str_contains($approval, "return in_array(\$role, ['financial_manager', 'fm', 'finance', 'admin', 'sudo'], true);"),
     'The shared sponsor-payment review capability must include only the existing FM/Admin roles.'
 );
 $assert(
