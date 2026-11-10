@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/_bootstrap.php';
+require_once dirname(__DIR__, 3) . '/modules/accounting/lib_sponsor_payment_approval.php';
 
 ak_api_require_method('GET');
 $user = ak_api_authenticated_user();
@@ -12,6 +13,8 @@ if (!in_array((string)$user['role_code'], $allowedRoles, true)) {
         'message' => 'Financial review queue access is not allowed for this account.',
     ]]);
 }
+
+$canReviewActions = ak_sponsor_payment_can_review((string)$user['role_code']);
 
 $purposeLabels = [
     'monthly_sponsorship' => 'كفالة شهرية',
@@ -86,4 +89,5 @@ ak_api_json(200, ['ok' => true, 'data' => [
     'pending' => $pending,
     'pending_count' => count($pending),
     'history' => $history,
+    'can_review_actions' => $canReviewActions,
 ]]);
