@@ -565,3 +565,19 @@ Verification boundary: source and regression tests are committed; CI and local P
 ## 2026-11-09 — GM monitoring cards: browser acceptance and presentation refinement
 
 **GM browser acceptance — confirmed by the user:** Both dashboard cards appear in the correct **ما يحتاج انتباه الإدارة** section, and both report pages open and display data. A small presentation refinement removes the redundant “فتح التقرير” label and left-arrow from both cards; the full card remains the link. Regression coverage asserts that this prompt/arrow is absent.
+
+
+## 2026-11-10 — GM sponsor collection review is read-only (source committed; CI pending)
+
+Business authority decision confirmed by the user: General Manager (GM) retains read-only access to pending supervisor collection submissions and recent review history. GM must not approve or return a collection. Existing action authority remains with the current Financial Manager aliases (`financial_manager`, `fm`, `finance`) and Admin aliases (`admin`, `sudo`).
+
+The same server-side capability is now shared by the web queue and mobile API. The web queue keeps GM read access but hides approve/return controls and rejects forged POST actions with HTTP 403. The mobile GET queue returns a server-derived `can_review_actions` flag; the Flutter page hides controls for read-only users. The mobile POST action endpoint independently enforces the shared capability and denies GM. Ordinary transaction review and unrelated GM monitoring/report permissions are unchanged.
+
+Regression coverage:
+- PHP role-boundary contract test wired into the PHP workflow.
+- Flutter widget test verifies pending collections render read-only when the server denies actions.
+- No database/schema/accounting data changes and no runtime DDL.
+
+Source commits: `dc30560`, `ecefa4b`, `6b2d170`, `f317c77`, `3e13d4b`, `9c3081d`, `fc60ea6`, `297d60a`, `03793a8`, `05cfcc3`.
+
+Verification status: GitHub PHP workflow run `42754519832` and Flutter workflow run `42754442088` were queued/in progress at documentation time. Do not claim CI or local runtime acceptance until results are checked. Next verify both workflows, then perform local PHP lint and browser role acceptance (GM read-only; FM/Admin can approve/return). Do not rerun closed sponsorship arrears/advances calculation or accounting backfill tests.
