@@ -243,7 +243,6 @@ jobs:
             modules/accounting/fm_review_queue.php
             modules/accounting/lib_sponsor_payment_approval.php
             tools/test_sponsor_payment_review_role_contract.php
-            modules/accounting/lib_sponsor_payment_approval.php
             modules/ai_assistant/chat.php
             includes/ai_assistant_widget.php
             tools/run_hr_fm_sponsor_payment_approval_integration_tests.php
