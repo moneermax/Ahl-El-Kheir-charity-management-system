@@ -6391,3 +6391,19 @@ Verification boundary: source and regression tests are committed; CI and local P
 
 
 **Follow-up refinement — GM report detail and regression coverage:** The GM arrears view also exposes the same supervisor filter/name column already available to Admin and VGM, so executive-wide results can be reviewed by responsible supervisor. The static contract test asserts all four GM supervisor-detail presentation checks. The runtime harness now explicitly calls the GM suggestion loader as well. Commits: `754af0ee93bd90167aa99562630f9afe330fa9bf`, `da4575af3ff584dcf279844ab9531287fb00b430`, `164c7b4cf3e74c0929a5ee2542500591c8579627`. CI/local execution remains pending.
+
+
+## 2026-11-10 — GM sponsor collection review is read-only (source committed; CI pending)
+
+Business authority decision confirmed by the user: General Manager (GM) retains read-only access to pending supervisor collection submissions and recent review history. GM must not approve or return a collection. Existing action authority remains with the current Financial Manager aliases (`financial_manager`, `fm`, `finance`) and Admin aliases (`admin`, `sudo`).
+
+The same server-side capability is now shared by the web queue and mobile API. The web queue keeps GM read access but hides approve/return controls and rejects forged POST actions with HTTP 403. The mobile GET queue returns a server-derived `can_review_actions` flag; the Flutter page hides controls for read-only users. The mobile POST action endpoint independently enforces the shared capability and denies GM. Ordinary transaction review and unrelated GM monitoring/report permissions are unchanged.
+
+Regression coverage:
+- PHP role-boundary contract test wired into the PHP workflow.
+- Flutter widget test verifies pending collections render read-only when the server denies actions.
+- No database/schema/accounting data changes and no runtime DDL.
+
+Source commits: `dc30560`, `ecefa4b`, `6b2d170`, `f317c77`, `3e13d4b`, `9c3081d`, `fc60ea6`, `297d60a`, `03793a8`, `05cfcc3`.
+
+Verification status: GitHub PHP workflow run `42754519832` and Flutter workflow run `42754442088` were queued/in progress at documentation time. Do not claim CI or local runtime acceptance until results are checked. Next verify both workflows, then perform local PHP lint and browser role acceptance (GM read-only; FM/Admin can approve/return). Do not rerun closed sponsorship arrears/advances calculation or accounting backfill tests.
