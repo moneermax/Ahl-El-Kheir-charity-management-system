@@ -217,3 +217,11 @@ Regression coverage:
 Source commits: `dc30560`, `ecefa4b`, `6b2d170`, `f317c77`, `3e13d4b`, `9c3081d`, `fc60ea6`, `297d60a`, `03793a8`, `05cfcc3`.
 
 Verification status: GitHub PHP workflow run `42754519832` and Flutter workflow run `42754442088` were queued/in progress at documentation time. Do not claim CI or local runtime acceptance until results are checked. Next verify both workflows, then perform local PHP lint and browser role acceptance (GM read-only; FM/Admin can approve/return). Do not rerun closed sponsorship arrears/advances calculation or accounting backfill tests.
+
+
+### 2026-11-10 — Verification update
+
+- PHP workflow run `42754730990` completed **success** across all six jobs. The PHP lint job passed and executed `tools/test_sponsor_payment_review_role_contract.php`, which reported: `PASS | sponsor_payment_review_roles=PASS | web_read_only_guard=PASS | mobile_api_read_only_guard=PASS | mobile_ui_read_only=PASS`. The test was rerun after removing its PHP interpolation warning.
+- Flutter workflow run `42754442088`: Dart analysis passed, and both `fm_review_queue_page_test.dart` tests passed, including the new read-only rendering test. The overall Flutter suite did **not** pass: an unrelated existing `payroll_management_page_test.dart` assertion failed (`Expected: <10>`). No payroll files were changed.
+- Mobile API auth workflow run `42754433616` failed at the unrelated existing assertion that an administrator can create a SQL backup on the disposable database. The preceding endpoint checks passed; this run did not contain a sponsor-review-specific role assertion.
+- **Still required:** local Apache/browser acceptance of GM read-only queue access and confirmation that FM/Admin retain the action controls. No local live-database/API action test is claimed. No schema or accounting data was changed.
