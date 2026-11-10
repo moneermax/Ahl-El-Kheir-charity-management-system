@@ -42,7 +42,6 @@ $headerQuickActions = [
 
 ak_ensure_tables();
 ak_seed_accounts();
-ak_out_ensure_schema();
 
 /* ══════════ PROJECT BUDGET FIRST-LEVEL APPROVAL ══════════ */
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['project_fm_review'])) {
