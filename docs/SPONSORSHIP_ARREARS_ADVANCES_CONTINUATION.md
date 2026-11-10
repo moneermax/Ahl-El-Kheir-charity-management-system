@@ -589,3 +589,24 @@ Verification status: GitHub PHP workflow run `42754519832` and Flutter workflow 
 - Flutter workflow run `42754442088`: Dart analysis passed, and both `fm_review_queue_page_test.dart` tests passed, including the new read-only rendering test. The overall Flutter suite did **not** pass: an unrelated existing `payroll_management_page_test.dart` assertion failed (`Expected: <10>`). No payroll files were changed.
 - Mobile API auth workflow run `42754433616` failed at the unrelated existing assertion that an administrator can create a SQL backup on the disposable database. The preceding endpoint checks passed; this run did not contain a sponsor-review-specific role assertion.
 - **Still required:** local Apache/browser acceptance of GM read-only queue access and confirmation that FM/Admin retain the action controls. No local live-database/API action test is claimed. No schema or accounting data was changed.
+
+
+## 2026-11-10 — Sponsorship payment history duplicate-row correction (source committed; local acceptance pending)
+
+The payment form history query in `modules/transactions/create.php` previously used `UNION ALL` to show both `transactions` and `sponsor_payments` without suppressing an approved submission after FM had linked it to its posted transaction. This made one approved collection appear twice in the history even though the accounting transaction and journal were created once.
+
+Correction on `main`:
+- The `sponsor_payments` history branch now excludes only rows where `status='approved'` and `transaction_id IS NOT NULL`.
+- The linked posted transaction remains visible through the `transactions` branch.
+- Pending and returned submissions remain visible.
+- Approved legacy submissions without a transaction link remain visible rather than being silently hidden.
+- No payment data, transaction, journal, schema, migration, or approval behavior changed.
+
+Regression contract: `tools/test_sponsor_payment_history_dedup_contract.php`, wired into `.github/workflows/php-syntax-check.yml`.
+
+Commits:
+- `481af1e3df891bfde610f57625a8267331e603f4` — history query correction.
+- `97bc6f36f1c765be5e53603571ec697848beb6b3` — regression contract.
+- `cb70e7a9df4a0db3f7ae8546b55b5c280e89723e` — CI wiring.
+
+**Verification boundary:** source and regression contract are committed; CI and local runtime/browser verification are not yet claimed. After CI passes, pull `main`, lint `modules/transactions/create.php` and `tools/test_sponsor_payment_history_dedup_contract.php`, run the new contract, and reopen the same sponsorship payment form. Confirm the 15,000 approved collection appears once as its posted transaction, while pending and returned submissions (if present) remain visible. Do not submit a payment or change financial data.
