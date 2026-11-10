@@ -15,6 +15,15 @@ $assert = static function (bool $condition, string $message): void {
     }
 };
 
+require_once $root . '/modules/accounting/lib_sponsor_payment_approval.php';
+
+foreach (['financial_manager', 'fm', 'finance', 'admin', 'sudo'] as $role) {
+    $assert(ak_sponsor_payment_can_review($role), 'Expected review authority for ' . $role . '.');
+}
+foreach (['general_manager', 'gm', 'supervisor', 'accountant'] as $role) {
+    $assert(!ak_sponsor_payment_can_review($role), 'Unexpected review authority for ' . $role . '.');
+}
+
 $approval = $read('modules/accounting/lib_sponsor_payment_approval.php');
 $web = $read('modules/accounting/fm_review_queue.php');
 $apiRead = $read('api/v1/accounting/fm_review_queue.php');
