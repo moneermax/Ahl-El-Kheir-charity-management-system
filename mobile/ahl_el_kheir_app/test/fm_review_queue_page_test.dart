@@ -14,6 +14,7 @@ void main() {
         child: FmReviewQueuePage(
           english: false,
           loadQueue: () async => {
+            'can_review_actions': true,
             'pending': [
               {
                 'id': 41,
@@ -78,4 +79,40 @@ void main() {
     expect(find.textContaining('تحصيل #40'), findsOneWidget);
     expect(find.textContaining('يرجى إرفاق الإيصال'), findsOneWidget);
   });
+
+  testWidgets('renders pending collections read-only when the server denies review actions', (tester) async {
+    await tester.pumpWidget(MaterialApp(
+      home: Directionality(
+        textDirection: TextDirection.rtl,
+        child: FmReviewQueuePage(
+          english: true,
+          loadQueue: () async => {
+            'can_review_actions': false,
+            'pending': [
+              {
+                'id': 52,
+                'purpose_label': 'Monthly sponsorship',
+                'amount': 900.0,
+                'currency_code': 'SDG',
+                'supervisor_name': 'Supervisor',
+                'status': 'pending',
+              },
+            ],
+            'history': [],
+          },
+          submitAction: (id, action, note) async {
+            fail('Read-only queue must not submit review actions.');
+          },
+        ),
+      ),
+    ));
+
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Payment #52'), findsOneWidget);
+    expect(find.text('Read-only — awaiting financial review.'), findsOneWidget);
+    expect(find.byType(TextField), findsNothing);
+    expect(find.text('Approve and post'), findsNothing);
+    expect(find.text('Return'), findsNothing);
+  });
+
 }
