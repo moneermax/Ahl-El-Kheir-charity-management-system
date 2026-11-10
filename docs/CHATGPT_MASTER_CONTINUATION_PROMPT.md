@@ -3855,3 +3855,13 @@ Correction on `main`:
 Commits: `1b6b7b238f6e0234048308bf574c1b7a3d1daec2`, `3ca3d8f3f832378576c8a082f100016c87621a3b` (helper correction); `3f5ef74ff92b09f901a8b6ce09070718b9ced543`, `9142cc4ca2ce0bf540367169a2a30bf8750863be` (regression contract).
 
 **Verification boundary:** source and contract are committed. GitHub Actions and local PHP/browser verification are pending. After CI passes, pull `main`, lint `config/database.php` and `tools/test_sponsor_payment_history_dedup_contract.php`, run the contract, and reopen the same VGM payment form. The linked September 2026 collection must appear only once as `مرحّل`; pending/returned rows must remain visible. Do not submit, approve, post, edit, or otherwise mutate any payment during acceptance.
+
+
+### 2026-11-10 — Focused CI verification update
+
+The PHP lint job in GitHub Actions run `42864053461` passed after the final contract-test correction. Its log confirms:
+- `config/database.php`: no syntax errors;
+- `tools/test_sponsor_payment_history_dedup_contract.php`: no syntax errors;
+- regression contract: `PASS | linked_approved_submission_hidden=PASS | transaction_history_preserved=PASS`.
+
+The workflow's remaining jobs were still running at this checkpoint; overall workflow success is not yet claimed. The workflow was also updated to lint `config/database.php` explicitly (commit `f7d7e945bb4cef41ce893ad2d607f4b6c1d01a64`). Local XAMPP/browser acceptance remains required.
