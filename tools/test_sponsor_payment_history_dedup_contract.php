@@ -32,7 +32,7 @@ $assert(
 $assert(
     str_contains($helper, '$excludeLinkedApproved = str_contains($sql, $linkedApprovedFilter);')
         && str_contains($helper, 'WHERE sponsor_id = ?"')
-        && str_contains($helper, ". ($excludeLinkedApproved ? $linkedApprovedFilter : '') ."),
+        && str_contains($helper, '$excludeLinkedApproved ? $linkedApprovedFilter :'),
     'The collation-normalized history query must preserve the caller exclusion for linked approved submissions.'
 );
 
