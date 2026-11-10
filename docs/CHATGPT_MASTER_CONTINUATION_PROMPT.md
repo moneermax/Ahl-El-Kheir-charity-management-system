@@ -3833,3 +3833,10 @@ Verification status: GitHub PHP workflow run `42754519832` and Flutter workflow 
 ## 2026-11-10 — FM dashboard stale outflow initializer removed
 
 Local FM login exposed a fatal undefined-function call at `modules/accounting/fm_dashboard.php:45`: `ak_out_ensure_schema()`. Source inspection confirmed `modules/accounting/lib_outflows.php` does not define this function and explicitly states that outflow schema is owned by `database/migrations/2026-10-28_accounting_outflows_schema_cleanup.sql`. The migration defines/normalizes the outflow tables and columns; restoring a request-time schema initializer would contradict the completed PHP-12 runtime-DDL cleanup. Commit `3a4817ed366665ecdf509826cdd35cdb749fd9e0` removes only the obsolete call. No schema, data, role, or accounting behavior changed. PHP lint and local FM browser acceptance remain pending; do not call this fixed at runtime until the user confirms the FM dashboard loads.
+
+
+## 2026-11-10 — Sponsorship payment history duplicate-row correction
+
+The payment form history query now suppresses approved `sponsor_payments` rows with a populated `transaction_id`, because the linked `transactions` row is the canonical posted history entry. Pending/returned submissions and approved rows without a transaction link remain visible. No accounting records or schema changed. Source, contract test and CI wiring commits: `481af1e3df891bfde610f57625a8267331e603f4`, `97bc6f36f1c765be5e53603571ec697848beb6b3`, `cb70e7a9df4a0db3f7ae8546b55b5c280e89723e`.
+
+Next: inspect CI; after it passes, user pulls main and runs PHP lint on `modules/transactions/create.php` and `tools/test_sponsor_payment_history_dedup_contract.php`, executes the new contract, and checks the same sponsorship form. The 15,000 approved collection must appear once as the posted transaction; pending/returned submissions must remain visible. No payment submission or financial mutation during acceptance.
