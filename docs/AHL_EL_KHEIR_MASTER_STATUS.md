@@ -6187,3 +6187,31 @@ The workflow's remaining jobs were still running at this checkpoint; overall wor
 GitHub Actions run `42864053461` completed **success** across all six jobs: `php-lint`, `migration-full-schema`, `migration-mariadb-10-4`, `sponsor-request-migration`, `hr-job-description-migrations`, and `rescheduling-service-tests`. The focused PHP job passed the updated payment-history regression contract and explicitly linted `config/database.php`. This closes repository CI verification only; local XAMPP/browser acceptance is still pending.
 
 Run: https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/42864053461
+
+
+## 2026-11-10 — GM/FM sponsor-payment review acceptance CLOSED; Advances workflow continues
+
+The earlier local browser acceptance was already completed in the preceding session; it was not necessary to repeat it in this session.
+
+Confirmed local acceptance:
+- GM login and dashboard/report pages rendered successfully.
+- GM sponsor-collection review queue showed pending submissions and recent history as applicable, with no Approve/Return actions. The queue remained read-only for GM.
+- FM login/dashboard rendered after commit `3a4817ed366665ecdf509826cdd35cdb749fd9e0` removed the obsolete `ak_out_ensure_schema()` call from `modules/accounting/fm_dashboard.php`. This was a stale runtime initializer; outflow schema is owned by migration `2026-10-28_accounting_outflows_schema_cleanup.sql`.
+- FM review queue retained Approve/Return controls. Role-boundary acceptance did not execute an approval or return action.
+- Do not repeat these browser checks or role-contract tests without concrete regression evidence.
+
+CI boundary remains accurately recorded: PHP workflow `42754730990` passed all six jobs and its sponsor-payment role contract passed. Both Fina review-queue Flutter widget tests passed, but the full Flutter suite had an unrelated existing payroll assertion failure. The mobile API auth workflow had an unrelated SQL-backup assertion failure. These unrelated failures are not sponsor-review regressions.
+
+## 2026-11-10 — Sponsorship Advances read-only acceptance update
+
+User-confirmed GM Advances report acceptance:
+- The page loaded without errors and displayed three records.
+- One future allocation: `2027-07-01`, `11,000` allocated/committed.
+- Two excess balances of `5,000` each remained unallocated.
+- No pending or returned future-review items were visible.
+- VGM access to the report was also confirmed and showed the same three records.
+- The FM review queue at that checkpoint showed zero pending submissions; approved history included sponsor `النور حامد محمود`, amount `15,000`, dated `2026-08-26`.
+
+**Current next acceptance step:** inspect the VGM-accessible sponsorship details page and verify whether the **Register payment** action is present/available in the intended role context. Do not submit a payment during this inspection. Then continue the already-planned Advances → payment submission → FM approval/posting workflow only after the relevant UI and role boundaries are established.
+
+The completed GM/FM review-queue acceptance, FM dashboard rendering, arrears/advances calculations, and payment-history deduplication are closed. Do not reopen them absent concrete regression evidence.
