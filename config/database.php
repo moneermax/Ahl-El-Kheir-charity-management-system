@@ -90,7 +90,8 @@ function dbFetchAll(string $sql, array $params = []): array
                        0.00 AS admin_fee_percent,
                        supervisor_id AS created_by
                 FROM sponsor_payments
-                WHERE sponsor_id = ?' . ($excludeLinkedApproved ? $linkedApprovedFilter : '') . '
+                WHERE sponsor_id = ?"
+                . ($excludeLinkedApproved ? $linkedApprovedFilter : '') . "
                 ORDER BY dt DESC
                 LIMIT 50";
     }
