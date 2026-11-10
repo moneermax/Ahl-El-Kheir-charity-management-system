@@ -34,7 +34,7 @@ $assert(
     'Web POST actions must be denied to read-only roles and action controls must be hidden.'
 );
 $assert(
-    str_contains($apiRead, "'general_manager'") && str_contains($apiRead, "'can_review_actions' => $canReviewActions"),
+    str_contains($apiRead, "'general_manager'") && str_contains($apiRead, "'can_review_actions' => \$canReviewActions"),
     'Mobile queue GET must preserve GM read access and return the server-derived action capability.'
 );
 $assert(
