@@ -19,6 +19,7 @@ class FmReviewQueuePage extends StatefulWidget {
 class _FmReviewQueuePageState extends State<FmReviewQueuePage> with SingleTickerProviderStateMixin {
   late final TabController tabs;
   bool loading = true;
+  bool canReviewActions = false;
   String? error;
   List<Map<String, dynamic>> pending = [];
   List<Map<String, dynamic>> history = [];
@@ -46,7 +47,11 @@ class _FmReviewQueuePageState extends State<FmReviewQueuePage> with SingleTicker
           ? value.whereType<Map>().map((item) => Map<String, dynamic>.from(item)).toList()
           : <Map<String, dynamic>>[];
       if (!mounted) return;
-      setState(() { pending = parse(data['pending']); history = parse(data['history']); });
+      setState(() {
+          pending = parse(data['pending']);
+          history = parse(data['history']);
+          canReviewActions = data['can_review_actions'] == true;
+        });
     } catch (e) { if (mounted) setState(() => error = e.toString()); }
     finally { if (mounted) setState(() => loading = false); }
   }
@@ -126,7 +131,7 @@ class _FmReviewQueuePageState extends State<FmReviewQueuePage> with SingleTicker
         Text(amount.toStringAsFixed(2) + ' ' + (item['currency_code']?.toString() ?? 'SDG'),
           style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
         if (lines.isNotEmpty) Padding(padding: const EdgeInsets.only(top: 7), child: Text(lines.join('\n'))),
-        if (!past) ...[
+        if (!past && canReviewActions) ...[
           const SizedBox(height: 12),
           TextField(
             controller: noteController(id),
@@ -153,6 +158,11 @@ class _FmReviewQueuePageState extends State<FmReviewQueuePage> with SingleTicker
           ]),
           if (busy) const Padding(padding: EdgeInsets.only(top: 8), child: LinearProgressIndicator()),
         ],
+        if (!past && !canReviewActions)
+          Padding(
+            padding: const EdgeInsets.only(top: 12),
+            child: Text(en ? 'Read-only — awaiting financial review.' : 'عرض فقط — بانتظار المراجعة المالية.'),
+          ),
       ],
     )));
   }
