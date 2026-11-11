@@ -191,3 +191,9 @@ Sponsor Trees:
 ## 2026-11-11 — Ordinary transaction VGM return/correction acceptance CLOSED
 
 Fresh VGM-created ordinary transaction TR-000024 passed local browser/database acceptance through FM return, creator correction, resubmission, FM approval, and journal posting. No journal existed before approval; exactly one posted journal JE-000054 was created afterward with two lines: debit account 1100 Cash 1,000.00 SDG and credit account 4300 General Donations 1,000.00 SDG. Total debit and credit both equal 1,000.00 SDG. See ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md for evidence and the explicitly untested sub-branches.
+
+## 2026-11-11 — VGM sponsorship payment entry and monthly service-fee plan
+
+- `SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` is the active, ordered work plan for the VGM sponsorship advance-payment workflow, compact payment-detail table redesign, per-sponsorship monthly fixed service-fee agreement, immutable submission snapshot, and FM/accounting acceptance.
+- The plan records the clarified additive rule (monthly sponsorship amount + agreed fixed monthly service fee), the accounting split, scope boundaries, staged acceptance gates, test matrix, and unresolved business decisions. It is a plan only: implementation and local runtime verification have not started.
+- Immediate next step: read the plan, revalidate current `main` and inspect the VGM-accessible sponsorship detail page/Register payment action without submitting or changing financial data.
