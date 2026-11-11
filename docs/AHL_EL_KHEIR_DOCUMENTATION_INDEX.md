@@ -182,3 +182,8 @@ Sponsor Trees:
 ## Sponsorship arrears and advances
 
 - SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md — sponsorship allocation/reporting rules, two-month arrears eligibility, advances, pending-duplicate protection, full-result arrears dashboard, test evidence and local acceptance gates.
+
+
+## 2026-11-11 — Ordinary transaction FM review / VGM return correction
+
+- `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md` — source findings, VGM creator authorization correction, and the pending local Return → correction → resubmission → FM approval acceptance sequence.
