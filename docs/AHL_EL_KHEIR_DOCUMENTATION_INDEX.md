@@ -187,3 +187,7 @@ Sponsor Trees:
 ## 2026-11-11 — Ordinary transaction FM review / VGM return correction
 
 - `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md` — source findings, VGM creator authorization correction, and the pending local Return → correction → resubmission → FM approval acceptance sequence.
+
+## 2026-11-11 — Ordinary transaction VGM return/correction acceptance CLOSED
+
+Fresh VGM-created ordinary transaction TR-000024 passed local browser/database acceptance through FM return, creator correction, resubmission, FM approval, and journal posting. No journal existed before approval; exactly one posted journal JE-000054 was created afterward with two lines: debit account 1100 Cash 1,000.00 SDG and credit account 4300 General Donations 1,000.00 SDG. Total debit and credit both equal 1,000.00 SDG. See ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md for evidence and the explicitly untested sub-branches.
