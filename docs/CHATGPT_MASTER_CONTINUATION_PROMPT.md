@@ -3900,3 +3900,10 @@ User-confirmed GM Advances report acceptance:
 **Current next acceptance step:** inspect the VGM-accessible sponsorship details page and verify whether the **Register payment** action is present/available in the intended role context. Do not submit a payment during this inspection. Then continue the already-planned Advances → payment submission → FM approval/posting workflow only after the relevant UI and role boundaries are established.
 
 The completed GM/FM review-queue acceptance, FM dashboard rendering, arrears/advances calculations, and payment-history deduplication are closed. Do not reopen them absent concrete regression evidence.
+
+
+## 2026-11-11 — Active continuation: ordinary transaction VGM Return/resubmission runtime acceptance
+
+Read `docs/ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`. Source correction is committed on `main` in `0b220ec3fa4980246bde41049ed62c874191a3ea` and `e4251346f47687d7c8482c1fdb5b58a93c69526c`. The fix extends returned-transaction creator actions/editor access to VGM while preserving creator ownership and FM/Admin review boundaries. The editor's return URL is restricted to known transaction-list filters; stale missing-element JS access was removed. No DB/schema/accounting logic changed.
+
+**Next exact gate:** user pulls main, runs PHP 8.2 lint for `modules/transactions/index.php` and `modules/transactions/edit_returned.php`, then executes the fresh VGM → FM Return → VGM correction/resubmission → FM pending review sequence in the continuation document. Confirm no journal before approval and exactly one balanced journal after approval. Do not reuse `TR-000023`; it is already posted and fully allocated. Do not repeat unrelated closed accounting, payroll, attendance, waiver, or i18n tests.
