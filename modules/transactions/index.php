@@ -14,7 +14,7 @@ if (!in_array($role, ['admin','vice_general_manager','general_manager','supervis
 $canVoid = in_array($role, ['admin','financial_manager'], true);
 $canReviewPending = in_array($role, ['admin','financial_manager'], true);
 $canViewJournal = in_array($role, ['admin','vice_general_manager','general_manager','financial_manager'], true);
-$canEditReturned = in_array($role, ['admin','accountant_staff'], true);
+$canEditReturned = in_array($role, ['admin','accountant_staff','vice_general_manager'], true);
 
 // Posted transaction void workflow. The accounting reversal is atomic and is
 // completed before the transaction itself is marked voided.
