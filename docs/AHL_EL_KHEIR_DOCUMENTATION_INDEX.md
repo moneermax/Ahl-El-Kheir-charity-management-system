@@ -186,7 +186,7 @@ Sponsor Trees:
 
 ## 2026-11-11 — Ordinary transaction FM review / VGM return correction
 
-- `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md` — source findings, VGM creator authorization correction, and the pending local Return → correction → resubmission → FM approval acceptance sequence.
+- `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md` — source findings, VGM creator authorization correction, and the now-closed local Return → correction → resubmission → FM approval/posting acceptance. Creator cancellation remains a separate untested branch.
 
 ## 2026-11-11 — Ordinary transaction VGM return/correction acceptance CLOSED
 
