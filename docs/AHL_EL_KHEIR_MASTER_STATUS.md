@@ -6228,7 +6228,7 @@ Implemented on `main`:
 
 Commits: `0b220ec3fa4980246bde41049ed62c874191a3ea`, `e4251346f47687d7c8482c1fdb5b58a93c69526c`.
 
-**Runtime status: PENDING local PHP lint and browser/database acceptance.** Use a fresh test transaction. Do not reuse `TR-000023`, which is already posted and fully allocated to `SH-003557` for November 2026. Exact steps are in `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`.
+**Runtime status: CLOSED.** The fresh-transaction acceptance passed as documented in `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`; evidence is recorded in the 2026-11-11 RUNTIME VERIFIED / CLOSED entry below. Preserve `TR-000023` and `TR-000024`; neither is to be reused.
 
 ## 2026-11-11 — Ordinary transaction VGM Return → correction → resubmission → FM posting: RUNTIME VERIFIED / CLOSED
 
