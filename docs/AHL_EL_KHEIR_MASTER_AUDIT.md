@@ -6499,7 +6499,7 @@ Source correction committed on `main`:
 
 VGM can now access the standalone editor for their own returned transactions and see the corresponding creator actions in Transaction History. FM/Admin review authority, posted-transaction immutability/void authority, and accounting posting logic were not broadened. No schema or financial data changed.
 
-**Verification boundary: SOURCE FIX ONLY / LOCAL RUNTIME PENDING.** Do not claim VGM Return/resubmission is runtime-proven until the fresh-transaction acceptance sequence in `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md` passes. The already-posted `TR-000023` is protected evidence and must not be reused for this test.
+**Verification boundary: RUNTIME VERIFIED / CLOSED.** The fresh-transaction acceptance passed with `TR-000024`; full lifecycle, audit, pre-approval journal absence, and final balanced account lines are recorded in the 2026-11-11 closure entry below. Preserve both `TR-000023` and `TR-000024` as evidence.
 
 ## 2026-11-11 — Ordinary transaction VGM Return → correction → resubmission → FM posting: RUNTIME VERIFIED / CLOSED
 
