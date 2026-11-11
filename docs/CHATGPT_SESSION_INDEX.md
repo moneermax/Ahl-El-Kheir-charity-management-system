@@ -3948,3 +3948,8 @@ User-confirmed GM Advances report acceptance:
 **Current next acceptance step:** inspect the VGM-accessible sponsorship details page and verify whether the **Register payment** action is present/available in the intended role context. Do not submit a payment during this inspection. Then continue the already-planned Advances → payment submission → FM approval/posting workflow only after the relevant UI and role boundaries are established.
 
 The completed GM/FM review-queue acceptance, FM dashboard rendering, arrears/advances calculations, and payment-history deduplication are closed. Do not reopen them absent concrete regression evidence.
+
+
+## 2026-11-11 — Active ordinary transaction VGM Return/resubmission gate
+
+See `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`. The VGM returned-transaction access mismatch is source-fixed on `main` (commits `0b220ec3fa4980246bde41049ed62c874191a3ea`, `e4251346f47687d7c8482c1fdb5b58a93c69526c`). Local PHP lint and runtime acceptance remain pending. Use a fresh test transaction; do not reuse posted/allocation evidence `TR-000023`.
