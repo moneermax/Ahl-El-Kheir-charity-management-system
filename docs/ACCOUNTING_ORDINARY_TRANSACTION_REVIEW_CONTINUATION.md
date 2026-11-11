@@ -26,7 +26,7 @@ Commits on `main`:
 
 The edit page continues to enforce `status='returned'` and `created_by=current user`. The list's FM approval/return controls, posted-transaction void controls, and journal permissions were not broadened. No schema, migration, journal, allocation, or accounting-policy change was made.
 
-## Runtime acceptance — pending
+## Planned runtime acceptance checklist (executed; results recorded below)
 
 The earlier successful transaction `TR-000023` is already posted and fully allocated to `SH-003557` for November 2026. **Do not reuse, return, or modify it.** Use a new disposable test transaction.
 
@@ -43,7 +43,7 @@ Recommended focused scenario: create a small `general_donation` transaction as V
 7. As FM, confirm the resubmitted transaction appears in the pending queue. Approve only after the preceding checks pass; then confirm `posted`, exactly one balanced journal, and no duplicate posting.
 8. Keep creator cancellation as a separate creator action. If testing it, use a second fresh returned test transaction and verify `cancelled`, audit evidence, and no journal.
 
-Do not mark this workflow runtime-verified until the local browser/database evidence is reported. If any step fails, stop and inspect the exact source/database state before changing code.
+The executed path and results are recorded in the Runtime acceptance — PASS / CLOSED section below. The separate creator-cancellation branch and independent Transaction History action-visibility check remain untested; do not represent them as proven.
 
 ## Runtime acceptance — PASS / CLOSED (2026-11-11)
 
