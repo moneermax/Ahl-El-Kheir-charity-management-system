@@ -1,6 +1,6 @@
 # Ordinary Transaction FM Review — VGM Return/Resubmission Continuation
 
-**Status (2026-11-11): SOURCE FIX COMMITTED / LOCAL RUNTIME VERIFICATION PENDING**
+**Status (2026-11-11): SOURCE FIX COMMITTED / MAIN RETURN-RESUBMISSION-POSTING PATH RUNTIME VERIFIED / CLOSED**
 
 ## Scope
 
@@ -44,3 +44,19 @@ Recommended focused scenario: create a small `general_donation` transaction as V
 8. Keep creator cancellation as a separate creator action. If testing it, use a second fresh returned test transaction and verify `cancelled`, audit evidence, and no journal.
 
 Do not mark this workflow runtime-verified until the local browser/database evidence is reported. If any step fails, stop and inspect the exact source/database state before changing code.
+
+## Runtime acceptance — PASS / CLOSED (2026-11-11)
+
+Fresh test transaction TR-000024 (ID 53), created by VGM user ID 3 as a general_donation for 1,000.00 SDG, passed the complete executed path:
+
+1. VGM submitted; audit event SUBMIT_FM (audit row 2587, 19:40:08).
+2. FM returned with required reason «يرجى تصحيح وصف العملية وإعادة الإرسال بعد استكمال بيانات التوضيح»; audit event FM_RETURN (row 2588, 19:42:06).
+3. Original VGM creator opened the returned editor from the notification, corrected the description, and resubmitted. UI confirmation: «تم تعديل الدفعة وإعادة إرسالها للمدير المالي للمراجعة.» Audit event RESUBMIT_FM (row 2589, 19:43:42).
+4. After resubmission, status was pending_fm_review; FM reviewer/time/reason fields were NULL; resubmitted_at was populated. No journal_entries row existed for reference_id=53 before approval.
+5. FM approved at 19:52:42. UI confirmation: «تم اعتماد الدفعة وترحيل القيد المحاسبي بنجاح.» Transaction status became posted; FM reviewer was user ID 29; FM pending queue returned to zero.
+6. Exactly one posted journal exists: JE-000054, ID 210, reference_type='transaction', reference_id=53. It has exactly two lines and balances: debit 1,000.00 / credit 1,000.00 / difference 0.00.
+7. Account directions: 1100 «الصندوق (نقدي) / Cash» (asset) debit 1,000.00; 4300 «التبرعات العامة / General Donations» (revenue) credit 1,000.00.
+
+PHP 8.2 syntax checks for modules/transactions/index.php and modules/transactions/edit_returned.php passed before runtime acceptance. No schema, migration, accounting-policy, journal, or allocation code changed.
+
+Disposition: the VGM creator's FM-returned ordinary-transaction correction/resubmission and subsequent FM approval/posting path is runtime-verified and closed. Preserve TR-000024 and JE-000054 as test evidence; do not modify or reuse them. The separate creator-cancellation branch and an independent runtime check of Transaction History action visibility were not executed and are not claimed as proven. Do not rerun this acceptance without concrete regression evidence.
