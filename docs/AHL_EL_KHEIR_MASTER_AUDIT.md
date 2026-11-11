@@ -6500,3 +6500,23 @@ Source correction committed on `main`:
 VGM can now access the standalone editor for their own returned transactions and see the corresponding creator actions in Transaction History. FM/Admin review authority, posted-transaction immutability/void authority, and accounting posting logic were not broadened. No schema or financial data changed.
 
 **Verification boundary: SOURCE FIX ONLY / LOCAL RUNTIME PENDING.** Do not claim VGM Return/resubmission is runtime-proven until the fresh-transaction acceptance sequence in `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md` passes. The already-posted `TR-000023` is protected evidence and must not be reused for this test.
+
+## 2026-11-11 — Ordinary transaction VGM Return → correction → resubmission → FM posting: RUNTIME VERIFIED / CLOSED
+
+Local Linux/XAMPP + MariaDB browser/database acceptance passed using fresh transaction TR-000024 (transaction ID 53), created by VGM user ID 3 as a general_donation for 1,000.00 SDG.
+
+Verified lifecycle and audit trail:
+- Initial submission: SUBMIT_FM, audit row 2587 at 19:40:08.
+- FM returned the transaction with a required reason: FM_RETURN, audit row 2588 at 19:42:06. Saved reason: «يرجى تصحيح وصف العملية وإعادة الإرسال بعد استكمال بيانات التوضيح».
+- The original VGM creator opened the returned-transaction editor from the return notification, corrected the transaction description, and resubmitted successfully. UI confirmation: «تم تعديل الدفعة وإعادة إرسالها للمدير المالي للمراجعة.»
+- Resubmission: RESUBMIT_FM, audit row 2589 at 19:43:42. Status returned to pending_fm_review; fm_reviewed_by, fm_reviewed_at, and fm_review_reason were NULL; resubmitted_at was populated.
+- Before FM approval, journal_entries for reference_id = 53 returned zero rows.
+- FM approved at 19:52:42. UI confirmed «تم اعتماد الدفعة وترحيل القيد المحاسبي بنجاح.» and the FM pending queue returned to zero.
+- Transaction ID 53 is now posted, reviewed by FM user ID 29 at 19:52:42.
+- Exactly one journal entry exists: JE-000054, journal ID 210, reference_type='transaction', reference_id=53, status posted.
+- The journal has exactly two lines and balances: debit 1,000.00 / credit 1,000.00 / difference 0.00.
+- Account identities/directions: 1100 — «الصندوق (نقدي) / Cash», asset, debit 1,000.00; 4300 — «التبرعات العامة / General Donations», revenue, credit 1,000.00.
+
+Local PHP 8.2 syntax checks for modules/transactions/index.php and modules/transactions/edit_returned.php passed before browser/database acceptance. No schema, migration, accounting-policy, journal, or allocation code was changed for this source fix or acceptance.
+
+Acceptance disposition: CLOSED for the VGM creator's FM-returned ordinary-transaction correction/resubmission and subsequent FM approval/posting path. Preserve TR-000024 / JE-000054 as test evidence; do not edit, void, return, or reuse them. The separate creator-cancellation branch and an independent runtime check of Transaction History action visibility were not part of this executed scenario and are not claimed as runtime-proven. Do not rerun this acceptance without concrete regression evidence.
