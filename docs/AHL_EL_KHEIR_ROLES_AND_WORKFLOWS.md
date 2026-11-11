@@ -225,3 +225,8 @@ Verification status: GitHub PHP workflow run `42754519832` and Flutter workflow 
 - Flutter workflow run `42754442088`: Dart analysis passed, and both `fm_review_queue_page_test.dart` tests passed, including the new read-only rendering test. The overall Flutter suite did **not** pass: an unrelated existing `payroll_management_page_test.dart` assertion failed (`Expected: <10>`). No payroll files were changed.
 - Mobile API auth workflow run `42754433616` failed at the unrelated existing assertion that an administrator can create a SQL backup on the disposable database. The preceding endpoint checks passed; this run did not contain a sponsor-review-specific role assertion.
 - **Still required:** local Apache/browser acceptance of GM read-only queue access and confirmation that FM/Admin retain the action controls. No local live-database/API action test is claimed. No schema or accounting data was changed.
+
+
+## 2026-11-11 — VGM ordinary transaction return/correction boundary
+
+VGM is an authorized creator of ordinary `transactions` (distinct from the Supervisor `sponsor_payments` workflow). When FM returns an ordinary transaction, its original creator may edit/resubmit it or cancel it under the existing creator-owned returned-transaction rules. The server must continue to require `status='returned'` and `created_by=current user`. VGM does not gain FM review/approval authority, posted-transaction void authority, or journal mutation access. The standalone editor and transaction-list creator actions now include VGM; local runtime acceptance remains pending. See `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`.
