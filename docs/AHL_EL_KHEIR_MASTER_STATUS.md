@@ -6215,3 +6215,17 @@ User-confirmed GM Advances report acceptance:
 **Current next acceptance step:** inspect the VGM-accessible sponsorship details page and verify whether the **Register payment** action is present/available in the intended role context. Do not submit a payment during this inspection. Then continue the already-planned Advances → payment submission → FM approval/posting workflow only after the relevant UI and role boundaries are established.
 
 The completed GM/FM review-queue acceptance, FM dashboard rendering, arrears/advances calculations, and payment-history deduplication are closed. Do not reopen them absent concrete regression evidence.
+
+
+## 2026-11-11 — Ordinary transaction VGM Return correction: SOURCE FIX COMMITTED / RUNTIME PENDING
+
+A source-level authorization mismatch was found in the ordinary `transactions` workflow: VGM could create an ordinary transaction, and FM could return it, but the transaction-list returned-action gate and the linked standalone correction page excluded VGM. The creator-ownership helper already enforces returned state plus `created_by=current user`; the separate `create.php` correction flow also supports creator-owned ordinary transactions.
+
+Implemented on `main`:
+- `modules/transactions/edit_returned.php`: allow VGM while preserving creator/state checks; safely preserve only whitelisted list filters in the return URL; remove a stale JavaScript reference to a missing element.
+- `modules/transactions/index.php`: expose returned creator actions to VGM; FM review and posted-void capabilities are unchanged.
+- No schema/migration, accounting-policy, journal, or allocation changes.
+
+Commits: `0b220ec3fa4980246bde41049ed62c874191a3ea`, `e4251346f47687d7c8482c1fdb5b58a93c69526c`.
+
+**Runtime status: PENDING local PHP lint and browser/database acceptance.** Use a fresh test transaction. Do not reuse `TR-000023`, which is already posted and fully allocated to `SH-003557` for November 2026. Exact steps are in `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`.
