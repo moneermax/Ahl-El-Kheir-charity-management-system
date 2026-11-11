@@ -6487,3 +6487,16 @@ User-confirmed GM Advances report acceptance:
 **Current next acceptance step:** inspect the VGM-accessible sponsorship details page and verify whether the **Register payment** action is present/available in the intended role context. Do not submit a payment during this inspection. Then continue the already-planned Advances → payment submission → FM approval/posting workflow only after the relevant UI and role boundaries are established.
 
 The completed GM/FM review-queue acceptance, FM dashboard rendering, arrears/advances calculations, and payment-history deduplication are closed. Do not reopen them absent concrete regression evidence.
+
+
+## 2026-11-11 — Ordinary transaction VGM return/correction authorization extension
+
+The existing Accounting Phase 1 creator → FM review → return/edit/resubmit → post/cancel controls remain closed for their previously tested acceptance boundary. A later source review identified a role-coverage gap for VGM-created ordinary transactions: VGM could submit them, but the transaction-list returned-action gate and the FM notification's standalone editor target excluded VGM. The shared creator validator already enforced returned state and creator ownership.
+
+Source correction committed on `main`:
+- `0b220ec3fa4980246bde41049ed62c874191a3ea`
+- `e4251346f47687d7c8482c1fdb5b58a93c69526c`
+
+VGM can now access the standalone editor for their own returned transactions and see the corresponding creator actions in Transaction History. FM/Admin review authority, posted-transaction immutability/void authority, and accounting posting logic were not broadened. No schema or financial data changed.
+
+**Verification boundary: SOURCE FIX ONLY / LOCAL RUNTIME PENDING.** Do not claim VGM Return/resubmission is runtime-proven until the fresh-transaction acceptance sequence in `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md` passes. The already-posted `TR-000023` is protected evidence and must not be reused for this test.
