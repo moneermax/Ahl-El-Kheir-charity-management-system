@@ -3906,7 +3906,7 @@ The completed GM/FM review-queue acceptance, FM dashboard rendering, arrears/adv
 
 Read `docs/ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`. Source correction is committed on `main` in `0b220ec3fa4980246bde41049ed62c874191a3ea` and `e4251346f47687d7c8482c1fdb5b58a93c69526c`. The fix extends returned-transaction creator actions/editor access to VGM while preserving creator ownership and FM/Admin review boundaries. The editor's return URL is restricted to known transaction-list filters; stale missing-element JS access was removed. No DB/schema/accounting logic changed.
 
-**Next exact gate:** user pulls main, runs PHP 8.2 lint for `modules/transactions/index.php` and `modules/transactions/edit_returned.php`, then executes the fresh VGM → FM Return → VGM correction/resubmission → FM pending review sequence in the continuation document. Confirm no journal before approval and exactly one balanced journal after approval. Do not reuse `TR-000023`; it is already posted and fully allocated. Do not repeat unrelated closed accounting, payroll, attendance, waiver, or i18n tests.
+**Disposition: CLOSED.** PHP 8.2 lint and the fresh VGM → FM Return → VGM correction/resubmission → FM approval/posting runtime sequence passed. Evidence and the exact journal account lines are in `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`. Preserve `TR-000023` and `TR-000024`; do not rerun the closed acceptance without concrete regression evidence. Do not repeat unrelated closed accounting, payroll, attendance, waiver, or i18n tests.
 
 ## 2026-11-11 — Ordinary transaction VGM Return → correction → resubmission → FM posting: RUNTIME VERIFIED / CLOSED
 
