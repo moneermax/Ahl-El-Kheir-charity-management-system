@@ -8,11 +8,21 @@ require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.p
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
-if (!in_array($role, ['admin', 'accountant_staff'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+if (!in_array($role, ['admin', 'accountant_staff', 'vice_general_manager'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+
+// Preserve only known transaction-list filters; never accept an arbitrary return URL.
+$returnParams = [];
+$returnRaw = trim((string)($_GET['return'] ?? $_POST['return'] ?? ''));
+if ($returnRaw !== '') {
+    parse_str($returnRaw, $returnParams);
+}
+$returnParams = array_intersect_key($returnParams, array_flip(['q', 'from', 'to', 'tstatus', 'page']));
+$returnQuery = http_build_query($returnParams);
+$backUrl = APP_URL . 'modules/transactions/index.php' . ($returnQuery !== '' ? '?' . $returnQuery : '');
 $uid = (int)Session::getUserId();
 $tid = (int)($_GET['id'] ?? $_POST['transaction_id'] ?? 0);
 $t = dbFetchOne("SELECT t.*, s.full_name AS sponsor_name, s.sponsor_code FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id WHERE t.id=? AND t.status='returned' AND t.created_by=?", [$tid, $uid]);
-if (!$t) { flash('error', 'لا يمكن تعديل هذه الدفعة. يجب أن تكون مُعادة إليك وأن تكون أنت منشئها.'); header('Location: ' . APP_URL . 'modules/transactions/index.php'); exit(); }
+if (!$t) { flash('error', 'لا يمكن تعديل هذه الدفعة. يجب أن تكون مُعادة إليك وأن تكون أنت منشئها.'); header('Location: ' . $backUrl); exit(); }
 $purposeLabels=['monthly_sponsorship'=>'كفالة شهرية','school_fees'=>'رسوم دراسية','medicine'=>'علاج وأدوية','gift'=>'هدية/عيدية','other'=>'أخرى'];
 $monthOptions=[]; for($i=-24;$i<=12;$i++) $monthOptions[]=date('F/Y',strtotime(date('Y-m-01')." $i months"));
 $storedType=(string)($t['transaction_type']??'general_donation');
@@ -31,7 +41,7 @@ if($_SERVER['REQUEST_METHOD']==='POST'){
  if(!$errors&&isset($_FILES['unified_receipt'])&&$_FILES['unified_receipt']['error']===UPLOAD_ERR_OK){$f=$_FILES['unified_receipt'];$ext=strtolower(pathinfo($f['name'],PATHINFO_EXTENSION));if(!in_array($ext,['jpg','jpeg','png','pdf'],true)||$f['size']>10*1024*1024)$errors[]='صيغة أو حجم الإيصال الموحّد غير صالح.';else{$dir=dirname(__DIR__,2).'/storage/receipts';if(!is_dir($dir))@mkdir($dir,0777,true);$fn='TR-'.date('YmdHis').'-'.bin2hex(random_bytes(3)).'.'.$ext;if(move_uploaded_file($f['tmp_name'],$dir.'/'.$fn))$newUnified='storage/receipts/'.$fn;else$errors[]='فشل حفظ ملف الإيصال الموحّد.';}}elseif(isset($_FILES['unified_receipt'])&&$_FILES['unified_receipt']['error']!==UPLOAD_ERR_NO_FILE)$errors[]='حدث خطأ أثناء رفع الإيصال الموحّد.';
  if(!$errors){$txnType=$input['type']==='monthly_sponsorship'?'sponsorship_payment':($input['type']==='admin_fee'?'other':$input['type']);$feePct=$input['type']==='monthly_sponsorship'?max(0,min(100,(float)$input['fee'])):0.0;$feeAmt=round($amount*$feePct/100,2);$net=round($amount-$feeAmt,2);$sponsorId=(int)($t['sponsor_id']??0);if($input['sponsorship_id']>0&&$selectedShip)$sponsorId=(int)$selectedShip['sponsor_id'];$oldReceipt=$t['receipt_path']??null;$oldUnified=$t['unified_receipt_path']??null;$upd=['sponsorship_id'=>$input['sponsorship_id']>0?$input['sponsorship_id']:null,'project_id'=>$input['project_id']>0?$input['project_id']:null,'transaction_type'=>$txnType,'sponsor_id'=>$sponsorId>0?$sponsorId:null,'payment_period'=>$input['month']!==''?$input['month']:null,'purpose'=>$input['purpose'],'purpose_note'=>$input['note']!==''?$input['note']:null,'amount'=>$amount,'admin_fee_percent'=>$feePct,'admin_fee_amount'=>$feeAmt,'net_amount'=>$net,'transaction_date'=>$input['date'],'payment_method'=>$input['method'],'receipt_number'=>$input['receipt']!==''?$input['receipt']:null,'reference_number'=>$input['reference']!==''?$input['reference']:null,'description'=>$input['description']!==''?$input['description']:null,'status'=>'pending_fm_review','fm_reviewed_by'=>null,'fm_reviewed_at'=>null,'fm_review_reason'=>null,'resubmitted_at'=>date('Y-m-d H:i:s')];if($newReceipt)$upd['receipt_path']=$newReceipt;elseif($removeReceipt)$upd['receipt_path']=null;if($newUnified)$upd['unified_receipt_path']=$newUnified;elseif($removeUnified)$upd['unified_receipt_path']=null;$sets=[];$params=[];foreach($upd as $k=>$v){$sets[]="`$k`=?";$params[]=$v;}
   try{db()->beginTransaction();$affected=dbExecute("UPDATE transactions SET ".implode(',',$sets)." WHERE id=? AND status='returned' AND created_by=?",array_merge($params,[$tid,$uid]));if($affected!==1)throw new RuntimeException('لم يتم تحديث الدفعة المُعادة.');ak_transaction_review_audit($uid,'RESUBMIT_FM',$tid,$t,$upd);db()->commit();}catch(Throwable $e){if(db()->inTransaction())db()->rollBack();if($newReceipt){$p=dirname(__DIR__,2).'/'.$newReceipt;if(is_file($p))@unlink($p);}if($newUnified){$p=dirname(__DIR__,2).'/'.$newUnified;if(is_file($p))@unlink($p);}$errors[]='تعذر حفظ التعديلات وإعادة إرسال الدفعة للمراجعة المالية. يرجى التحقق من البيانات والمحاولة مرة أخرى.';}
-  if(!$errors){if(($newReceipt||$removeReceipt)&&$oldReceipt&&$oldReceipt!==$newReceipt)ak_transaction_review_delete_receipt_if_unreferenced($oldReceipt);if(($newUnified||$removeUnified)&&$oldUnified&&$oldUnified!==$newUnified)ak_transaction_review_delete_receipt_if_unreferenced($oldUnified);ak_transaction_review_notify_fm(1,Session::getUserName()??'');flash('success','تم تعديل الدفعة وإعادة إرسالها للمدير المالي للمراجعة.');header('Location: '.APP_URL.'modules/transactions/index.php');exit();}
+  if(!$errors){if(($newReceipt||$removeReceipt)&&$oldReceipt&&$oldReceipt!==$newReceipt)ak_transaction_review_delete_receipt_if_unreferenced($oldReceipt);if(($newUnified||$removeUnified)&&$oldUnified&&$oldUnified!==$newUnified)ak_transaction_review_delete_receipt_if_unreferenced($oldUnified);ak_transaction_review_notify_fm(1,Session::getUserName()??'');flash('success','تم تعديل الدفعة وإعادة إرسالها للمدير المالي للمراجعة.');header('Location: '.$backUrl);exit();}
  }
 }
 $pageTitle='تعديل دفعة مُعادة';$active='transactions';include dirname(__DIR__,2).'/includes/header.php'; ?>
@@ -60,7 +70,7 @@ $pageTitle='تعديل دفعة مُعادة';$active='transactions';include dir
 <div class="d-flex gap-2 justify-content-end mt-4"><a href="<?php echo e($backUrl); ?>" class="btn btn-secondary" onclick="return akGoBack(this.href);">إلغاء</a><button type="submit" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i>حفظ وإعادة إرسال للمراجعة</button></div>
 </form></div></div>
 <script>
-function toggleFields(){const t=document.getElementById('payType').value;document.getElementById('grpShip').style.display=t==='monthly_sponsorship'?'':'none';document.getElementById('grpProject').style.display=t==='project_donation'?'':'none';document.getElementById('grpOther').style.display='none';document.getElementById('grpFee').style.display=t==='monthly_sponsorship'?'':'none';}
+function toggleFields(){const t=document.getElementById('payType').value;document.getElementById('grpShip').style.display=t==='monthly_sponsorship'?'':'none';document.getElementById('grpProject').style.display=t==='project_donation'?'':'none';document.getElementById('grpFee').style.display=t==='monthly_sponsorship'?'':'none';}
 toggleFields();
 </script>
 <?php include dirname(__DIR__,2).'/includes/footer.php'; ?>
