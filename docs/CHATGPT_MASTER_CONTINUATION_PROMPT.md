@@ -3907,3 +3907,23 @@ The completed GM/FM review-queue acceptance, FM dashboard rendering, arrears/adv
 Read `docs/ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`. Source correction is committed on `main` in `0b220ec3fa4980246bde41049ed62c874191a3ea` and `e4251346f47687d7c8482c1fdb5b58a93c69526c`. The fix extends returned-transaction creator actions/editor access to VGM while preserving creator ownership and FM/Admin review boundaries. The editor's return URL is restricted to known transaction-list filters; stale missing-element JS access was removed. No DB/schema/accounting logic changed.
 
 **Next exact gate:** user pulls main, runs PHP 8.2 lint for `modules/transactions/index.php` and `modules/transactions/edit_returned.php`, then executes the fresh VGM → FM Return → VGM correction/resubmission → FM pending review sequence in the continuation document. Confirm no journal before approval and exactly one balanced journal after approval. Do not reuse `TR-000023`; it is already posted and fully allocated. Do not repeat unrelated closed accounting, payroll, attendance, waiver, or i18n tests.
+
+## 2026-11-11 — Ordinary transaction VGM Return → correction → resubmission → FM posting: RUNTIME VERIFIED / CLOSED
+
+Local Linux/XAMPP + MariaDB browser/database acceptance passed using fresh transaction TR-000024 (transaction ID 53), created by VGM user ID 3 as a general_donation for 1,000.00 SDG.
+
+Verified lifecycle and audit trail:
+- Initial submission: SUBMIT_FM, audit row 2587 at 19:40:08.
+- FM returned the transaction with a required reason: FM_RETURN, audit row 2588 at 19:42:06. Saved reason: «يرجى تصحيح وصف العملية وإعادة الإرسال بعد استكمال بيانات التوضيح».
+- The original VGM creator opened the returned-transaction editor from the return notification, corrected the transaction description, and resubmitted successfully. UI confirmation: «تم تعديل الدفعة وإعادة إرسالها للمدير المالي للمراجعة.»
+- Resubmission: RESUBMIT_FM, audit row 2589 at 19:43:42. Status returned to pending_fm_review; fm_reviewed_by, fm_reviewed_at, and fm_review_reason were NULL; resubmitted_at was populated.
+- Before FM approval, journal_entries for reference_id = 53 returned zero rows.
+- FM approved at 19:52:42. UI confirmed «تم اعتماد الدفعة وترحيل القيد المحاسبي بنجاح.» and the FM pending queue returned to zero.
+- Transaction ID 53 is now posted, reviewed by FM user ID 29 at 19:52:42.
+- Exactly one journal entry exists: JE-000054, journal ID 210, reference_type='transaction', reference_id=53, status posted.
+- The journal has exactly two lines and balances: debit 1,000.00 / credit 1,000.00 / difference 0.00.
+- Account identities/directions: 1100 — «الصندوق (نقدي) / Cash», asset, debit 1,000.00; 4300 — «التبرعات العامة / General Donations», revenue, credit 1,000.00.
+
+Local PHP 8.2 syntax checks for modules/transactions/index.php and modules/transactions/edit_returned.php passed before browser/database acceptance. No schema, migration, accounting-policy, journal, or allocation code was changed for this source fix or acceptance.
+
+Acceptance disposition: CLOSED for the VGM creator's FM-returned ordinary-transaction correction/resubmission and subsequent FM approval/posting path. Preserve TR-000024 / JE-000054 as test evidence; do not edit, void, return, or reuse them. The separate creator-cancellation branch and an independent runtime check of Transaction History action visibility were not part of this executed scenario and are not claimed as runtime-proven. Do not rerun this acceptance without concrete regression evidence.
