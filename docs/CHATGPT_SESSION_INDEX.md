@@ -3950,9 +3950,9 @@ User-confirmed GM Advances report acceptance:
 The completed GM/FM review-queue acceptance, FM dashboard rendering, arrears/advances calculations, and payment-history deduplication are closed. Do not reopen them absent concrete regression evidence.
 
 
-## 2026-11-11 — Active ordinary transaction VGM Return/resubmission gate
+## 2026-11-11 — Ordinary transaction VGM Return/resubmission source-fix checkpoint (superseded)
 
-See `ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md`. The VGM returned-transaction access mismatch is source-fixed on `main` (commits `0b220ec3fa4980246bde41049ed62c874191a3ea`, `e4251346f47687d7c8482c1fdb5b58a93c69526c`). Local PHP lint and runtime acceptance remain pending. Use a fresh test transaction; do not reuse posted/allocation evidence `TR-000023`.
+The initial checkpoint recorded the source fix and pending runtime gate. That gate has since passed using TR-000024; see the RUNTIME VERIFIED / CLOSED entry immediately below. Do not reuse TR-000023 or TR-000024.
 
 ## 2026-11-11 — Ordinary transaction VGM Return → correction → resubmission → FM posting: RUNTIME VERIFIED / CLOSED
 
