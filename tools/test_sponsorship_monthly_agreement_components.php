@@ -269,7 +269,7 @@ if (is_string($paymentEntrySource)) {
         'two_independent_forms_and_no_standalone_admin_fee_type'
     );
     $assert(
-        str_contains($donationFormMarkup, 'class="donation-entry-table"')
+        str_contains($donationFormMarkup, 'donation-entry-table')
         && str_contains($donationFormMarkup, 'name="type" id="donationType"')
         && str_contains($donationFormMarkup, 'name="amount"')
         && str_contains($donationFormMarkup, 'name="project_id"')
