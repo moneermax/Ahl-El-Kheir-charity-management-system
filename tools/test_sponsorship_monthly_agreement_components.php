@@ -83,6 +83,52 @@ try { ak_spma_build_submission_snapshot(3559, 'November/2026', '-1', '0'); }
 catch (RuntimeException $e) { $negativeBlocked = true; }
 $assert($negativeBlocked, 'negative_actual_blocked');
 
+$agreementTransaction = [
+    'component_model'=>'monthly_agreement',
+    'monthly_agreement_id'=>42,
+    'agreed_sponsorship_amount'=>10000.00
+];
+$assert(
+    ak_spma_resolve_allocation_commitment($agreementTransaction, [], ['monthly_amount'=>5000.00]) === 10000.00,
+    'new_model_allocation_uses_agreement'
+);
+$assert(
+    ak_spma_resolve_allocation_commitment($agreementTransaction, [['commitment_amount'=>10000.00]], ['monthly_amount'=>5000.00]) === 10000.00,
+    'existing_allocation_snapshot_remains_authoritative'
+);
+$allocationMismatchBlocked = false;
+try { ak_spma_resolve_allocation_commitment($agreementTransaction, [['commitment_amount'=>5000.00]], ['monthly_amount'=>5000.00]); }
+catch (RuntimeException $e) { $allocationMismatchBlocked = true; }
+$assert($allocationMismatchBlocked, 'conflicting_agreement_allocation_blocked');
+
+$legacyTransaction = ['component_model'=>'legacy'];
+$assert(
+    ak_spma_resolve_allocation_commitment($legacyTransaction, [], ['monthly_amount'=>5000.00]) === 5000.00,
+    'legacy_allocation_fallback_unchanged'
+);
+$assert(
+    ak_spma_resolve_allocation_commitment($legacyTransaction, [['commitment_amount'=>4500.00]], ['monthly_amount'=>5000.00]) === 4500.00,
+    'legacy_existing_snapshot_unchanged'
+);
+
+$agreementRow = ['agreed_sponsorship_amount'=>10000.00];
+$assert(
+    ak_spma_resolve_report_commitment(null, $agreementRow, 5000.00) === 10000.00,
+    'report_uses_agreement_without_allocation'
+);
+$assert(
+    ak_spma_resolve_report_commitment(['commitment_versions'=>1,'commitment_amount'=>5000.00], $agreementRow, 7000.00) === 5000.00,
+    'report_prefers_existing_allocation_snapshot'
+);
+$assert(
+    ak_spma_resolve_report_commitment(null, null, 5000.00) === 5000.00,
+    'report_legacy_fallback_unchanged'
+);
+$reportConflictBlocked = false;
+try { ak_spma_resolve_report_commitment(['commitment_versions'=>2,'commitment_amount'=>5000.00], $agreementRow, 5000.00); }
+catch (RuntimeException $e) { $reportConflictBlocked = true; }
+$assert($reportConflictBlocked, 'report_conflicting_snapshots_blocked');
+
 $failed = array_keys(array_filter($checks, static fn(bool $passed): bool => !$passed));
 foreach ($checks as $name=>$passed) {
     echo ($passed ? 'PASS' : 'FAIL') . ' | ' . $name . PHP_EOL;
