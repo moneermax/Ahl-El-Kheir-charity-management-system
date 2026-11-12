@@ -121,7 +121,23 @@ function ak_sp_create_payment_allocation_prepared(array $transaction, float $net
                 [$sponsorshipId, $coveredMonth]
             );
             if (count($snapshots) > 1) throw new RuntimeException('توجد لالتزامات الشهر قيم متعارضة في تخصيصات سابقة.');
-            $commitment = $snapshots ? round((float)$snapshots[0]['commitment_amount'], 2) : round((float)$sponsorship['monthly_amount'], 2);
+            if ((string)($transaction['component_model'] ?? 'legacy') === 'monthly_agreement') {
+                $agreedCommitment = round((float)($transaction['agreed_sponsorship_amount'] ?? 0), 2);
+                $agreementId = (int)($transaction['monthly_agreement_id'] ?? 0);
+                if ($agreementId <= 0 || $agreedCommitment <= 0) {
+                    throw new RuntimeException('لقطة اتفاق الكفالة الشهرية غير مكتملة؛ تعذر إنشاء التخصيص.');
+                }
+                $commitment = $snapshots
+                    ? round((float)$snapshots[0]['commitment_amount'], 2)
+                    : $agreedCommitment;
+                if (round($commitment, 2) !== $agreedCommitment) {
+                    throw new RuntimeException('قيمة الاتفاقية لا تطابق الالتزام المثبت بتخصيص سابق لهذا الشهر.');
+                }
+            } else {
+                $commitment = $snapshots
+                    ? round((float)$snapshots[0]['commitment_amount'], 2)
+                    : round((float)$sponsorship['monthly_amount'], 2);
+            }
             if ($commitment <= 0) throw new RuntimeException('قيمة الالتزام الشهري للكفالة غير صالحة.');
             $alreadyAllocated = dbFetchOne(
                 "SELECT COALESCE(SUM(a.allocated_amount),0) AS allocated
