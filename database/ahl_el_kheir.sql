@@ -30847,7 +30847,7 @@ INSERT INTO `winback_contacts` (`id`, `campaign_id`, `contacted_by`, `contact_da
 -- Table structure for table `sponsorship_monthly_agreements`
 --
 CREATE TABLE `sponsorship_monthly_agreements` (
-  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `id` int(10) UNSIGNED NOT NULL,
   `sponsorship_id` int(10) UNSIGNED NOT NULL,
   `covered_month` date NOT NULL COMMENT 'First day of the covered calendar month',
   `version_no` int(10) UNSIGNED NOT NULL,
