@@ -3952,3 +3952,12 @@ Continue from `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. GM, VGM,
 ### Sponsorship service-fee accounting mapping decision (2026-11-12)
 
 Keep sponsorship service fees as a distinct transaction component and use a controlled, auditable, configurable accounting mapping to a valid revenue account. Do not hard-code account `4200`, invent an account code, or allow arbitrary per-payment account selection. Require an authorized accounting owner to confirm the actual destination before live posting is enabled. See the detailed work plan. Implementation has not started.
+
+
+## 2026-11-12 — Sponsorship service-fee architecture audit complete
+
+The read-only accounting architecture audit is complete; use `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` as the detailed source of truth. Begin the next session by re-reading the four required canonical documents plus this plan, checking current local `main` and working-tree state, reading the latest schema dump and live database schema, and inspecting pending/returned legacy sponsorship rows.
+
+The helper caller inventory was completed locally; common posting is shared across workflows. Preserve the global admin-fee policy for unrelated transaction types. New sponsorship rows must use distinct actual sponsorship/service-fee components, allocate only the sponsorship component, and use a versioned/effective-dated mapping to a valid active revenue account. Never hard-code 4200, never fall back silently, and never expose a free account picker on individual payments. Keep posted journal lines immutable and snapshot the mapping version/account used.
+
+Before enabling live posting, obtain an authorized accounting-owner decision on service-fee recognition timing and the actual revenue destination. Also resolve meeting evidence/amendment controls, missing-agreement behavior (recommended: block the affected month until FM enters an agreement), and treatment of any legacy pending submissions. No code/schema/data changes were made during the audit.
