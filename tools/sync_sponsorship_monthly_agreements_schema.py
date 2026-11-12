@@ -50,7 +50,8 @@ def synchronize(text: str) -> str:
         )
         if index_statement not in text:
             misplaced = "--\n-- Constraints for table " + q + table + q + "\n--\n" + index_statement + "\n"
-            text = require_once(text, misplaced, "", "move agreement indexes out of constraints section")
+            constraint_header = "--\\n-- Constraints for table " + q + table + q + "\\n--\\n"
+            text = require_once(text, misplaced, constraint_header, "move agreement indexes out of constraints section")
             header = "-- Indexes for dumped tables\n--\n\n"
             index_block = "--\n-- Indexes for table " + q + table + q + "\n--\n" + index_statement + "\n\n"
             text = require_once(text, header, header + index_block, "agreement indexes section")
