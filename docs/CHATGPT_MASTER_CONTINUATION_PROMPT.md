@@ -4054,3 +4054,13 @@ Continue from `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. Current 
 Stage 2 repository work added the FM-only monthly agreement page `modules/sponsorships/monthly_agreements.php` and FM dashboard link. It creates append-only, audited versions; future unallocated months can have new sponsorship commitments; after a posted allocation, the month commitment is frozen while service-fee-only amendments remain possible. PHP 8.2 syntax CI passed (run 43231663010). No local migration or runtime verification has occurred.
 
 Next: Stage 3 in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`: implement per-month agreement lookup and missing-agreement blocking; capture agreed and actual sponsorship/service-fee components in both VGM and Supervisor routes; preserve returned legacy rows; then update allocator and arrears/advance calculations without changing legacy behavior. Do not enable positive service-fee journal posting until an authorized accounting owner confirms recognition timing and the valid revenue destination.
+
+## 2026-11-12 — Current sponsorship workflow continuation
+
+Stages 2–4 repository implementation is present on main: FM monthly agreements; agreement and actual receipt snapshots in VGM/direct and Supervisor payment submission; FM review breakdown; returned-row snapshot preservation; agreement-aware allocation/arrears/advance reporting; compact RTL responsive payment-entry table; and protection against commitment amendments while new-model payments are pending/returned. Effective-dated append-only service-fee revenue mapping is prepared with mandatory authorizer name and decision reference.
+
+Do not enable positive service-fee posting. Recognition timing (immediate or at covered-month end) is still an accounting decision, and the service-fee journal line has intentionally not been implemented. A configured revenue mapping alone is not sufficient. Zero-service-fee sponsorship payments retain the existing posting path.
+
+CI: PHP 8.2 lint + 32 component/commitment/mapping contract checks PASS (43236546673). MariaDB 10.4.32 import + both migrations applied twice, FK and legacy-preservation checks PASS (43236977774). Canonical schema sync passed twice in CI but the generated SQL dump change remains uncommitted. No local XAMPP runtime/browser acceptance.
+
+Next: commit canonical schema synchronization to main; inspect final diff and CI; then provide one concise local pull/migration/browser acceptance sequence. Keep legacy workflows unchanged and do not reopen closed attendance/payroll, waiver, i18n, or salary advance stages. Detailed rules: `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
