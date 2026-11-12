@@ -116,4 +116,8 @@ jobs:
           test "$service_fee_fks" = "4"
           test "$agreement_checks" = "2"
           row_evidence_columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='sponsor_payments' AND column_name IN ('transaction_date','receipt_number','reference_number')")
+          row_evidence_types=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='sponsor_payments' AND ((column_name='transaction_date' AND column_type='date' AND is_nullable='YES') OR (column_name='receipt_number' AND column_type='varchar(50)' AND is_nullable='YES') OR (column_name='reference_number' AND column_type='varchar(100)' AND is_nullable='YES'))")
+          legacy_evidence_nulls=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM sponsor_payments WHERE transaction_date IS NULL AND receipt_number IS NULL AND reference_number IS NULL")
           test "$row_evidence_columns" = "3"
+          test "$row_evidence_types" = "3"
+          test "$legacy_evidence_nulls" = "$after_sponsor_payments"
