@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/sponsorships/lib_monthly_agreements.php';
 /**
  * Administrative-fee policy and calculation helpers.
  * Currency for the application is SDG. Historical transactions keep the
