@@ -70,6 +70,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 throw new RuntimeException('حدد شهر الاتفاقية بصورة صحيحة.');
             }
             $coveredMonth = $monthInput . '-01';
+            $paymentPeriodLabel = DateTimeImmutable::createFromFormat('!Y-m', $monthInput)->format('F/Y');
             $agreedSponsorship = ak_sma_amount((string) ($_POST['agreed_sponsorship_amount'] ?? ''), false, 'قيمة الكفالة الشهرية المتفق عليها');
             $agreedServiceFee = ak_sma_amount((string) ($_POST['agreed_service_fee_amount'] ?? ''), true, 'رسوم الخدمة الشهرية المتفق عليها');
             $meetingReference = trim((string) ($_POST['meeting_reference'] ?? ''));
