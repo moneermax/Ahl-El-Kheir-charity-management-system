@@ -3997,3 +3997,10 @@ The user confirmed that GM, VGM, and FM will determine the agreed sponsorship am
 ### 2026-11-12 — Sponsorship service-fee accounting destination
 
 The user delegated the accounting design recommendation because they are not an accountant. Selected direction: keep sponsorship service fees distinct in transaction data and use a controlled, auditable, configurable accounting mapping to a valid revenue account. Do not hard-code account `4200`, invent a new account code, or permit arbitrary per-payment account selection. An authorized accounting owner must confirm the actual chart-of-accounts destination before live posting is enabled. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. Implementation remains not started.
+
+
+## 2026-11-12 — Read-only sponsorship service-fee architecture audit completed
+
+Continue with `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. The chart-of-accounts, mapping patterns, audit history, journal safeguards, shared helper callers, migration CI execution, and returned VGM correction path have now been reviewed. The local helper-call grep is complete for the current PHP source; current remote `main` has no PHP source changes since that grep baseline.
+
+The next session may begin schema-first implementation only after re-reading the current local schema/live DB and inspecting pending legacy sponsorship submissions. Keep service fee separate from `admin_fee_*`; require an effective mapping to an active revenue account; snapshot mapping/account on posting; block posting when mapping or accounting recognition treatment is not approved. Do not assume account 4200 or immediate recognition. No code/schema/data changes in this audit session.
