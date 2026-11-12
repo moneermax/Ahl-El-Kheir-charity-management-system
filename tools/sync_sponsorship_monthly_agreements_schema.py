@@ -32,6 +32,9 @@ def synchronize(text: str) -> str:
             q + "agreed_service_fee_amount" + q + " decimal(12,2) DEFAULT NULL",
             q + "actual_sponsorship_received" + q + " decimal(12,2) DEFAULT NULL",
             q + "actual_service_fee_received" + q + " decimal(12,2) DEFAULT NULL",
+            q + "transaction_date" + q + " date DEFAULT NULL",
+            q + "receipt_number" + q + " varchar(50) DEFAULT NULL",
+            q + "reference_number" + q + " varchar(100) DEFAULT NULL",
             q + "fk_transactions_spma" + q, q + "fk_sponsor_payments_spma" + q,
             q + "fk_spma_sponsorship" + q, q + "fk_spma_currency" + q, q + "fk_spma_creator" + q,
             q + "uq_spma_sponsorship_month_version" + q, q + "idx_spma_month_latest" + q,
@@ -82,11 +85,17 @@ def synchronize(text: str) -> str:
         return text
 
     sponsor_marker = (
-        "  `payment_method` varchar(30) NOT NULL DEFAULT 'cash'\n"
+        "  `payment_method` varchar(30) NOT NULL DEFAULT 'cash',\n"
+        "  `transaction_date` date DEFAULT NULL,\n"
+        "  `receipt_number` varchar(50) DEFAULT NULL,\n"
+        "  `reference_number` varchar(100) DEFAULT NULL\n"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
     )
     sponsor_replacement = (
         "  `payment_method` varchar(30) NOT NULL DEFAULT 'cash',\n"
+        "  `transaction_date` date DEFAULT NULL,\n"
+        "  `receipt_number` varchar(50) DEFAULT NULL,\n"
+        "  `reference_number` varchar(100) DEFAULT NULL,\n"
         "  `component_model` enum('legacy','monthly_agreement') NOT NULL DEFAULT 'legacy',\n"
         "  `monthly_agreement_id` int(10) UNSIGNED DEFAULT NULL,\n"
         "  `agreed_sponsorship_amount` decimal(12,2) DEFAULT NULL,\n"
