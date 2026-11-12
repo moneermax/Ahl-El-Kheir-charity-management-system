@@ -143,7 +143,7 @@ The following findings were revalidated against the current `main` source and th
 - The current VGM returned-transaction editor permits a monthly sponsorship percentage fee and recomputes `admin_fee_amount`/ `net_amount`. It must be redesigned to preserve the submitted per-month agreement snapshot and actual receipt components, not reintroduce percentage policy behavior after an FM return.
 - The current allocation model stores `net_received` and calculates allocation against the sponsorship's monthly commitment. In the new contract, `net_received` must represent only actual sponsorship component receipts. Service-fee receipts must not inflate the sponsorship allocation or consume the monthly sponsorship commitment cap.
 
-**Stage 1 audit boundary:** the known VGM and Supervisor workflows are confirmed, but repository-wide callers of the shared administrative-fee helpers are not yet exhaustively mapped because the connected GitHub code-search index returns no results and the connector does not expose a repository tree listing. No shared helper changes are safe until that caller inventory is completed. A narrowly scoped local grep is likely required; do not ask the user for a database dump.
+**Stage 1 audit boundary (updated 2026-11-12):** the local `git grep` inventory was completed on source baseline `4c5dcb4c2b2d5e25acf495515f3b323af8f58e07`. It found no additional callsites beyond the common journal-posting path and the separate Supervisor approval calculation path. A GitHub comparison from that baseline to current `main` (`5b0c8cd20657ecbf701a6aeeae273a0ed2673ed4`) shows 22 commits ahead, 0 behind, and no PHP source-file changes; the differences are documentation, the checked-in schema dump, and removal of two CSV files. Therefore the PHP caller inventory remains current for `main`. The checked-in schema dump did change and could not be retrieved through the connector because of its size, so re-inspect the current local schema and live database before writing a migration.
 
 **Known data fixture:** the updated repository dump contains active sponsorship `SH-003559` (ID `3559`), monthly commitment `5,000.00` SDG, start date `2026-08-27`, sponsor `SP-002857` (`معاويه عوض عبد العظيم`), child `اسراء`. The dump contains no linked `transactions`, `sponsor_payments`, or `sponsorship_payment_allocations` rows for this sponsorship. It remains a candidate fixture only; no payment was created or altered.
 
@@ -328,3 +328,61 @@ The last documented next step before this plan was read-only inspection of the V
 The VGM payment form and accounting implementation had been inspected in an earlier source review, but the current main/schema must be revalidated before coding. The redesign and monthly additive fee implementation have **not** been implemented or runtime verified.
 
 Closed adjacent work remains closed. In particular, do not rerun the completed sponsorship accounting backfill, arrears/advances calculation suites, GM/FM sponsor-review acceptance, or VGM ordinary-transaction return/resubmission acceptance without concrete regression evidence.
+
+
+## 2026-11-12 — Read-only accounting architecture audit completed
+
+**Audit disposition:** the repository-side architecture review is complete enough to start a carefully gated implementation session. This is not implementation approval for an unconfirmed accounting treatment. No application code, schema, migration, or financial data has been changed in this audit.
+
+### Confirmed source and configuration findings
+
+1. **Chart of accounts administration**
+   - `modules/accounting/accounts.php` permits `admin` and `financial_manager` to add accounts and toggle active status. GM/VGM are read-only on this page.
+   - The page does not provide a sponsorship-service-fee mapping facility, does not record an `audit_log` event for account add/toggle actions, and does not provide a controlled version history for mappings.
+   - The accounts model contains account code, Arabic/English names, account type, parent, and active status. Account code is unique. The valid account types include `revenue`.
+   - The journal-line foreign key ensures the selected account exists, but the generic journal-line schema does not itself enforce that a revenue component uses a revenue account or that the account is active.
+
+2. **Existing configurable-account patterns**
+   - Project accounting stores project-specific revenue/expense account IDs. `akp_project_expense_account_id()` validates a configured account as active and of type `expense`, but then falls back to a hard-coded `5100`. This is a project-specific fallback pattern, not a safe template for a sponsorship service-fee mapping; the new mapping must not silently fall back.
+   - HR incentive policy uses versioned policy records, effective dates, lifecycle statuses, and a separate approval-history table. It demonstrates version/history mechanics, but its HR → GM → FM approval chain must not be copied into this task without an organizational decision.
+   - `accounting_admin_fee_policies` is a single organization-wide draft/active/superseded policy activated at opening-balance setup and locked once opening balance is live. It is not a per-sponsorship or per-covered-month agreement store and is not a reusable generic account-mapping facility.
+
+3. **Audit and journal safeguards**
+   - The application has a generic `audit_log` with actor/action/entity and old/new JSON values. The audit viewer is restricted to Admin and GM; this does not prevent FM-originated audit writes.
+   - The existing chart-of-accounts add/toggle handlers do not write audit events. A new service-fee mapping change must therefore write its own immutable/versioned history and a corresponding audit event in the same database transaction. Audit-write failure must abort the configuration change; do not swallow it.
+   - `ak_post_transaction_journal_prepared()` validates non-negative debit/credit values, one-sided journal lines, total balance, and that the referenced account code resolves. It does not generally validate account type or active status.
+   - The new mapping must be validated explicitly as an existing, active `revenue` account both when configured and at posting. If there is no effective valid mapping, posting must fail closed with a clear FM-facing error. No default to `4200`.
+
+4. **Shared administrative-fee helper caller inventory**
+   - The local source grep covered `ak_apply_admin_fee_snapshot_prepared`, `ak_apply_admin_fee_snapshot`, `ak_calculate_admin_fee_prepared`, and `ak_calculate_admin_fee`.
+   - The common application call is inside `ak_post_transaction_journal_prepared()`; that common path is used by ordinary FM review and the Supervisor approval workflow, so it cannot be globally redefined as sponsorship-only.
+   - The Supervisor approval helper also calculates the current organization policy directly before inserting the transaction.
+   - The shared helper must retain legacy/non-sponsorship behavior. New sponsorship rows need an explicit component-model marker/snapshot so the posting path can distinguish the new actual sponsorship + service-fee model from legacy rows. Before changing behavior, inspect the live DB for pending legacy sponsorship rows and define their compatibility treatment; never silently reinterpret them.
+   - The VGM returned-transaction editor still exposes a percentage-based administrative-fee field and recomputes gross/net. It must be updated as part of the new sponsorship component contract without changing unrelated transaction correction behavior.
+
+5. **Migration execution**
+   - Migrations are dated SQL files under `database/migrations/`; the repository has no generic local migration runner and no `database/migrations/README.md`.
+   - CI's full-schema job imports `database/ahl_el_kheir.sql` using the MariaDB `mysql` client, then applies dated SQL migration files using the same client. CI tests some migrations for repeatability on disposable MariaDB 10.4.
+   - Production preparation says to apply migrations created after the baseline, but does not define the local XAMPP application procedure. Before applying a migration locally, confirm whether the user wants to use phpMyAdmin or the XAMPP MariaDB CLI, take a verified backup, and verify the target database name. Do not invent a migration runner.
+
+### Recommended implementation architecture (subject to current local schema verification)
+
+- Store the agreement per `sponsorship_id + covered_month`, including both the agreed sponsorship amount and agreed service-fee amount. Preserve amendments as new immutable versions rather than overwriting values used by earlier submissions. FM enters the meeting-agreed values; do not invent unilateral FM approval authority.
+- Each payment month snapshots its agreement-version ID and both agreed values. Store actual sponsorship received and actual service fee received separately. The recorder can edit only the actual values; agreement values remain read-only.
+- For new-model sponsorship rows, the transaction's cash total is the sum of the two actual components. The sponsorship allocation input must be the actual sponsorship component only. Keep the service-fee component separate from legacy `admin_fee_*` fields; do not repurpose those fields as service fee.
+- Keep the existing global administrative-fee policy behavior for unrelated transaction types. Use an explicit new-model branch for sponsorship payments; retain a compatibility path for any pre-existing legacy pending sponsorship records until their status and treatment are inspected.
+- Use a versioned, effective-dated service-fee account mapping to an active revenue account. The selected mapping version/account must be snapshotted on the transaction at posting and the journal line must use that account ID. A later mapping change must not rewrite any posted journal. Do not expose arbitrary account selection on each payment.
+- FM review must display the agreed and actual component breakdown and agreement reference. VGM returned-transaction correction must preserve the same component snapshots. Supervisor approval must use the same component contract while preserving its existing separate review workflow.
+- Preserve the existing sponsorship month-end recognition and allocation controls. Do not let the service fee increase the sponsorship allocation cap or net sponsorship received.
+
+### Accounting decisions still required before enabling live posting
+
+1. **Service-fee recognition timing:** the source audit establishes that sponsorship net receipts are deferred and recognized at month-end, while the existing administrative fee is credited immediately. It does not establish whether this new sponsorship service fee is earned immediately on collection or deferred until the covered month. This is a real accounting policy decision, not a coding detail. Obtain the authorized accounting owner's direction. If unavailable, implement data capture and review with posting safely blocked for the service-fee component; do not guess.
+2. **Revenue destination:** the user selected a configurable mapping design, but no actual revenue account has been approved. An authorized accounting owner must confirm the valid revenue account before live posting.
+3. **Agreement amendments/evidence:** FM enters the meeting-agreed values. The organization still needs to decide what meeting reference/evidence is stored, who authorizes amendments, and whether in-system confirmation is required. Do not create a GM/VGM approval workflow by assumption.
+4. **Missing agreement:** recommended safe behavior is to block monthly sponsorship submission for any covered month without a recorded agreement, rather than assume zero or silently use `sponsorships.monthly_amount`/a global policy. Confirm this behavior before implementation.
+5. **Existing legacy pending rows:** inspect current `transactions` and `sponsor_payments` before deciding how old pending/returned sponsorship submissions are handled under the new model.
+
+### Next implementation-session gate
+
+Re-read all required canonical docs and the current local `main`; inspect the updated `database/ahl_el_kheir.sql` and live `ahl_el_kheir` schema; inspect the pending legacy sponsorship rows; then begin the smallest justified schema-first implementation. Do not reuse or modify `TR-000023`, `TR-000024`, or `JE-000054`. Do not repeat closed arrears/advances, GM/FM review-role, sponsorship accounting backfill, or ordinary VGM return/resubmission tests absent regression evidence.
