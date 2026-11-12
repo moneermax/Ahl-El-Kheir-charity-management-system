@@ -22,7 +22,6 @@ $pageTitle = 'اتفاقيات الكفالات الشهرية';
 $active = 'sponsorship_monthly_agreements';
 $uid = (int) Session::getUserId();
 $errors = [];
-$success = '';
 $search = trim((string) ($_GET['q'] ?? $_POST['q'] ?? ''));
 if (strlen($search) > 120) {
     $search = substr($search, 0, 120);
@@ -180,7 +179,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     $uid,
                     $latest ? 'AMEND' : 'CREATE',
                     $agreementId,
-                    $oldValues !== null ? json_encode($oldValues, JSON_UNESCAPED_UNICODE) : null,
+                    json_encode($oldValues ?? [], JSON_UNESCAPED_UNICODE),
                     json_encode($newValues, JSON_UNESCAPED_UNICODE),
                     $_SERVER['REMOTE_ADDR'] ?? '',
                     $_SERVER['HTTP_USER_AGENT'] ?? ''
@@ -265,7 +264,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 ?>
 <div class="welcome-section fade-in">
     <h2><i class="fas fa-file-signature me-2"></i>اتفاقيات الكفالات الشهرية</h2>
-    <p>تسجيل القيم التي اتفق عليها GM وVGM وFM لكل كفالة وشهر. يقوم المدير المالي بإدخال الاتفاق، ولا يغيّر هذا الإجراء أي دفعة أو تخصيص أو قيد سابق.</p>
+    <p>تسجيل القيم التي اتفق عليها GM وVGM وFM لكل كفالة وشهر. زيادة التزام شهر قادم هي اتفاق شهري جديد وليست سلفة؛ السلفة هي ما يزيد على المبالغ المتفق عليها للفترات المغطاة. يقوم المدير المالي بإدخال الاتفاق، ولا يغيّر هذا الإجراء أي دفعة أو تخصيص أو قيد سابق.</p>
 </div>
 <?php include dirname(__DIR__, 2) . '/includes/alerts.php'; ?>
 <?php if ($errors): ?>
