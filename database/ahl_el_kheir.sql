@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Nov 08, 2026 at 04:12 PM
+-- Generation Time: Nov 12, 2026 at 04:45 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1437,7 +1437,42 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2553, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-02 12:33:39'),
 (2554, 3, 'LOGOUT', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-02 18:57:45'),
 (2555, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-03 05:40:00'),
-(2556, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-06 06:43:09');
+(2556, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/156.0.0.0 Safari/537.36', '2026-11-06 06:43:09'),
+(2557, 1, 'LOGIN', 'users', 1, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 08:55:40'),
+(2558, 1, 'LOGOUT', 'users', 1, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 08:57:56'),
+(2559, 1, 'LOGOUT', 'users', 1, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 08:57:56'),
+(2560, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 08:58:33'),
+(2561, 3, 'LOGOUT', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 10:05:41'),
+(2562, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 10:05:55'),
+(2563, 3, 'LOGOUT', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 10:06:00'),
+(2564, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 10:06:09'),
+(2565, 3, 'LOGOUT', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 10:16:56'),
+(2566, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 10:17:08'),
+(2567, 3, 'LOGOUT', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 18:41:26'),
+(2568, 19, 'LOGIN', 'users', 19, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 18:41:34'),
+(2569, 19, 'LOGOUT', 'users', 19, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 18:49:46'),
+(2570, 2, 'LOGIN', 'users', 2, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-09 18:49:54'),
+(2571, 2, 'LOGIN', 'users', 2, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 06:31:50'),
+(2572, 29, 'LOGIN', 'users', 29, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 06:32:41'),
+(2573, 29, 'LOGOUT', 'users', 29, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 17:57:28'),
+(2574, 19, 'LOGIN', 'users', 19, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 17:57:36'),
+(2575, 19, 'LOGOUT', 'users', 19, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 18:02:55'),
+(2576, 29, 'LOGIN', 'users', 29, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 18:03:03'),
+(2577, 29, 'LOGOUT', 'users', 29, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 18:04:35'),
+(2578, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 18:04:43'),
+(2579, 2, 'LOGOUT', 'users', 2, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 19:42:21'),
+(2580, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 19:42:34'),
+(2581, 3, 'SUBMIT_FM', 'transactions', 52, 'null', '{\"status\":\"pending_fm_review\",\"transaction_code\":\"TR-000023\"}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 20:22:59'),
+(2582, 3, 'LOGOUT', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 20:27:06'),
+(2583, 29, 'LOGIN', 'users', 29, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 20:27:15'),
+(2584, 29, 'FM_APPROVE', 'transactions', 52, '{\"status\":\"pending_fm_review\",\"fm_reviewed_by\":null,\"fm_reviewed_at\":null,\"fm_review_reason\":null}', '{\"status\":\"posted\",\"journal_id\":209}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-10 20:39:09'),
+(2585, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:33:18'),
+(2586, 29, 'LOGIN', 'users', 29, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:35:06'),
+(2587, 3, 'SUBMIT_FM', 'transactions', 53, 'null', '{\"status\":\"pending_fm_review\",\"transaction_code\":\"TR-000024\"}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:40:08'),
+(2588, 29, 'FM_RETURN', 'transactions', 53, '{\"status\":\"pending_fm_review\"}', '{\"status\":\"returned\",\"reason\":\"يرجى تصحيح وصف العملية وإعادة الإرسال بعد استكمال بيانات التوضيح\"}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:42:06'),
+(2589, 3, 'RESUBMIT_FM', 'transactions', 53, '{\"id\":53,\"sponsorship_id\":3535,\"amount\":\"1000.00\",\"currency_code\":\"SDG\",\"payment_method\":\"cash\",\"transaction_date\":\"2026-11-11\",\"receipt_number\":null,\"description\":\"اختبار دورة إرجاع وتصحيح دفعة — VGM (اختبار دورة إرجاع وتصحيح دفعة — VGM)\",\"months_covered\":\"0.00\",\"payment_period\":null,\"purpose_note\":\"اختبار دورة إرجاع وتصحيح دفعة — VGM\",\"purpose\":null,\"admin_fee_percent\":\"0.00\",\"admin_fee_amount\":\"0.00\",\"net_amount\":\"1000.00\",\"status\":\"returned\",\"voided_at\":null,\"voided_by\":null,\"void_reason\":null,\"created_by\":3,\"fm_reviewed_by\":29,\"fm_reviewed_at\":\"2026-11-11 19:42:06\",\"fm_review_reason\":\"يرجى تصحيح وصف العملية وإعادة الإرسال بعد استكمال بيانات التوضيح\",\"submitted_at\":\"2026-11-11 19:40:08\",\"resubmitted_at\":null,\"cancelled_at\":null,\"cancelled_by\":null,\"cancel_reason\":null,\"created_at\":\"2026-11-11 19:40:08\",\"updated_at\":\"2026-11-11 19:42:06\",\"transaction_code\":\"TR-000024\",\"transaction_type\":\"general_donation\",\"family_id\":null,\"sponsor_id\":2842,\"project_id\":null,\"child_id\":null,\"reference_number\":null,\"month_start\":null,\"month_end\":null,\"admin_fee_separate\":\"0.00\",\"legacy_admin_fee_deducted\":null,\"receipt_path\":\"storage\\/receipts\\/TR-20261111194008-86aa01.jpg\",\"unified_receipt_path\":null,\"admin_fee_method\":\"none\",\"admin_fee_value\":\"0.00\",\"admin_fee_policy_id\":null,\"sponsor_name\":\"هويدا ابراهيم عبد المنعم\",\"sponsor_code\":\"SP-002842\"}', '{\"sponsorship_id\":null,\"project_id\":null,\"transaction_type\":\"general_donation\",\"sponsor_id\":2842,\"payment_period\":null,\"purpose\":\"other\",\"purpose_note\":\"اختبار دورة إرجاع وتصحيح دفعة — VGM\",\"amount\":1000,\"admin_fee_percent\":0,\"admin_fee_amount\":0,\"net_amount\":1000,\"transaction_date\":\"2026-11-11\",\"payment_method\":\"cash\",\"receipt_number\":null,\"reference_number\":null,\"description\":\"اختبار دورة إرجاع وتصحيح دفعة — VGM (اختبار دورة إرجاع وتصحيح دفعة — VGM)\",\"status\":\"pending_fm_review\",\"fm_reviewed_by\":null,\"fm_reviewed_at\":null,\"fm_review_reason\":null,\"resubmitted_at\":\"2026-11-11 19:43:42\"}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:43:42'),
+(2590, 29, 'FM_APPROVE', 'transactions', 53, '{\"status\":\"pending_fm_review\",\"fm_reviewed_by\":null,\"fm_reviewed_at\":null,\"fm_review_reason\":null}', '{\"status\":\"posted\",\"journal_id\":210}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:52:42'),
+(2591, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-12 05:33:49');
 
 -- --------------------------------------------------------
 
@@ -10615,7 +10650,22 @@ INSERT INTO `journal_entries` (`id`, `entry_code`, `entry_date`, `description`, 
 (173, 'PAY-36', '2026-10-19', 'صرف راتب الموظف: حمد أحمد اختبار كلمة المرور - 2026-10', 'payroll', 36, 'posted', NULL, NULL, NULL, 29, '2026-10-19 15:50:39'),
 (174, 'PAY-35', '2026-10-19', 'صرف راتب الموظف: المدير المالي - 2026-10', 'payroll', 35, 'posted', NULL, NULL, NULL, 29, '2026-10-19 15:50:45'),
 (175, 'PAY-34', '2026-10-19', 'صرف راتب الموظف: المدير العام - 2026-10', 'payroll', 34, 'posted', NULL, NULL, NULL, 29, '2026-10-19 15:50:57'),
-(176, 'PAY-33', '2026-10-19', 'صرف راتب الموظف: أحمد حسين - 2026-10', 'payroll', 33, 'posted', NULL, NULL, NULL, 29, '2026-10-19 15:51:03');
+(176, 'PAY-33', '2026-10-19', 'صرف راتب الموظف: أحمد حسين - 2026-10', 'payroll', 33, 'posted', NULL, NULL, NULL, 29, '2026-10-19 15:51:03'),
+(196, 'JE-SP-HIST-RECLASS-1', '2026-08-16', 'إعادة تصنيف إيراد كفالة تاريخي إلى إيراد مؤجل — SP-000001', 'sponsorship_historical_reclassification', 1, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(197, 'JE-SP-HIST-RECLASS-2', '2026-08-16', 'إعادة تصنيف إيراد كفالة تاريخي إلى إيراد مؤجل — SP-000002', 'sponsorship_historical_reclassification', 2, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(198, 'JE-SP-HIST-RECLASS-17', '2026-08-26', 'إعادة تصنيف إيراد كفالة تاريخي إلى إيراد مؤجل — SP-000004', 'sponsorship_historical_reclassification', 17, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(199, 'JE-SP-HIST-RECLASS-18', '2026-08-26', 'إعادة تصنيف إيراد كفالة تاريخي إلى إيراد مؤجل — SP-000005', 'sponsorship_historical_reclassification', 18, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(200, 'JE-SP-HIST-RECLASS-27', '2026-09-15', 'إعادة تصنيف إيراد كفالة تاريخي إلى إيراد مؤجل — SP-000006', 'sponsorship_historical_reclassification', 27, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(201, 'JE-SP-HIST-RECLASS-28', '2026-09-15', 'إعادة تصنيف إيراد كفالة تاريخي إلى إيراد مؤجل — SP-000010', 'sponsorship_historical_reclassification', 28, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(202, 'JE-SP-HIST-RECLASS-29', '2026-09-15', 'إعادة تصنيف إيراد كفالة تاريخي إلى إيراد مؤجل — SP-000011', 'sponsorship_historical_reclassification', 29, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(203, 'JE-SP-RECOG-15', '2026-08-31', 'إثبات إيراد الكفالة عن شهر 08/2026', 'sponsorship_month_end_recognition', 15, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(204, 'JE-SP-RECOG-16', '2026-09-30', 'إثبات إيراد الكفالة عن شهر 09/2026', 'sponsorship_month_end_recognition', 16, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(205, 'JE-SP-RECOG-17', '2026-09-30', 'إثبات إيراد الكفالة عن شهر 09/2026', 'sponsorship_month_end_recognition', 17, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(206, 'JE-SP-RECOG-18', '2026-09-30', 'إثبات إيراد الكفالة عن شهر 09/2026', 'sponsorship_month_end_recognition', 18, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(207, 'JE-SP-RECOG-19', '2026-09-30', 'إثبات إيراد الكفالة عن شهر 09/2026', 'sponsorship_month_end_recognition', 19, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(208, 'JE-SP-RECOG-20', '2026-09-30', 'إثبات إيراد الكفالة عن شهر 09/2026', 'sponsorship_month_end_recognition', 20, 'posted', NULL, NULL, NULL, NULL, '2026-11-09 08:16:58'),
+(209, 'JE-000053', '2026-11-10', 'قيد آلي من TR-000023', 'transaction', 52, 'posted', NULL, NULL, NULL, 29, '2026-11-10 20:39:09'),
+(210, 'JE-000054', '2026-11-11', 'قيد آلي من TR-000024', 'transaction', 53, 'posted', NULL, NULL, NULL, 29, '2026-11-11 19:52:42');
 
 -- --------------------------------------------------------
 
@@ -10857,7 +10907,37 @@ INSERT INTO `journal_lines` (`id`, `entry_id`, `account_id`, `debit`, `credit`, 
 (361, 175, 2, 0.00, 10000.00, 'صرف صافي الرواتب والحوافز المجدولة - 2026-10'),
 (362, 176, 14, 10000.00, 0.00, 'رواتب وأجور - 2026-10'),
 (363, 176, 2, 0.00, 5000.00, 'صرف صافي الرواتب والحوافز المجدولة - 2026-10'),
-(364, 176, 37, 0.00, 5000.00, 'سداد سلفة راتب من مسير - 2026-10');
+(364, 176, 37, 0.00, 5000.00, 'سداد سلفة راتب من مسير - 2026-10'),
+(404, 196, 9, 11000.00, 0.00, 'إعادة تصنيف إيراد كفالة تاريخي SP-000001'),
+(405, 196, 6, 0.00, 11000.00, 'إيراد كفالة مؤجل SP-000001'),
+(406, 197, 9, 11000.00, 0.00, 'إعادة تصنيف إيراد كفالة تاريخي SP-000002'),
+(407, 197, 6, 0.00, 11000.00, 'إيراد كفالة مؤجل SP-000002'),
+(408, 198, 9, 15000.00, 0.00, 'إعادة تصنيف إيراد كفالة تاريخي SP-000004'),
+(409, 198, 6, 0.00, 15000.00, 'إيراد كفالة مؤجل SP-000004'),
+(410, 199, 9, 15000.00, 0.00, 'إعادة تصنيف إيراد كفالة تاريخي SP-000005'),
+(411, 199, 6, 0.00, 15000.00, 'إيراد كفالة مؤجل SP-000005'),
+(412, 200, 9, 15000.00, 0.00, 'إعادة تصنيف إيراد كفالة تاريخي SP-000006'),
+(413, 200, 6, 0.00, 15000.00, 'إيراد كفالة مؤجل SP-000006'),
+(414, 201, 9, 10000.00, 0.00, 'إعادة تصنيف إيراد كفالة تاريخي SP-000010'),
+(415, 201, 6, 0.00, 10000.00, 'إيراد كفالة مؤجل SP-000010'),
+(416, 202, 9, 10000.00, 0.00, 'إعادة تصنيف إيراد كفالة تاريخي SP-000011'),
+(417, 202, 6, 0.00, 10000.00, 'إيراد كفالة مؤجل SP-000011'),
+(418, 203, 6, 11000.00, 0.00, 'إيراد مؤجل مستحق عن شهر 08/2026'),
+(419, 203, 9, 0.00, 11000.00, 'إيراد كفالة مستحق عن شهر 08/2026'),
+(420, 204, 6, 10000.00, 0.00, 'إيراد مؤجل مستحق عن شهر 09/2026'),
+(421, 204, 9, 0.00, 10000.00, 'إيراد كفالة مستحق عن شهر 09/2026'),
+(422, 205, 6, 10000.00, 0.00, 'إيراد مؤجل مستحق عن شهر 09/2026'),
+(423, 205, 9, 0.00, 10000.00, 'إيراد كفالة مستحق عن شهر 09/2026'),
+(424, 206, 6, 15000.00, 0.00, 'إيراد مؤجل مستحق عن شهر 09/2026'),
+(425, 206, 9, 0.00, 15000.00, 'إيراد كفالة مستحق عن شهر 09/2026'),
+(426, 207, 6, 10000.00, 0.00, 'إيراد مؤجل مستحق عن شهر 09/2026'),
+(427, 207, 9, 0.00, 10000.00, 'إيراد كفالة مستحق عن شهر 09/2026'),
+(428, 208, 6, 10000.00, 0.00, 'إيراد مؤجل مستحق عن شهر 09/2026'),
+(429, 208, 9, 0.00, 10000.00, 'إيراد كفالة مستحق عن شهر 09/2026'),
+(430, 209, 1, 4000.00, 0.00, 'تحصيل TR-000023'),
+(431, 209, 6, 0.00, 4000.00, 'إيراد كفالات مؤجل TR-000023'),
+(432, 210, 1, 1000.00, 0.00, 'تحصيل TR-000024'),
+(433, 210, 11, 0.00, 1000.00, 'تبرع عام TR-000024');
 
 -- --------------------------------------------------------
 
@@ -11554,7 +11634,13 @@ INSERT INTO `notifications` (`id`, `recipient_user_id`, `type`, `title`, `body`,
 (226, 19, 'sponsor_request', 'طلب كفيل جديد', 'أمير علي طه — 01234567', 'modules/sponsors/my_request.php?id=8', 1, '2026-10-29 08:57:07'),
 (227, 1, 'sponsor_request', 'طلب كفيل جديد', 'أمير علي طه — 01234567', 'modules/sponsors/requests.php', 0, '2026-10-29 08:57:07'),
 (228, 3, 'sponsor_request', 'طلب كفيل جديد', 'أمير علي طه — 01234567', 'modules/sponsors/requests.php', 1, '2026-10-29 08:57:07'),
-(229, 19, 'sponsor_request', 'طلب كفيل جديد', 'احمد محمد احمد — 0966647874', 'modules/sponsors/my_request.php?id=9', 0, '2026-11-01 16:33:33');
+(229, 19, 'sponsor_request', 'طلب كفيل جديد', 'احمد محمد احمد — 0966647874', 'modules/sponsors/my_request.php?id=9', 1, '2026-11-01 16:33:33'),
+(230, 29, 'info', 'دفعات بانتظار المراجعة المالية', 'لديك 1 دفعة بانتظار الاعتماد من لمياء علي طه صالح.', 'http://localhost/AhlElKheir/modules/accounting/fm_transaction_review.php', 1, '2026-11-10 20:22:59'),
+(231, 3, 'info', 'تم اعتماد الدفعة', 'تم اعتماد الدفعة TR-000023 وترحيلها للقيد المحاسبي.', 'modules/transactions/index.php', 1, '2026-11-10 20:39:09'),
+(232, 29, 'info', 'دفعات بانتظار المراجعة المالية', 'لديك 1 دفعة بانتظار الاعتماد من لمياء علي طه صالح.', 'http://localhost/AhlElKheir/modules/accounting/fm_transaction_review.php', 1, '2026-11-11 19:40:08'),
+(233, 3, 'info', 'تم إرجاع الدفعة للتعديل', 'تم إرجاع الدفعة TR-000024 للتعديل. السبب: يرجى تصحيح وصف العملية وإعادة الإرسال بعد استكمال بيانات التوضيح', 'http://localhost/AhlElKheir/modules/transactions/edit_returned.php?id=53', 1, '2026-11-11 19:42:06'),
+(234, 29, 'info', 'دفعات بانتظار المراجعة المالية', 'لديك 1 دفعة بانتظار الاعتماد من لمياء علي طه صالح.', 'http://localhost/AhlElKheir/modules/accounting/fm_transaction_review.php', 1, '2026-11-11 19:43:42'),
+(235, 3, 'info', 'تم اعتماد الدفعة', 'تم اعتماد الدفعة TR-000024 وترحيلها للقيد المحاسبي.', 'modules/transactions/index.php', 1, '2026-11-11 19:52:42');
 
 -- --------------------------------------------------------
 
@@ -19223,6 +19309,44 @@ INSERT INTO `sponsorships` (`id`, `sponsor_id`, `child_id`, `monthly_amount`, `c
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `sponsorship_accounting_events`
+--
+
+CREATE TABLE `sponsorship_accounting_events` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `event_key` varchar(120) NOT NULL,
+  `event_type` enum('historical_reclassification','month_end_recognition','transaction_void_reversal') NOT NULL,
+  `transaction_id` int(10) UNSIGNED NOT NULL,
+  `allocation_id` int(10) UNSIGNED DEFAULT NULL,
+  `journal_entry_id` int(10) UNSIGNED NOT NULL,
+  `event_date` date NOT NULL,
+  `amount` decimal(14,2) NOT NULL,
+  `created_by` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sponsorship_accounting_events`
+--
+
+INSERT INTO `sponsorship_accounting_events` (`id`, `event_key`, `event_type`, `transaction_id`, `allocation_id`, `journal_entry_id`, `event_date`, `amount`, `created_by`, `created_at`) VALUES
+(17, 'historical-reclassification:transaction:1', 'historical_reclassification', 1, 14, 196, '2026-08-16', 11000.00, NULL, '2026-11-09 08:16:58'),
+(18, 'historical-reclassification:transaction:2', 'historical_reclassification', 2, 15, 197, '2026-08-16', 11000.00, NULL, '2026-11-09 08:16:58'),
+(19, 'historical-reclassification:transaction:17', 'historical_reclassification', 17, 16, 198, '2026-08-26', 15000.00, NULL, '2026-11-09 08:16:58'),
+(20, 'historical-reclassification:transaction:18', 'historical_reclassification', 18, 17, 199, '2026-08-26', 15000.00, NULL, '2026-11-09 08:16:58'),
+(21, 'historical-reclassification:transaction:27', 'historical_reclassification', 27, 18, 200, '2026-09-15', 15000.00, NULL, '2026-11-09 08:16:58'),
+(22, 'historical-reclassification:transaction:28', 'historical_reclassification', 28, 19, 201, '2026-09-15', 10000.00, NULL, '2026-11-09 08:16:58'),
+(23, 'historical-reclassification:transaction:29', 'historical_reclassification', 29, 20, 202, '2026-09-15', 10000.00, NULL, '2026-11-09 08:16:58'),
+(24, 'month-end-recognition:allocation:15', 'month_end_recognition', 2, 15, 203, '2026-08-31', 11000.00, NULL, '2026-11-09 08:16:58'),
+(25, 'month-end-recognition:allocation:16', 'month_end_recognition', 17, 16, 204, '2026-09-30', 10000.00, NULL, '2026-11-09 08:16:58'),
+(26, 'month-end-recognition:allocation:17', 'month_end_recognition', 18, 17, 205, '2026-09-30', 10000.00, NULL, '2026-11-09 08:16:58'),
+(27, 'month-end-recognition:allocation:18', 'month_end_recognition', 27, 18, 206, '2026-09-30', 15000.00, NULL, '2026-11-09 08:16:58'),
+(28, 'month-end-recognition:allocation:19', 'month_end_recognition', 28, 19, 207, '2026-09-30', 10000.00, NULL, '2026-11-09 08:16:58'),
+(29, 'month-end-recognition:allocation:20', 'month_end_recognition', 29, 20, 208, '2026-09-30', 10000.00, NULL, '2026-11-09 08:16:58');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `sponsorship_children`
 --
 
@@ -22201,6 +22325,59 @@ INSERT INTO `sponsorship_children` (`sponsorship_id`, `family_child_id`) VALUES
 (2965, 1710),
 (2966, 1711),
 (2967, 1712);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sponsorship_pause_events`
+--
+
+CREATE TABLE `sponsorship_pause_events` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `sponsorship_id` int(10) UNSIGNED NOT NULL,
+  `event_type` enum('pause','resume') NOT NULL,
+  `effective_date` date NOT NULL,
+  `reason` text DEFAULT NULL,
+  `actor_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sponsorship_payment_allocations`
+--
+
+CREATE TABLE `sponsorship_payment_allocations` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `transaction_id` int(10) UNSIGNED NOT NULL,
+  `sponsorship_id` int(10) UNSIGNED DEFAULT NULL,
+  `collector_user_id` int(10) UNSIGNED DEFAULT NULL,
+  `payment_period` varchar(20) DEFAULT NULL,
+  `covered_month` date DEFAULT NULL COMMENT 'First day of the covered calendar month',
+  `commitment_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `net_received` decimal(12,2) NOT NULL,
+  `allocated_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `unallocated_amount` decimal(12,2) NOT NULL DEFAULT 0.00,
+  `allocation_status` enum('allocated','partial','unallocated') NOT NULL,
+  `source_type` enum('live','historical_backfill') NOT NULL DEFAULT 'live',
+  `created_by` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `sponsorship_payment_allocations`
+--
+
+INSERT INTO `sponsorship_payment_allocations` (`id`, `transaction_id`, `sponsorship_id`, `collector_user_id`, `payment_period`, `covered_month`, `commitment_amount`, `net_received`, `allocated_amount`, `unallocated_amount`, `allocation_status`, `source_type`, `created_by`, `created_at`) VALUES
+(14, 1, 1429, 19, 'July/2027', '2027-07-01', 11000.00, 11000.00, 11000.00, 0.00, 'allocated', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
+(15, 2, 1429, 19, 'August/2026', '2026-08-01', 11000.00, 11000.00, 11000.00, 0.00, 'allocated', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
+(16, 17, 2947, 19, 'September/2026', '2026-09-01', 10000.00, 15000.00, 10000.00, 5000.00, 'partial', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
+(17, 18, 2935, 19, 'September/2026', '2026-09-01', 10000.00, 15000.00, 10000.00, 5000.00, 'partial', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
+(18, 27, 328, 19, 'September/2026', '2026-09-01', 15000.00, 15000.00, 15000.00, 0.00, 'allocated', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
+(19, 28, 3538, 19, 'September/2026', '2026-09-01', 10000.00, 10000.00, 10000.00, 0.00, 'allocated', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
+(20, 29, 3534, 19, 'September/2026', '2026-09-01', 10000.00, 10000.00, 10000.00, 0.00, 'allocated', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
+(21, 52, 3557, 3, 'November/2026', '2026-11-01', 4000.00, 4000.00, 4000.00, 0.00, 'allocated', 'live', 29, '2026-11-10 20:39:09');
 
 -- --------------------------------------------------------
 
@@ -30421,7 +30598,9 @@ INSERT INTO `transactions` (`id`, `sponsorship_id`, `amount`, `currency_code`, `
 (26, NULL, 3000.00, 'SDG', 'cash', '2026-09-14', NULL, 'إعادة صرف مبلغ مرتجع للأسرة 817 - شهر 2026-10', 1.00, '2026-10', 'إعادة صرف مبلغ مرتجع بعد إعادة فتحه', NULL, 0.00, 0.00, 3000.00, 'posted', NULL, NULL, NULL, 16, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:38:06', '2026-09-14 09:38:06', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-REDISB-ITEM-30', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
 (27, 328, 15000.00, 'SDG', 'cash', '2026-09-15', 'SP-000006', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 15000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 09:46:11', '2026-09-15 09:46:11', 'SP-000006', 'sponsorship_payment', NULL, 323, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915071448-14a68c.jpg', NULL, 'none', 0.00, NULL),
 (28, 3538, 10000.00, 'SDG', 'bank_transfer', '2026-09-15', 'SP-000010', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 10:01:36', '2026-09-15 10:01:36', 'SP-000010', 'sponsorship_payment', NULL, 2844, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915085953-52a92b.jpg', NULL, 'none', 0.00, NULL),
-(29, 3534, 10000.00, 'SDG', 'mobile', '2026-09-15', 'SP-000011', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 11:14:15', '2026-09-15 11:14:15', 'SP-000011', 'sponsorship_payment', NULL, 2841, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915101345-90aad0.jpg', NULL, 'none', 0.00, NULL);
+(29, 3534, 10000.00, 'SDG', 'mobile', '2026-09-15', 'SP-000011', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 11:14:15', '2026-09-15 11:14:15', 'SP-000011', 'sponsorship_payment', NULL, 2841, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915101345-90aad0.jpg', NULL, 'none', 0.00, NULL),
+(52, 3557, 4000.00, 'SDG', 'cash', '2026-11-10', NULL, 'دفعة — كفالة شهرية عن شهر November/2026', 1.00, 'November/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 4000.00, 'posted', NULL, NULL, NULL, 3, 29, '2026-11-10 20:39:09', NULL, '2026-11-10 20:22:59', NULL, NULL, NULL, NULL, '2026-11-10 20:22:59', '2026-11-10 20:39:09', 'TR-000023', 'sponsorship_payment', NULL, 2856, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20261110202259-630ec9.jpeg', NULL, 'none', 0.00, NULL),
+(53, NULL, 1000.00, 'SDG', 'cash', '2026-11-11', NULL, 'اختبار دورة إرجاع وتصحيح دفعة — VGM (اختبار دورة إرجاع وتصحيح دفعة — VGM)', 0.00, NULL, 'اختبار دورة إرجاع وتصحيح دفعة — VGM', 'other', 0.00, 0.00, 1000.00, 'posted', NULL, NULL, NULL, 3, 29, '2026-11-11 19:52:42', NULL, '2026-11-11 19:40:08', '2026-11-11 19:43:42', NULL, NULL, NULL, '2026-11-11 19:40:08', '2026-11-11 19:52:42', 'TR-000024', 'general_donation', NULL, 2842, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20261111194008-86aa01.jpg', NULL, 'none', 0.00, NULL);
 
 -- --------------------------------------------------------
 
@@ -30463,16 +30642,16 @@ CREATE TABLE `users` (
 --
 
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
-(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-10-27 14:27:44', NULL, '2026-08-02 16:49:35', '2026-10-27 14:27:44', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'ذكر', 1, 1, 'auto', 'ar', 1, 1, 1),
-(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-29 06:24:45', NULL, '2026-08-02 16:49:35', '2026-10-29 06:24:45', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
-(3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-06 06:43:09', NULL, '2026-08-02 16:49:35', '2026-11-06 06:43:09', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
+(1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-11-09 08:55:40', NULL, '2026-08-02 16:49:35', '2026-11-09 08:55:40', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'ذكر', 1, 1, 'auto', 'ar', 1, 1, 1),
+(2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-10 06:31:50', NULL, '2026-08-02 16:49:35', '2026-11-10 06:31:50', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
+(3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-12 05:33:49', NULL, '2026-08-02 16:49:35', '2026-11-12 05:33:49', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$2Pps4jCppxKBhdFrBRi94.FmCAYDqhUWd.vOLH4CnCIZDWbWrLhTC', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 'archived', 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-09-04 08:02:07', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (15, 4, 'medo', '$2y$10$8XL6WcxWHuHZ2MB0XKlWReI28/2VUY0P9TJNWIM1chyov7mi9vZGy', 'مديحه عبد الماجد', 'madiha@example.com', '096664568', 0, 'archived', 0, NULL, 3, '2026-08-10 10:31:56', '2026-09-04 08:01:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (16, 7, 'nany1', '$2y$10$bOs5FR0MQDIWcay4vmcoc.wkTOTt7mU2umWJYHn1AFkAXclPGcZWO', 'nany1', 'nany1@gmail.com', '094449785', 1, '', 0, '2026-10-23 12:24:03', 1, '2026-08-13 18:03:28', '2026-10-23 12:24:03', NULL, 'storage/avatars/user_16_1787805870.png', NULL, NULL, 'female', 2, 3, 'light', 'ar', 1, 1, 1),
 (17, 10, 'acc1', '$2y$10$n6sTBlpffNdZOaN48KkAx.zqkDnrikirhM.HWVBH81qG255EuUqKS', 'acc1', 'acc1@gmail.com', '0945786321', 1, '', 0, '2026-10-19 14:16:05', 1, '2026-08-13 19:47:47', '2026-10-19 14:16:05', NULL, NULL, NULL, NULL, 'male', 6, 29, 'light', 'ar', 1, 1, 1),
 (18, 8, 'ro1', '$2y$10$Rx63s7Lt4lh4IkJwbUKigOAmp0MzhzByWauPrF1HptcVmr4V/MpHq', 'أحمد حسين عبدالكريم', 'ro@gmail.com', '0123456789', 1, '', 0, '2026-10-19 13:41:10', 1, '2026-08-13 20:23:47', '2026-10-19 13:41:10', NULL, 'storage/avatars/user_18_1789729126.jpg', NULL, NULL, NULL, 3, 3, 'light', 'ar', 1, 1, 1),
-(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-10-29 10:23:06', 3, '2026-08-14 08:10:49', '2026-10-29 10:23:06', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
+(19, 4, 'sv1', '$2y$10$1orOJuoh50H0m8Ow4eKIMOZC18pCFV6XILrjtEZvInwH/M/yGCDUS', 'فاطمه سليمان', 'fatima@gmail.com', '0999999999999', 1, 'active', 0, '2026-11-10 17:57:36', 3, '2026-08-14 08:10:49', '2026-11-10 17:57:36', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (20, 4, 'sv2', '$2y$10$GlgbXKPFv/Tqz/UYdBF2kOgV.Wwpe6yBpfmzcUSOKOocQuLulV2IW', 'ميادة الحبر', 'mayadah@gmail.com', NULL, 1, 'active', 0, '2026-10-29 10:22:20', 3, '2026-08-14 08:12:16', '2026-10-29 10:22:20', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (21, 4, 'sv3', '$2y$10$hi/o4qq4Byzdwq96wvXYPe3JW4lPlbIAwRH.JFjLtLXa7DEAj06ZG', 'هديل عثمان', 'hadeel@gmail.com', '03333333333333', 1, 'active', 0, '2026-09-29 08:07:42', 3, '2026-08-14 08:31:52', '2026-09-29 08:07:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (22, 4, 'sv4', '$2y$10$aw1SmFzeeI.xEnSbxWPwEOn/3UahrD72EBqhPuDMJ5bPcdtp40Ppy', 'ميساء سليمان', 'mysa@gmail.com', '26498879658', 1, 'active', 0, '2026-08-16 09:14:21', 3, '2026-08-14 09:13:31', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
@@ -30481,7 +30660,7 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-10-25 09:41:27', 1, '2026-08-17 14:26:40', '2026-10-25 09:41:27', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-11 19:35:06', 1, '2026-08-17 14:26:40', '2026-11-11 19:35:06', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
 (32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-25 09:45:51', NULL, '2026-08-18 21:49:04', '2026-10-25 09:45:51', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
 (33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-19 08:33:28', 1, '2026-08-28 18:33:31', '2026-10-19 08:33:28', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
 (34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-15 18:05:58', 1, '2026-08-28 18:35:16', '2026-10-15 18:05:58', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
@@ -31659,11 +31838,41 @@ ALTER TABLE `sponsorships`
   ADD KEY `fk_sponsorship_child` (`child_id`);
 
 --
+-- Indexes for table `sponsorship_accounting_events`
+--
+ALTER TABLE `sponsorship_accounting_events`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_sae_event_key` (`event_key`),
+  ADD UNIQUE KEY `uq_sae_journal` (`journal_entry_id`),
+  ADD KEY `idx_sae_transaction_type` (`transaction_id`,`event_type`),
+  ADD KEY `idx_sae_allocation_type` (`allocation_id`,`event_type`),
+  ADD KEY `fk_sae_creator` (`created_by`);
+
+--
 -- Indexes for table `sponsorship_children`
 --
 ALTER TABLE `sponsorship_children`
   ADD PRIMARY KEY (`sponsorship_id`,`family_child_id`),
   ADD KEY `idx_sponsorship_children_family_child_id` (`family_child_id`);
+
+--
+-- Indexes for table `sponsorship_pause_events`
+--
+ALTER TABLE `sponsorship_pause_events`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_spe_sponsorship_date` (`sponsorship_id`,`effective_date`,`id`),
+  ADD KEY `fk_spe_actor` (`actor_user_id`);
+
+--
+-- Indexes for table `sponsorship_payment_allocations`
+--
+ALTER TABLE `sponsorship_payment_allocations`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_spa_transaction` (`transaction_id`),
+  ADD KEY `idx_spa_sponsorship_month` (`sponsorship_id`,`covered_month`),
+  ADD KEY `idx_spa_month_status` (`covered_month`,`allocation_status`),
+  ADD KEY `fk_spa_collector` (`collector_user_id`),
+  ADD KEY `fk_spa_creator` (`created_by`);
 
 --
 -- Indexes for table `sponsor_import_exceptions`
@@ -31884,7 +32093,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2557;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2592;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -32196,13 +32405,13 @@ ALTER TABLE `hr_salary_advance_waiver_schedule_items`
 -- AUTO_INCREMENT for table `journal_entries`
 --
 ALTER TABLE `journal_entries`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=177;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=211;
 
 --
 -- AUTO_INCREMENT for table `journal_lines`
 --
 ALTER TABLE `journal_lines`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=365;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=434;
 
 --
 -- AUTO_INCREMENT for table `leaves`
@@ -32274,7 +32483,7 @@ ALTER TABLE `nanny_group_assignments`
 -- AUTO_INCREMENT for table `notifications`
 --
 ALTER TABLE `notifications`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=230;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=236;
 
 --
 -- AUTO_INCREMENT for table `orphan_documents`
@@ -32463,6 +32672,24 @@ ALTER TABLE `sponsorships`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3561;
 
 --
+-- AUTO_INCREMENT for table `sponsorship_accounting_events`
+--
+ALTER TABLE `sponsorship_accounting_events`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
+
+--
+-- AUTO_INCREMENT for table `sponsorship_pause_events`
+--
+ALTER TABLE `sponsorship_pause_events`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+
+--
+-- AUTO_INCREMENT for table `sponsorship_payment_allocations`
+--
+ALTER TABLE `sponsorship_payment_allocations`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+
+--
 -- AUTO_INCREMENT for table `sponsor_import_exceptions`
 --
 ALTER TABLE `sponsor_import_exceptions`
@@ -32472,7 +32699,7 @@ ALTER TABLE `sponsor_import_exceptions`
 -- AUTO_INCREMENT for table `sponsor_payments`
 --
 ALTER TABLE `sponsor_payments`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=27;
 
 --
 -- AUTO_INCREMENT for table `sponsor_requests`
@@ -32526,7 +32753,7 @@ ALTER TABLE `suspension_cases`
 -- AUTO_INCREMENT for table `transactions`
 --
 ALTER TABLE `transactions`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=40;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=54;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -32880,11 +33107,36 @@ ALTER TABLE `sponsorships`
   ADD CONSTRAINT `fk_sponsorships_sponsor` FOREIGN KEY (`sponsor_id`) REFERENCES `sponsors` (`id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `sponsorship_accounting_events`
+--
+ALTER TABLE `sponsorship_accounting_events`
+  ADD CONSTRAINT `fk_sae_allocation` FOREIGN KEY (`allocation_id`) REFERENCES `sponsorship_payment_allocations` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_sae_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_sae_journal` FOREIGN KEY (`journal_entry_id`) REFERENCES `journal_entries` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_sae_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `sponsorship_children`
 --
 ALTER TABLE `sponsorship_children`
   ADD CONSTRAINT `fk_sponsorship_children_family_child` FOREIGN KEY (`family_child_id`) REFERENCES `family_children` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_sponsorship_children_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Constraints for table `sponsorship_pause_events`
+--
+ALTER TABLE `sponsorship_pause_events`
+  ADD CONSTRAINT `fk_spe_actor` FOREIGN KEY (`actor_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_spe_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON UPDATE CASCADE;
+
+--
+-- Constraints for table `sponsorship_payment_allocations`
+--
+ALTER TABLE `sponsorship_payment_allocations`
+  ADD CONSTRAINT `fk_spa_collector` FOREIGN KEY (`collector_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_spa_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_spa_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_spa_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `sponsor_payments`
