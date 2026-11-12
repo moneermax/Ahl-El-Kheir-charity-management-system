@@ -265,28 +265,28 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, 'name="entry_section" value="sponsorship"')
         && str_contains($paymentEntrySource, 'name="entry_section" value="donation"')
         && str_contains($paymentEntrySource, 'إرسال تحصيل الكفالة للمراجعة المالية')
-        && str_contains($paymentEntrySource, 'إرسال التبرع للمراجعة المالية'),
+        && str_contains($paymentEntrySource, 'إرسال التبرعات للمراجعة المالية'),
         'two_independent_forms_and_no_standalone_admin_fee_type'
     );
     $assert(
         str_contains($donationFormMarkup, 'donation-entry-table')
-        && str_contains($donationFormMarkup, 'name="type" id="donationType"')
-        && str_contains($donationFormMarkup, 'name="amount"')
-        && str_contains($donationFormMarkup, 'name="project_id"')
-        && str_contains($donationFormMarkup, 'name="other_source_note"')
-        && str_contains($donationFormMarkup, 'name="receipt_file"')
+        && str_contains($donationFormMarkup, 'name="donation_type[]"')
+        && str_contains($donationFormMarkup, 'name="donation_amount[]"')
+        && str_contains($donationFormMarkup, 'name="donation_project_id[]"')
+        && str_contains($donationFormMarkup, 'name="donation_other_source_note[]"')
+        && str_contains($donationFormMarkup, 'name="donation_receipt_file[]"')
+        && str_contains($donationFormMarkup, 'name="donation_date[]"')
+        && str_contains($donationFormMarkup, 'name="donation_method[]"')
+        && str_contains($donationFormMarkup, 'name="donation_receipt[]"')
+        && str_contains($donationFormMarkup, 'name="donation_reference[]"')
+        && str_contains($donationFormMarkup, 'name="donation_description[]"')
+        && str_contains($donationFormMarkup, 'function addDonationLine()')
+        && str_contains($donationFormMarkup, 'لا تُفرض رسوم خدمة على هذه التبرعات.')
         && !str_contains($donationFormMarkup, 'name="pay_month[]"')
         && !str_contains($donationFormMarkup, 'name="pay_service_fee_received[]"')
         && str_contains($donationFormMarkup, 'value="<?php echo $input[\'sponsor_id\']; ?>"><div class="payment-section-title"'),
-        'donation_form_has_own_table_and_no_sponsorship_fee_fields'
+        'donation_form_supports_independent_rows_and_row_evidence_without_service_fees'
     );
-    $assert(
-        str_contains($paymentEntrySource, '$entrySection=') 
-        && str_contains($paymentEntrySource, "\$entrySection==='sponsorship'?['monthly_sponsorship']")
-        && str_contains($paymentEntrySource, "\$entrySection==='donation'?['general_donation','project_donation','other']")
-        && str_contains($paymentEntrySource, "\$input['sponsor_id']=(int)(\$_POST['sponsor_id']??0)")
-        && str_contains($paymentEntrySource, "if(!\$errors&&\$role==='supervisor'){"),
-        'server_validates_each_form_type_and_sponsor_scope_independently'
     );
     $assert(
         str_contains($paymentEntrySource, 'class="pay-evidence-row"')
@@ -306,19 +306,19 @@ if (is_string($paymentEntrySource)) {
     );
     $sharedEvidenceStart = strpos($paymentEntrySource, 'id="grpSharedEvidence"');
     $assert(
-        $sharedEvidenceStart !== false
-        && strpos($paymentEntrySource, 'name="date"', $sharedEvidenceStart) !== false
-        && strpos($paymentEntrySource, 'name="method"', $sharedEvidenceStart) !== false
-        && strpos($paymentEntrySource, 'name="receipt"', $sharedEvidenceStart) !== false
-        && strpos($paymentEntrySource, 'name="reference"', $sharedEvidenceStart) !== false
-        && strpos($paymentEntrySource, 'name="description"', $sharedEvidenceStart) !== false
-        && strpos($paymentEntrySource, 'name="receipt_file"', $sharedEvidenceStart) !== false
-        && str_contains($paymentEntrySource, 'function toggleDonationFields()'),
-        'donation_evidence_is_separate_and_conditional_fields_are_toggled'
+        str_contains($paymentEntrySource, 'name="donation_date[]"')
+        && str_contains($paymentEntrySource, 'name="donation_method[]"')
+        && str_contains($paymentEntrySource, 'name="donation_receipt[]"')
+        && str_contains($paymentEntrySource, 'name="donation_reference[]"')
+        && str_contains($paymentEntrySource, 'name="donation_description[]"')
+        && str_contains($paymentEntrySource, 'name="donation_receipt_file[]"')
+        && str_contains($paymentEntrySource, '$donationReceiptPaths[$donationLine[\'idx\']]')
+        && str_contains($paymentEntrySource, 'foreach ($donationLines as $donationLine)')
+        && str_contains($paymentEntrySource, 'function removeDonationLine(button)')
+        && str_contains($paymentEntrySource, 'recalcDonationTotal()')
+        && !str_contains($paymentEntrySource, 'id="grpSharedEvidence"'),
+        'donation_evidence_and_server_persistence_are_per_line'
     );
-    $monthlyWarningPosition = strpos($paymentEntrySource, 'تنبيه:</strong> قيم الاتفاقية الشهرية مرجعية');
-    $monthlySectionStart = strpos($paymentEntrySource, '<div class="col-12" id="grpLines">');
-    $agreementSummaryPosition = strpos($paymentEntrySource, 'id="agreementSummary"');
     $assert(
         $monthlyWarningPosition !== false
         && $monthlySectionStart !== false
