@@ -41,6 +41,7 @@ $headerQuickActions = [
 ];
 if (in_array($urole, ['financial_manager', 'fm'], true)) {
     $headerQuickActions[] = ['label'=>'اتفاقيات الكفالات الشهرية','url'=>'modules/sponsorships/monthly_agreements.php','icon'=>'fa-file-signature','color'=>'#198754'];
+    $headerQuickActions[] = ['label'=>'حساب إيراد رسوم خدمة الكفالات','url'=>'modules/accounting/sponsorship_service_fee_account.php','icon'=>'fa-coins','color'=>'#0d6efd'];
 }
 
 ak_ensure_tables();
