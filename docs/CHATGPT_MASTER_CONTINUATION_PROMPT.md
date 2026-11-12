@@ -4064,3 +4064,12 @@ Do not enable positive service-fee posting. Recognition timing (immediate or at 
 CI: PHP 8.2 lint + 32 component/commitment/mapping contract checks PASS (43236546673). MariaDB 10.4.32 import + both migrations applied twice, FK and legacy-preservation checks PASS (43236977774). Canonical schema sync passed twice in CI and is committed to main as `9994f6ae2e792dedcceefe44cc7c739ece0291f3`. No local XAMPP runtime/browser acceptance.
 
 Next: inspect final diff and CI; then provide one concise local pull/migration/browser acceptance sequence. Do not claim local runtime acceptance until the user applies the migration and verifies the real XAMPP application. Keep legacy workflows unchanged and do not reopen closed attendance/payroll, waiver, i18n, or salary advance stages. Detailed rules: `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
+
+
+## 2026-11-12 — Latest sponsorship payment-entry continuation
+
+A browser acceptance defect was found and corrected in repository source before any payment submission: the agreed 10,000 SDG sponsorship and 2,000 SDG service fee were auto-copied into actual-received fields, incorrectly showing 12,000 SDG. PHP rendering and JavaScript both caused this. Actual inputs now start blank; totals start at zero and use actual entries only; changing the covered month clears the actuals. Agreement references remain readonly. The row remains single-line with a fixed 1,590px width, larger controls and horizontal scrolling on narrower viewports. The legacy admin-fee message was clarified. Regression assertions were added to `tools/test_sponsorship_monthly_agreement_components.php`; the existing workflow runs that test and lints `modules/transactions/create.php`.
+
+Latest commits: `543567be93e8c2dbd64a3194303b3f16fb400cf7`, `265f32be23293a45e36991b16c5cf1f58621a7d9`, `3271b0bb875f70efe436f422dbd7fcc9da0ca75d`.
+
+Next: wait for the focused GitHub Actions run to pass, then have the user pull main and visually verify SH-003508 / November shows agreed 10,000 / actual blank / agreed fee 2,000 / actual blank and total 0.00. Do not submit this payment. Also verify the table stays one row with horizontal scrolling as needed. Local browser verification is required before closure. Keep positive service-fee posting blocked pending authorized timing/account decisions.
