@@ -53,8 +53,11 @@ $zeroFee['amount'] = 9000.00;
 $posting = ak_spma_validate_snapshot_for_posting($zeroFee);
 $assert($posting['sponsorship_received'] === 9000.00, 'zero_fee_sponsorship_posting_allowed');
 
+$positiveFee = $zeroFee;
+$positiveFee['actual_service_fee_received'] = 1200.00;
+$positiveFee['amount'] = 10200.00;
 $positiveFeeBlocked = false;
-try { ak_spma_validate_snapshot_for_posting($snapshot); }
+try { ak_spma_validate_snapshot_for_posting($positiveFee); }
 catch (RuntimeException $e) { $positiveFeeBlocked = str_contains($e->getMessage(), 'المعالجة المحاسبية'); }
 $assert($positiveFeeBlocked, 'positive_service_fee_posting_blocked');
 
