@@ -1,6 +1,6 @@
 # VGM Sponsorship Payment Entry and Monthly Service Fee — Working Plan
 
-**Status:** APPROVED WORK PLAN / FM AGREEMENT SETUP CONFIRMED / CONFIGURABLE SERVICE-FEE ACCOUNTING DESIGN SELECTED / IMPLEMENTATION NOT STARTED  
+**Status:** APPROVED WORK PLAN / FM AGREEMENT SETUP CONFIRMED / MONTHLY AMENDMENT RULE CONFIRMED / CONFIGURABLE SERVICE-FEE ACCOUNTING DESIGN SELECTED / IMPLEMENTATION NOT STARTED  
 ## Mandatory ChatGPT collaboration and execution protocol
 
 This is a permanent project rule for every session. Do not make the user repeatedly restate it.
@@ -540,4 +540,21 @@ This is repository/CI evidence only. The user's local `ahl_el_kheir` database ha
 
 Next implementation work: FM agreement management, server-side agreement lookup/missing-agreement blocking, both payment submission paths, component snapshots, FM review breakdowns, returned-row compatibility, and strict legacy/new-model accounting separation. Positive actual service-fee receipts remain blocked from journal posting until an authorized accounting owner approves recognition timing and an active revenue destination. Never fall back to account `4200`.
 
-**Open decision before allocator/amendment implementation:** approve freezing the original sponsorship/month allocation commitment after its first posted allocation. A conflicting later agreement amendment would not rewrite that commitment or prior allocations; it would require an explicit audited correction before the new commitment can affect allocation. Do not implement this rule until the user confirms it.
+**Decision CLOSED:** the user approved the month-specific commitment freeze described in the 2026-11-12 decision entry above. Future covered months may have new sponsorship commitments; only a month with a first posted allocation has its sponsorship commitment frozen. Do not reopen this rule without a concrete business change.
+
+
+## 2026-11-12 — Agreement amendment and monthly commitment freeze decision confirmed
+
+The user approved the following distinction after challenging the earlier wording that appeared to freeze a sponsorship commitment indefinitely:
+
+- A monthly agreement is versioned per sponsorship and covered calendar month. It is not one permanent amount for the lifetime of a sponsorship.
+- A sponsor may increase or decrease the agreed sponsorship commitment for a future covered month. Example: an earlier month remains 5,000 SDG; from the next agreed month the commitment becomes 10,000 SDG. The new month receives a new agreement version/value. The 5,000 SDG difference is **not an advance**; it is the increase in that month's agreed commitment.
+- An advance is an amount received beyond the applicable agreed sponsorship/service-fee amounts for the explicitly covered months. It must not be inferred merely from a change in the monthly commitment.
+- After the first posted allocation for a particular sponsorship/month, that month's sponsorship commitment is frozen at the commitment snapshot recorded by the allocation. A later agreement version must not change that commitment. A conflicting change to the sponsorship commitment for that already-allocated month is blocked unless handled through a separate explicit, audited correction process. No existing allocation or journal may be rewritten.
+- A later agreement version may change the service-fee amount while retaining the frozen sponsorship commitment. Existing submitted/posted payment snapshots remain unchanged; only subsequent eligible submissions may use the amended service-fee value.
+- For a month with no posted allocation, the latest applicable agreement version supplies the sponsorship commitment and service-fee reference. New monthly increases therefore affect future unallocated months normally.
+- The allocation helper and arrears/advance reporting must use the monthly-agreement amount for new-model months, while retaining the existing allocation snapshot as authoritative once an allocation exists. Legacy rows/months retain their current legacy fallback and meaning.
+- FM remains the person who enters the values agreed by GM, VGM and FM. This does not create unilateral FM decision authority or an in-system approval hierarchy. Agreement versions and payment snapshots remain append-only/auditable.
+
+**Implementation consequence:** do not freeze the entire sponsorship or prohibit future agreement amendments. Freeze only the sponsorship commitment for the specific month after its first posted allocation. This resolves the prior open allocator/amendment gate. The exact audited correction workflow for changing an already-allocated month's commitment is not part of this implementation and must not be invented; block that change.
+
