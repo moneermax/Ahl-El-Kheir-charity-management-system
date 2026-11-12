@@ -39,7 +39,7 @@ This is a permanent project rule for every session. Do not make the user repeate
 
 ## Current active task — 2026-11-12
 
-Continue the existing monthly sponsorship agreement and service-fee payment workflow in this repository. Current `main` head at the latest schema checkpoint: `a81a1c5edcbb2f372e41dbb0bcc0318853d8c1d0`.
+Continue the existing monthly sponsorship agreement and service-fee payment workflow in this repository. At session start, resolve the current `main` branch head directly; do not rely on a historical hash embedded in this continuation document.
 
 Stage 1 is complete: migration column naming corrected to `monthly_agreement_id`, canonical schema synchronized, and the MariaDB 10.4.32 migration workflow passed. The migration has **not** been applied to the local XAMPP database. Application PHP changes are now present on `main`: the split payment-entry page has row-specific monthly sponsorship evidence, and Section 2 supports multiple independent donations with per-row type, amount, project/source, payment evidence and receipt attachment. Each donation is saved as its own pending record through the existing Supervisor or VGM review path; no service fee applies to donations. GitHub Actions run `43300051479` passed PHP 8.2 lint and 53 focused payment-entry contract checks. Local XAMPP/browser/database acceptance remains pending.
 
