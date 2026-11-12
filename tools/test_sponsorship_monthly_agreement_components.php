@@ -287,6 +287,16 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, "\$line['description']"),
         'monthly_row_metadata_used_during_submission'
     );
+    $assert(
+        str_contains($paymentEntrySource, "'date'=>\$line['date']")
+        && str_contains($paymentEntrySource, "'method'=>\$line['method']")
+        && str_contains($paymentEntrySource, "'receipt'=>\$line['receipt']")
+        && str_contains($paymentEntrySource, "'reference'=>\$line['reference']")
+        && str_contains($paymentEntrySource, "'description'=>\$line['description']")
+        && str_contains($paymentEntrySource, "'date'=>\$input['date']")
+        && str_contains($paymentEntrySource, "'method'=>\$input['method']"),
+        'vgm_monthly_and_nonmonthly_rows_receive_payment_metadata'
+    );
     $approvalSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_sponsor_payment_approval.php');
     $reviewQueueSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/fm_review_queue.php');
     $migrationSource = file_get_contents(dirname(__DIR__) . '/database/migrations/2026-11-12_sponsor_payment_row_evidence.sql');
