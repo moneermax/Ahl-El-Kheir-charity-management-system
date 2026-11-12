@@ -6359,3 +6359,12 @@ This is repository/CI evidence only. The user's local `ahl_el_kheir` database ha
 Next implementation work: FM agreement management, server-side agreement lookup/missing-agreement blocking, both payment submission paths, component snapshots, FM review breakdowns, returned-row compatibility, and strict legacy/new-model accounting separation. Positive actual service-fee receipts remain blocked from journal posting until an authorized accounting owner approves recognition timing and an active revenue destination. Never fall back to account `4200`.
 
 **Open decision before allocator/amendment implementation:** approve freezing the original sponsorship/month allocation commitment after its first posted allocation. A conflicting later agreement amendment would not rewrite that commitment or prior allocations; it would require an explicit audited correction before the new commitment can affect allocation. Do not implement this rule until the user confirms it.
+
+
+## 2026-11-12 — Monthly sponsorship agreement amendment rule approved
+
+The user confirmed that sponsorship commitments are not frozen for the lifetime of a sponsorship. A sponsor may change the monthly commitment for a future covered month (for example, 5,000 SDG previously and 10,000 SDG from the next agreed month). That difference is a new monthly commitment, not an advance. An advance is excess receipt beyond the agreed amounts for the explicitly covered months.
+
+The freeze applies only to the sponsorship commitment for a specific covered month after its first posted allocation. A conflicting amendment for that already-allocated month is blocked absent a separate explicit audited correction. Existing allocations and journals are immutable. Service-fee amendments may retain the frozen sponsorship commitment; prior submitted/posted snapshots remain unchanged. New unallocated months use their applicable agreement version. Implementation must apply this rule consistently to allocation and arrears/advance reporting. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
+
+**Implementation status:** business rule confirmed; PHP implementation has not yet started. The local database migration and browser acceptance remain unverified.
