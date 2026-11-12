@@ -215,6 +215,29 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, 'payment-components-table-wrap{overflow-x:auto;'),
         'payment_components_remain_single_wide_scrollable_row'
     );
+    $agreementSummaryStart = strpos($paymentEntrySource, '<div class="col-12" id="grpLines">');
+    $agreementSummaryEnd = strpos($paymentEntrySource, '<div class="col-md-4" id="grpSingleAmount"', $agreementSummaryStart === false ? 0 : $agreementSummaryStart);
+    $agreementSummaryMarkup = ($agreementSummaryStart !== false && $agreementSummaryEnd !== false)
+        ? substr($paymentEntrySource, $agreementSummaryStart, $agreementSummaryEnd - $agreementSummaryStart)
+        : '';
+    $assert(
+        str_contains($agreementSummaryMarkup, 'id="selectedAgreedSponsorship"')
+        && str_contains($agreementSummaryMarkup, 'id="selectedAgreedServiceFee"')
+        && str_contains($agreementSummaryMarkup, 'class="col-md-6"'),
+        'agreed_amounts_display_side_by_side_above_table'
+    );
+    $assert(
+        str_contains($agreementSummaryMarkup, '<th>الكفالة المستلمة فعلياً</th>')
+        && str_contains($agreementSummaryMarkup, '<th>رسوم الخدمة المستلمة فعلياً</th>')
+        && !str_contains($agreementSummaryMarkup, '<th>الكفالة المتفق عليها</th>')
+        && !str_contains($agreementSummaryMarkup, '<th>رسوم الخدمة المتفق عليها</th>'),
+        'payment_table_contains_remaining_fields_not_agreement_references'
+    );
+    $assert(
+        str_contains($paymentEntrySource, 'function showAgreementSummary(line)')
+        && str_contains($paymentEntrySource, "document.addEventListener('focusin'"),
+        'agreement_summary_follows_selected_month_row'
+    );
     $assert(
         !str_contains($paymentEntrySource, 'الرسوم الإدارية لا تُدخل يدوياً.'),
         'stale_admin_fee_message_removed'
