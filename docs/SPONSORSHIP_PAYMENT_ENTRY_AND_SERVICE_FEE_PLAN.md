@@ -65,13 +65,15 @@ The existing accounting posting model currently treats transaction amount as gro
 
 ### 2.3 Agreement ownership and stability
 
-The fee is agreed with the sponsor during sponsorship onboarding/creation. The agreement is associated with the relevant sponsorship arrangement, not assumed to be a universal sponsor-wide value.
+The agreed service fee is associated with the specific sponsorship and **each covered month**. It is not a universal sponsor-wide value and must not be treated as one immutable monthly amount for the entire life of the sponsorship.
 
-An organization-wide policy change must not silently rewrite an existing sponsor agreement. An existing agreement changes only through an explicitly agreed amendment. A new agreement may use the then-current organizational default, if the actual application has such a default.
+The system must be able to retain the agreed fee applicable to each sponsorship/month. Different covered months may legitimately have different agreed fees. A multi-month advance therefore loads a separate agreement value for every month; it must not copy one current fee across all rows unless the stored agreement data says those months share that value.
 
-For a multi-month advance payment, load the sponsorship's agreed monthly fee for each covered month. The user recording the payment may edit the actual service-fee amount received for each row, just as the actual sponsorship amount received is editable. A later agreement change must not retroactively alter a submitted payment or already-covered months.
+A change to the agreement for a future month must not rewrite earlier months or any submitted payment snapshot. The Supervisor/VGM may edit the actual service fee received for a payment row, but that edit is a receipt fact, not an agreement amendment.
 
-The exact storage location and effective-date/history mechanism are **not yet established**. Inspect the live schema and current create/edit workflows before deciding whether a migration is required.
+The global administrative-fee policy is **not the source of sponsorship service-fee amounts and must not calculate, override, prorate, gross-up, or deduct this fee on either sponsorship payment route**. Preserve the existing global administrative-fee policy and its callers for other transaction types unless a separate caller audit proves it can safely be retired. Do not delete or globally disable it as part of this task.
+
+The exact storage/history mechanism for per-sponsorship, per-covered-month agreements is **not yet established**. Inspect current schema, migration conventions, and create/amend workflows before choosing the smallest justified data model.
 
 ### 2.4 Accounting separation
 
@@ -92,6 +94,7 @@ The prior source review found:
 - `modules/accounting/lib_admin_fee_policy.php` currently calculates a gross-to-net administrative fee using the policy effective on the transaction date.
 - `modules/accounting/lib.php` posts gross cash and splits the credit between net sponsorship and administrative-fee revenue; sponsorship allocation uses net.
 - The separate Supervisor `sponsor_payments` approval path also calculates a fee from gross amount.
+- The new sponsorship service fee is a manually agreed per-sponsorship/per-covered-month amount, not a global policy calculation. Both VGM and Supervisor sponsorship routes must bypass the global administrative-fee calculation for this component while preserving unrelated transaction behavior.
 - No prior inspection established that a per-sponsorship agreed service-fee field already exists.
 
 These are investigation leads, not permission to assume the current schema or source has not changed. Re-fetch current `main` source and schema before implementation.
@@ -115,7 +118,7 @@ The following findings were revalidated against the current `main` source and th
 **Actual-receipt entry decision — confirmed by the user on 2026-11-12:** when a VGM or Supervisor opens a sponsorship payment row, the system must load and display the agreed sponsorship amount and agreed service-fee amount as read-only reference values, alongside separate editable actual-received fields initially populated with those agreement values. The recorder edits only the actual-received fields to reflect the amounts collected for that covered month and enters the remaining payment details. The system calculates the actual row/transaction total from those entered component amounts. The agreement values must remain distinguishable from actual received values and both must be snapshotted for audit/FM review. Partial receipts do not trigger an inferred fee rule: the recorder enters the actual service fee received. For example, agreement defaults 5,000 + 2,000 may be edited to actual receipts 2,500 + 1,000, producing an actual total of 3,500.
 
 
-**Design direction (not yet approved for implementation):** keep the agreed fee attached to the sponsorship agreement; snapshot the agreement reference and monetary components when either route submits; preserve the two existing workflow/review paths; and make the accounting posting distinguish the sponsorship component from the additional service-fee component without changing unrelated donation or ordinary transaction behavior. Exact table/column design and accounting account classification remain subject to the remaining business decisions and migration-convention audit.
+**Design direction (approved business rule; technical design pending):** store the agreed service fee per sponsorship and covered month, allowing different values in different months. Both VGM and Supervisor payment rows load that month's agreed sponsorship and service-fee references as read-only values, then allow editing of the actual amounts received. Snapshot agreement references/values and actual received components at submission. The global administrative-fee policy must not calculate or override the sponsorship service fee. Preserve the existing global policy for other transaction types pending a complete caller audit. Preserve the two existing review workflows and make posting distinguish the sponsorship component from the additional service-fee component. Exact table/column design, agreement amendment controls, and accounting account classification remain subject to source/schema audit.
 
 **Known data fixture:** the updated repository dump contains active sponsorship `SH-003559` (ID `3559`), monthly commitment `5,000.00` SDG, start date `2026-08-27`, sponsor `SP-002857` (`معاويه عوض عبد العظيم`), child `اسراء`. The dump contains no linked `transactions`, `sponsor_payments`, or `sponsorship_payment_allocations` rows for this sponsorship. It remains a candidate fixture only; no payment was created or altered.
 
@@ -157,9 +160,9 @@ Answer from evidence:
 Implement only if Stage 1 proves storage is absent or insufficient.
 
 Requirements:
-- Store a fixed monthly fee against the correct sponsorship agreement.
-- Make the fee visible to authorized users at the appropriate create/edit/detail points.
-- Define whether an agreement can be amended, who may amend it, and how prior agreement values remain auditable.
+- Store the agreed service-fee amount by sponsorship and covered month; different months may have different agreed values.
+- Make each month's agreed fee visible to authorized users at the appropriate create/edit/detail points.
+- Define who may establish/amend each month's agreement, its effective covered month, and how prior agreement values remain auditable.
 - Preserve existing sponsorships and historical transactions; do not backfill guessed fees.
 - Use an explicit migration for any database change.
 - Ensure a fee change cannot silently change an already-submitted payment.
@@ -171,7 +174,7 @@ Requirements:
 Implement the backend contract before presenting the redesigned totals.
 
 For each eligible monthly sponsorship row:
-- load and display the agreed sponsorship commitment and agreed service fee as read-only reference values for each covered month, with separate actual-received inputs initially populated from those values;
+- load and display that sponsorship/month's agreed sponsorship commitment and agreed service fee as read-only reference values; different months may load different fee values, with separate actual-received inputs initially populated from the corresponding month's agreement values;
 - accept the actual sponsorship amount received and actual service-fee amount received entered by the VGM/Supervisor;
 - calculate row total as actual sponsorship received + actual service fee received;
 - calculate transaction total as the sum of row totals;
@@ -284,7 +287,7 @@ Partial receipts are represented by the two actual component amounts entered by 
 
 ## 6. Explicit open questions / decisions not to invent
 
-1. **Agreement amendment authority:** which role can record a negotiated fee change, and from which covered month does it apply?
+1. **Agreement amendment authority:** which role can establish or amend a sponsorship's agreed fee for a covered month, and what evidence/reason is required? The effective covered month must be explicit; prior months and submitted snapshots must remain unchanged.
 2. **Existing sponsorships with no recorded fee agreement:** do not infer zero, apply today's policy, or backfill a fee without an explicit rule.
 3. **Outstanding-balance behavior:** how actual partial receipts affect any existing arrears/advance balance presentation must be verified against the existing domain rules; do not create a new balance calculation in this task.
 
