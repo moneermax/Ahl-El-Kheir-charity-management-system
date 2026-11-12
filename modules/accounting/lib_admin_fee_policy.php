@@ -133,12 +133,29 @@ if (!function_exists('ak_apply_admin_fee_snapshot_prepared')) {
             if ($type !== 'sponsorship_payment') {
                 throw new RuntimeException('نموذج الاتفاقية الشهرية لا يتوافق مع نوع المعاملة المحاسبي.');
             }
+            $feeMapping = ak_spma_resolve_service_fee_account_mapping($t, $components['service_fee_received']);
+            dbExecute(
+                "UPDATE transactions
+                 SET service_fee_account_mapping_id = ?, service_fee_account_id = ?,
+                     admin_fee_method = 'none', admin_fee_value = 0,
+                     admin_fee_amount = 0, admin_fee_policy_id = NULL, net_amount = ?
+                 WHERE id = ?",
+                [
+                    $feeMapping['mapping_id'],
+                    $feeMapping['account_id'],
+                    $components['sponsorship_received'],
+                    $txnId
+                ]
+            );
             return [
                 'method'=>'none',
                 'value'=>0.00,
-                'amount'=>0.00,
+                'amount'=>$components['service_fee_received'],
                 'net_amount'=>$components['sponsorship_received'],
-                'policy_id'=>null
+                'policy_id'=>null,
+                'service_fee_account_mapping_id'=>$feeMapping['mapping_id'],
+                'service_fee_account_id'=>$feeMapping['account_id'],
+                'service_fee_account_code'=>$feeMapping['account_code']
             ];
         }
         if (!in_array($type, ['sponsorship_payment','admin_fee'], true)) {
