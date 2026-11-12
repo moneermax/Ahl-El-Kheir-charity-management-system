@@ -35,7 +35,10 @@ def synchronize(text: str) -> str:
             raise RuntimeError("sponsor_payments table is missing from canonical schema.")
         sponsor_table_end = text.find(";", sponsor_table_start)
         sponsor_table_block = text[sponsor_table_start:sponsor_table_end]
-        if any(column not in sponsor_table_block for column in evidence_columns):
+        present_evidence_columns = sum(column in sponsor_table_block for column in evidence_columns)
+        if present_evidence_columns not in (0, 3):
+            raise RuntimeError("Sponsor payment row-evidence columns are only partially present.")
+        if present_evidence_columns == 0:
             payment_method_line = "  " + q + "payment_method" + q + " varchar(30) NOT NULL DEFAULT 'cash',"
             if payment_method_line not in sponsor_table_block:
                 payment_method_line = "  " + q + "payment_method" + q + " varchar(30) NOT NULL DEFAULT 'cash'"
