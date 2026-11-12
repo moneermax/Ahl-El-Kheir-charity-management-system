@@ -189,6 +189,37 @@ try { ak_spma_resolve_report_commitment(['commitment_versions'=>2,'commitment_am
 catch (RuntimeException $e) { $reportConflictBlocked = true; }
 $assert($reportConflictBlocked, 'report_conflicting_snapshots_blocked');
 
+$paymentEntrySource = file_get_contents(dirname(__DIR__) . '/modules/transactions/create.php');
+$assert(is_string($paymentEntrySource), 'payment_entry_source_readable');
+if (is_string($paymentEntrySource)) {
+    $assert(
+        str_contains($paymentEntrySource, "$actualS=(string)($ln['sponsorship_received']??'');")
+        && str_contains($paymentEntrySource, "$actualF=(string)($ln['service_fee_received']??'');"),
+        'initial_actual_receipts_never_fall_back_to_agreement'
+    );
+    $assert(
+        str_contains($paymentEntrySource, "$lineTotal=$isMonthlyLine?round((float)$actualS+(float)$actualF,2):$ln['amount'];"),
+        'initial_monthly_line_total_uses_actual_receipts_only'
+    );
+    $assert(
+        !str_contains($paymentEntrySource, "actualS.value=a?Number(a.sponsorship).toFixed(2)")
+        && !str_contains($paymentEntrySource, "actualF.value=a?Number(a.service_fee).toFixed(2)"),
+        'javascript_never_prefills_actual_receipts_from_agreement'
+    );
+    $assert(
+        str_contains($paymentEntrySource, "if(resetActuals){actualS.value='';actualF.value='';}"),
+        'changing_covered_month_clears_actual_receipts'
+    );
+    $assert(
+        str_contains($paymentEntrySource, 'payment-components-table{width:1590px;min-width:1590px;table-layout:fixed;}')
+        && str_contains($paymentEntrySource, 'payment-components-table-wrap{overflow-x:auto;'),
+        'payment_components_remain_single_wide_scrollable_row'
+    );
+    $assert(
+        !str_contains($paymentEntrySource, 'الرسوم الإدارية لا تُدخل يدوياً.'),
+        'stale_admin_fee_message_removed'
+    );
+}
 $failed = array_keys(array_filter($checks, static fn(bool $passed): bool => !$passed));
 foreach ($checks as $name=>$passed) {
     echo ($passed ? 'PASS' : 'FAIL') . ' | ' . $name . PHP_EOL;
