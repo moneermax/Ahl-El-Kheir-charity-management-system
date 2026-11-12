@@ -6627,3 +6627,22 @@ Evidence: PHP 8.2 lint + 32 contract checks PASS (run 43236546673); MariaDB 10.4
 ## 2026-11-12 — Audit note: actual receipts must never be inferred from agreement values
 
 VGM acceptance for SH-003508 / November showed 10,000 SDG agreed sponsorship plus 2,000 SDG agreed service fee copied into actual-received inputs, producing a 12,000 SDG total without evidence of collection. The user confirmed the values; no payment was submitted. Source inspection proved both PHP initial rendering and JavaScript initialization were responsible. The correction removes both fallbacks, starts monthly line/overall totals at zero, clears actual values when the covered month changes, and preserves the agreement snapshots as readonly references. The row layout remains horizontal and now uses fixed wider columns, larger controls, and horizontal scrolling. Legacy admin-fee wording was clarified without changing accounting policy. Added focused contract assertions. Commits: `543567b`, `265f32b`, `3271b0b`. GitHub Actions run [43266671312](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43266671312) passed PHP 8.2 lint and all 39 component contract checks; local browser retest remains pending. Positive service-fee posting remains blocked pending authorization; no financial records were changed.
+
+
+## 2026-11-12 — Agreed-amount summary row layout refinement
+
+Following the user's clarification, the agreed sponsorship amount and agreed service-fee amount remain unchanged; their combined agreed total of **12,000** is correct. This is an agreement reference, not evidence that 12,000 was actually received.
+
+Repository-only UI change on `main`:
+- The two readonly agreement values now appear side by side in a prominent top row.
+- The payment table beneath them contains the remaining row-level fields: covered month, purpose, actual sponsorship received, actual service fee received, line total, line receipt, explanation, and row action.
+- Because one submission may contain multiple covered months with different agreement versions/amounts, the top pair follows the payment row currently focused/selected. The page labels the month represented by those values.
+- Actual receipt fields remain blank until entered. Per-line and overall collection totals continue to sum actual receipt amounts only. Agreement values are not copied into actual receipts.
+- The table remains a single horizontal row with horizontal scrolling where needed; wider remaining columns and taller controls reduce the previous compression.
+- No schema, migration, allocation, journal, approval, or accounting behavior was changed. Positive service-fee posting remains blocked pending the existing accounting authorization decision.
+
+Commits:
+- `e468f3450a3370e0155c864be07e01d9e5f13993` — UI layout and active-row agreement summary.
+- `45161ab857dd40e367b0d91c9e6e2c389c8b3bbd` — three additional layout/row-selection contract assertions.
+
+Verification boundary: source-level checks confirmed both top-row fields, the remaining table columns, active-row summary wiring, and actual-only total calculation. The new assertions have been added but have not yet been executed in CI or local PHP. Local browser acceptance remains pending; do not submit a payment during visual inspection.
