@@ -74,34 +74,55 @@ if($input['sponsorship_id']>0){
 if($_SERVER['REQUEST_METHOD']==='POST'&&!isset($_POST['edit_record'])){if(!verify_csrf())$errors[]='انتهت صلاحية الجلسة.';else{$entrySection=(string)($_POST['entry_section']??'');$allowedTypes=$entrySection==='sponsorship'?['monthly_sponsorship']:($entrySection==='donation'?['general_donation','project_donation','other']:[]);$postedTypes=$entrySection==='donation'?($_POST['donation_type']??[]):[];$postedType=$entrySection==='donation'?(string)($postedTypes[0]??''):(string)($_POST['type']??'');if(!$allowedTypes||($entrySection==='sponsorship'&&!in_array($postedType,$allowedTypes,true)))$errors[]='نوع نموذج تسجيل الدفعة غير صالح.';$input['type']=in_array($postedType,$allowedTypes,true)?$postedType:($entrySection==='donation'?'general_donation':'monthly_sponsorship');$input['sponsorship_id']=$entrySection==='sponsorship'?(int)($_POST['sponsorship_id']??0):0;$input['sponsor_id']=(int)($_POST['sponsor_id']??0);$input['project_id']=(int)($_POST['donation_project_id'][0]??0);$input['amount']=trim((string)($entrySection==='donation'?($_POST['donation_amount'][0]??''):($_POST['amount']??'')));$input['date']=trim((string)($entrySection==='donation'?($_POST['donation_date'][0]??''):($_POST['date']??'')))?:date('Y-m-d');$postedMethod=$entrySection==='donation'?($_POST['donation_method'][0]??''):($_POST['method']??'');$input['method']=in_array($postedMethod,['cash','bank_transfer','credit_card','mobile','other'],true)?$postedMethod:'cash';$input['receipt']=trim((string)($entrySection==='donation'?($_POST['donation_receipt'][0]??''):($_POST['receipt']??'')));$input['reference']=trim((string)($entrySection==='donation'?($_POST['donation_reference'][0]??''):($_POST['reference']??'')));$input['other_source_note']=trim((string)($entrySection==='donation'?($_POST['donation_other_source_note'][0]??''):($_POST['other_source_note']??'')));$input['description']=trim((string)($entrySection==='donation'?($_POST['donation_description'][0]??''):($_POST['description']??'')));$input['fee']=0.0;$amount=(float)str_replace(',','',$input['amount']);$ship=null;if($input['sponsorship_id']>0){$ship=dbFetchOne("SELECT id, sponsor_id, status FROM sponsorships WHERE id = ?",[$input['sponsorship_id']]);if($ship)$input['sponsor_id']=(int)$ship['sponsor_id'];}
 $unifiedPath = null;
 $donationReceiptPaths = [];
-if (isset($_FILES['donation_receipt_file']) && is_array($_FILES['donation_receipt_file']['name'] ?? null)) {
-    $dir = dirname(__DIR__, 2) . '/storage/receipts';
-    foreach (array_keys($_FILES['donation_receipt_file']['name']) as $i) {
-        $donationReceiptPaths[$i] = null;
-        $err = $_FILES['donation_receipt_file']['error'][$i] ?? UPLOAD_ERR_NO_FILE;
-        if ($err === UPLOAD_ERR_NO_FILE) { continue; }
-        if ($err !== UPLOAD_ERR_OK) { $errors[] = 'خطأ في رفع إيصال التبرع رقم ' . ($i + 1) . '.'; continue; }
-        $name = $_FILES['donation_receipt_file']['name'][$i];
-        $tmp = $_FILES['donation_receipt_file']['tmp_name'][$i];
-        $size = $_FILES['donation_receipt_file']['size'][$i];
-        $ext = strtolower(pathinfo($name, PATHINFO_EXTENSION));
-        if (!in_array($ext, ['jpg', 'jpeg', 'png', 'pdf'], true)) { $errors[] = 'صيغة إيصال التبرع رقم ' . ($i + 1) . ' يجب أن تكون JPG أو PNG أو PDF.'; continue; }
-        if ($size > 10 * 1024 * 1024) { $errors[] = 'حجم إيصال التبرع رقم ' . ($i + 1) . ' يتجاوز 10MB.'; continue; }
-        if (!is_dir($dir)) { @mkdir($dir, 0777, true); }
-        $fn = 'TR-' . date('YmdHis') . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
-        if (move_uploaded_file($tmp, $dir . '/' . $fn)) { $donationReceiptPaths[$i] = 'storage/receipts/' . $fn; }
-        else { $errors[] = 'فشل حفظ إيصال التبرع رقم ' . ($i + 1) . '.'; }
+$validPurposes = array_keys($purposeLabels);
+if ($input['type'] === 'monthly_sponsorship') {
+    if (!$ship) $errors[] = 'اختر الكفالة (اليتيم).';
+    if ($ship && $ship['status'] !== 'active') $errors[] = 'الكفالة المحددة غير نشطة.';
+    if (!$lines) $errors[] = 'أضف سطراً واحداً على الأقل (شهر + غرض + مبلغ).';
+    $seen = [];
+    foreach ($lines as $ln) {
+        if ($ln['month'] === '') { $errors[] = 'اختر الشهر لكل سطر.'; continue; }
+        if (!in_array($ln['month'], $monthOptions, true)) { $errors[] = 'شهر غير صالح: ' . $ln['month']; continue; }
+        if (!in_array($ln['purpose'], $validPurposes, true)) { $errors[] = 'غرض غير صالح.'; continue; }
+        $lineDate = DateTime::createFromFormat('!Y-m-d', (string)$ln['date']);
+        if (!$lineDate || $lineDate->format('Y-m-d') !== (string)$ln['date']) $errors[] = 'أدخل تاريخ التحصيل بصورة صحيحة عن ' . $ln['month'] . '.';
+        if (!in_array($ln['method'], ['cash', 'bank_transfer', 'credit_card', 'mobile', 'other'], true)) $errors[] = 'طريقة دفع غير صالحة عن ' . $ln['month'] . '.';
+        if (strlen((string)$ln['receipt']) > 50) $errors[] = 'رقم الإيصال يتجاوز 50 حرفاً عن ' . $ln['month'] . '.';
+        if (strlen((string)$ln['reference']) > 100) $errors[] = 'الرقم المرجعي الإضافي يتجاوز 100 حرفاً عن ' . $ln['month'] . '.';
+        if (strlen((string)$ln['description']) > 255) $errors[] = 'ملاحظات التحصيل تتجاوز 255 حرفاً عن ' . $ln['month'] . '.';
+        if ($ln['purpose'] === 'other' && $ln['note'] === '') $errors[] = 'حدد توضيح الغرض للشهر: ' . $ln['month'];
+        $key = $ln['month'] . '|' . $ln['purpose'];
+        if (isset($seen[$key])) $errors[] = 'سطر مكرر (نفس الشهر والغرض): ' . $ln['month'] . ' — ' . ($purposeLabels[$ln['purpose']] ?? '');
+        $seen[$key] = true;
+        if ($ln['purpose'] === 'monthly_sponsorship') {
+            if (!isset($agreementOptions[$ln['month']])) $errors[] = 'لا توجد اتفاقية شهرية معتمدة في النظام للكفالة عن ' . $ln['month'] . '. يرجى مراجعة المدير المالي.';
+            if (trim((string)($ln['sponsorship_received'] ?? '')) === '' || !is_numeric(str_replace(',', '', (string)$ln['sponsorship_received'])) || (float)str_replace(',', '', (string)$ln['sponsorship_received']) < 0) $errors[] = 'أدخل مبلغ الكفالة المستلم بصورة صحيحة عن ' . $ln['month'] . '.';
+            if (trim((string)($ln['service_fee_received'] ?? '')) === '' || !is_numeric(str_replace(',', '', (string)$ln['service_fee_received'])) || (float)str_replace(',', '', (string)$ln['service_fee_received']) < 0) $errors[] = 'أدخل رسوم الخدمة المستلمة بصورة صحيحة عن ' . $ln['month'] . '.';
+            if (round((float)str_replace(',', '', (string)$ln['sponsorship_received']) + (float)str_replace(',', '', (string)$ln['service_fee_received']), 2) <= 0) $errors[] = 'إجمالي التحصيل الفعلي يجب أن يكون أكبر من صفر عن ' . $ln['month'] . '.';
+        } else {
+            if ((float)str_replace(',', '', $ln['amount']) <= 0) $errors[] = 'المبلغ يجب أن يكون أكبر من صفر للشهر: ' . $ln['month'];
+        }
+    }
+} else {
+    if (!$donationLines) $errors[] = 'أضف سطراً واحداً على الأقل للتبرعات.';
+    if (count($donationLines) > 50) $errors[] = 'لا يمكن تسجيل أكثر من 50 بند تبرع في العملية الواحدة.';
+    foreach ($donationLines as $donationLine) {
+        $rowNo = $donationLine['idx'] + 1;
+        if (!in_array($donationLine['type'], ['general_donation', 'project_donation', 'other'], true)) $errors[] = 'نوع التبرع غير صالح في السطر ' . $rowNo . '.';
+        $rowDate = DateTime::createFromFormat('!Y-m-d', $donationLine['date']);
+        if (!$rowDate || $rowDate->format('Y-m-d') !== $donationLine['date']) $errors[] = 'أدخل تاريخاً صحيحاً للتبرع في السطر ' . $rowNo . '.';
+        if (!in_array($donationLine['method'], ['cash', 'bank_transfer', 'credit_card', 'mobile', 'other'], true)) $errors[] = 'طريقة دفع غير صالحة في السطر ' . $rowNo . '.';
+        $amountText = str_replace(',', '', $donationLine['amount']);
+        $rowAmount = (float)$amountText;
+        if ($amountText === '' || !is_numeric($amountText) || $rowAmount <= 0 || $rowAmount > 9999999999.99) $errors[] = 'مبلغ التبرع يجب أن يكون أكبر من صفر في السطر ' . $rowNo . '.';
+        if (strlen($donationLine['receipt']) > 50) $errors[] = 'رقم الإيصال يتجاوز 50 حرفاً في السطر ' . $rowNo . '.';
+        if (strlen($donationLine['reference']) > 100) $errors[] = 'الرقم المرجعي الإضافي يتجاوز 100 حرف في السطر ' . $rowNo . '.';
+        if (strlen($donationLine['description']) > 255) $errors[] = 'ملاحظات التبرع تتجاوز 255 حرفاً في السطر ' . $rowNo . '.';
+        if (strlen($donationLine['other_source_note']) > 255) $errors[] = 'تفاصيل المصدر تتجاوز 255 حرفاً في السطر ' . $rowNo . '.';
+        if ($donationLine['type'] === 'project_donation' && $donationLine['project_id'] <= 0) $errors[] = 'اختر المشروع في السطر ' . $rowNo . '.';
+        if ($donationLine['type'] === 'other' && $donationLine['other_source_note'] === '') $errors[] = 'حدد مصدر التبرع الآخر في السطر ' . $rowNo . '.';
     }
 }
-$lineReceipts=[];if(isset($_FILES['pay_receipt_file'])&&is_array($_FILES['pay_receipt_file']['name']??null)){$dir=dirname(__DIR__,2).'/storage/receipts';foreach(array_keys($_FILES['pay_receipt_file']['name']) as $i){$lineReceipts[$i]=null;$err=$_FILES['pay_receipt_file']['error'][$i]??UPLOAD_ERR_NO_FILE;if($err===UPLOAD_ERR_NO_FILE)continue;if($err!==UPLOAD_ERR_OK){$errors[]='خطأ في رفع إيصال السطر '.($i+1).'.';continue;}$name=$_FILES['pay_receipt_file']['name'][$i];$tmp=$_FILES['pay_receipt_file']['tmp_name'][$i];$size=$_FILES['pay_receipt_file']['size'][$i];$ext=strtolower(pathinfo($name,PATHINFO_EXTENSION));if(!in_array($ext,['jpg','jpeg','png','pdf'],true)){$errors[]='صيغة إيصال السطر '.($i+1).' يجب أن تكون JPG أو PNG أو PDF.';continue;}if($size>10*1024*1024){$errors[]='حجم إيصال السطر '.($i+1).' يتجاوز 10MB.';continue;}if(!is_dir($dir))@mkdir($dir,0777,true);$fn='TR-'.date('YmdHis').'-'.bin2hex(random_bytes(3)).'.'.$ext;if(move_uploaded_file($tmp,$dir.'/'.$fn))$lineReceipts[$i]='storage/receipts/'.$fn;else$errors[]='فشل حفظ إيصال السطر '.($i+1).'.';}}
-$validPurposes=array_keys($purposeLabels);if($input['type']==='monthly_sponsorship'){if(!$ship)$errors[]='اختر الكفالة (اليتيم).';if($ship&&$ship['status']!=='active')$errors[]='الكفالة المحددة غير نشطة.';if(!$lines)$errors[]='أضف سطراً واحداً على الأقل (شهر + غرض + مبلغ).';$seen=[];foreach($lines as $ln){if($ln['month']===''){$errors[]='اختر الشهر لكل سطر.';continue;}if(!in_array($ln['month'],$monthOptions,true)){$errors[]='شهر غير صالح: '.$ln['month'];continue;}if(!in_array($ln['purpose'],$validPurposes,true)){$errors[]='غرض غير صالح.';continue;}$lineDate=DateTime::createFromFormat('!Y-m-d',(string)$ln['date']);if(!$lineDate||$lineDate->format('Y-m-d')!==(string)$ln['date'])$errors[]='أدخل تاريخ التحصيل بصورة صحيحة عن '.$ln['month'].'.';if(!in_array($ln['method'],['cash','bank_transfer','credit_card','mobile','other'],true))$errors[]='طريقة دفع غير صالحة عن '.$ln['month'].'.';if(strlen((string)$ln['receipt'])>50)$errors[]='رقم الإيصال يتجاوز 50 حرفاً عن '.$ln['month'].'.';if(strlen((string)$ln['reference'])>100)$errors[]='الرقم المرجعي الإضافي يتجاوز 100 حرف عن '.$ln['month'].'.';if(strlen((string)$ln['description'])>255)$errors[]='ملاحظات التحصيل تتجاوز 255 حرفاً عن '.$ln['month'].'.';if($ln['purpose']==='other'&&$ln['note']==='')$errors[]='حدد توضيح الغرض للشهر: '.$ln['month'];$key=$ln['month'].'|'.$ln['purpose'];if(isset($seen[$key]))$errors[]='سطر مكرر (نفس الشهر والغرض): '.$ln['month'].' — '.($purposeLabels[$ln['purpose']]??'');$seen[$key]=true;if($ln['purpose']==='monthly_sponsorship'){
-    if(!isset($agreementOptions[$ln['month']]))$errors[]='لا توجد اتفاقية شهرية معتمدة في النظام للكفالة عن '.$ln['month'].'. يرجى مراجعة المدير المالي.';
-    if(trim((string)($ln['sponsorship_received']??''))===''||!is_numeric(str_replace(',','',(string)$ln['sponsorship_received']))||(float)str_replace(',','',(string)$ln['sponsorship_received'])<0)$errors[]='أدخل مبلغ الكفالة المستلم بصورة صحيحة عن '.$ln['month'].'.';
-    if(trim((string)($ln['service_fee_received']??''))===''||!is_numeric(str_replace(',','',(string)$ln['service_fee_received']))||(float)str_replace(',','',(string)$ln['service_fee_received'])<0)$errors[]='أدخل رسوم الخدمة المستلمة بصورة صحيحة عن '.$ln['month'].'.';
-    if(round((float)str_replace(',','',(string)$ln['sponsorship_received'])+(float)str_replace(',','',(string)$ln['service_fee_received']),2)<=0)$errors[]='إجمالي التحصيل الفعلي يجب أن يكون أكبر من صفر عن '.$ln['month'].'.';
-}else{
-    if((float)str_replace(',','',$ln['amount'])<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر للشهر: '.$ln['month'];
-}}}else{if(!$donationLines)$errors[]='أضف سطراً واحداً على الأقل للتبرعات.';if(count($donationLines)>50)$errors[]='لا يمكن تسجيل أكثر من 50 بند تبرع في العملية الواحدة.';foreach($donationLines as $donationLine){$rowNo=$donationLine['idx']+1;if(!in_array($donationLine['type'],['general_donation','project_donation','other'],true))$errors[]='نوع التبرع غير صالح في السطر '.$rowNo.'.';$rowDate=DateTime::createFromFormat('!Y-m-d',$donationLine['date']);if(!$rowDate||$rowDate->format('Y-m-d')!==$donationLine['date'])$errors[]='أدخل تاريخاً صحيحاً للتبرع في السطر '.$rowNo.'.';if(!in_array($donationLine['method'],['cash','bank_transfer','credit_card','mobile','other'],true))$errors[]='طريقة دفع غير صالحة في السطر '.$rowNo.'.';$amountText=str_replace(',','',$donationLine['amount']);$rowAmount=(float)$amountText;if($amountText===''||!is_numeric($amountText)||$rowAmount<=0||$rowAmount>9999999999.99)$errors[]='مبلغ التبرع يجب أن يكون أكبر من صفر في السطر '.$rowNo.'.';if(strlen($donationLine['receipt'])>50)$errors[]='رقم الإيصال يتجاوز 50 حرفاً في السطر '.$rowNo.'.';if(strlen($donationLine['reference'])>100)$errors[]='الرقم المرجعي الإضافي يتجاوز 100 حرف في السطر '.$rowNo.'.';if(strlen($donationLine['description'])>255)$errors[]='ملاحظات التبرع تتجاوز 255 حرفاً في السطر '.$rowNo.'.';if(strlen($donationLine['other_source_note'])>255)$errors[]='تفاصيل المصدر تتجاوز 255 حرفاً في السطر '.$rowNo.'.';if($donationLine['type']==='project_donation'&&$donationLine['project_id']<=0)$errors[]='اختر المشروع في السطر '.$rowNo.'.';if($donationLine['type']==='other'&&$donationLine['other_source_note']==='')$errors[]='حدد مصدر التبرع الآخر في السطر '.$rowNo.'.'}}
 if(!$errors&&$role==='supervisor'){$submittedSponsorId=(int)$input['sponsor_id'];if($submittedSponsorId<=0)$errors[]='يجب تحديد الكفيل.';else{$submittedSponsor=dbFetchOne("SELECT id, supervisor_id, first_letter_id, gender, is_manual_override, sponsor_type, created_by FROM sponsors WHERE id=?",[$submittedSponsorId]);if(!$submittedSponsor||!supervisorCanAccessSponsor($uid,$submittedSponsor))$errors[]='هذا الكفيل خارج نطاق إشرافك.';}}
 if (!$errors) {
     if ($role === 'supervisor') {
