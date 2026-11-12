@@ -173,10 +173,6 @@ def synchronize(text: str) -> str:
     agreement_constraints = (
         "--\n-- Constraints for table `sponsorship_monthly_agreements`\n--\n"
         "ALTER TABLE `sponsorship_monthly_agreements`\n"
-
-
-
-        "ALTER TABLE `sponsorship_monthly_agreements`\n"
         "  ADD CONSTRAINT `fk_spma_sponsorship` FOREIGN KEY (`sponsorship_id`) "
         "REFERENCES `sponsorships` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,\n"
         "  ADD CONSTRAINT `fk_spma_currency` FOREIGN KEY (`currency_code`) "

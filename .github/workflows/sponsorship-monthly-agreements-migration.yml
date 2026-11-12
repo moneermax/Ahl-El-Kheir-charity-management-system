@@ -43,8 +43,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mariadb-client
 
-      - name: Synchronize canonical schema representation
-        run: python3 tools/sync_sponsorship_monthly_agreements_schema.py
+      - name: Synchronize canonical schema representation (repeatability check)
+        run: |
+          python3 tools/sync_sponsorship_monthly_agreements_schema.py
+          python3 tools/sync_sponsorship_monthly_agreements_schema.py
 
       - name: Commit canonical schema synchronization to main
         if: github.event_name == 'push'
