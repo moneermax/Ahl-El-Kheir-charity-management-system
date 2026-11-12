@@ -35,9 +35,9 @@ if((string)($old['component_model']??'legacy')==='monthly_agreement'){
     $newMonth=(string)$old['payment_period'];$newPurpose=(string)$old['purpose'];
     $actualS=trim((string)($_POST['edit_actual_sponsorship']??''));
     $actualF=trim((string)($_POST['edit_actual_service_fee']??''));
-    if($actualS===''||!is_numeric(str_replace(',','',$actualS))||$actualF===''||!is_numeric(str_replace(',','',$actualF)))throw new RuntimeException('أدخل مكوني التحصيل الفعليين بصورة صحيحة.');
+    if($actualS===''||!is_numeric(str_replace(',','',$actualS))||$actualF===''||!is_numeric(str_replace(',','',$actualF))){flash('error','أدخل مكوني التحصيل الفعليين بصورة صحيحة.');header('Location: '.APP_URL.'modules/transactions/create.php?sponsor_id='.(int)$input['sponsor_id']);exit();}
     $actualS=round((float)str_replace(',','',$actualS),2);$actualF=round((float)str_replace(',','',$actualF),2);
-    if($actualS<0||$actualF<0||round($actualS+$actualF,2)<=0)throw new RuntimeException('مكونات التحصيل الفعلية غير صالحة.');
+    if($actualS<0||$actualF<0||round($actualS+$actualF,2)<=0||round($actualS+$actualF,2)>9999999999.99){flash('error','مكونات التحصيل الفعلية غير صالحة.');header('Location: '.APP_URL.'modules/transactions/create.php?sponsor_id='.(int)$input['sponsor_id']);exit();}
     $newAmount=round($actualS+$actualF,2);$net=$actualS;
     $updComponents=['actual_sponsorship_received'=>$actualS,'actual_service_fee_received'=>$actualF];
 }else{$updComponents=[];}
@@ -50,9 +50,9 @@ $updComponents=[];
 if((string)($old['component_model']??'legacy')==='monthly_agreement'){
     $newMonth=(string)$old['payment_period'];$newPurpose=(string)$old['payment_type'];
     $actualS=trim((string)($_POST['edit_actual_sponsorship']??''));$actualF=trim((string)($_POST['edit_actual_service_fee']??''));
-    if($actualS===''||!is_numeric(str_replace(',','',$actualS))||$actualF===''||!is_numeric(str_replace(',','',$actualF)))throw new RuntimeException('أدخل مكوني التحصيل الفعليين بصورة صحيحة.');
+    if($actualS===''||!is_numeric(str_replace(',','',$actualS))||$actualF===''||!is_numeric(str_replace(',','',$actualF))){flash('error','أدخل مكوني التحصيل الفعليين بصورة صحيحة.');header('Location: '.APP_URL.'modules/transactions/create.php?sponsor_id='.(int)$input['sponsor_id']);exit();}
     $actualS=round((float)str_replace(',','',$actualS),2);$actualF=round((float)str_replace(',','',$actualF),2);
-    if($actualS<0||$actualF<0||round($actualS+$actualF,2)<=0)throw new RuntimeException('مكونات التحصيل الفعلية غير صالحة.');
+    if($actualS<0||$actualF<0||round($actualS+$actualF,2)<=0||round($actualS+$actualF,2)>9999999999.99){flash('error','مكونات التحصيل الفعلية غير صالحة.');header('Location: '.APP_URL.'modules/transactions/create.php?sponsor_id='.(int)$input['sponsor_id']);exit();}
     $newAmount=round($actualS+$actualF,2);
     $updComponents=['actual_sponsorship_received'=>$actualS,'actual_service_fee_received'=>$actualF];
 }
