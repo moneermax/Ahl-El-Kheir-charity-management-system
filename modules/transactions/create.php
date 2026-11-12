@@ -8,6 +8,7 @@ require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
 require_once dirname(__DIR__, 2) . '/modules/sponsorships/lib_payment_status.php';
+require_once dirname(__DIR__, 2) . '/modules/sponsorships/lib_monthly_agreements.php';
 require_once dirname(__DIR__, 2) . '/modules/hr/lib_employee_incentives.php';
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
@@ -31,11 +32,30 @@ $uniReceiptPath=null;if(isset($_FILES['edit_unified_file'])&&$_FILES['edit_unifi
 if(!$errors&&$src==='transaction'&&$isReturnedTransaction){$old=dbFetchOne("SELECT * FROM transactions WHERE id = ? AND status = 'returned' AND created_by = ?",[$rid,$uid]);if(!$old)$errors[]='الدفعة غير موجودة أو لم تعد في حالة الإرجاع.';else{$feeAmt=0.0;$net=round($newAmount,2);$txnType=$old['transaction_type'];$isSpon=$newPurpose==='monthly_sponsorship';if($txnType==='sponsorship_payment'||$isSpon)$txnType=$isSpon?'sponsorship_payment':'general_donation';if($old['transaction_type']==='project_donation')$txnType='project_donation';if($old['transaction_type']==='other'&&!$isSpon)$txnType='other';$upd=['payment_period'=>$newMonth!==''?$newMonth:null,'purpose'=>$newPurpose,'purpose_note'=>$newNote!==''?$newNote:null,'amount'=>$newAmount,'admin_fee_percent'=>0,'admin_fee_amount'=>$feeAmt,'net_amount'=>$net,'admin_fee_method'=>'none','admin_fee_value'=>0,'admin_fee_policy_id'=>null,'transaction_type'=>$txnType,'status'=>'pending_fm_review','fm_reviewed_by'=>null,'fm_reviewed_at'=>null,'fm_review_reason'=>null,'resubmitted_at'=>date('Y-m-d H:i:s')];if($lineReceiptPath)$upd['receipt_path']=$lineReceiptPath;if($uniReceiptPath)$upd['unified_receipt_path']=$uniReceiptPath;$oldReceipt=$old['receipt_path']??null;$oldUnified=$old['unified_receipt_path']??null;$sets=[];$params=[];foreach($upd as $k=>$v){$sets[]="`$k` = ?";$params[]=$v;}try{db()->beginTransaction();$affected=dbExecute("UPDATE transactions SET ".implode(', ',$sets)." WHERE id = ? AND status = 'returned' AND created_by = ?",array_merge($params,[$rid,$uid]));if($affected!==1)throw new RuntimeException('تعذر تحديث الدفعة المُعادة.');ak_transaction_review_audit($uid,'RESUBMIT_FM',$rid,$old,$upd);db()->commit();}catch(Throwable $e){if(db()->inTransaction())db()->rollBack();$errors[]='تعذر إعادة إرسال الدفعة للمراجعة المالية بشكل ذري.';}if(!$errors){if($lineReceiptPath&&$oldReceipt&&$oldReceipt!==$lineReceiptPath)ak_transaction_review_delete_receipt_if_unreferenced($oldReceipt);if($uniReceiptPath&&$oldUnified&&$oldUnified!==$uniReceiptPath)ak_transaction_review_delete_receipt_if_unreferenced($oldUnified);ak_transaction_review_notify_fm(1,Session::getUserName()??'');flash('success','تم تعديل الدفعة وإعادة إرسالها للمدير المالي للمراجعة.');header('Location: '.APP_URL.'modules/transactions/create.php?sponsor_id='.$input['sponsor_id']);exit();}}}
 elseif(!$errors&&$src==='pending'){$old=dbFetchOne("SELECT * FROM sponsor_payments WHERE id = ? AND status = 'returned'",[$rid]);if($old){$upd=['payment_period'=>$newMonth,'payment_type'=>$newPurpose,'purpose_note'=>$newNote!==''?$newNote:null,'amount'=>$newAmount,'status'=>'pending','return_note'=>null];if($lineReceiptPath)$upd['receipt_file_path']=$lineReceiptPath;if($uniReceiptPath)$upd['unified_receipt_path']=$uniReceiptPath;$oldReceipt=$old['receipt_file_path']??null;$oldUnified=$old['unified_receipt_path']??null;$sets=[];$params=[];foreach($upd as $k=>$v){$sets[]="`$k` = ?";$params[]=$v;}try{db()->beginTransaction();$affected=dbExecute("UPDATE sponsor_payments SET ".implode(', ',$sets)." WHERE id = ? AND status = 'returned' AND supervisor_id = ?",array_merge($params,[$rid,$uid]));if($affected!==1)throw new RuntimeException('تعذر إعادة إرسال التحصيل.');db()->commit();}catch(Throwable $e){if(db()->inTransaction())db()->rollBack();$errors[]='تعذر إعادة إرسال التحصيل للمراجعة.';}if(!$errors){if($lineReceiptPath&&$oldReceipt&&$oldReceipt!==$lineReceiptPath)ak_transaction_review_delete_receipt_if_unreferenced($oldReceipt);if($uniReceiptPath&&$oldUnified&&$oldUnified!==$uniReceiptPath)ak_transaction_review_delete_receipt_if_unreferenced($oldUnified);ak_transaction_review_notify_fm_event($rid,'sponsor_payment_resubmitted','تمت إعادة إرسال تحصيل للمراجعة المالية','قام المشرف بتعديل التحصيل المُعاد وإعادة إرساله للمراجعة المالية.',APP_URL.'modules/accounting/fm_review_queue.php?payment_id='.$rid,$uid);flash('success','تم تعديل التحصيل وإعادته للمراجعة المالية.');header('Location: '.APP_URL.'modules/transactions/create.php?sponsor_id='.$input['sponsor_id']);exit();}}else$errors[]='التحصيل غير موجود أو لم يعد في حالة الإرجاع.';}}
 }
-$lines=[];if($_SERVER['REQUEST_METHOD']==='POST'&&!isset($_POST['edit_record'])){$pm=$_POST['pay_month']??[];$pp=$_POST['pay_purpose']??[];$pn=$_POST['pay_note']??[];$pa=$_POST['pay_amount']??[];foreach($pm as $i=>$m){$m=trim((string)$m);$pur=trim((string)($pp[$i]??''));$note=trim((string)($pn[$i]??''));$a=trim((string)($pa[$i]??''));if($m===''&&$a===''&&$pur===''&&$note==='')continue;$lines[]=['idx'=>$i,'month'=>$m,'purpose'=>$pur,'note'=>$note,'amount'=>$a];}}else{$lines[]=['idx'=>0,'month'=>$CURRENT_MONTH,'purpose'=>'monthly_sponsorship','note'=>'','amount'=>$input['amount']];}
+$lines=[];if($_SERVER['REQUEST_METHOD']==='POST'&&!isset($_POST['edit_record'])){$pm=$_POST['pay_month']??[];$pp=$_POST['pay_purpose']??[];$pn=$_POST['pay_note']??[];$pa=$_POST['pay_amount']??[];$ps=$_POST['pay_sponsorship_received']??[];$pf=$_POST['pay_service_fee_received']??[];foreach($pm as $i=>$m){$m=trim((string)$m);$pur=trim((string)($pp[$i]??''));$note=trim((string)($pn[$i]??''));$a=trim((string)($pa[$i]??''));$sr=trim((string)($ps[$i]??''));$fr=trim((string)($pf[$i]??''));if($m===''&&$a===''&&$pur===''&&$note===''&&$sr===''&&$fr==='')continue;if($pur==='monthly_sponsorship')$a=(string)(round((float)str_replace(',','',$sr),2)+round((float)str_replace(',','',$fr),2));$lines[]=['idx'=>$i,'month'=>$m,'purpose'=>$pur,'note'=>$note,'amount'=>$a,'sponsorship_received'=>$sr,'service_fee_received'=>$fr];}}else{$lines[]=['idx'=>0,'month'=>$CURRENT_MONTH,'purpose'=>'monthly_sponsorship','note'=>'','amount'=>$input['amount'],'sponsorship_received'=>'','service_fee_received'=>''];}
+$agreementOptions=[];
+if($input['sponsorship_id']>0){
+    $agreementRows=dbFetchAll("SELECT a.* FROM sponsorship_monthly_agreements a JOIN (SELECT covered_month,MAX(version_no) version_no FROM sponsorship_monthly_agreements WHERE sponsorship_id=? GROUP BY covered_month) latest ON latest.covered_month=a.covered_month AND latest.version_no=a.version_no WHERE a.sponsorship_id=? ORDER BY a.covered_month",[$input['sponsorship_id'],$input['sponsorship_id']]);
+    foreach($agreementRows as $agreementRow){
+        $agreementOptions[(new DateTimeImmutable((string)$agreementRow['covered_month']))->format('F/Y')]=[
+            'id'=>(int)$agreementRow['id'],
+            'sponsorship'=>(float)$agreementRow['agreed_sponsorship_amount'],
+            'service_fee'=>(float)$agreementRow['agreed_service_fee_amount'],
+            'currency'=>(string)$agreementRow['currency_code']
+        ];
+    }
+}
 if($_SERVER['REQUEST_METHOD']==='POST'&&!isset($_POST['edit_record'])){if(!verify_csrf())$errors[]='انتهت صلاحية الجلسة.';else{$input['type']=in_array($_POST['type']??'', ['monthly_sponsorship','admin_fee','general_donation','project_donation','other'],true)?$_POST['type']:'monthly_sponsorship';$input['sponsorship_id']=(int)($_POST['sponsorship_id']??0);$input['sponsor_id']=(int)($_POST['sponsor_id']??0);$input['project_id']=(int)($_POST['project_id']??0);$input['amount']=trim($_POST['amount']??'');$input['date']=trim($_POST['date']??'')?:date('Y-m-d');$input['method']=in_array($_POST['method']??'', ['cash','bank_transfer','credit_card','mobile','other'],true)?$_POST['method']:'cash';$input['receipt']=trim($_POST['receipt']??'');$input['reference']=trim($_POST['reference']??'');$input['other_source_note']=trim($_POST['other_source_note']??'');$input['description']=trim($_POST['description']??'');$input['fee']=0.0;$amount=(float)str_replace(',','',$input['amount']);$ship=null;if($input['sponsorship_id']>0){$ship=dbFetchOne("SELECT id, sponsor_id, status FROM sponsorships WHERE id = ?",[$input['sponsorship_id']]);if($ship)$input['sponsor_id']=(int)$ship['sponsor_id'];}
 $unifiedPath=null;if(isset($_FILES['receipt_file'])&&$_FILES['receipt_file']['error']===UPLOAD_ERR_OK){$file=$_FILES['receipt_file'];$ext=strtolower(pathinfo($file['name'],PATHINFO_EXTENSION));if(in_array($ext,['jpg','jpeg','png','pdf'],true)){if($file['size']<=10*1024*1024){$dir=dirname(__DIR__,2).'/storage/receipts';if(!is_dir($dir))@mkdir($dir,0777,true);$fileName='TR-'.date('YmdHis').'-'.bin2hex(random_bytes(3)).'.'.$ext;if(move_uploaded_file($file['tmp_name'],$dir.'/'.$fileName))$unifiedPath='storage/receipts/'.$fileName;else$errors[]='فشل حفظ ملف الإيصال على الخادم.';}else$errors[]='حجم ملف الإيصال يتجاوز 10 ميجابايت.';}else$errors[]='صيغة الإيصال يجب أن تكون JPG أو PNG أو PDF.';}elseif(isset($_FILES['receipt_file'])&&$_FILES['receipt_file']['error']!==UPLOAD_ERR_NO_FILE)$errors[]='حدث خطأ أثناء رفع الإيصال.';
 $lineReceipts=[];if(isset($_FILES['pay_receipt_file'])&&is_array($_FILES['pay_receipt_file']['name']??null)){$dir=dirname(__DIR__,2).'/storage/receipts';foreach(array_keys($_FILES['pay_receipt_file']['name']) as $i){$lineReceipts[$i]=null;$err=$_FILES['pay_receipt_file']['error'][$i]??UPLOAD_ERR_NO_FILE;if($err===UPLOAD_ERR_NO_FILE)continue;if($err!==UPLOAD_ERR_OK){$errors[]='خطأ في رفع إيصال السطر '.($i+1).'.';continue;}$name=$_FILES['pay_receipt_file']['name'][$i];$tmp=$_FILES['pay_receipt_file']['tmp_name'][$i];$size=$_FILES['pay_receipt_file']['size'][$i];$ext=strtolower(pathinfo($name,PATHINFO_EXTENSION));if(!in_array($ext,['jpg','jpeg','png','pdf'],true)){$errors[]='صيغة إيصال السطر '.($i+1).' يجب أن تكون JPG أو PNG أو PDF.';continue;}if($size>10*1024*1024){$errors[]='حجم إيصال السطر '.($i+1).' يتجاوز 10MB.';continue;}if(!is_dir($dir))@mkdir($dir,0777,true);$fn='TR-'.date('YmdHis').'-'.bin2hex(random_bytes(3)).'.'.$ext;if(move_uploaded_file($tmp,$dir.'/'.$fn))$lineReceipts[$i]='storage/receipts/'.$fn;else$errors[]='فشل حفظ إيصال السطر '.($i+1).'.';}}
-$validPurposes=array_keys($purposeLabels);if($input['type']==='monthly_sponsorship'){if(!$ship)$errors[]='اختر الكفالة (اليتيم).';if($ship&&$ship['status']!=='active')$errors[]='الكفالة المحددة غير نشطة.';if(!$lines)$errors[]='أضف سطراً واحداً على الأقل (شهر + غرض + مبلغ).';$seen=[];foreach($lines as $ln){if($ln['month']===''){$errors[]='اختر الشهر لكل سطر.';continue;}if(!in_array($ln['month'],$monthOptions,true)){$errors[]='شهر غير صالح: '.$ln['month'];continue;}if(!in_array($ln['purpose'],$validPurposes,true)){$errors[]='غرض غير صالح.';continue;}if($ln['purpose']==='other'&&$ln['note']==='')$errors[]='حدد توضيح الغرض للشهر: '.$ln['month'];$key=$ln['month'].'|'.$ln['purpose'];if(isset($seen[$key]))$errors[]='سطر مكرر (نفس الشهر والغرض): '.$ln['month'].' — '.($purposeLabels[$ln['purpose']]??'');$seen[$key]=true;if((float)str_replace(',','',$ln['amount'])<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر للشهر: '.$ln['month'];}}else{if($amount<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر.';if($input['type']==='project_donation'&&$input['project_id']<=0)$errors[]='اختر المشروع.';if($input['type']==='other'&&$input['other_source_note']==='')$errors[]='يجب تحديد مصدر الدفعة.';}
+$validPurposes=array_keys($purposeLabels);if($input['type']==='monthly_sponsorship'){if(!$ship)$errors[]='اختر الكفالة (اليتيم).';if($ship&&$ship['status']!=='active')$errors[]='الكفالة المحددة غير نشطة.';if(!$lines)$errors[]='أضف سطراً واحداً على الأقل (شهر + غرض + مبلغ).';$seen=[];foreach($lines as $ln){if($ln['month']===''){$errors[]='اختر الشهر لكل سطر.';continue;}if(!in_array($ln['month'],$monthOptions,true)){$errors[]='شهر غير صالح: '.$ln['month'];continue;}if(!in_array($ln['purpose'],$validPurposes,true)){$errors[]='غرض غير صالح.';continue;}if($ln['purpose']==='other'&&$ln['note']==='')$errors[]='حدد توضيح الغرض للشهر: '.$ln['month'];$key=$ln['month'].'|'.$ln['purpose'];if(isset($seen[$key]))$errors[]='سطر مكرر (نفس الشهر والغرض): '.$ln['month'].' — '.($purposeLabels[$ln['purpose']]??'');$seen[$key]=true;if($ln['purpose']==='monthly_sponsorship'){
+    if(!isset($agreementOptions[$ln['month']]))$errors[]='لا توجد اتفاقية شهرية معتمدة في النظام للكفالة عن '.$ln['month'].'. يرجى مراجعة المدير المالي.';
+    if(trim((string)($ln['sponsorship_received']??''))===''||!is_numeric(str_replace(',','',(string)$ln['sponsorship_received']))||(float)str_replace(',','',(string)$ln['sponsorship_received'])<0)$errors[]='أدخل مبلغ الكفالة المستلم بصورة صحيحة عن '.$ln['month'].'.';
+    if(trim((string)($ln['service_fee_received']??''))===''||!is_numeric(str_replace(',','',(string)$ln['service_fee_received']))||(float)str_replace(',','',(string)$ln['service_fee_received'])<0)$errors[]='أدخل رسوم الخدمة المستلمة بصورة صحيحة عن '.$ln['month'].'.';
+    if(round((float)str_replace(',','',(string)$ln['sponsorship_received'])+(float)str_replace(',','',(string)$ln['service_fee_received']),2)<=0)$errors[]='إجمالي التحصيل الفعلي يجب أن يكون أكبر من صفر عن '.$ln['month'].'.';
+}else{
+    if((float)str_replace(',','',$ln['amount'])<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر للشهر: '.$ln['month'];
+}}}else{if($amount<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر.';if($input['type']==='project_donation'&&$input['project_id']<=0)$errors[]='اختر المشروع.';if($input['type']==='other'&&$input['other_source_note']==='')$errors[]='يجب تحديد مصدر الدفعة.';}
 if(!$errors&&$role==='supervisor'){$submittedSponsorId=(int)$input['sponsor_id'];if($submittedSponsorId<=0)$errors[]='يجب تحديد الكفيل.';else{$submittedSponsor=dbFetchOne("SELECT id, supervisor_id, first_letter_id, gender, is_manual_override, sponsor_type, created_by FROM sponsors WHERE id=?",[$submittedSponsorId]);if(!$submittedSponsor||!supervisorCanAccessSponsor($uid,$submittedSponsor))$errors[]='هذا الكفيل خارج نطاق إشرافك.';}}
 if (!$errors) {
     if ($role === 'supervisor') {
@@ -54,14 +74,24 @@ if (!$errors) {
             if ($input['type'] === 'monthly_sponsorship') {
                 foreach ($lines as $line) {
                     $own = $lineReceipts[$line['idx']] ?? null;
+                    $componentSnapshot = $line['purpose'] === 'monthly_sponsorship'
+                        ? ak_spma_build_submission_snapshot((int)$ship['id'], (string)$line['month'], $line['sponsorship_received'], $line['service_fee_received'], true)
+                        : null;
+                    $lineAmount = $componentSnapshot ? $componentSnapshot['amount'] : (float)str_replace(',', '', $line['amount']);
                     dbExecute(
-                        "INSERT INTO sponsor_payments (sponsorship_id, supervisor_id, payment_type, sponsor_id, project_id, other_source_note, purpose_note, payment_period, amount, currency_code, payment_method, receipt_file_path, unified_receipt_path, notes, status)
-                         VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, 'SDG', ?, ?, ?, ?, 'pending')",
+                        "INSERT INTO sponsor_payments (sponsorship_id, supervisor_id, payment_type, sponsor_id, project_id, other_source_note, purpose_note, payment_period, amount, currency_code, payment_method, receipt_file_path, unified_receipt_path, notes, status, component_model, monthly_agreement_id, agreed_sponsorship_amount, agreed_service_fee_amount, actual_sponsorship_received, actual_service_fee_received)
+                         VALUES (?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?, ?, ?)",
                         [
                             $ship['id'], $uid, $line['purpose'], $input['sponsor_id'],
                             $line['note'] !== '' ? $line['note'] : null, $line['month'],
-                            (float)str_replace(',', '', $line['amount']), $input['method'],
-                            $own, $unifiedPath, $input['description'] !== '' ? $input['description'] : null
+                            $lineAmount, $componentSnapshot['currency_code'] ?? 'SDG', $input['method'],
+                            $own, $unifiedPath, $input['description'] !== '' ? $input['description'] : null,
+                            $componentSnapshot['component_model'] ?? 'legacy',
+                            $componentSnapshot['monthly_agreement_id'] ?? null,
+                            $componentSnapshot['agreed_sponsorship_amount'] ?? null,
+                            $componentSnapshot['agreed_service_fee_amount'] ?? null,
+                            $componentSnapshot['actual_sponsorship_received'] ?? null,
+                            $componentSnapshot['actual_service_fee_received'] ?? null
                         ]
                     );
                     $notificationIds[] = (int)dbLastInsertId();
@@ -119,6 +149,8 @@ if (!$errors) {
                 fn($line) => [
                     'idx'=>$line['idx'], 'month'=>$line['month'], 'purpose'=>$line['purpose'],
                     'note'=>$line['note'], 'amount'=>(float)str_replace(',', '', $line['amount']),
+                    'sponsorship_received'=>$line['sponsorship_received'] ?? '',
+                    'service_fee_received'=>$line['service_fee_received'] ?? '',
                     'own'=>$lineReceipts[$line['idx']] ?? null, 'uni'=>$unifiedPath
                 ],
                 $lines
@@ -147,7 +179,11 @@ if (!$errors) {
                     : ($isSponsorship ? 'sponsorship_payment' : 'general_donation');
                 $feePercent = 0.0;
                 $feeAmount = 0.0;
-                $net = round($line['amount'], 2);
+                $componentSnapshot = $isSponsorship
+                    ? ak_spma_build_submission_snapshot((int)$ship['id'], (string)$line['month'], $line['sponsorship_received'], $line['service_fee_received'], true)
+                    : null;
+                $line['amount'] = $componentSnapshot ? $componentSnapshot['amount'] : round((float)$line['amount'], 2);
+                $net = $componentSnapshot ? $componentSnapshot['actual_sponsorship_received'] : round($line['amount'], 2);
                 $purposeLabel = $line['purpose'] !== null
                     ? ($purposeLabels[$line['purpose']] ?? $line['purpose'])
                     : '';
@@ -160,17 +196,23 @@ if (!$errors) {
                 $nextNumber = (int)(dbFetchOne("SELECT COUNT(*) c FROM transactions")['c'] ?? 0) + 1;
                 $code = 'TR-' . str_pad((string)$nextNumber, 6, '0', STR_PAD_LEFT);
                 dbExecute(
-                    "INSERT INTO transactions (sponsorship_id, amount, currency_code, payment_method, transaction_date, receipt_number, description, months_covered, admin_fee_percent, admin_fee_amount, net_amount, status, created_by, transaction_code, transaction_type, sponsor_id, project_id, reference_number, receipt_path, unified_receipt_path, payment_period, purpose_note, purpose, submitted_at)
-                     VALUES (?, ?, 'SDG', ?, ?, ?, ?, ?, ?, ?, ?, 'pending_fm_review', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())",
+                    "INSERT INTO transactions (sponsorship_id, amount, currency_code, payment_method, transaction_date, receipt_number, description, months_covered, admin_fee_percent, admin_fee_amount, net_amount, status, created_by, transaction_code, transaction_type, sponsor_id, project_id, reference_number, receipt_path, unified_receipt_path, payment_period, purpose_note, purpose, submitted_at, component_model, monthly_agreement_id, agreed_sponsorship_amount, agreed_service_fee_amount, actual_sponsorship_received, actual_service_fee_received)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending_fm_review', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), ?, ?, ?, ?, ?, ?)",
                     [
-                        $ship ? $ship['id'] : null, $line['amount'], $input['method'], $input['date'],
+                        $ship ? $ship['id'] : null, $line['amount'], $componentSnapshot['currency_code'] ?? 'SDG', $input['method'], $input['date'],
                         $input['receipt'] !== '' ? $input['receipt'] : null, $description,
                         $isSponsorship ? 1.00 : 0.00, $feePercent, $feeAmount, $net, $uid, $code,
                         $transactionType, $input['sponsor_id'] > 0 ? $input['sponsor_id'] : null,
                         $input['project_id'] > 0 ? $input['project_id'] : null,
                         $input['reference'] !== '' ? $input['reference'] : null,
                         $line['own'], $line['uni'], $line['month'],
-                        $line['note'] !== '' ? $line['note'] : null, $line['purpose']
+                        $line['note'] !== '' ? $line['note'] : null, $line['purpose'],
+                        $componentSnapshot['component_model'] ?? 'legacy',
+                        $componentSnapshot['monthly_agreement_id'] ?? null,
+                        $componentSnapshot['agreed_sponsorship_amount'] ?? null,
+                        $componentSnapshot['agreed_service_fee_amount'] ?? null,
+                        $componentSnapshot['actual_sponsorship_received'] ?? null,
+                        $componentSnapshot['actual_service_fee_received'] ?? null
                     ]
                 );
                 $transactionId = (int)dbLastInsertId();
