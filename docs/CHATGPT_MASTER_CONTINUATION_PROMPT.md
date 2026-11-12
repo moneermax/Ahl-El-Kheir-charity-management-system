@@ -4117,3 +4117,25 @@ Commits:
 - `c253c223b7717824fd3cda21e87c892613739c6e` — corrected contract assertions for blank amount default and grouping.
 
 Verification boundary: repository source and contract assertions are committed. The focused GitHub Actions run for `c253c223` is currently in progress; local PHP lint, the focused local harness, and browser acceptance remain pending. No payment was submitted and no accounting, allocation, schema, or database behavior was changed.
+
+
+## 2026-11-12 — Monthly sponsorship evidence is recorded per payment row
+
+The user clarified that each monthly table row is an individual sponsorship payment. Reusing the lower payment-documentation fields for those rows would require duplicate/shared evidence entry and could incorrectly suggest that one shared proof covers multiple independent payments. The UI and storage path have therefore been corrected:
+
+- Each monthly payment keeps its existing amount/component row and its own receipt attachment. A directly associated evidence-detail strip beneath that row captures its own payment date, method, external receipt number, additional reference, and description. This detail strip is part of the same payment row/record, not a second payment.
+- The exact monthly-agreement warning is at the top of the monthly sponsorship section.
+- The lower **بيانات توثيق الدفعة غير الشهرية** section is shown only for non-monthly payment types (administrative fee, general donation, project donation, or other). It retains one date/method/receipt/reference/description and receipt attachment for that separate payment.
+- Monthly submissions do not upload or copy a shared/unified receipt. Each monthly payment uses only its own receipt attachment; no second proof is requested.
+- The monthly table's existing agreed-amount references, blank actual-receipt defaults, actual-only totals, agreement snapshots, and positive service-fee posting restriction remain unchanged.
+
+Storage and approval:
+- VGM monthly rows now map their own date, method, external receipt number, additional reference, description, and individual receipt directly into their own transactions record.
+- Supervisor rows use the existing payment_method, notes (description), purpose_note (purpose explanation), and receipt_file_path (individual receipt). Migration 2026-11-12_sponsor_payment_row_evidence.sql adds nullable transaction_date DATE, receipt_number VARCHAR(50), and reference_number VARCHAR(100) to sponsor_payments. Existing rows remain NULL; no historical date or external receipt is fabricated.
+- FM approval carries the Supervisor's actual payment date, external receipt number, additional reference, and description into the corresponding transactions fields. Legacy rows without the new date retain their existing created-at fallback and old generated receipt-number behavior. New submissions keep the system-generated transaction_code distinct from the payer's external receipt_number; an absent external receipt remains NULL.
+- The FM review queue now displays the payment date, external receipt number, additional reference, and description.
+
+Verification:
+- GitHub Actions run 43280269202 passed: PHP 8.2 lint and all 51 monthly agreement/payment-evidence contract checks.
+- The separate MariaDB 10.4.32 migration workflow still needs a clean run after the final repository commits. Its earlier attempts reached canonical-schema synchronization but the automated schema commit was rejected because other commits advanced main during the run. No migration has been applied to the user's local database.
+- Local XAMPP/browser acceptance remains pending. No payment was submitted and no live payment/accounting data was changed during this repository work.
