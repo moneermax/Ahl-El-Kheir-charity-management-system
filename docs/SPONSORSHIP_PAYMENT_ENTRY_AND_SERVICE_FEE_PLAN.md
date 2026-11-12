@@ -601,3 +601,30 @@ Next gates:
 1. Review the final source/schema diff and PHP/schema CI results (repository implementation is complete for this pass).
 2. Then provide the user the local pull/migration/browser acceptance commands.
 3. Keep positive service-fee posting blocked until an authorized accounting owner confirms recognition timing and the approved revenue destination. Do not invent an immediate/month-end policy.
+
+
+## 2026-11-12 — Payment-entry actual-receipt default and row-readability correction
+
+The VGM browser acceptance for SH-003508 / November 2026 exposed a material UI defect before submission: the form showed the agreement references (10,000 SDG sponsorship + 2,000 SDG service fee) as if both amounts had actually been received, and displayed a 12,000 SDG total without any actual receipt entry. The user confirmed these displayed values. No payment was submitted.
+
+Root cause was confirmed in both rendering layers of `modules/transactions/create.php`:
+- Initial PHP rendering fell back from blank actual-received values to the agreed amounts.
+- JavaScript also populated blank actual-received fields from the agreement on initial load, new rows, month changes, and reset.
+- The total then summed those invented actual values.
+
+Correction committed to main:
+- Actual sponsorship and service-fee receipt fields now remain blank until the VGM/Supervisor explicitly enters the amount received.
+- The monthly line total and overall total start at 0.00 and are derived only from actual receipt inputs.
+- Changing the covered month clears actual receipt values rather than carrying values across months.
+- Agreement values remain visible as readonly references; missing-agreement blocking and server-side component validation remain unchanged.
+- The stale message conflating the legacy administrative-fee path with monthly service-fee capture was replaced with an explicit distinction and the existing positive service-fee posting restriction.
+- The payment table remains one horizontal row. It now has a 1,590px fixed-width column layout, larger controls, and horizontal scrolling on narrower viewports rather than compressing the fields.
+
+A focused set of source-contract assertions was added to `tools/test_sponsorship_monthly_agreement_components.php`; the existing component workflow already lints and runs this test on changes to `modules/transactions/create.php` and the test file.
+
+Commits:
+- `543567be93e8c2dbd64a3194303b3f16fb400cf7` — actual-receipt defaults and wider row layout.
+- `265f32be23293a45e36991b16c5cf1f58621a7d9` — initial regression assertions.
+- `3271b0bb875f70efe436f422dbd7fcc9da0ca75d` — corrected literal source assertions.
+
+Verification boundary: repository changes are committed; the focused GitHub Actions workflow must pass before asking for browser retest. Local XAMPP/browser verification is still pending. Do not submit a payment for SH-003508 as part of visual acceptance. First verify the four November values display as agreed references 10,000 / actual blank / agreed fee 2,000 / actual blank, with line and overall totals at 0.00. Then enter only amounts actually received and confirm totals update accordingly. Keep all fields in the same row; horizontal scrolling is expected where the viewport is narrower than the table.
