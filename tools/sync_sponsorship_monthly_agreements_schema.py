@@ -35,6 +35,7 @@ def synchronize(text: str) -> str:
             q + "fk_transactions_spma" + q, q + "fk_sponsor_payments_spma" + q,
             q + "fk_spma_sponsorship" + q, q + "fk_spma_currency" + q, q + "fk_spma_creator" + q,
             q + "uq_spma_sponsorship_month_version" + q, q + "idx_spma_month_latest" + q,
+            q + "chk_spma_sponsorship_amount" + q, q + "chk_spma_service_fee_amount" + q,
         ]
         missing = [item for item in required if item not in text]
         if missing:
@@ -64,6 +65,13 @@ def synchronize(text: str) -> str:
         table_end = text.index(";", table_start)
         table_block = text[table_start:table_end]
         table_block = table_block.replace("  " + q + "id" + q + " int(10) UNSIGNED NOT NULL AUTO_INCREMENT,", "  " + q + "id" + q + " int(10) UNSIGNED NOT NULL,", 1)
+        check_marker = "  " + q + "created_at" + q + " datetime NOT NULL DEFAULT current_timestamp()"
+        check_replacement = (
+            check_marker + ",\n"
+            "  CONSTRAINT " + q + "chk_spma_sponsorship_amount" + q + " CHECK (agreed_sponsorship_amount >= 0),\n"
+            "  CONSTRAINT " + q + "chk_spma_service_fee_amount" + q + " CHECK (agreed_service_fee_amount >= 0)\n"
+        )
+        table_block = require_once(table_block, check_marker, check_replacement, "agreement amount checks")
         text = text[:table_start] + table_block + text[table_end:]
         if "AUTO_INCREMENT" in text[table_start:text.index(";", table_start)]:
             raise RuntimeError("Agreement table must add AUTO_INCREMENT only after its primary key is created.")
@@ -115,7 +123,9 @@ def synchronize(text: str) -> str:
         "  `meeting_reference` varchar(255) DEFAULT NULL,\n"
         "  `amendment_reason` text DEFAULT NULL,\n"
         "  `created_by` int(10) UNSIGNED NOT NULL,\n"
-        "  `created_at` datetime NOT NULL DEFAULT current_timestamp()\n"
+        "  `created_at` datetime NOT NULL DEFAULT current_timestamp(),\n"
+        "  CONSTRAINT `chk_spma_sponsorship_amount` CHECK (agreed_sponsorship_amount >= 0),\n"
+        "  CONSTRAINT `chk_spma_service_fee_amount` CHECK (agreed_service_fee_amount >= 0)\n"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n"
     )
     agreement_indexes = (
