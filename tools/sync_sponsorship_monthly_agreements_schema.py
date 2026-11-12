@@ -43,16 +43,16 @@ def synchronize(text: str) -> str:
             raise RuntimeError("Obsolete service_fee_agreement_id remains in canonical schema.")
         table = "sponsorship_monthly_agreements"
         index_statement = (
-            "ALTER TABLE " + q + table + q + "\\n"
-            "  ADD PRIMARY KEY (" + q + "id" + q + "),\\n"
-            "  ADD UNIQUE KEY " + q + "uq_spma_sponsorship_month_version" + q + " (" + q + "sponsorship_id" + q + "," + q + "covered_month" + q + "," + q + "version_no" + q + "),\\n"
+            "ALTER TABLE " + q + table + q + "\n"
+            "  ADD PRIMARY KEY (" + q + "id" + q + "),\n"
+            "  ADD UNIQUE KEY " + q + "uq_spma_sponsorship_month_version" + q + " (" + q + "sponsorship_id" + q + "," + q + "covered_month" + q + "," + q + "version_no" + q + "),\n"
             "  ADD KEY " + q + "idx_spma_month_latest" + q + " (" + q + "sponsorship_id" + q + "," + q + "covered_month" + q + "," + q + "id" + q + ");"
         )
         if index_statement not in text:
-            misplaced = "--\\n-- Constraints for table " + q + table + q + "\\n--\\n" + index_statement + "\\n"
+            misplaced = "--\n-- Constraints for table " + q + table + q + "\n--\n" + index_statement + "\n"
             text = require_once(text, misplaced, "", "move agreement indexes out of constraints section")
-            header = "-- Indexes for dumped tables\\n--\\n\\n"
-            index_block = "--\\n-- Indexes for table " + q + table + q + "\\n--\\n" + index_statement + "\\n\\n"
+            header = "-- Indexes for dumped tables\n--\n\n"
+            index_block = "--\n-- Indexes for table " + q + table + q + "\n--\n" + index_statement + "\n\n"
             text = require_once(text, header, header + index_block, "agreement indexes section")
         index_pos = text.index(index_statement)
         auto_pos = text.index("-- AUTO_INCREMENT for dumped tables")
@@ -111,11 +111,11 @@ def synchronize(text: str) -> str:
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;\n\n"
     )
     agreement_indexes = (
-        "--\\n-- Indexes for table `sponsorship_monthly_agreements`\\n--\\n"
-        "ALTER TABLE `sponsorship_monthly_agreements`\\n"
-        "  ADD PRIMARY KEY (`id`),\\n"
-        "  ADD UNIQUE KEY `uq_spma_sponsorship_month_version` (`sponsorship_id`,`covered_month`,`version_no`),\\n"
-        "  ADD KEY `idx_spma_month_latest` (`sponsorship_id`,`covered_month`,`id`);\\n\\n"
+        "--\n-- Indexes for table `sponsorship_monthly_agreements`\n--\n"
+        "ALTER TABLE `sponsorship_monthly_agreements`\n"
+        "  ADD PRIMARY KEY (`id`),\n"
+        "  ADD UNIQUE KEY `uq_spma_sponsorship_month_version` (`sponsorship_id`,`covered_month`,`version_no`),\n"
+        "  ADD KEY `idx_spma_month_latest` (`sponsorship_id`,`covered_month`,`id`);\n\n"
     )
     text = require_once(text, table_marker, agreement_table + table_marker + agreement_indexes, "agreement table and indexes")
 
