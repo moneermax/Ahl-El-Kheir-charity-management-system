@@ -19,6 +19,7 @@ $uid = (int)Session::getUserId();
 $errors = [];
 $accountId = (int)($_POST['account_id'] ?? 0);
 $effectiveFrom = trim((string)($_POST['effective_from'] ?? date('Y-m-d')));
+$authorizedByName = trim((string)($_POST['authorized_by_name'] ?? ''));
 $authorizationReference = trim((string)($_POST['authorization_reference'] ?? ''));
 $authorizationNote = trim((string)($_POST['authorization_note'] ?? ''));
 
@@ -31,6 +32,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $errors[] = 'حدد تاريخ سريان صحيحاً.';
         }
         if ($accountId <= 0) $errors[] = 'اختر حساب إيراد نشطاً.';
+        if ($authorizedByName === '' || strlen($authorizedByName) > 150) $errors[] = 'اسم/صفة صاحب الاعتماد مطلوب ويجب ألا يتجاوز 150 حرفاً.';
         if ($authorizationReference === '' || strlen($authorizationReference) > 255) {
             $errors[] = 'مرجع الاعتماد مطلوب ويجب ألا يتجاوز 255 حرفاً.';
         }
@@ -58,10 +60,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 )['max_version'] ?? 0) + 1;
                 dbExecute(
                     "INSERT INTO sponsorship_service_fee_account_mappings
-                        (effective_from, version_no, account_id, authorization_reference, authorization_note, created_by)
-                     VALUES (?, ?, ?, ?, ?, ?)",
+                        (effective_from, version_no, account_id, authorized_by_name, authorization_reference, authorization_note, created_by)
+                     VALUES (?, ?, ?, ?, ?, ?, ?)",
                     [
-                        $effectiveFrom, $version, $accountId, $authorizationReference,
+                        $effectiveFrom, $version, $accountId, $authorizedByName, $authorizationReference,
                         $authorizationNote !== '' ? $authorizationNote : null, $uid
                     ]
                 );
@@ -79,6 +81,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                             'account_id'=>$accountId,
                             'account_code'=>$account['code'],
                             'account_name'=>$account['name_ar'],
+                            'authorized_by_name'=>$authorizedByName,
                             'authorization_reference'=>$authorizationReference,
                             'authorization_note'=>$authorizationNote !== '' ? $authorizationNote : null
                         ], JSON_UNESCAPED_UNICODE),
@@ -153,6 +156,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                 <input type="date" name="effective_from" class="form-control" required value="<?php echo e($effectiveFrom); ?>">
             </div>
             <div class="col-md-4">
+                <label class="form-label">اسم/صفة صاحب الاعتماد *</label>
+                <input type="text" name="authorized_by_name" class="form-control" maxlength="150" required value="<?php echo e($authorizedByName); ?>" placeholder="اسم الشخص أو صفته المحاسبية">
+            </div>
+            <div class="col-md-4">
                 <label class="form-label">مرجع قرار الاعتماد *</label>
                 <input type="text" name="authorization_reference" class="form-control" maxlength="255" required value="<?php echo e($authorizationReference); ?>" placeholder="رقم محضر / قرار / اعتماد">
             </div>
@@ -182,16 +189,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     <div class="card-body p-0">
         <div class="table-responsive">
             <table class="table table-sm table-hover align-middle mb-0">
-                <thead><tr><th>السريان</th><th>الإصدار</th><th>الحساب</th><th>مرجع الاعتماد</th><th>الملاحظة</th><th>أُدخل بواسطة</th><th>تاريخ الإدخال</th></tr></thead>
+                <thead><tr><th>السريان</th><th>الإصدار</th><th>الحساب</th><th>صاحب الاعتماد</th><th>مرجع الاعتماد</th><th>الملاحظة</th><th>أُدخل بواسطة</th><th>تاريخ الإدخال</th></tr></thead>
                 <tbody>
                 <?php if (!$history): ?>
-                    <tr><td colspan="7" class="text-center text-muted py-3">لا توجد إعدادات مسجلة.</td></tr>
+                    <tr><td colspan="8" class="text-center text-muted py-3">لا توجد إعدادات مسجلة.</td></tr>
                 <?php else: foreach ($history as $row): ?>
                     <tr>
                         <td><?php echo e($row['effective_from']); ?></td>
                         <td><?php echo (int)$row['version_no']; ?></td>
                         <td><?php echo e($row['account_code'] . ' — ' . $row['account_name']); ?></td>
-                        <td><?php echo e($row['authorization_reference']); ?></td>
+                        <td><?php echo e($row['authorized_by_name']); ?></td><td><?php echo e($row['authorization_reference']); ?></td>
                         <td><?php echo e($row['authorization_note'] ?? '—'); ?></td>
                         <td><?php echo e($row['creator_name']); ?></td>
                         <td><?php echo e($row['created_at']); ?></td>
