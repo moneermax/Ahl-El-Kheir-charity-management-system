@@ -1,6 +1,6 @@
 # VGM Sponsorship Payment Entry and Monthly Service Fee — Working Plan
 
-**Status:** APPROVED WORK PLAN / FM AGREEMENT SETUP CONFIRMED / MONTHLY AMENDMENT RULE CONFIRMED / CONFIGURABLE SERVICE-FEE ACCOUNTING DESIGN SELECTED / IMPLEMENTATION NOT STARTED  
+**Status:** APPROVED WORK PLAN / FM AGREEMENT SETUP CONFIRMED / MONTHLY AMENDMENT RULE CONFIRMED / STAGE 2 FM AGREEMENT PAGE IMPLEMENTED (LOCAL RUNTIME PENDING) / CONFIGURABLE SERVICE-FEE ACCOUNTING DESIGN SELECTED  
 ## Mandatory ChatGPT collaboration and execution protocol
 
 This is a permanent project rule for every session. Do not make the user repeatedly restate it.
@@ -558,3 +558,20 @@ The user approved the following distinction after challenging the earlier wordin
 
 **Implementation consequence:** do not freeze the entire sponsorship or prohibit future agreement amendments. Freeze only the sponsorship commitment for the specific month after its first posted allocation. This resolves the prior open allocator/amendment gate. The exact audited correction workflow for changing an already-allocated month's commitment is not part of this implementation and must not be invented; block that change.
 
+
+## 2026-11-12 — Stage 2 FM monthly-agreement management surface added (repository-only)
+
+Implemented on `main`:
+- Added `modules/sponsorships/monthly_agreements.php`, restricted to the `financial_manager`/`fm` roles.
+- Added an FM-dashboard quick action to open the agreement page.
+- FM can search active/paused sponsorships, choose a covered month, create the first agreement version, and append later versions.
+- Each version records agreed sponsorship amount, agreed service fee, currency, optional meeting reference, amendment reason, creator and timestamp. An amendment reason is required for later versions.
+- Creation/amendment is transactional and writes an `audit_log` record. Prior agreement versions are never updated.
+- When a posted allocation exists for the sponsorship/month, the page freezes the sponsorship amount to the allocation snapshot and rejects a conflicting amount. A service-fee amendment remains possible if the sponsorship commitment is retained.
+- For an unallocated month, a new agreement may set a different sponsorship commitment, including a future increase such as 5,000 → 10,000 SDG.
+
+PHP syntax verification: GitHub Actions run [43231663010](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43231663010) passed both `modules/sponsorships/monthly_agreements.php` and `modules/accounting/fm_dashboard.php` under PHP 8.2.
+
+**Verification boundary:** repository code and PHP syntax only. The local XAMPP database has not been migrated and the page has not been runtime-tested. No payment submission, allocation, journal, or existing financial record was changed. The new agreement values are not yet consumed by payment entry, allocation, or arrears/advance reporting.
+
+**Next:** Stage 3 — load the correct agreement for each covered month, block missing agreements, capture agreement and actual receipt components in both VGM and Supervisor submission paths, preserve returned-row compatibility, and update allocation/reporting to use the monthly agreement while keeping legacy behavior unchanged. Positive service-fee journal posting remains blocked pending the authorized accounting decisions.
