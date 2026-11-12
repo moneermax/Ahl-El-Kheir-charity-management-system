@@ -6249,3 +6249,14 @@ Verified lifecycle and audit trail:
 Local PHP 8.2 syntax checks for modules/transactions/index.php and modules/transactions/edit_returned.php passed before browser/database acceptance. No schema, migration, accounting-policy, journal, or allocation code was changed for this source fix or acceptance.
 
 Acceptance disposition: CLOSED for the VGM creator's FM-returned ordinary-transaction correction/resubmission and subsequent FM approval/posting path. Preserve TR-000024 / JE-000054 as test evidence; do not edit, void, return, or reuse them. The separate creator-cancellation branch and an independent runtime check of Transaction History action visibility were not part of this executed scenario and are not claimed as runtime-proven. Do not rerun this acceptance without concrete regression evidence.
+
+
+## 2026-11-12 — Active sponsorship payment/service-fee workflow
+
+The active work unit is documented in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
+
+Confirmed business rules: the agreed service fee is maintained per sponsorship and covered month (values may differ between months); VGM and Supervisor payment routes must use the same agreement; agreement values are read-only references and actual sponsorship/service-fee receipts are separately editable; actual total equals the sum of actual components; no automatic percentage, gross-up, deduction, or inferred fee is permitted.
+
+The organization-wide administrative-fee policy must not calculate or override sponsorship service fees. It must not be deleted or globally disabled until all non-sponsorship callers are mapped. Source audit found the current common posting helper applies that policy to `sponsorship_payment`, and the Supervisor approval path calculates it independently before posting. The posting/allocation contract, FM detail, returned-payment editing, and service-fee revenue account classification require a source-backed design before implementation.
+
+**Status:** business rule agreed; repository audit/design in progress. No application code, schema, or financial data changed. Do not mark implemented or runtime verified.
