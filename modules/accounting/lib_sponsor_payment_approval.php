@@ -30,7 +30,7 @@ function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,
         : date('Y-m-d',strtotime((string)$sp['created_at']));
     $externalReceiptNumber=!empty($sp['receipt_number'])
         ? (string)$sp['receipt_number']
-        : (((string)($sp['component_model']??'legacy')==='monthly_agreement') ? null : $transactionCode);
+        : (empty($sp['transaction_date']) ? $transactionCode : null);
     if($amount<=0) throw new RuntimeException('مبلغ التحصيل غير صالح.');
     $componentModel=(string)($sp['component_model']??'legacy');
     if($componentModel==='monthly_agreement'){
