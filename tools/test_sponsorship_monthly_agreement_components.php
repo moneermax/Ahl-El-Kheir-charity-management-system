@@ -253,8 +253,10 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, 'name="pay_receipt[]"')
         && str_contains($paymentEntrySource, 'name="pay_reference[]"')
         && str_contains($paymentEntrySource, 'name="pay_description[]"')
-        && str_contains($paymentEntrySource, 'name="pay_receipt_file[]"'),
-        'monthly_payment_evidence_is_row_specific'
+        && str_contains($paymentEntrySource, 'name="pay_receipt_file[]"')
+        && !str_contains($agreementSummaryMarkup, 'name="receipt_file"')
+        && str_contains($paymentEntrySource, 'كل سطر يمثل تحصيلاً مستقلاً'),
+        'monthly_payment_evidence_is_row_specific_without_shared_proof'
     );
     $sharedEvidenceStart = strpos($paymentEntrySource, 'id="grpSharedEvidence"');
     $assert(
