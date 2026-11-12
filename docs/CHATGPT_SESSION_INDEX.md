@@ -4159,3 +4159,8 @@ Verification:
 - GitHub Actions run 43280527391 passed the MariaDB 10.4.32 migration workflow. It synchronized the canonical schema twice (second run was a no-op), preserved all 209 existing data INSERT statements, imported the canonical dump, and applied the monthly-agreement, service-fee mapping, and row-evidence migrations twice each. It verified all three new Supervisor evidence columns with their exact nullable types and confirmed existing Supervisor rows retained NULL evidence values. The existing agreement/service-fee schema checks also passed.
 - This migration test used the disposable CI database only. No migration has been applied to the user's local database.
 - Local XAMPP/browser acceptance remains pending. No payment was submitted and no live payment/accounting data was changed during this repository work.
+
+
+### 2026-11-12 — Payment-entry row readability
+
+The existing monthly payment-entry table now retains its eight columns in one 1,590px-wide row, with horizontal scrolling on narrower screens and larger 44px / 0.95rem controls. The forced-fit/hidden-overflow styling was removed; payment calculations, agreement references and evidence behavior were not changed. Focused PHP lint/contract CI and local browser acceptance remain the verification gates. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` for the exact checkpoint.
