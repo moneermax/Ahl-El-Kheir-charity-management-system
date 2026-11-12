@@ -594,11 +594,10 @@ Repository implementation completed on `main` for the payment-component workflow
 Focused verification:
 - GitHub Actions run [43236546673](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43236546673): PHP 8.2 lint and 32 isolated component/commitment/mapping contract checks passed.
 - GitHub Actions run [43236977774](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43236977774): MariaDB 10.4.32 imported the canonical schema, applied both dated migrations twice, confirmed 12 agreement snapshot columns, 2 service-fee mapping snapshot columns, the mapping table and authority field, 5 agreement foreign keys, 4 mapping foreign keys, and preserved all legacy transaction/payment rows and null snapshots. The canonical schema sync script passed twice in the runner.
-- The canonical schema synchronization was verified in CI but its generated change has not yet been committed to `database/ahl_el_kheir.sql` on `main`; the final sync commit is still pending.
+- The canonical schema synchronization was verified twice in CI and committed to `database/ahl_el_kheir.sql` on `main` as `9994f6ae2e792dedcceefe44cc7c739ece0291f3`.
 - No local XAMPP migration or browser/runtime acceptance has been performed. Repository CI is not local runtime proof.
 
 Next gates:
-1. Commit the canonical schema synchronization on `main`.
-2. Review the final source/schema diff and PHP/schema CI results.
-3. Only then provide the user the local pull/migration/browser acceptance commands.
-4. Keep positive service-fee posting blocked until an authorized accounting owner confirms recognition timing and the approved revenue destination. Do not invent an immediate/month-end policy.
+1. Review the final source/schema diff and PHP/schema CI results (repository implementation is complete for this pass).
+2. Then provide the user the local pull/migration/browser acceptance commands.
+3. Keep positive service-fee posting blocked until an authorized accounting owner confirms recognition timing and the approved revenue destination. Do not invent an immediate/month-end policy.
