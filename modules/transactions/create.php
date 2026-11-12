@@ -81,7 +81,7 @@ $validPurposes=array_keys($purposeLabels);if($input['type']==='monthly_sponsorsh
     if(round((float)str_replace(',','',(string)$ln['sponsorship_received'])+(float)str_replace(',','',(string)$ln['service_fee_received']),2)<=0)$errors[]='إجمالي التحصيل الفعلي يجب أن يكون أكبر من صفر عن '.$ln['month'].'.';
 }else{
     if((float)str_replace(',','',$ln['amount'])<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر للشهر: '.$ln['month'];
-}}}else{if($amount<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر.';if($input['type']==='project_donation'&&$input['project_id']<=0)$errors[]='اختر المشروع.';if($input['type']==='other'&&$input['other_source_note']==='')$errors[]='يجب تحديد مصدر الدفعة.';}
+}}}else{if($amount<=0)$errors[]='المبلغ يجب أن يكون أكبر من صفر.';if(strlen($input['description'])>255)$errors[]='ملاحظات الدفعة تتجاوز 255 حرفاً.';if($input['type']==='project_donation'&&$input['project_id']<=0)$errors[]='اختر المشروع.';if($input['type']==='other'&&$input['other_source_note']==='')$errors[]='يجب تحديد مصدر الدفعة.';}
 if(!$errors&&$role==='supervisor'){$submittedSponsorId=(int)$input['sponsor_id'];if($submittedSponsorId<=0)$errors[]='يجب تحديد الكفيل.';else{$submittedSponsor=dbFetchOne("SELECT id, supervisor_id, first_letter_id, gender, is_manual_override, sponsor_type, created_by FROM sponsors WHERE id=?",[$submittedSponsorId]);if(!$submittedSponsor||!supervisorCanAccessSponsor($uid,$submittedSponsor))$errors[]='هذا الكفيل خارج نطاق إشرافك.';}}
 if (!$errors) {
     if ($role === 'supervisor') {
@@ -238,12 +238,7 @@ if (!$errors) {
                 $purposeLabel = $line['purpose'] !== null
                     ? ($purposeLabels[$line['purpose']] ?? $line['purpose'])
                     : '';
-                $description = trim(
-                    ($line['description'] !== '' ? $line['description'] : 'دفعة')
-                    . ($purposeLabel !== '' ? ' — ' . $purposeLabel : '')
-                    . ($line['month'] ? ' عن شهر ' . $line['month'] : '')
-                    . ($line['note'] !== '' ? ' (' . $line['note'] . ')' : '')
-                );
+                $description = $line['description'] !== '' ? $line['description'] : 'دفعة';
                 $nextNumber = (int)(dbFetchOne("SELECT COUNT(*) c FROM transactions")['c'] ?? 0) + 1;
                 $code = 'TR-' . str_pad((string)$nextNumber, 6, '0', STR_PAD_LEFT);
                 dbExecute(
