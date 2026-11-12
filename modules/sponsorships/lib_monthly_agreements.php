@@ -91,7 +91,7 @@ function ak_spma_resolve_service_fee_account_mapping(array $transaction, float $
          JOIN accounts a ON a.id = m.account_id
          WHERE m.effective_from <= ?
          ORDER BY m.effective_from DESC, m.version_no DESC, m.id DESC
-         LIMIT 1",
+         LIMIT 1 FOR UPDATE",
         [$date]
     );
     if (!$mapping) {
