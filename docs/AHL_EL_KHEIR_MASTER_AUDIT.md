@@ -6520,3 +6520,12 @@ Verified lifecycle and audit trail:
 Local PHP 8.2 syntax checks for modules/transactions/index.php and modules/transactions/edit_returned.php passed before browser/database acceptance. No schema, migration, accounting-policy, journal, or allocation code was changed for this source fix or acceptance.
 
 Acceptance disposition: CLOSED for the VGM creator's FM-returned ordinary-transaction correction/resubmission and subsequent FM approval/posting path. Preserve TR-000024 / JE-000054 as test evidence; do not edit, void, return, or reuse them. The separate creator-cancellation branch and an independent runtime check of Transaction History action visibility were not part of this executed scenario and are not claimed as runtime-proven. Do not rerun this acceptance without concrete regression evidence.
+
+
+## 2026-11-12 — Sponsorship payment/service-fee accounting architecture audit
+
+Read-only audit findings are now recorded in the detailed plan `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. The chart-of-accounts page is not a mapping tool; current mapping patterns are domain-specific; generic journal posting does not enforce account type/active status; and the shared admin-fee helper is used by multiple transaction workflows. The local `git grep` caller inventory is complete for the current PHP source baseline, and comparison to current `main` shows no intervening PHP source changes.
+
+The implementation must add a distinct sponsorship service-fee component, preserve the existing global admin-fee behavior for unrelated types, allocate only the actual sponsorship component, and use a versioned/effective-dated mapping to an active revenue account with immutable posting snapshots. No fallback to account 4200 and no arbitrary per-payment account picker.
+
+**Unresolved accounting gate:** whether the service fee is recognized immediately or deferred until its covered month, and the actual revenue destination, must be confirmed by an authorized accounting owner. Also resolve agreement amendment/evidence, missing-agreement behavior, and any legacy pending sponsorship rows before live posting. No code/schema/data changes were made.
