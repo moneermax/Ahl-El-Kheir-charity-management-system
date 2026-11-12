@@ -107,6 +107,23 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 [$selectedId, $coveredMonth]
             );
             $allocationCount = (int) ($allocation['allocation_count'] ?? 0);
+            $pendingComponents = dbFetchOne(
+                "SELECT
+                    (SELECT COUNT(*) FROM transactions
+                     WHERE sponsorship_id = ? AND payment_period = ?
+                       AND transaction_type = 'sponsorship_payment'
+                       AND component_model = 'monthly_agreement'
+                       AND status IN ('pending_fm_review','returned'))
+                    +
+                    (SELECT COUNT(*) FROM sponsor_payments
+                     WHERE sponsorship_id = ? AND payment_period = ?
+                       AND payment_type = 'monthly_sponsorship'
+                       AND component_model = 'monthly_agreement'
+                       AND status IN ('pending','returned')
+                       AND transaction_id IS NULL) AS pending_count",
+                [$selectedId, $monthInput, $selectedId, $monthInput]
+            );
+            $pendingComponentCount = (int)($pendingComponents['pending_count'] ?? 0);
             if ((int) ($allocation['commitment_versions'] ?? 0) > 1) {
                 throw new RuntimeException('توجد لقطات التزام متعارضة لهذا الشهر. أوقفنا التعديل لحماية السجل المالي.');
             }
@@ -120,6 +137,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             if ($frozenCommitment !== null && $latest
                 && round((float) $latest['agreed_sponsorship_amount'], 2) !== $frozenCommitment) {
                 throw new RuntimeException('إصدار الاتفاقية الحالي لا يطابق الالتزام المثبت في التخصيصات المرحلة. يلزم فحص ومطابقة السجل قبل أي تعديل.');
+            }
+            if ($pendingComponentCount > 0 && $latest
+                && round((float)$agreedSponsorship, 2) !== round((float)$latest['agreed_sponsorship_amount'], 2)) {
+                throw new RuntimeException('توجد دفعة مرتبطة بإصدار الاتفاقية الحالي بانتظار المراجعة أو مُعادة للتعديل. لا يمكن تغيير التزام هذا الشهر حتى تُحسم الدفعة؛ يمكن تعديل رسوم الخدمة مع إبقاء قيمة الكفالة المتفق عليها.');
             }
             if ($frozenCommitment !== null && round((float) $agreedSponsorship, 2) !== $frozenCommitment) {
                 throw new RuntimeException(
@@ -248,6 +269,7 @@ if ($selected) {
          ORDER BY a.version_no DESC, a.id DESC",
         [$selectedId, $coveredMonth]
     );
+    $pendingComponentCount = 0;
     $allocation = dbFetchOne(
         "SELECT COUNT(*) AS allocation_count,
                 COUNT(DISTINCT NULLIF(a.commitment_amount, 0)) AS commitment_versions,
@@ -258,6 +280,23 @@ if ($selected) {
            AND t.status = 'posted' AND t.voided_at IS NULL",
         [$selectedId, $coveredMonth]
     );
+    $pendingComponents = dbFetchOne(
+        "SELECT
+            (SELECT COUNT(*) FROM transactions
+             WHERE sponsorship_id = ? AND payment_period = ?
+               AND transaction_type = 'sponsorship_payment'
+               AND component_model = 'monthly_agreement'
+               AND status IN ('pending_fm_review','returned'))
+            +
+            (SELECT COUNT(*) FROM sponsor_payments
+             WHERE sponsorship_id = ? AND payment_period = ?
+               AND payment_type = 'monthly_sponsorship'
+               AND component_model = 'monthly_agreement'
+               AND status IN ('pending','returned')
+               AND transaction_id IS NULL) AS pending_count",
+        [$selectedId, $coveredMonth, $selectedId, $coveredMonth]
+    );
+    $pendingComponentCount = (int)($pendingComponents['pending_count'] ?? 0);
 }
 
 include dirname(__DIR__, 2) . '/includes/header.php';
@@ -320,6 +359,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
 
         <?php $frozen = (int) ($allocation['allocation_count'] ?? 0) > 0; ?>
+        <?php if ($pendingComponentCount > 0): ?>
+            <div class="alert alert-warning">توجد <?php echo $pendingComponentCount; ?> دفعة جديدة مرتبطة بإصدار الاتفاقية بانتظار المراجعة أو مُعادة للتعديل. لا يمكن تغيير التزام الكفالة لهذا الشهر حتى حسمها؛ يمكن تعديل رسوم الخدمة مع إبقاء الالتزام نفسه.</div>
+        <?php endif; ?>
         <?php if ($frozen): ?>
             <div class="alert alert-warning">تم ترحيل تخصيص لهذا الشهر. التزام الكفالة مجمد عند <?php echo number_format((float) ($allocation['frozen_commitment'] ?? 0), 2); ?>. يمكن إصدار اتفاق جديد لرسوم الخدمة فقط مع الإبقاء على هذا الالتزام.</div>
         <?php else: ?>
