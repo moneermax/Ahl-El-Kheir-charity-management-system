@@ -58,7 +58,7 @@ jobs:
           python3 tools/sync_sponsorship_service_fee_mapping_schema.py
 
       - name: Commit canonical schema synchronization to main
-        if: github.event_name == 'workflow_dispatch'
+        if: github.event_name != 'pull_request'
         shell: bash
         run: |
           set -euo pipefail
