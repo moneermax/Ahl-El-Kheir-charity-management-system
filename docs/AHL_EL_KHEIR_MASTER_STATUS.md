@@ -6449,5 +6449,6 @@ Storage and approval:
 
 Verification:
 - GitHub Actions run 43280269202 passed: PHP 8.2 lint and all 51 monthly agreement/payment-evidence contract checks.
-- The separate MariaDB 10.4.32 migration workflow still needs a clean run after the final repository commits. Its earlier attempts reached canonical-schema synchronization but the automated schema commit was rejected because other commits advanced main during the run. No migration has been applied to the user's local database.
+- GitHub Actions run 43280527391 passed the MariaDB 10.4.32 migration workflow. It synchronized the canonical schema twice (second run was a no-op), preserved all 209 existing data INSERT statements, imported the canonical dump, and applied the monthly-agreement, service-fee mapping, and row-evidence migrations twice each. It verified all three new Supervisor evidence columns with their exact nullable types and confirmed existing Supervisor rows retained NULL evidence values. The existing agreement/service-fee schema checks also passed.
+- This migration test used the disposable CI database only. No migration has been applied to the user's local database.
 - Local XAMPP/browser acceptance remains pending. No payment was submitted and no live payment/accounting data was changed during this repository work.
