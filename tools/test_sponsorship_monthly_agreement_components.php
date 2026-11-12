@@ -21,6 +21,9 @@ function dbFetchOne(string $sql, array $params = []): ?array
     }
     $row = $GLOBALS['ak_spma_test_agreement'];
     if ($row === null) return null;
+    if (strpos($sql, 'WHERE id = ?') !== false) {
+        return (int)$row['id'] === (int)($params[0] ?? 0) ? $row : null;
+    }
     if ((int)$row['sponsorship_id'] !== (int)($params[0] ?? 0)
         || (string)$row['covered_month'] !== (string)($params[1] ?? '')) return null;
     return $row;
@@ -42,6 +45,9 @@ $assert($snapshot['amount'] === 10200.00, 'total_is_component_sum');
 $assert($snapshot['currency_code'] === 'SDG', 'agreement_currency');
 
 $zeroFee = $snapshot;
+$zeroFee['sponsorship_id'] = 3559;
+$zeroFee['payment_period'] = 'November/2026';
+$zeroFee['currency_code'] = 'SDG';
 $zeroFee['actual_service_fee_received'] = 0.00;
 $zeroFee['amount'] = 9000.00;
 $posting = ak_spma_validate_snapshot_for_posting($zeroFee);
