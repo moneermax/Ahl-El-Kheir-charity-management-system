@@ -120,7 +120,28 @@ if (!$errors) {
                             $componentSnapshot['actual_service_fee_received'] ?? null
                         ]
                     );
-                    $notificationIds[] = (int)dbLastInsertId();
+                    $paymentId = (int)dbLastInsertId();
+                    if ($paymentId <= 0) throw new RuntimeException('تعذر حفظ التحصيل.');
+                    dbExecute(
+                        "INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                         VALUES (?, 'SUBMIT', 'sponsor_payments', ?, ?, ?, ?, ?)",
+                        [
+                            $uid, $paymentId,
+                            json_encode(['status'=>null], JSON_UNESCAPED_UNICODE),
+                            json_encode([
+                                'status'=>'pending',
+                                'component_model'=>$componentSnapshot['component_model'] ?? 'legacy',
+                                'monthly_agreement_id'=>$componentSnapshot['monthly_agreement_id'] ?? null,
+                                'agreed_sponsorship_amount'=>$componentSnapshot['agreed_sponsorship_amount'] ?? null,
+                                'agreed_service_fee_amount'=>$componentSnapshot['agreed_service_fee_amount'] ?? null,
+                                'actual_sponsorship_received'=>$componentSnapshot['actual_sponsorship_received'] ?? null,
+                                'actual_service_fee_received'=>$componentSnapshot['actual_service_fee_received'] ?? null,
+                                'amount'=>$lineAmount
+                            ], JSON_UNESCAPED_UNICODE),
+                            $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? ''
+                        ]
+                    );
+                    $notificationIds[] = $paymentId;
                     $count++;
                 }
             } else {
