@@ -31,9 +31,9 @@ This is the single high-level **START HERE** status and continuation summary for
 
 ## Current continuation boundary — 2026-11-12
 
-The active task is implementation of monthly sponsorship agreements and the sponsorship/service-fee receipt workflow. Stage 1 is complete on `main`: migration naming corrected to `monthly_agreement_id`, canonical `database/ahl_el_kheir.sql` synchronized, and MariaDB 10.4.32 CI run `43227177755` passed repeatability, schema, FK/CHECK, and legacy-preservation assertions. The migration is **not applied to the local database**. No application PHP changes have yet been made.
+The active task remains the monthly sponsorship agreement and service-fee payment workflow. The schema foundation is complete and passed MariaDB 10.4.32 CI; the migration is **not applied to the local database**. Application PHP implementation is now present on `main`: monthly sponsorship entry has row-specific actual-component and evidence capture, while Section 2 accepts multiple independent donations with per-row type, amount, project/source, payment date, method, receipt/reference, description, and receipt attachment. Supervisor submissions create one pending `sponsor_payments` row per donation; VGM submissions create one pending `transactions` row per donation. No service fee applies to donations. GitHub Actions run `43300051479` passed PHP 8.2 lint and 53 focused payment-entry contract checks.
 
-Next: implement append-only FM-managed monthly agreements and the shared agreement/component contract for VGM and Supervisor submissions. Preserve legacy behavior and protected financial evidence. Positive actual service-fee receipts must fail closed in shared posting until recognition timing and a valid revenue destination are approved. Allocation-amendment policy is awaiting the user's decision; see the detailed plan.
+Next: continue the remaining monthly-agreement accounting/review work, including returned-payment compatibility and strict legacy/new-model posting separation. Positive actual service-fee receipts must continue to fail closed until recognition timing and a valid revenue destination are approved. Allocation-amendment policy remains awaiting the user's decision; see the detailed plan. Local XAMPP migration/browser/database acceptance remains pending.
 
 ## 1. Project rule
 
