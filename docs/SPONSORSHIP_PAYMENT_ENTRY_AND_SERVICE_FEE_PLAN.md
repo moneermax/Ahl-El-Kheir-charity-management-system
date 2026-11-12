@@ -695,3 +695,14 @@ Verification:
 - GitHub Actions run 43280527391 passed the MariaDB 10.4.32 migration workflow. It synchronized the canonical schema twice (second run was a no-op), preserved all 209 existing data INSERT statements, imported the canonical dump, and applied the monthly-agreement, service-fee mapping, and row-evidence migrations twice each. It verified all three new Supervisor evidence columns with their exact nullable types and confirmed existing Supervisor rows retained NULL evidence values. The existing agreement/service-fee schema checks also passed.
 - This migration test used the disposable CI database only. No migration has been applied to the user's local database.
 - Local XAMPP/browser acceptance remains pending. No payment was submitted and no live payment/accounting data was changed during this repository work.
+
+
+## 2026-11-12 — Payment-entry row readability adjustment
+
+The VGM/direct monthly payment table has been adjusted to resolve the cramped controls without splitting the eight payment columns into multiple rows:
+- The table now has a 1,590px fixed minimum layout and retains the same eight-column single-row structure.
+- The containing viewport uses horizontal scrolling on narrower screens instead of hiding overflow or compressing every column into the viewport.
+- Input/select controls are 44px high with 0.95rem text; table cell padding and receipt-upload text are also larger for readability.
+- The agreement summary above the table, actual-receipt-only defaults and totals, row-specific evidence fields, and all payment/business logic remain unchanged.
+
+The focused component contract test was updated to assert the readable single-row/scrolling layout rather than the previous forced-fit/no-scroll behavior. GitHub Actions PHP 8.2 lint and the focused contract test are the repository verification gate. Local browser acceptance is still required to confirm the actual desktop viewport and horizontal-scroll usability; do not submit a payment during visual inspection.
