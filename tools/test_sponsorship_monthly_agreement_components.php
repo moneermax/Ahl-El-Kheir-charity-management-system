@@ -287,7 +287,8 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, "\$entrySection==='sponsorship'?(int)(\$_POST['sponsor_id']??0):0")
         && str_contains($paymentEntrySource, "\$role==='supervisor'&&\$entrySection==='sponsorship'"),
         'server_validates_each_form_type_and_sponsor_scope_independently'
-    );    $assert(
+    );
+    $assert(
         str_contains($paymentEntrySource, 'class="pay-evidence-row"')
         && str_contains($paymentEntrySource, 'line-purpose-note-wrap')
         && str_contains($paymentEntrySource, 'name="pay_note[]"')
