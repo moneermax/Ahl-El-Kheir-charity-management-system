@@ -280,11 +280,11 @@ if (is_string($paymentEntrySource)) {
         'exact_agreement_warning_at_top_of_monthly_section'
     );
     $assert(
-        str_contains($paymentEntrySource, "$line['date']")
-        && str_contains($paymentEntrySource, "$line['method']")
-        && str_contains($paymentEntrySource, "$line['receipt']")
-        && str_contains($paymentEntrySource, "$line['reference']")
-        && str_contains($paymentEntrySource, "$line['description']"),
+        str_contains($paymentEntrySource, '$line[\'date\']')
+        && str_contains($paymentEntrySource, '$line[\'method\']')
+        && str_contains($paymentEntrySource, '$line[\'receipt\']')
+        && str_contains($paymentEntrySource, '$line[\'reference\']')
+        && str_contains($paymentEntrySource, '$line[\'description\']'),
         'monthly_row_metadata_used_during_submission'
     );
     $approvalSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_sponsor_payment_approval.php');
@@ -292,19 +292,19 @@ if (is_string($paymentEntrySource)) {
     $migrationSource = file_get_contents(dirname(__DIR__) . '/database/migrations/2026-11-12_sponsor_payment_row_evidence.sql');
     $assert(
         is_string($approvalSource)
-        && str_contains($approvalSource, "$sp['transaction_date']")
-        && str_contains($approvalSource, "$sp['receipt_number']")
-        && str_contains($approvalSource, "$sp['reference_number']")
-        && str_contains($approvalSource, "$sp['notes']")
+        && str_contains($approvalSource, '$sp[\'transaction_date\']')
+        && str_contains($approvalSource, '$sp[\'receipt_number\']')
+        && str_contains($approvalSource, '$sp[\'reference_number\']')
+        && str_contains($approvalSource, '$sp[\'notes\']')
         && str_contains($approvalSource, '$transactionCode'),
         'supervisor_evidence_carried_into_transaction_approval'
     );
     $assert(
         is_string($reviewQueueSource)
-        && str_contains($reviewQueueSource, "$p['transaction_date']")
-        && str_contains($reviewQueueSource, "$p['receipt_number']")
-        && str_contains($reviewQueueSource, "$p['reference_number']")
-        && str_contains($reviewQueueSource, "$p['notes']"),
+        && str_contains($reviewQueueSource, '$p[\'transaction_date\']')
+        && str_contains($reviewQueueSource, '$p[\'receipt_number\']')
+        && str_contains($reviewQueueSource, '$p[\'reference_number\']')
+        && str_contains($reviewQueueSource, '$p[\'notes\']'),
         'fm_queue_displays_row_evidence'
     );
     $assert(
