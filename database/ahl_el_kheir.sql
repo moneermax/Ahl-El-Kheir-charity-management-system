@@ -30581,7 +30581,9 @@ CREATE TABLE `transactions` (
   `agreed_sponsorship_amount` decimal(12,2) DEFAULT NULL,
   `agreed_service_fee_amount` decimal(12,2) DEFAULT NULL,
   `actual_sponsorship_received` decimal(12,2) DEFAULT NULL,
-  `actual_service_fee_received` decimal(12,2) DEFAULT NULL
+  `actual_service_fee_received` decimal(12,2) DEFAULT NULL,
+  `service_fee_account_mapping_id` int(10) UNSIGNED DEFAULT NULL,
+  `service_fee_account_id` int(10) UNSIGNED DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
@@ -30863,6 +30865,21 @@ CREATE TABLE `sponsorship_monthly_agreements` (
 
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Table structure for table `sponsorship_service_fee_account_mappings`
+--
+CREATE TABLE `sponsorship_service_fee_account_mappings` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `effective_from` date NOT NULL,
+  `version_no` int(10) UNSIGNED NOT NULL,
+  `account_id` int(10) UNSIGNED NOT NULL,
+  `authorized_by_name` varchar(150) NOT NULL,
+  `authorization_reference` varchar(255) NOT NULL,
+  `authorization_note` text DEFAULT NULL,
+  `created_by` int(10) UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 -- Indexes for dumped tables
 --
 
@@ -30873,6 +30890,15 @@ ALTER TABLE `sponsorship_monthly_agreements`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uq_spma_sponsorship_month_version` (`sponsorship_id`,`covered_month`,`version_no`),
   ADD KEY `idx_spma_month_latest` (`sponsorship_id`,`covered_month`,`id`);
+
+--
+-- Indexes for table `sponsorship_service_fee_account_mappings`
+--
+ALTER TABLE `sponsorship_service_fee_account_mappings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_ssfam_effective_version` (`effective_from`,`version_no`),
+  ADD KEY `idx_ssfam_account` (`account_id`),
+  ADD KEY `idx_ssfam_effective_latest` (`effective_from`,`version_no`,`id`);
 
 --
 -- Indexes for table `accountant_nanny_assignments`
@@ -32036,7 +32062,8 @@ ALTER TABLE `transactions`
   ADD KEY `idx_txn_period` (`payment_period`),
   ADD KEY `idx_transactions_fm_review_status` (`status`),
   ADD KEY `idx_transactions_created_by_status` (`created_by`,`status`),
-  ADD KEY `idx_transactions_monthly_agreement` (`monthly_agreement_id`);
+  ADD KEY `idx_transactions_monthly_agreement` (`monthly_agreement_id`),
+  ADD KEY `idx_transactions_service_fee_mapping` (`service_fee_account_mapping_id`);
 
 --
 -- Indexes for table `users`
@@ -32094,6 +32121,12 @@ ALTER TABLE `winback_contacts`
 --
 -- AUTO_INCREMENT for dumped tables
 --
+--
+-- AUTO_INCREMENT for table `sponsorship_service_fee_account_mappings`
+--
+ALTER TABLE `sponsorship_service_fee_account_mappings`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
 --
 -- AUTO_INCREMENT for table `sponsorship_monthly_agreements`
 --
@@ -33187,6 +33220,13 @@ ALTER TABLE `sponsorship_payment_allocations`
   ADD CONSTRAINT `fk_spa_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON UPDATE CASCADE;
 
 --
+-- Constraints for table `sponsorship_service_fee_account_mappings`
+--
+ALTER TABLE `sponsorship_service_fee_account_mappings`
+  ADD CONSTRAINT `fk_ssfam_account` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  ADD CONSTRAINT `fk_ssfam_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+
+--
 -- Constraints for table `sponsorship_monthly_agreements`
 --
 ALTER TABLE `sponsorship_monthly_agreements`
@@ -33270,7 +33310,9 @@ ALTER TABLE `transactions`
   ADD CONSTRAINT `fk_transactions_currency` FOREIGN KEY (`currency_code`) REFERENCES `currencies` (`code`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_transactions_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_transactions_voided_by` FOREIGN KEY (`voided_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_transactions_spma` FOREIGN KEY (`monthly_agreement_id`) REFERENCES `sponsorship_monthly_agreements` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+  ADD CONSTRAINT `fk_transactions_spma` FOREIGN KEY (`monthly_agreement_id`) REFERENCES `sponsorship_monthly_agreements` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  ADD CONSTRAINT `fk_transactions_ssfam_mapping` FOREIGN KEY (`service_fee_account_mapping_id`) REFERENCES `sponsorship_service_fee_account_mappings` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
+  ADD CONSTRAINT `fk_transactions_ssfam_account` FOREIGN KEY (`service_fee_account_id`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
 
 --
 -- Constraints for table `users`
