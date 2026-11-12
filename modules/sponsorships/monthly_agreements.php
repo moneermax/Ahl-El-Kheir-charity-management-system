@@ -59,7 +59,7 @@ function ak_sma_load_sponsorship(int $sponsorshipId, bool $forUpdate = false): ?
     return dbFetchOne($sql, [$sponsorshipId]);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if (!verify_csrf()) {
         $errors[] = 'انتهت صلاحية الجلسة. أعد تحميل الصفحة وحاول مرة أخرى.';
     } else {
