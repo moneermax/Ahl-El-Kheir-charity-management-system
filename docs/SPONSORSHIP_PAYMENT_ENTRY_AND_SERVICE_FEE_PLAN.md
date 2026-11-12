@@ -497,3 +497,8 @@ Added `.github/workflows/sponsorship-monthly-agreements-migration.yml` in commit
 **Not yet verified:** the workflow has been committed but its GitHub Actions run has not yet been inspected. The canonical schema dump remains unsynchronized: the GitHub Git-blob upload attempt for the 5.9 MB dump failed with a transport error. No alternate write path has yet succeeded. The migration has not been applied to the user's local database. Do not pull/apply this migration yet.
 
 The migration itself is still a schema foundation only. PHP agreement management, payment snapshots, review display, returned-payment compatibility, and posting safeguards are not implemented.
+
+
+### CI result — 2026-11-12
+
+GitHub Actions run `43164414238` for commit `78ef9a4519b22e42a67cf3ad6771fafd98de9cb4` completed successfully on MariaDB 10.4.32. The canonical schema import, two consecutive applications of the new migration, and all assertions in the workflow passed. This verifies the migration against the current baseline schema in a disposable CI database and confirms that existing transaction and Supervisor submission rows remain unchanged and legacy-marked. It does **not** validate the migration against the user's local database or browser runtime, and it does not resolve the unsynchronized canonical schema dump. The migration remains not ready for local application until that dump issue is resolved.
