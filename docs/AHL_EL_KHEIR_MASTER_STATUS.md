@@ -6413,3 +6413,19 @@ Following local visual feedback, the fixed 1,590px payment table was identified 
 Repository commits: `4230d8d67c069fe12e332484ff96a4c48d80de55` (layout) and `e6ad369958c48c988a4edfbf0f359cb48bbf21c9` (contract assertion requiring a viewport-fit row without horizontal scrolling).
 
 Verification boundary: source/test changes are committed to `main`; local PHP lint, the focused 42-check harness, and browser verification of the no-scroll result are still pending. Do not submit a payment during visual acceptance. The browser check must confirm all eight columns are visible together at the user's normal desktop viewport and remain legible. If the available width is too small, adjust the proportional widths/control sizing based on the actual screenshot rather than reintroducing horizontal scrolling.
+
+
+## 2026-11-12 — Payment evidence section and unrelated amount default
+
+The user clarified that the date, payment method, receipt/reference numbers, notes/description, and unified receipt need a clear section heading, and questioned whether these fields represent a separate non-sponsorship donation. Source inspection confirmed they are shared payment-level metadata used for the submitted payment; they do not themselves represent a donation. The page already separates payment purpose/type and amount for non-monthly payments (general donation, project donation, administrative fee, or other).
+
+A real defaulting defect was found: when a sponsorship was preselected, the page copied its legacy `monthly_amount` into the generic single-payment `amount` input. That input is hidden for monthly sponsorship, but becomes visible if the operator changes the payment type to a non-monthly type, incorrectly carrying the orphan sponsorship amount into an unrelated payment. The automatic prefill was removed. The generic amount now starts blank and must be entered for non-monthly payment types; monthly agreement and actual-receipt component handling is unchanged.
+
+UI grouping: the shared date/method/reference/description/unified-receipt fields now sit under **بيانات توثيق الدفعة**, with helper text explaining that the same payment-level evidence applies to every monthly line when one submission covers multiple months. The monthly-agreement warning was moved into the monthly sponsorship section so it is not mistaken for a general-donation warning.
+
+Commits:
+- `1572c601a7518a6e72a3f6c84b278fe30dabb4bd` — heading, shared evidence grouping, monthly warning placement, and removal of sponsorship-derived amount prefill.
+- `0c75371397c253231ae4ac75ee157eb6cb0c4a60` — initial contract assertions.
+- `c253c223b7717824fd3cda21e87c892613739c6e` — corrected contract assertions for blank amount default and grouping.
+
+Verification boundary: repository source and contract assertions are committed. The focused GitHub Actions run for `c253c223` is currently in progress; local PHP lint, the focused local harness, and browser acceptance remain pending. No payment was submitted and no accounting, allocation, schema, or database behavior was changed.
