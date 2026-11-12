@@ -88,6 +88,21 @@ function ak_spma_validate_snapshot_for_posting(array $transaction): array
     }
     $sponsorship = round((float)$actualSponsorship, 2);
     $serviceFee = round((float)$actualFee, 2);
+    $agreement = dbFetchOne(
+        "SELECT id, sponsorship_id, covered_month, agreed_sponsorship_amount,
+                agreed_service_fee_amount, currency_code
+         FROM sponsorship_monthly_agreements WHERE id = ? LIMIT 1",
+        [$agreementId]
+    );
+    $expectedMonth = ak_spma_parse_period((string)($transaction['payment_period'] ?? ''));
+    if (!$agreement || $expectedMonth === null
+        || (int)$agreement['sponsorship_id'] !== (int)($transaction['sponsorship_id'] ?? 0)
+        || (string)$agreement['covered_month'] !== $expectedMonth
+        || round((float)$agreement['agreed_sponsorship_amount'], 2) !== round((float)$agreedSponsorship, 2)
+        || round((float)$agreement['agreed_service_fee_amount'], 2) !== round((float)$agreedFee, 2)
+        || strtoupper((string)$agreement['currency_code']) !== strtoupper((string)($transaction['currency_code'] ?? ''))) {
+        throw new RuntimeException('لقطة الدفعة لا تطابق إصدار اتفاقية الكفالة المرتبط بها؛ تم إيقاف الترحيل.');
+    }
     $total = round((float)($transaction['amount'] ?? 0), 2);
     if ($sponsorship < 0 || $serviceFee < 0 || $total <= 0
         || round($sponsorship + $serviceFee, 2) !== $total) {
