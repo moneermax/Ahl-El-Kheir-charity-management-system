@@ -4092,3 +4092,12 @@ Commits:
 - `45161ab857dd40e367b0d91c9e6e2c389c8b3bbd` — three additional layout/row-selection contract assertions.
 
 Verification boundary: source-level checks confirmed both top-row fields, the remaining table columns, active-row summary wiring, and actual-only total calculation. The new assertions have been added but have not yet been executed in CI or local PHP. Local browser acceptance remains pending; do not submit a payment during visual inspection.
+
+
+## 2026-11-12 — Sponsorship payment row made viewport-fit
+
+Following local visual feedback, the fixed 1,590px payment table was identified as the direct cause of the horizontal scrollbar. The table now uses the available container width (100%), fixed proportional column widths totaling 100%, compact but usable controls, and no horizontal overflow. All eight existing columns remain present in the same row; the two agreed-amount references remain above the table. No payment, agreement value, submission, allocation, or accounting behavior was changed.
+
+Repository commits: `4230d8d67c069fe12e332484ff96a4c48d80de55` (layout) and `e6ad369958c48c988a4edfbf0f359cb48bbf21c9` (contract assertion requiring a viewport-fit row without horizontal scrolling).
+
+Verification boundary: source/test changes are committed to `main`; local PHP lint, the focused 42-check harness, and browser verification of the no-scroll result are still pending. Do not submit a payment during visual acceptance. The browser check must confirm all eight columns are visible together at the user's normal desktop viewport and remain legible. If the available width is too small, adjust the proportional widths/control sizing based on the actual screenshot rather than reintroducing horizontal scrolling.
