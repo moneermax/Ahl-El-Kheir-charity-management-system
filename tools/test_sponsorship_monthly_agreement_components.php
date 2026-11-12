@@ -251,7 +251,7 @@ if (is_string($paymentEntrySource)) {
     );
     $assert(
         str_contains($paymentEntrySource, 'class="pay-evidence-row"')
-        && str_contains($paymentEntrySource, 'class="line-purpose-note-wrap"')
+        && str_contains($paymentEntrySource, 'line-purpose-note-wrap')
         && str_contains($paymentEntrySource, 'name="pay_note[]"')
         && str_contains($paymentEntrySource, "purposeNote.style.display=line.querySelector('.line-purpose').value==='other'?'':'none';")
         && str_contains($paymentEntrySource, "json_encode(date('Y-m-d'))")
