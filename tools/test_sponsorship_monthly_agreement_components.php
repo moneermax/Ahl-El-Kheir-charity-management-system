@@ -246,27 +246,73 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, "'amount'=>'','date'=>date('Y-m-d')"),
         'unrelated_single_payment_amount_starts_blank'
     );
-    $paymentEvidenceHeading = strpos($paymentEntrySource, 'بيانات توثيق الدفعة');
     $assert(
-        $paymentEvidenceHeading !== false
-        && strpos($paymentEntrySource, 'name="date"', $paymentEvidenceHeading) !== false
-        && strpos($paymentEntrySource, 'name="method"', $paymentEvidenceHeading) !== false
-        && strpos($paymentEntrySource, 'name="receipt"', $paymentEvidenceHeading) !== false
-        && strpos($paymentEntrySource, 'name="reference"', $paymentEvidenceHeading) !== false
-        && strpos($paymentEntrySource, 'name="description"', $paymentEvidenceHeading) !== false
-        && strpos($paymentEntrySource, 'name="receipt_file"', $paymentEvidenceHeading) !== false,
-        'shared_payment_metadata_grouped_under_heading'
+        str_contains($paymentEntrySource, 'class="pay-evidence-row"')
+        && str_contains($paymentEntrySource, 'name="pay_date[]"')
+        && str_contains($paymentEntrySource, 'name="pay_method[]"')
+        && str_contains($paymentEntrySource, 'name="pay_receipt[]"')
+        && str_contains($paymentEntrySource, 'name="pay_reference[]"')
+        && str_contains($paymentEntrySource, 'name="pay_description[]"')
+        && str_contains($paymentEntrySource, 'name="pay_receipt_file[]"'),
+        'monthly_payment_evidence_is_row_specific'
     );
-    $monthlyWarningPosition = strpos($paymentEntrySource, 'قيم الاتفاقية الشهرية مرجعية');
+    $sharedEvidenceStart = strpos($paymentEntrySource, 'id="grpSharedEvidence"');
+    $assert(
+        $sharedEvidenceStart !== false
+        && strpos($paymentEntrySource, 'name="date"', $sharedEvidenceStart) !== false
+        && strpos($paymentEntrySource, 'name="method"', $sharedEvidenceStart) !== false
+        && strpos($paymentEntrySource, 'name="receipt"', $sharedEvidenceStart) !== false
+        && strpos($paymentEntrySource, 'name="reference"', $sharedEvidenceStart) !== false
+        && strpos($paymentEntrySource, 'name="description"', $sharedEvidenceStart) !== false
+        && strpos($paymentEntrySource, 'name="receipt_file"', $sharedEvidenceStart) !== false
+        && str_contains($paymentEntrySource, "document.getElementById('grpSharedEvidence').style.display=monthly?'none':'';"),
+        'shared_evidence_section_is_nonmonthly_only'
+    );
+    $monthlyWarningPosition = strpos($paymentEntrySource, 'تنبيه:</strong> قيم الاتفاقية الشهرية مرجعية');
     $monthlySectionStart = strpos($paymentEntrySource, '<div class="col-12" id="grpLines">');
-    $monthlySectionEnd = strpos($paymentEntrySource, '<div class="col-md-4" id="grpSingleAmount"', $monthlySectionStart === false ? 0 : $monthlySectionStart);
+    $agreementSummaryPosition = strpos($paymentEntrySource, 'id="agreementSummary"');
     $assert(
         $monthlyWarningPosition !== false
         && $monthlySectionStart !== false
-        && $monthlySectionEnd !== false
+        && $agreementSummaryPosition !== false
         && $monthlyWarningPosition > $monthlySectionStart
-        && $monthlyWarningPosition < $monthlySectionEnd,
-        'agreement_warning_stays_with_monthly_sponsorship_section'
+        && $monthlyWarningPosition < $agreementSummaryPosition,
+        'exact_agreement_warning_at_top_of_monthly_section'
+    );
+    $assert(
+        str_contains($paymentEntrySource, "$line['date']")
+        && str_contains($paymentEntrySource, "$line['method']")
+        && str_contains($paymentEntrySource, "$line['receipt']")
+        && str_contains($paymentEntrySource, "$line['reference']")
+        && str_contains($paymentEntrySource, "$line['description']"),
+        'monthly_row_metadata_used_during_submission'
+    );
+    $approvalSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_sponsor_payment_approval.php');
+    $reviewQueueSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/fm_review_queue.php');
+    $migrationSource = file_get_contents(dirname(__DIR__) . '/database/migrations/2026-11-12_sponsor_payment_row_evidence.sql');
+    $assert(
+        is_string($approvalSource)
+        && str_contains($approvalSource, "$sp['transaction_date']")
+        && str_contains($approvalSource, "$sp['receipt_number']")
+        && str_contains($approvalSource, "$sp['reference_number']")
+        && str_contains($approvalSource, "$sp['notes']")
+        && str_contains($approvalSource, '$transactionCode'),
+        'supervisor_evidence_carried_into_transaction_approval'
+    );
+    $assert(
+        is_string($reviewQueueSource)
+        && str_contains($reviewQueueSource, "$p['transaction_date']")
+        && str_contains($reviewQueueSource, "$p['receipt_number']")
+        && str_contains($reviewQueueSource, "$p['reference_number']")
+        && str_contains($reviewQueueSource, "$p['notes']"),
+        'fm_queue_displays_row_evidence'
+    );
+    $assert(
+        is_string($migrationSource)
+        && str_contains($migrationSource, 'transaction_date DATE DEFAULT NULL')
+        && str_contains($migrationSource, 'receipt_number VARCHAR(50) DEFAULT NULL')
+        && str_contains($migrationSource, 'reference_number VARCHAR(100) DEFAULT NULL'),
+        'row_evidence_migration_preserves_legacy_nulls'
     );
     $assert(
         !str_contains($paymentEntrySource, 'الرسوم الإدارية لا تُدخل يدوياً.'),
