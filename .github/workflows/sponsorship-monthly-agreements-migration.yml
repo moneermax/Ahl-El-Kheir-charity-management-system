@@ -43,7 +43,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mariadb-client
 
-      - name: Validate and synchronize canonical schema representation (repeatability check, order-safe)
+      - name: Validate and synchronize canonical schema representation (repeatability check, key-safe)
         run: |
           python3 -m py_compile tools/sync_sponsorship_monthly_agreements_schema.py
           python3 tools/sync_sponsorship_monthly_agreements_schema.py

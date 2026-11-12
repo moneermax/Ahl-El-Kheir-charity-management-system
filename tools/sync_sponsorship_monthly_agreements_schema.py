@@ -60,6 +60,13 @@ def synchronize(text: str) -> str:
         constraint_pos = text.index("-- Constraints for table " + q + table + q)
         if not (index_pos < auto_pos < constraint_pos):
             raise RuntimeError("Agreement schema index/auto-increment/constraint ordering is invalid.")
+        table_start = text.index("CREATE TABLE " + q + table + q)
+        table_end = text.index(";", table_start)
+        table_block = text[table_start:table_end]
+        table_block = table_block.replace("  " + q + "id" + q + " int(10) UNSIGNED NOT NULL AUTO_INCREMENT,", "  " + q + "id" + q + " int(10) UNSIGNED NOT NULL,", 1)
+        text = text[:table_start] + table_block + text[table_end:]
+        if "AUTO_INCREMENT" in text[table_start:text.index(";", table_start)]:
+            raise RuntimeError("Agreement table must add AUTO_INCREMENT only after its primary key is created.")
         return text
 
     sponsor_marker = (
@@ -98,7 +105,7 @@ def synchronize(text: str) -> str:
     agreement_table = (
         "--\n-- Table structure for table `sponsorship_monthly_agreements`\n--\n"
         "CREATE TABLE `sponsorship_monthly_agreements` (\n"
-        "  `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT,\n"
+        "  `id` int(10) UNSIGNED NOT NULL,\n"
         "  `sponsorship_id` int(10) UNSIGNED NOT NULL,\n"
         "  `covered_month` date NOT NULL COMMENT 'First day of the covered calendar month',\n"
         "  `version_no` int(10) UNSIGNED NOT NULL,\n"
