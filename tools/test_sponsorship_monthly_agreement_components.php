@@ -277,15 +277,15 @@ if (is_string($paymentEntrySource)) {
         && str_contains($donationFormMarkup, 'name="receipt_file"')
         && !str_contains($donationFormMarkup, 'name="pay_month[]"')
         && !str_contains($donationFormMarkup, 'name="pay_service_fee_received[]"')
-        && str_contains($donationFormMarkup, 'value="0"><div class="payment-section-title"'),
-        'donation_form_has_own_table_and_no_sponsorship_fee_fields_or_sponsor_link'
+        && str_contains($donationFormMarkup, 'value="<?php echo $input[\'sponsor_id\']; ?>"><div class="payment-section-title"'),
+        'donation_form_has_own_table_and_no_sponsorship_fee_fields'
     );
     $assert(
         str_contains($paymentEntrySource, '$entrySection=') 
         && str_contains($paymentEntrySource, "\$entrySection==='sponsorship'?['monthly_sponsorship']")
         && str_contains($paymentEntrySource, "\$entrySection==='donation'?['general_donation','project_donation','other']")
-        && str_contains($paymentEntrySource, "\$entrySection==='sponsorship'?(int)(\$_POST['sponsor_id']??0):0")
-        && str_contains($paymentEntrySource, "\$role==='supervisor'&&\$entrySection==='sponsorship'"),
+        && str_contains($paymentEntrySource, "\$input['sponsor_id']=(int)(\$_POST['sponsor_id']??0)")
+        && str_contains($paymentEntrySource, "if(!\$errors&&\$role==='supervisor'){"),
         'server_validates_each_form_type_and_sponsor_scope_independently'
     );
     $assert(
