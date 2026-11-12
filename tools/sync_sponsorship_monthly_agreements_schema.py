@@ -35,7 +35,6 @@ def synchronize(text: str) -> str:
             q + "fk_transactions_spma" + q, q + "fk_sponsor_payments_spma" + q,
             q + "fk_spma_sponsorship" + q, q + "fk_spma_currency" + q, q + "fk_spma_creator" + q,
             q + "uq_spma_sponsorship_month_version" + q, q + "idx_spma_month_latest" + q,
-            q + "chk_spma_sponsorship_amount" + q, q + "chk_spma_service_fee_amount" + q,
         ]
         missing = [item for item in required if item not in text]
         if missing:
@@ -66,12 +65,17 @@ def synchronize(text: str) -> str:
         table_block = text[table_start:table_end]
         table_block = table_block.replace("  " + q + "id" + q + " int(10) UNSIGNED NOT NULL AUTO_INCREMENT,", "  " + q + "id" + q + " int(10) UNSIGNED NOT NULL,", 1)
         check_marker = "  " + q + "created_at" + q + " datetime NOT NULL DEFAULT current_timestamp()"
-        check_replacement = (
-            check_marker + ",\n"
-            "  CONSTRAINT " + q + "chk_spma_sponsorship_amount" + q + " CHECK (agreed_sponsorship_amount >= 0),\n"
-            "  CONSTRAINT " + q + "chk_spma_service_fee_amount" + q + " CHECK (agreed_service_fee_amount >= 0)\n"
-        )
-        table_block = require_once(table_block, check_marker, check_replacement, "agreement amount checks")
+        check_one = q + "chk_spma_sponsorship_amount" + q
+        check_two = q + "chk_spma_service_fee_amount" + q
+        if check_one not in table_block and check_two not in table_block:
+            check_replacement = (
+                check_marker + ",\n"
+                "  CONSTRAINT " + check_one + " CHECK (agreed_sponsorship_amount >= 0),\n"
+                "  CONSTRAINT " + check_two + " CHECK (agreed_service_fee_amount >= 0)\n"
+            )
+            table_block = require_once(table_block, check_marker, check_replacement, "agreement amount checks")
+        elif check_one not in table_block or check_two not in table_block:
+            raise RuntimeError("Agreement table has only one of the two required amount checks.")
         text = text[:table_start] + table_block + text[table_end:]
         if "AUTO_INCREMENT" in text[table_start:text.index(";", table_start)]:
             raise RuntimeError("Agreement table must add AUTO_INCREMENT only after its primary key is created.")
