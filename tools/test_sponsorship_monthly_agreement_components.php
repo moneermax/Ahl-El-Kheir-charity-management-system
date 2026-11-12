@@ -242,8 +242,8 @@ if (is_string($paymentEntrySource)) {
         'agreement_summary_follows_selected_month_row'
     );
     $assert(
-        !str_contains($paymentEntrySource, "$input['amount']=(string)((float)$pre['monthly_amount'])")
-        && str_contains($paymentEntrySource, "'amount'=>'','date'=>date('Y-m-d)'"),
+        !str_contains($paymentEntrySource, '$input[\'amount\']=(string)((float)$pre[\'monthly_amount\'])')
+        && str_contains($paymentEntrySource, "'amount'=>'','date'=>date('Y-m-d')"),
         'unrelated_single_payment_amount_starts_blank'
     );
     $paymentEvidenceHeading = strpos($paymentEntrySource, 'بيانات توثيق الدفعة');
