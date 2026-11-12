@@ -58,6 +58,7 @@ function ak_spma_build_submission_snapshot(
     $actualServiceFee = $parse($actualServiceFeeRaw, 'رسوم الخدمة المستلمة');
     $total = round($actualSponsorship + $actualServiceFee, 2);
     if ($total <= 0) throw new RuntimeException('إجمالي التحصيل الفعلي يجب أن يكون أكبر من صفر.');
+    if ($total > 9999999999.99) throw new RuntimeException('إجمالي التحصيل يتجاوز الحد الأقصى المسموح به.');
     return [
         'component_model' => 'monthly_agreement',
         'monthly_agreement_id' => (int)$agreement['id'],
