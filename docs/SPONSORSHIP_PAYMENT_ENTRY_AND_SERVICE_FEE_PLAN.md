@@ -482,3 +482,18 @@ Created migration `database/migrations/2026-11-12_sponsorship_monthly_agreements
 **Not yet verified:** the migration has not been executed against MariaDB 10.4, linted by the repository CI, or applied locally. The checked-in 5.9 MB schema dump was successfully read via Git blob, but the GitHub write connector failed when attempting to upload a modified 5.9 MB replacement. Therefore `database/ahl_el_kheir.sql` is not yet synchronized with this new migration. Do not treat this schema milestone as pull-and-test ready or apply the migration until the dump synchronization and SQL validation are completed.
 
 No PHP application code has yet been changed. The FM agreement page, server-side agreement lookup/locking, payment component capture, returned-row compatibility, FM review display, and posting guard remain unimplemented. The migration is a schema foundation only, not a completed feature.
+
+
+## 2026-11-12 — MariaDB migration CI gate added
+
+The schema-first migration was reviewed against the current checked-in schema definitions. The relevant key types match: sponsorship, user, and agreement IDs are `INT(10) UNSIGNED`; currency uses `CHAR(3) CHARACTER SET ascii COLLATE ascii_bin`; the `sponsor_payments` and `transactions` tables are InnoDB. This removes the suspected FK type/collation mismatch for the migration's five foreign keys.
+
+Added `.github/workflows/sponsorship-monthly-agreements-migration.yml` in commit `78ef9a4519b22e42a67cf3ad6771fafd98de9cb4`. The workflow uses MariaDB 10.4.32, imports the current canonical schema, applies the migration twice, and checks that:
+- the agreement table and all 12 snapshot columns exist;
+- all five expected foreign keys exist;
+- transaction and Supervisor submission row counts are unchanged;
+- existing rows remain `component_model='legacy'` with NULL agreement/component snapshots.
+
+**Not yet verified:** the workflow has been committed but its GitHub Actions run has not yet been inspected. The canonical schema dump remains unsynchronized: the GitHub Git-blob upload attempt for the 5.9 MB dump failed with a transport error. No alternate write path has yet succeeded. The migration has not been applied to the user's local database. Do not pull/apply this migration yet.
+
+The migration itself is still a schema foundation only. PHP agreement management, payment snapshots, review display, returned-payment compatibility, and posting safeguards are not implemented.
