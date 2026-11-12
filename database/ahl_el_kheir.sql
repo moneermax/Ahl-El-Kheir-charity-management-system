@@ -30857,7 +30857,10 @@ CREATE TABLE `sponsorship_monthly_agreements` (
   `meeting_reference` varchar(255) DEFAULT NULL,
   `amendment_reason` text DEFAULT NULL,
   `created_by` int(10) UNSIGNED NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
+  CONSTRAINT `chk_spma_sponsorship_amount` CHECK (agreed_sponsorship_amount >= 0),
+  CONSTRAINT `chk_spma_service_fee_amount` CHECK (agreed_service_fee_amount >= 0)
+
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Indexes for dumped tables
