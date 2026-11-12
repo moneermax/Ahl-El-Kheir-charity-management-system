@@ -85,10 +85,7 @@ def synchronize(text: str) -> str:
         return text
 
     sponsor_marker = (
-        "  `payment_method` varchar(30) NOT NULL DEFAULT 'cash',\n"
-        "  `transaction_date` date DEFAULT NULL,\n"
-        "  `receipt_number` varchar(50) DEFAULT NULL,\n"
-        "  `reference_number` varchar(100) DEFAULT NULL\n"
+        "  `payment_method` varchar(30) NOT NULL DEFAULT 'cash'\n"
         ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
     )
     sponsor_replacement = (
