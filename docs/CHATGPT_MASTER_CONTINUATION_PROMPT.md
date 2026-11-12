@@ -3998,3 +3998,8 @@ The read-only accounting architecture audit is complete; use `docs/SPONSORSHIP_P
 The helper caller inventory was completed locally; common posting is shared across workflows. Preserve the global admin-fee policy for unrelated transaction types. New sponsorship rows must use distinct actual sponsorship/service-fee components, allocate only the sponsorship component, and use a versioned/effective-dated mapping to a valid active revenue account. Never hard-code 4200, never fall back silently, and never expose a free account picker on individual payments. Keep posted journal lines immutable and snapshot the mapping version/account used.
 
 Before enabling live posting, obtain an authorized accounting-owner decision on service-fee recognition timing and the actual revenue destination. Also resolve meeting evidence/amendment controls, missing-agreement behavior (recommended: block the affected month until FM enters an agreement), and treatment of any legacy pending submissions. No code/schema/data changes were made during the audit.
+
+
+## Current continuation — 2026-11-12 sponsorship service-fee implementation
+
+The approved monthly-agreement schema migration is committed. A MariaDB 10.4.32 CI workflow now tests canonical-schema import, applying the migration twice, and preservation of legacy submission rows. Its run still needs inspection. The 5.9 MB canonical schema dump has not been synchronized because the GitHub blob upload failed; no local migration should be applied yet. No PHP implementation has been made. Continue with the detailed plan in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`; preserve all stated accounting gates and legacy records.
