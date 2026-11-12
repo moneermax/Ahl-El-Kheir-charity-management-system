@@ -72,6 +72,42 @@ function ak_spma_build_submission_snapshot(
 }
 }
 
+if (!function_exists('ak_spma_resolve_service_fee_account_mapping')) {
+function ak_spma_resolve_service_fee_account_mapping(array $transaction, float $serviceFee): array
+{
+    $serviceFee = round($serviceFee, 2);
+    if ($serviceFee <= 0) {
+        return ['mapping_id'=>null, 'account_id'=>null, 'account_code'=>null];
+    }
+    $date = (string)($transaction['transaction_date'] ?? '');
+    $parsed = DateTimeImmutable::createFromFormat('!Y-m-d', $date);
+    if (!$parsed || $parsed->format('Y-m-d') !== $date) {
+        throw new RuntimeException('تاريخ المعاملة غير صالح لتحديد حساب رسوم الخدمة.');
+    }
+    $mapping = dbFetchOne(
+        "SELECT m.id AS mapping_id, m.account_id, m.effective_from, m.version_no,
+                a.code AS account_code, a.account_type, a.is_active
+         FROM sponsorship_service_fee_account_mappings m
+         JOIN accounts a ON a.id = m.account_id
+         WHERE m.effective_from <= ?
+         ORDER BY m.effective_from DESC, m.version_no DESC, m.id DESC
+         LIMIT 1",
+        [$date]
+    );
+    if (!$mapping) {
+        throw new RuntimeException('لا يوجد حساب إيراد معتمد لرسوم خدمة الكفالات بتاريخ هذه الدفعة. أوقفنا الترحيل حتى يسجل المدير المالي/الإدارة المخولة مرجع الاعتماد وحساب الإيراد.');
+    }
+    if ((string)$mapping['account_type'] !== 'revenue' || (int)$mapping['is_active'] !== 1) {
+        throw new RuntimeException('حساب رسوم الخدمة المحدد غير نشط أو ليس حساب إيراد؛ تم إيقاف الترحيل.');
+    }
+    return [
+        'mapping_id'=>(int)$mapping['mapping_id'],
+        'account_id'=>(int)$mapping['account_id'],
+        'account_code'=>(string)$mapping['account_code'],
+    ];
+}
+}
+
 if (!function_exists('ak_spma_resolve_allocation_commitment')) {
 function ak_spma_resolve_allocation_commitment(array $transaction, array $snapshots, array $sponsorship): float
 {
@@ -152,9 +188,6 @@ function ak_spma_validate_snapshot_for_posting(array $transaction): array
     if ($sponsorship < 0 || $serviceFee < 0 || $total <= 0
         || round($sponsorship + $serviceFee, 2) !== $total) {
         throw new RuntimeException('إجمالي التحصيل لا يطابق مجموع الكفالة ورسوم الخدمة الفعلية.');
-    }
-    if ($serviceFee > 0) {
-        throw new RuntimeException('لا يمكن ترحيل رسوم خدمة الكفالة قبل اعتماد المعالجة المحاسبية وتحديد حساب الإيراد المعتمد.');
     }
     return [
         'is_monthly_agreement' => true,
