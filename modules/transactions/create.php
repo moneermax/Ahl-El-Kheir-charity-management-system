@@ -202,14 +202,18 @@ if (!$errors) {
                     'note'=>$line['note'], 'amount'=>(float)str_replace(',', '', $line['amount']),
                     'sponsorship_received'=>$line['sponsorship_received'] ?? '',
                     'service_fee_received'=>$line['service_fee_received'] ?? '',
-                    'own'=>$lineReceipts[$line['idx']] ?? null, 'uni'=>$unifiedPath
+                    'date'=>$line['date'], 'method'=>$line['method'], 'receipt'=>$line['receipt'],
+                    'reference'=>$line['reference'], 'description'=>$line['description'],
+                    'own'=>$lineReceipts[$line['idx']] ?? null, 'uni'=>null
                 ],
                 $lines
             );
         } else {
             $postLines = [[
                 'idx'=>0, 'month'=>null, 'purpose'=>null, 'note'=>$input['other_source_note'],
-                'amount'=>$amount, 'own'=>$unifiedPath, 'uni'=>null
+                'amount'=>$amount, 'date'=>$input['date'], 'method'=>$input['method'],
+                'receipt'=>$input['receipt'], 'reference'=>$input['reference'],
+                'description'=>$input['description'], 'own'=>$unifiedPath, 'uni'=>null
             ]];
         }
 
