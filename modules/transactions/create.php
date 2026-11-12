@@ -148,14 +148,16 @@ if (!$errors) {
                 }
             } else {
                 dbExecute(
-                    "INSERT INTO sponsor_payments (sponsorship_id, supervisor_id, payment_type, sponsor_id, project_id, other_source_note, purpose_note, payment_period, amount, currency_code, payment_method, receipt_file_path, unified_receipt_path, notes, status)
-                     VALUES (NULL, ?, ?, ?, ?, ?, NULL, NULL, ?, 'SDG', ?, ?, NULL, ?, 'pending')",
+                    "INSERT INTO sponsor_payments (sponsorship_id, supervisor_id, payment_type, sponsor_id, project_id, other_source_note, purpose_note, payment_period, amount, currency_code, payment_method, transaction_date, receipt_number, reference_number, receipt_file_path, unified_receipt_path, notes, status)
+                     VALUES (NULL, ?, ?, ?, ?, ?, NULL, NULL, ?, 'SDG', ?, ?, ?, ?, ?, NULL, ?, 'pending')",
                     [
                         $uid, $input['type'], $input['sponsor_id'] > 0 ? $input['sponsor_id'] : null,
                         $input['project_id'] > 0 ? $input['project_id'] : null,
                         $input['other_source_note'] !== '' ? $input['other_source_note'] : null,
-                        $amount, $input['method'], $unifiedPath,
-                        $input['description'] !== '' ? $input['description'] : null
+                        $amount, $input['method'], $input['date'],
+                        $input['receipt'] !== '' ? $input['receipt'] : null,
+                        $input['reference'] !== '' ? $input['reference'] : null,
+                        $unifiedPath, $input['description'] !== '' ? $input['description'] : null
                     ]
                 );
                 $notificationIds[] = (int)dbLastInsertId();
