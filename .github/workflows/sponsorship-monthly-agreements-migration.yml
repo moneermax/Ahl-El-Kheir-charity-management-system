@@ -84,6 +84,7 @@ jobs:
           agreement_table=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='sponsorship_monthly_agreements'")
           snapshot_columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name IN ('transactions','sponsor_payments') AND column_name IN ('component_model','monthly_agreement_id','agreed_sponsorship_amount','agreed_service_fee_amount','actual_sponsorship_received','actual_service_fee_received')")
           agreement_fks=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.referential_constraints WHERE constraint_schema=DATABASE() AND constraint_name IN ('fk_spma_sponsorship','fk_spma_currency','fk_spma_creator','fk_transactions_spma','fk_sponsor_payments_spma')")
+          agreement_checks=$(${mysql[@]} --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='sponsorship_monthly_agreements'")
           test "$before_transactions" = "$after_transactions"
           test "$before_sponsor_payments" = "$after_sponsor_payments"
           test "$legacy_transactions" = "$after_transactions"
@@ -91,3 +92,4 @@ jobs:
           test "$agreement_table" = "1"
           test "$snapshot_columns" = "12"
           test "$agreement_fks" = "5"
+          test "$agreement_checks" = "2"
