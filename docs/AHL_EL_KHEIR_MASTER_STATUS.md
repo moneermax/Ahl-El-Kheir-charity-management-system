@@ -6264,3 +6264,7 @@ The organization-wide administrative-fee policy must not calculate or override s
 ## 2026-11-12 — Sponsorship payment agreement setup responsibility confirmed
 
 For the active VGM/Supervisor sponsorship payment and per-covered-month service-fee work, the user confirmed: GM, VGM, and FM determine the agreed sponsorship amount/service fee in a meeting; FM is responsible for entering those agreed values into the system. This does not grant FM unilateral decision authority or establish an in-system approval workflow. Payment recorders may edit actual received component amounts only, not agreement values. Agreement evidence/amendment controls, service-fee revenue account classification, and migration application procedure remain open. No application/schema changes have been made. The detailed approved work plan is `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
+
+## 2026-11-12 — Configurable sponsorship service-fee accounting design
+
+The user delegated the accounting design recommendation. The selected direction is a controlled, auditable, configurable mapping from the distinct sponsorship service-fee transaction component to a valid revenue account. Do not hard-code account `4200`, create an invented account code, or allow arbitrary account selection per payment. The authorized accounting owner must confirm the actual destination before live posting is enabled. Detailed design is in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. No application/schema changes have been made.
