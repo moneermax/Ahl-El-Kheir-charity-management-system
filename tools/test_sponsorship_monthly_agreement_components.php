@@ -70,6 +70,14 @@ $positiveFee['amount'] = 10200.00;
 $positiveFee['transaction_date'] = '2026-11-12';
 $positiveComponents = ak_spma_validate_snapshot_for_posting($positiveFee);
 $assert($positiveComponents['service_fee_received'] === 1200.00, 'positive_service_fee_snapshot_validated');
+$positivePostingBlocked = false;
+try { ak_spma_assert_service_fee_posting_allowed($positiveComponents); }
+catch (RuntimeException $e) { $positivePostingBlocked = str_contains($e->getMessage(), 'توقيت الاعتراف المحاسبي'); }
+$assert($positivePostingBlocked, 'positive_service_fee_posting_waits_for_recognition_policy');
+$zeroFeeAllowed = true;
+try { ak_spma_assert_service_fee_posting_allowed($posting); }
+catch (RuntimeException $e) { $zeroFeeAllowed = false; }
+$assert($zeroFeeAllowed, 'zero_service_fee_posting_does_not_need_recognition_policy');
 
 $mappingMissingBlocked = false;
 $GLOBALS['ak_spma_test_mapping'] = null;
@@ -83,6 +91,10 @@ $GLOBALS['ak_spma_test_mapping'] = [
 ];
 $resolvedMapping = ak_spma_resolve_service_fee_account_mapping($positiveFee, 1200.00);
 $assert($resolvedMapping['mapping_id'] === 77 && $resolvedMapping['account_id'] === 420, 'effective_mapping_resolved');
+$stillBlockedAfterMapping = false;
+try { ak_spma_assert_service_fee_posting_allowed($positiveComponents); }
+catch (RuntimeException $e) { $stillBlockedAfterMapping = true; }
+$assert($stillBlockedAfterMapping, 'account_mapping_alone_does_not_enable_posting');
 $assert($resolvedMapping['account_code'] === '4190', 'configured_revenue_account_used');
 
 $futureMappingBlocked = false;
