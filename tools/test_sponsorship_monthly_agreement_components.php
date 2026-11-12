@@ -282,10 +282,10 @@ if (is_string($paymentEntrySource)) {
     );
     $assert(
         str_contains($paymentEntrySource, '$entrySection=') 
-        && str_contains($paymentEntrySource, "$entrySection==='sponsorship'?['monthly_sponsorship']")
-        && str_contains($paymentEntrySource, "$entrySection==='donation'?['general_donation','project_donation','other']")
-        && str_contains($paymentEntrySource, "$entrySection==='sponsorship'?(int)($_POST['sponsor_id']??0):0")
-        && str_contains($paymentEntrySource, "$role==='supervisor'&&$entrySection==='sponsorship'"),
+        && str_contains($paymentEntrySource, "\$entrySection==='sponsorship'?['monthly_sponsorship']")
+        && str_contains($paymentEntrySource, "\$entrySection==='donation'?['general_donation','project_donation','other']")
+        && str_contains($paymentEntrySource, "\$entrySection==='sponsorship'?(int)(\$_POST['sponsor_id']??0):0")
+        && str_contains($paymentEntrySource, "\$role==='supervisor'&&\$entrySection==='sponsorship'"),
         'server_validates_each_form_type_and_sponsor_scope_independently'
     );    $assert(
         str_contains($paymentEntrySource, 'class="pay-evidence-row"')
