@@ -706,3 +706,12 @@ The VGM/direct monthly payment table has been adjusted to resolve the cramped co
 - The agreement summary above the table, actual-receipt-only defaults and totals, row-specific evidence fields, and all payment/business logic remain unchanged.
 
 The focused component contract test was updated to assert the readable single-row/scrolling layout rather than the previous forced-fit/no-scroll behavior. GitHub Actions run [43285812427](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43285812427) passed: PHP 8.2 lint for all 13 workflow files and all 51 component contract checks. Local browser acceptance is still required to confirm the actual desktop viewport and horizontal-scroll usability; do not submit a payment during visual inspection.
+
+
+## 2026-11-12 — Monthly payment form redesigned as a fit-screen spreadsheet grid
+
+The user rejected the previous 1,590px horizontally scrolling table. The existing `modules/transactions/create.php` payment form has now been reorganized into separate numbered sections for payment/sponsorship setup and monthly collection entry. The monthly grid is now a seven-column, 100%-width table (month, purpose, actual sponsorship received, actual service fee received, line total, individual receipt, action). The former purpose-explanation column was removed from the grid and moved into the row's own evidence-detail section beneath the main row, alongside payment date, method, external receipt number, additional reference, and payment description. This preserves the independent evidence and purpose fields while freeing width for amount inputs and receipt upload. Agreement references remain distinct summary cards and continue following the focused month row.
+
+The dynamic row builder was updated to create the same seven-column/evidence layout. Purpose explanation is shown only for the `other` purpose; the row's date reset/default now emits a quoted JSON string instead of an unquoted date expression. Existing actual-receipt-only defaults, totals, agreement snapshots, row-specific receipt upload, POST field names, and payment/accounting behavior remain unchanged. No schema or database changes were made.
+
+Repository verification status at this checkpoint: source and focused contract test are updated on `main`; GitHub Actions PHP lint and all 51 focused checks are pending for the latest commit. Local browser acceptance is also pending. Do not submit a payment during visual inspection. The user's local staged/untracked files must remain untouched.
