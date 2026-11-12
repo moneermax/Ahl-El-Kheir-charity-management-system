@@ -1,4 +1,5 @@
 <?php
+require_once dirname(__DIR__) . '/sponsorships/lib_monthly_agreements.php';
 // Sponsorship payment allocation snapshots. Requires the caller's existing DB transaction.
 // This file performs no DDL; database/migrations/2026-11-08_sponsorship_payment_accounting.sql owns the schema.
 
@@ -120,25 +121,7 @@ function ak_sp_create_payment_allocation_prepared(array $transaction, float $net
                 "SELECT DISTINCT commitment_amount FROM sponsorship_payment_allocations WHERE sponsorship_id=? AND covered_month=? ORDER BY commitment_amount",
                 [$sponsorshipId, $coveredMonth]
             );
-            if (count($snapshots) > 1) throw new RuntimeException('توجد لالتزامات الشهر قيم متعارضة في تخصيصات سابقة.');
-            if ((string)($transaction['component_model'] ?? 'legacy') === 'monthly_agreement') {
-                $agreedCommitment = round((float)($transaction['agreed_sponsorship_amount'] ?? 0), 2);
-                $agreementId = (int)($transaction['monthly_agreement_id'] ?? 0);
-                if ($agreementId <= 0 || $agreedCommitment <= 0) {
-                    throw new RuntimeException('لقطة اتفاق الكفالة الشهرية غير مكتملة؛ تعذر إنشاء التخصيص.');
-                }
-                $commitment = $snapshots
-                    ? round((float)$snapshots[0]['commitment_amount'], 2)
-                    : $agreedCommitment;
-                if (round($commitment, 2) !== $agreedCommitment) {
-                    throw new RuntimeException('قيمة الاتفاقية لا تطابق الالتزام المثبت بتخصيص سابق لهذا الشهر.');
-                }
-            } else {
-                $commitment = $snapshots
-                    ? round((float)$snapshots[0]['commitment_amount'], 2)
-                    : round((float)$sponsorship['monthly_amount'], 2);
-            }
-            if ($commitment <= 0) throw new RuntimeException('قيمة الالتزام الشهري للكفالة غير صالحة.');
+            $commitment = ak_spma_resolve_allocation_commitment($transaction, $snapshots, $sponsorship);
             $alreadyAllocated = dbFetchOne(
                 "SELECT COALESCE(SUM(a.allocated_amount),0) AS allocated
                  FROM sponsorship_payment_allocations a
