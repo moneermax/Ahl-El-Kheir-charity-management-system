@@ -6595,3 +6595,16 @@ This is repository/CI evidence only. The user's local `ahl_el_kheir` database ha
 Next implementation work: FM agreement management, server-side agreement lookup/missing-agreement blocking, both payment submission paths, component snapshots, FM review breakdowns, returned-row compatibility, and strict legacy/new-model accounting separation. Positive actual service-fee receipts remain blocked from journal posting until an authorized accounting owner approves recognition timing and an active revenue destination. Never fall back to account `4200`.
 
 **Open decision before allocator/amendment implementation:** approve freezing the original sponsorship/month allocation commitment after its first posted allocation. A conflicting later agreement amendment would not rewrite that commitment or prior allocations; it would require an explicit audited correction before the new commitment can affect allocation. Do not implement this rule until the user confirms it.
+
+
+## 2026-11-12 — Sponsorship agreement amendment/allocation decision CLOSED
+
+The earlier open question about freezing the sponsorship/month commitment is resolved. The user approved a **month-specific**, not lifetime, freeze:
+
+- New sponsorship commitment values are allowed for future covered months. A 5,000 → 10,000 SDG increase effective next month is a new monthly agreement, not an advance.
+- An advance is excess cash beyond the applicable agreed component amounts for explicitly covered months.
+- After the first posted allocation for a sponsorship/month, the sponsorship commitment for that month is frozen at the allocation snapshot. An ordinary agreement amendment cannot change it; a conflicting change must be blocked unless a separately designed and audited correction is authorized.
+- A later version may change that month's service fee while retaining the frozen sponsorship commitment. Existing payment snapshots, allocations and journals are not rewritten.
+- New-model allocation and arrears/advance reporting must use the applicable monthly agreement where no allocation snapshot exists, while preserving legacy behavior.
+
+No PHP or database runtime changes are implied by this decision entry. Detailed implementation requirements are in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
