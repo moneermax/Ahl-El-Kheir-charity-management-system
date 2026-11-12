@@ -23,7 +23,7 @@ In scope:
 
 Out of scope unless a source/schema audit proves a direct dependency:
 - Reworking the completed arrears/advances calculations or historical accounting backfill.
-- Changing unrelated Supervisor collection workflows, GM read-only reports, or ordinary donation transaction behavior.
+- Changing unrelated Supervisor collection workflows, GM read-only reports, or ordinary donation transaction behavior. **Supervisor monthly-sponsorship submissions are in scope and must use the same sponsorship-specific fee agreement and calculation as VGM submissions.**
 - Reopening closed accounting, payroll, i18n, or salary-advance work.
 - Broad redesign of other pages.
 
@@ -89,6 +89,28 @@ The prior source review found:
 - No prior inspection established that a per-sponsorship agreed service-fee field already exists.
 
 These are investigation leads, not permission to assume the current schema or source has not changed. Re-fetch current `main` source and schema before implementation.
+
+## 3A. Stage 1 audit evidence — 2026-11-12
+
+The following findings were revalidated against the current `main` source and the updated `database/ahl_el_kheir.sql` dump. They are evidence, not implementation decisions:
+
+- `sponsorships` stores `monthly_amount` but has no sponsorship-specific service-fee agreement field.
+- `transactions` stores the existing administrative-fee fields (`admin_fee_method`, `admin_fee_value`, `admin_fee_amount`, `admin_fee_policy_id`, `net_amount`) but no distinct sponsorship service-fee agreement or service-fee snapshot.
+- `sponsor_payments` stores one Supervisor submission row per covered month/purpose, with `amount`, `payment_period`, `sponsorship_id`, and review/transaction linkage; it has no service-fee agreement or snapshot fields.
+- `modules/sponsorships/create.php` saves the monthly sponsorship commitment but no service-fee agreement. `modules/sponsorships/view.php` has no fee-amendment action; its current management actions concern sponsorship status.
+- VGM/admin sponsorship payments use the direct `transactions` path in `modules/transactions/create.php`. The pending transaction currently stores the entered row amount as `amount`, sets the administrative-fee amount to zero, and sets `net_amount` equal to that amount. At FM posting, `ak_apply_admin_fee_snapshot_prepared()` may calculate the organization-wide policy if no policy snapshot exists.
+- Supervisor submissions in the same page create one pending `sponsor_payments` row for each detail row. FM approval in `ak_approve_sponsor_payment()` converts that row into a posted `transactions` record and calculates the organization-wide fee using the policy effective on the submission date. This is a separate submission path from VGM's direct transaction path.
+- The shared posting function allocates the transaction's `net_amount` to sponsorship and credits administrative-fee revenue to account `4200`. That account is currently labelled/used for administrative fees; whether the new agreed service fee belongs in this account is not yet established and must not be assumed.
+- The current global fee helper is gross-to-net: a fixed fee is `min(gross_amount, policy_value)`; it is not the required additive agreement rule. It must not be repurposed as the sponsorship service-fee agreement calculation.
+- The FM queues currently display a single amount, not an auditable breakdown of sponsorship component, agreed service fee, and total.
+
+**Supervisor parity decision — confirmed by the user on 2026-11-12:** the same sponsorship-specific agreement and calculation must govern Supervisor submissions because this is a core Supervisor responsibility. VGM and Supervisor entry routes must not charge different amounts for the same sponsorship and covered month. This parity is a mandatory acceptance criterion.
+
+**Design direction (not yet approved for implementation):** keep the agreed fee attached to the sponsorship agreement; snapshot the agreement reference and monetary components when either route submits; preserve the two existing workflow/review paths; and make the accounting posting distinguish the sponsorship component from the additional service-fee component without changing unrelated donation or ordinary transaction behavior. Exact table/column design and accounting account classification remain subject to the remaining business decisions and migration-convention audit.
+
+**Known data fixture:** the updated repository dump contains active sponsorship `SH-003559` (ID `3559`), monthly commitment `5,000.00` SDG, start date `2026-08-27`, sponsor `SP-002857` (`معاويه عوض عبد العظيم`), child `اسراء`. The dump contains no linked `transactions`, `sponsor_payments`, or `sponsorship_payment_allocations` rows for this sponsorship. It remains a candidate fixture only; no payment was created or altered.
+
+**Search limitation:** repository code search returned no indexed matches for the fee-helper identifiers, so the caller inventory is based on the active paths directly inspected above, not a claim that every repository caller has been exhaustively enumerated. A full local/repository grep is still required before any shared helper change.
 
 ## 4. Ordered implementation plan and acceptance gates
 
