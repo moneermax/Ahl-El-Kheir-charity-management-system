@@ -67,7 +67,19 @@ function ak_post_transaction_journal_prepared(int $txnId, ?int $createdByUserId 
     if ($type === 'general_donation') { $lines[] = ['4300', 0.0, $amount, 'تبرع عام ' . $t['transaction_code']]; }
     elseif ($type === 'project_donation') { $revCode = '4400'; if (!empty($t['project_id'])) { $prj = dbFetchOne("SELECT revenue_account_id FROM other_projects WHERE id = ?", [(int)$t['project_id']]); if ($prj && !empty($prj['revenue_account_id'])) { $acc = dbFetchOne("SELECT code FROM accounts WHERE id = ?", [(int)$prj['revenue_account_id']]); if ($acc) $revCode = $acc['code']; } } $lines[] = [$revCode, 0.0, $amount, 'إيراد مشروع ' . $t['transaction_code']]; }
     elseif ($type === 'admin_fee') { $lines[] = ['4200', 0.0, $amount, 'رسوم إدارية ' . $t['transaction_code']]; }
-    else { $revenueAccount = $type === 'sponsorship_payment' ? '2200' : '4100'; $lines[] = [$revenueAccount, 0.0, $net, ($type === 'sponsorship_payment' ? 'إيراد كفالات مؤجل ' : 'إيراد كفالات ') . $t['transaction_code']]; if ($fee > 0) $lines[] = ['4200', 0.0, $fee, 'رسوم إدارية ' . $t['transaction_code']]; }
+    else {
+        $revenueAccount = $type === 'sponsorship_payment' ? '2200' : '4100';
+        $lines[] = [$revenueAccount, 0.0, $net, ($type === 'sponsorship_payment' ? 'إيراد كفالات مؤجل ' : 'إيراد كفالات ') . $t['transaction_code']];
+        if ($fee > 0) {
+            if ((string)($t['component_model'] ?? 'legacy') === 'monthly_agreement') {
+                $serviceFeeCode = (string)($snapshot['service_fee_account_code'] ?? '');
+                if ($serviceFeeCode === '') throw new RuntimeException('حساب إيراد رسوم الخدمة غير مثبت في لقطة المعاملة.');
+                $lines[] = [$serviceFeeCode, 0.0, $fee, 'رسوم خدمة كفالة ' . $t['transaction_code']];
+            } else {
+                $lines[] = ['4200', 0.0, $fee, 'رسوم إدارية ' . $t['transaction_code']];
+            }
+        }
+    }
     $resolvedLines = []; $totalDebit = 0.0; $totalCredit = 0.0;
     foreach ($lines as $l) { $aid = ak_account_id($l[0]); if ($aid <= 0) throw new RuntimeException('الحساب المحاسبي غير موجود: ' . $l[0]); $debit = round((float)$l[1],2); $credit = round((float)$l[2],2); if ($debit < 0 || $credit < 0 || ($debit > 0 && $credit > 0)) throw new RuntimeException('سطر قيد محاسبي غير صالح للمعاملة ' . $txnId); $resolvedLines[] = [$aid,$debit,$credit,$l[3]]; $totalDebit += $debit; $totalCredit += $credit; }
     if (round($totalDebit,2) !== round($totalCredit,2)) throw new RuntimeException('القيد المحاسبي غير متوازن للمعاملة ' . $txnId);
