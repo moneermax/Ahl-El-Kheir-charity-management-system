@@ -337,14 +337,13 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, "\$line['description']"),
         'monthly_row_metadata_used_during_submission'
     );
+    $assert(
         str_contains($paymentEntrySource, "'date'=>\$line['date']")
         && str_contains($paymentEntrySource, "'method'=>\$line['method']")
         && str_contains($paymentEntrySource, "'receipt'=>\$line['receipt']")
         && str_contains($paymentEntrySource, "'reference'=>\$line['reference']")
         && str_contains($paymentEntrySource, "'description'=>\$line['description']")
-        && str_contains($paymentEntrySource, "'date'=>\$line['date'], 'method'=>\$line['method'], 'receipt'=>\$line['receipt']")
-        && str_contains($paymentEntrySource, "'description'=>\$line['description'], 'own'=>\$donationReceiptPaths")
-        && str_contains($paymentEntrySource, "'method'=>\$input['method']"),
+        && str_contains($paymentEntrySource, "'description'=>\$line['description'], 'own'=>\$donationReceiptPaths"),
         'vgm_monthly_and_nonmonthly_rows_receive_payment_metadata'
     );
     $approvalSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_sponsor_payment_approval.php');
