@@ -4073,3 +4073,22 @@ A browser acceptance defect was found and corrected in repository source before 
 Latest commits: `543567be93e8c2dbd64a3194303b3f16fb400cf7`, `265f32be23293a45e36991b16c5cf1f58621a7d9`, `3271b0bb875f70efe436f422dbd7fcc9da0ca75d`.
 
 Focused GitHub Actions run [43266671312](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43266671312) passed PHP 8.2 lint and all 39 contract checks. Next have the user pull main and visually verify SH-003508 / November shows agreed 10,000 / actual blank / agreed fee 2,000 / actual blank and total 0.00. Do not submit this payment. Also verify the table stays one row with horizontal scrolling as needed. Local browser verification is required before closure. Keep positive service-fee posting blocked pending authorized timing/account decisions.
+
+
+## 2026-11-12 — Agreed-amount summary row layout refinement
+
+Following the user's clarification, the agreed sponsorship amount and agreed service-fee amount remain unchanged; their combined agreed total of **12,000** is correct. This is an agreement reference, not evidence that 12,000 was actually received.
+
+Repository-only UI change on `main`:
+- The two readonly agreement values now appear side by side in a prominent top row.
+- The payment table beneath them contains the remaining row-level fields: covered month, purpose, actual sponsorship received, actual service fee received, line total, line receipt, explanation, and row action.
+- Because one submission may contain multiple covered months with different agreement versions/amounts, the top pair follows the payment row currently focused/selected. The page labels the month represented by those values.
+- Actual receipt fields remain blank until entered. Per-line and overall collection totals continue to sum actual receipt amounts only. Agreement values are not copied into actual receipts.
+- The table remains a single horizontal row with horizontal scrolling where needed; wider remaining columns and taller controls reduce the previous compression.
+- No schema, migration, allocation, journal, approval, or accounting behavior was changed. Positive service-fee posting remains blocked pending the existing accounting authorization decision.
+
+Commits:
+- `e468f3450a3370e0155c864be07e01d9e5f13993` — UI layout and active-row agreement summary.
+- `45161ab857dd40e367b0d91c9e6e2c389c8b3bbd` — three additional layout/row-selection contract assertions.
+
+Verification boundary: source-level checks confirmed both top-row fields, the remaining table columns, active-row summary wiring, and actual-only total calculation. The new assertions have been added but have not yet been executed in CI or local PHP. Local browser acceptance remains pending; do not submit a payment during visual inspection.
