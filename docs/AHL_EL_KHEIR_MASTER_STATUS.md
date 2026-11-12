@@ -6372,3 +6372,11 @@ The freeze applies only to the sponsorship commitment for a specific covered mon
 ## 2026-11-12 — FM monthly sponsorship agreement management page
 
 The repository now contains an FM-only monthly agreement management page at `modules/sponsorships/monthly_agreements.php`, linked from the FM dashboard. It appends versioned agreements and audit records, requires a reason for amendments, allows new commitments for unallocated months, and freezes the sponsorship amount for a month after a posted allocation while permitting a service-fee-only amendment. PHP 8.2 syntax CI passed in run 43231663010. This is not locally runtime-verified: the migration is not applied to the user's XAMPP database. VGM/Supervisor payment capture, allocation, arrears/advance integration, and accounting posting remain pending.
+
+## 2026-11-12 — Sponsorship monthly agreement payment workflow repository milestone
+
+The repository now captures agreement-version snapshots and actual sponsorship/service-fee receipt components in VGM/direct and Supervisor submissions. FM queues show the breakdown; returned new-model rows preserve agreement references and permit actual-component correction only. Allocation, arrears and advances use the applicable monthly agreement where no posted allocation snapshot exists, with existing allocation snapshots and legacy fallback preserved. Payment entry uses a compact RTL responsive table. Commitment amendments are blocked while new-model submissions for that month remain pending/returned.
+
+An effective-dated, immutable service-fee revenue mapping facility is prepared with a mandatory authorizer name and decision reference. **Positive service-fee posting remains blocked** because recognition timing (immediate versus month-end) is not authorized; mapping alone cannot enable posting and no service-fee journal line has been implemented. Zero-service-fee sponsorship payments retain the existing sponsorship posting path.
+
+CI: PHP 8.2 lint and 32 isolated contract checks passed (run 43236546673). MariaDB 10.4.32 schema/migration idempotency, FK counts, and legacy-row preservation passed (run 43236977774). Canonical SQL dump synchronization passed twice in CI but is not yet committed to main. Local XAMPP migration and browser/runtime verification remain pending. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
