@@ -227,7 +227,7 @@ function ak_sar_load_report_data(string $role, int $userId, ?array $filters = nu
     }
 
     if (!$sponsorships) {
-        return ['sponsorships'=>[], 'allocations'=>[], 'pause_events'=>[], 'pending'=>[], 'limit_exceeded'=>false];
+        return ['sponsorships'=>[], 'allocations'=>[], 'agreements'=>[], 'pause_events'=>[], 'pending'=>[], 'limit_exceeded'=>false];
     }
 
     $ids = array_values(array_unique(array_map(static fn(array $r): int => (int)$r['id'], $sponsorships)));
@@ -333,6 +333,7 @@ function ak_sar_load_report_data(string $role, int $userId, ?array $filters = nu
     return [
         'sponsorships'=>$sponsorships,
         'allocations'=>$allocations,
+        'agreements'=>$agreements,
         'unallocated_totals'=>$unallocatedTotals,
         'pause_events'=>$pauseEvents,
         'pending'=>$pending,
@@ -424,7 +425,9 @@ function ak_sar_get_arrears(string $role, int $userId, ?array $filters = null): 
             $months = ak_sar_month_rows(
                 $sponsorship,
                 $data['allocations'][(int)$sponsorship['id']] ?? [],
-                $data['pause_events'][(int)$sponsorship['id']] ?? []
+                $data['pause_events'][(int)$sponsorship['id']] ?? [],
+                null,
+                $data['agreements'][(int)$sponsorship['id']] ?? []
             );
         } catch (Throwable $e) {
             $result[] = ['sponsorship'=>$sponsorship, 'months'=>[], 'threshold'=>false, 'error'=>$e->getMessage()];
@@ -538,6 +541,25 @@ function ak_sar_get_arrears_summary(string $role, int $userId): array
     )));
     $marks = implode(',', array_fill(0, count($ids), '?'));
 
+    $agreementRows = dbFetchAll(
+        "SELECT a.*
+         FROM sponsorship_monthly_agreements a
+         JOIN (
+             SELECT sponsorship_id, covered_month, MAX(version_no) AS version_no
+             FROM sponsorship_monthly_agreements
+             WHERE sponsorship_id IN ($marks)
+             GROUP BY sponsorship_id, covered_month
+         ) latest
+           ON latest.sponsorship_id = a.sponsorship_id
+          AND latest.covered_month = a.covered_month
+          AND latest.version_no = a.version_no",
+        $ids
+    );
+    $agreements = [];
+    foreach ($agreementRows as $agreement) {
+        $agreements[(int)$agreement['sponsorship_id']][(string)$agreement['covered_month']] = $agreement;
+    }
+
     $allocationRows = dbFetchAll(
         "SELECT a.sponsorship_id, a.covered_month,
                 COUNT(DISTINCT NULLIF(a.commitment_amount,0)) AS commitment_versions,
@@ -577,7 +599,9 @@ function ak_sar_get_arrears_summary(string $role, int $userId): array
             $months = ak_sar_month_rows(
                 $sponsorship,
                 $allocations[$sid] ?? [],
-                $pauseEvents[$sid] ?? []
+                $pauseEvents[$sid] ?? [],
+                null,
+                $agreements[$sid] ?? []
             );
         } catch (Throwable $e) {
             $summary['calculation_error_count']++;
