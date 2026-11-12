@@ -58,7 +58,7 @@ def synchronize(text: str) -> str:
     txn_block = text[txn_start:txn_end]
     anchor = "  " + Q + "actual_service_fee_received" + Q + " decimal(12,2) DEFAULT NULL\n"
     replacement = (
-        anchor
+        "  " + Q + "actual_service_fee_received" + Q + " decimal(12,2) DEFAULT NULL,\n"
         + "  " + Q + "service_fee_account_mapping_id" + Q + " int(10) UNSIGNED DEFAULT NULL,\n"
         + "  " + Q + "service_fee_account_id" + Q + " int(10) UNSIGNED DEFAULT NULL\n"
     )
