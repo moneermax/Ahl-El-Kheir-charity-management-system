@@ -30864,6 +30864,14 @@ CREATE TABLE `sponsorship_monthly_agreements` (
 --
 
 --
+-- Indexes for table `sponsorship_monthly_agreements`
+--
+ALTER TABLE `sponsorship_monthly_agreements`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_spma_sponsorship_month_version` (`sponsorship_id`,`covered_month`,`version_no`),
+  ADD KEY `idx_spma_month_latest` (`sponsorship_id`,`covered_month`,`id`);
+
+--
 -- Indexes for table `accountant_nanny_assignments`
 --
 ALTER TABLE `accountant_nanny_assignments`
@@ -33178,10 +33186,6 @@ ALTER TABLE `sponsorship_payment_allocations`
 --
 -- Constraints for table `sponsorship_monthly_agreements`
 --
-ALTER TABLE `sponsorship_monthly_agreements`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_spma_sponsorship_month_version` (`sponsorship_id`,`covered_month`,`version_no`),
-  ADD KEY `idx_spma_month_latest` (`sponsorship_id`,`covered_month`,`id`);
 ALTER TABLE `sponsorship_monthly_agreements`
   ADD CONSTRAINT `fk_spma_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
   ADD CONSTRAINT `fk_spma_currency` FOREIGN KEY (`currency_code`) REFERENCES `currencies` (`code`) ON UPDATE CASCADE ON DELETE RESTRICT,
