@@ -4149,3 +4149,10 @@ The user rejected the previous 1,590px horizontally scrolling table. The existin
 The dynamic row builder was updated to create the same seven-column/evidence layout. Purpose explanation is shown only for the `other` purpose; the row's date reset/default now emits a quoted JSON string instead of an unquoted date expression. Existing actual-receipt-only defaults, totals, agreement snapshots, row-specific receipt upload, POST field names, and payment/accounting behavior remain unchanged. No schema or database changes were made.
 
 Repository verification: GitHub Actions run [43287201539](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43287201539) passed PHP 8.2 lint for all 13 workflow files and all 51 focused component checks, including the seven-column fit-screen layout and row-specific evidence contract. The run covered the exact source and test commits for this redesign; subsequent commits only updated documentation. Local browser acceptance remains pending. Do not submit a payment during visual inspection. The user's local staged/untracked files must remain untouched.
+
+
+## 2026-11-12 — Non-monthly payment details receive a dedicated section heading
+
+The amount, project, and other-source fields now sit under a visible section heading whenever the selected payment type is not monthly sponsorship. The heading is contextual rather than misleadingly calling every non-monthly payment a donation: it reads **بيانات الرسوم الإدارية**, **تفاصيل التبرع العام**, **تفاصيل التبرع للمشروع**, or **تفاصيل المصدر الآخر** according to the selected type. The heading hides for monthly sponsorship. Existing field visibility, required-field validation, values, submission names, and payment/accounting behavior are unchanged.
+
+A focused source-contract assertion now checks the heading and all four labels. Local browser acceptance remains pending; no payment should be submitted during visual inspection.
