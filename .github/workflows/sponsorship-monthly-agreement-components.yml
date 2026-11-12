@@ -9,6 +9,8 @@ on:
       - 'modules/transactions/create.php'
       - 'modules/transactions/edit_returned.php'
       - 'modules/accounting/lib.php'
+      - 'modules/accounting/accounts.php'
+      - 'modules/accounting/sponsorship_service_fee_account.php'
       - 'modules/accounting/lib_admin_fee_policy.php'
       - 'modules/accounting/lib_sponsorship_payment_accounting.php'
       - 'modules/accounting/lib_sponsor_payment_approval.php'
@@ -39,6 +41,8 @@ jobs:
           php -l modules/transactions/create.php
           php -l modules/transactions/edit_returned.php
           php -l modules/accounting/lib.php
+          php -l modules/accounting/accounts.php
+          php -l modules/accounting/sponsorship_service_fee_account.php
           php -l modules/accounting/lib_admin_fee_policy.php
           php -l modules/accounting/lib_sponsorship_payment_accounting.php
           php -l modules/accounting/lib_sponsor_payment_approval.php
