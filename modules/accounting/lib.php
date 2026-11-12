@@ -62,7 +62,7 @@ function ak_post_transaction_journal_prepared(int $txnId, ?int $createdByUserId 
     $t = dbFetchOne("SELECT * FROM transactions WHERE id = ?", [$txnId]);
     $amount = round((float)$t['amount'], 2); $fee = round((float)$snapshot['amount'], 2); $net = round((float)$snapshot['net_amount'], 2); $type = (string)($t['transaction_type'] ?? 'sponsorship_payment');
     if ($type === 'sponsorship_payment') ak_sp_create_payment_allocation_prepared($t, $net, $createdByUserId, $collectorUserId);
-    if ($amount <= 0 || $fee < 0 || $net < 0 || round($fee + $net,2) !== $amount) throw new RuntimeException('تفاصيل الرسوم الإدارية للمعاملة غير متوافقة مع إجمالي التحصيل.');
+    if ($amount <= 0 || $fee < 0 || $net < 0 || round($fee + $net,2) !== $amount) throw new RuntimeException('تفاصيل الرسوم للمعاملة غير متوافقة مع إجمالي التحصيل.');
     $lines = [[ak_cash_code((string)$t['payment_method']), $amount, 0.0, 'تحصيل ' . $t['transaction_code']]];
     if ($type === 'general_donation') { $lines[] = ['4300', 0.0, $amount, 'تبرع عام ' . $t['transaction_code']]; }
     elseif ($type === 'project_donation') { $revCode = '4400'; if (!empty($t['project_id'])) { $prj = dbFetchOne("SELECT revenue_account_id FROM other_projects WHERE id = ?", [(int)$t['project_id']]); if ($prj && !empty($prj['revenue_account_id'])) { $acc = dbFetchOne("SELECT code FROM accounts WHERE id = ?", [(int)$prj['revenue_account_id']]); if ($acc) $revCode = $acc['code']; } } $lines[] = [$revCode, 0.0, $amount, 'إيراد مشروع ' . $t['transaction_code']]; }
