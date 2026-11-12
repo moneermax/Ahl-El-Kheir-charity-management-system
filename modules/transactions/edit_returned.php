@@ -24,6 +24,7 @@ $uid = (int)Session::getUserId();
 $tid = (int)($_GET['id'] ?? $_POST['transaction_id'] ?? 0);
 $t = dbFetchOne("SELECT t.*, s.full_name AS sponsor_name, s.sponsor_code FROM transactions t LEFT JOIN sponsors s ON s.id=t.sponsor_id WHERE t.id=? AND t.status='returned' AND t.created_by=?", [$tid, $uid]);
 if (!$t) { flash('error', 'لا يمكن تعديل هذه الدفعة. يجب أن تكون مُعادة إليك وأن تكون أنت منشئها.'); header('Location: ' . $backUrl); exit(); }
+$componentModel=(string)($t['component_model']??'legacy');
 $purposeLabels=['monthly_sponsorship'=>'كفالة شهرية','school_fees'=>'رسوم دراسية','medicine'=>'علاج وأدوية','gift'=>'هدية/عيدية','other'=>'أخرى'];
 $monthOptions=[]; for($i=-24;$i<=12;$i++) $monthOptions[]=date('F/Y',strtotime(date('Y-m-01')." $i months"));
 $storedType=(string)($t['transaction_type']??'general_donation');
