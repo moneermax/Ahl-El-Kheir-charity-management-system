@@ -9,6 +9,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 2) . '/config/database.php';
 require_once dirname(__DIR__, 2) . '/config/sponsor_assignments.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_sponsorship_payment_accounting.php';
+require_once __DIR__ . '/lib_monthly_agreements.php';
 
 function ak_sar_assert_no_pending_month_payment(int $sponsorshipId, string $paymentPeriod): void
 {
@@ -232,6 +233,25 @@ function ak_sar_load_report_data(string $role, int $userId, ?array $filters = nu
     $ids = array_values(array_unique(array_map(static fn(array $r): int => (int)$r['id'], $sponsorships)));
     $marks = implode(',', array_fill(0, count($ids), '?'));
 
+    $agreementRows = dbFetchAll(
+        "SELECT a.*
+         FROM sponsorship_monthly_agreements a
+         JOIN (
+             SELECT sponsorship_id, covered_month, MAX(version_no) AS version_no
+             FROM sponsorship_monthly_agreements
+             WHERE sponsorship_id IN ($marks)
+             GROUP BY sponsorship_id, covered_month
+         ) latest
+           ON latest.sponsorship_id = a.sponsorship_id
+          AND latest.covered_month = a.covered_month
+          AND latest.version_no = a.version_no",
+        $ids
+    );
+    $agreements = [];
+    foreach ($agreementRows as $agreement) {
+        $agreements[(int)$agreement['sponsorship_id']][(string)$agreement['covered_month']] = $agreement;
+    }
+
     $allocationRows = dbFetchAll(
         "SELECT a.sponsorship_id, a.covered_month,
                 COUNT(DISTINCT NULLIF(a.commitment_amount,0)) AS commitment_versions,
@@ -327,7 +347,7 @@ function ak_sar_first_full_month(string $date): DateTimeImmutable
     return $start->format('d') === '01' ? $first : $first->modify('+1 month');
 }
 
-function ak_sar_month_rows(array $sponsorship, array $allocations, array $pauseEvents, ?DateTimeImmutable $asOf = null): array
+function ak_sar_month_rows(array $sponsorship, array $allocations, array $pauseEvents, ?DateTimeImmutable $asOf = null, array $agreements = []): array
 {
     $id = (int)$sponsorship['id'];
     $monitoringStart = str_starts_with((string)$sponsorship['sponsorship_code'], 'IMP-SH-')
@@ -360,9 +380,12 @@ function ak_sar_month_rows(array $sponsorship, array $allocations, array $pauseE
         if ($snapshot && (int)$snapshot['commitment_versions'] > 1) {
             throw new RuntimeException('توجد قيم التزام متعارضة لهذا الشهر.');
         }
+        $agreement = $agreements[$monthStart] ?? null;
         $commitment = $snapshot && (int)$snapshot['commitment_versions'] === 1
             ? round((float)$snapshot['commitment_amount'], 2)
-            : round((float)$sponsorship['monthly_amount'], 2);
+            : ($agreement
+                ? round((float)$agreement['agreed_sponsorship_amount'], 2)
+                : round((float)$sponsorship['monthly_amount'], 2));
         if ($commitment <= 0) throw new RuntimeException('قيمة الالتزام الشهري غير صالحة.');
         $paid = $snapshot ? round((float)$snapshot['allocated_amount'], 2) : 0.00;
         $rows[] = [
@@ -665,9 +688,9 @@ function ak_sar_get_advances(string $role, int $userId): array
             if ($month <= $currentMonth || isset($seenFutureMonths[$month])) continue;
             $future[] = [
                 'month'=>$month,
-                'commitment'=>round((float)$sponsorship['monthly_amount'],2),
+                'commitment'=>round((float)($data['agreements'][$sid][$month]['agreed_sponsorship_amount'] ?? $sponsorship['monthly_amount']),2),
                 'allocated'=>0.00,
-                'remaining'=>round((float)$sponsorship['monthly_amount'],2),
+                'remaining'=>round((float)($data['agreements'][$sid][$month]['agreed_sponsorship_amount'] ?? $sponsorship['monthly_amount']),2),
                 'pending'=>$items,
                 'error'=>null
             ];
