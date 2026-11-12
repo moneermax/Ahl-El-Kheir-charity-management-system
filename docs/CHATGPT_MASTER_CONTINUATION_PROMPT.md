@@ -3927,3 +3927,20 @@ Verified lifecycle and audit trail:
 Local PHP 8.2 syntax checks for modules/transactions/index.php and modules/transactions/edit_returned.php passed before browser/database acceptance. No schema, migration, accounting-policy, journal, or allocation code was changed for this source fix or acceptance.
 
 Acceptance disposition: CLOSED for the VGM creator's FM-returned ordinary-transaction correction/resubmission and subsequent FM approval/posting path. Preserve TR-000024 / JE-000054 as test evidence; do not edit, void, return, or reuse them. The separate creator-cancellation branch and an independent runtime check of Transaction History action visibility were not part of this executed scenario and are not claimed as runtime-proven. Do not rerun this acceptance without concrete regression evidence.
+
+
+## 2026-11-12 — Active sponsorship payment/service-fee work
+
+Read `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` and continue its stages in order. Current status: business rules agreed; repository audit/design still in progress; no code/schema/data changes made.
+
+Rules now confirmed:
+- Store agreed service-fee values per sponsorship and covered month; different months may differ.
+- VGM and Supervisor must use the same per-month agreement and receipt calculation.
+- Display agreed sponsorship and service-fee values as read-only references. Provide separate editable actual-received fields initially populated from those references.
+- Actual monthly total = actual sponsorship received + actual service fee received. No automatic policy percentage, gross-up, deduction, proration, or inferred fee.
+- Snapshot the agreement values/reference and actual receipt components for FM review/audit.
+- Do not use the global administrative-fee policy to calculate/override sponsorship service fees. Do not delete/disable that shared policy for unrelated transaction types until its complete caller inventory is established.
+
+Current audit findings: both sponsorship routes currently use gross-to-net policy behavior; the common posting helper allocates `net_amount` and credits `4200`; the allocation helper must receive only actual sponsorship receipts; the Supervisor approval path computes policy separately; returned VGM transaction editing still exposes a percentage fee. Service-fee account classification and agreement amendment authority/effective-month controls are unresolved. GitHub code search returned no indexed results, so a complete shared-helper caller inventory remains an explicit prerequisite before changing shared helpers.
+
+Do not start implementation/migration until the remaining schema, caller, migration, returned-payment and accounting classification audits are complete. Preserve all existing unrelated transaction behavior and financial evidence.
