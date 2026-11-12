@@ -31,6 +31,7 @@ def synchronize(text: str) -> str:
         required = [
             Q + "service_fee_account_mapping_id" + Q + " int(10) UNSIGNED DEFAULT NULL",
             Q + "service_fee_account_id" + Q + " int(10) UNSIGNED DEFAULT NULL",
+            Q + "authorized_by_name" + Q + " varchar(150) NOT NULL",
             Q + "uq_ssfam_effective_version" + Q,
             Q + "idx_ssfam_account" + Q,
             Q + "idx_ssfam_effective_latest" + Q,
@@ -67,6 +68,7 @@ def synchronize(text: str) -> str:
         "  " + Q + "effective_from" + Q + " date NOT NULL,\n"
         "  " + Q + "version_no" + Q + " int(10) UNSIGNED NOT NULL,\n"
         "  " + Q + "account_id" + Q + " int(10) UNSIGNED NOT NULL,\n"
+        "  " + Q + "authorized_by_name" + Q + " varchar(150) NOT NULL,\n"
         "  " + Q + "authorization_reference" + Q + " varchar(255) NOT NULL,\n"
         "  " + Q + "authorization_note" + Q + " text DEFAULT NULL,\n"
         "  " + Q + "created_by" + Q + " int(10) UNSIGNED NOT NULL,\n"
