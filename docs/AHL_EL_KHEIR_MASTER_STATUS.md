@@ -6268,3 +6268,20 @@ For the active VGM/Supervisor sponsorship payment and per-covered-month service-
 ## 2026-11-12 — Configurable sponsorship service-fee accounting design
 
 The user delegated the accounting design recommendation. The selected direction is a controlled, auditable, configurable mapping from the distinct sponsorship service-fee transaction component to a valid revenue account. Do not hard-code account `4200`, create an invented account code, or allow arbitrary account selection per payment. The authorized accounting owner must confirm the actual destination before live posting is enabled. Detailed design is in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. No application/schema changes have been made.
+
+
+## 2026-11-12 — Sponsorship payment/service-fee architecture audit CLOSED; implementation gate defined
+
+The read-only repository architecture audit is complete. Detailed source-backed findings and the implementation design are recorded in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
+
+Confirmed:
+- Chart-of-accounts management is not a service-fee mapping facility. Existing account add/toggle operations are available to Admin/FM but do not provide mapping history or audit events.
+- Existing project account mappings and HR incentive policy versioning are domain-specific patterns, not reusable generic mapping infrastructure.
+- Journal posting checks line validity and balance but does not generally enforce revenue account type/active status; the new mapping must explicitly validate an active revenue account.
+- The local source grep completed the shared administrative-fee helper caller inventory. Common posting is shared; preserve non-sponsorship behavior and isolate the new sponsorship component model.
+- The current VGM returned-transaction editor still has a percentage-fee correction path that must be reconciled.
+- CI applies dated SQL migrations using the MariaDB CLI, but the repository does not document a generic local migration runner or local XAMPP application procedure.
+
+No PHP, schema, migration, or financial data was changed. No local runtime tests were run as this was a read-only design audit.
+
+**Before live posting is enabled**, an authorized accounting owner must confirm service-fee revenue recognition timing and the destination revenue account. Agreement amendment/evidence controls and behavior when an agreement is missing also require explicit confirmation. See the detailed plan. Do not reopen closed adjacent work.
