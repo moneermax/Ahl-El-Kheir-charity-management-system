@@ -150,6 +150,15 @@ function ak_spma_resolve_report_commitment(?array $allocation, ?array $agreement
 }
 }
 
+if (!function_exists('ak_spma_assert_service_fee_posting_allowed')) {
+function ak_spma_assert_service_fee_posting_allowed(array $components): void
+{
+    if (round((float)($components['service_fee_received'] ?? 0), 2) > 0) {
+        throw new RuntimeException('لا يمكن ترحيل رسوم الخدمة الإيجابية قبل اعتماد توقيت الاعتراف المحاسبي (فوري أو نهاية شهر التغطية) وتأكيد حساب الإيراد المعتمد. بقيت الدفعة بانتظار القرار المحاسبي.');
+    }
+}
+}
+
 if (!function_exists('ak_spma_validate_snapshot_for_posting')) {
 function ak_spma_validate_snapshot_for_posting(array $transaction): array
 {
