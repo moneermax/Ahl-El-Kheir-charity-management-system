@@ -1,6 +1,6 @@
 # VGM Sponsorship Payment Entry and Monthly Service Fee — Working Plan
 
-**Status:** APPROVED WORK PLAN / AGREEMENT-ENTRY RESPONSIBILITY CONFIRMED / IMPLEMENTATION NOT STARTED  
+**Status:** APPROVED WORK PLAN / FM AGREEMENT SETUP CONFIRMED / CONFIGURABLE SERVICE-FEE ACCOUNTING DESIGN SELECTED / IMPLEMENTATION NOT STARTED  
 **Baseline:** 2026-11-11  
 **Target branch:** `main` only  
 **Primary page:** `modules/transactions/create.php`  
@@ -87,6 +87,8 @@ For a monthly sponsorship amount of 5,000 SDG and service fee of 2,000 SDG:
 For three months, preserve the equivalent split: 21,000 cash, 15,000 sponsorship component, and 6,000 fee component.
 
 Do not weaken the existing rules for deferred future sponsorship receipts, allocation limits, journal balance, duplicate posting protection, or paid/posted record immutability.
+
+**Service-fee account flexibility — design direction confirmed by the user on 2026-11-12:** do not hard-code sponsorship service-fee revenue to account `4200`, and do not ask the user to select an accounting classification without accounting expertise. Keep the service-fee component distinct in transaction data and route it through a controlled, auditable accounting mapping/configuration to a valid chart-of-accounts revenue account. The mapping must be governed by authorized accounting administration, validated before posting, and snapshotted or otherwise historically stable for posted journals. It must not be an arbitrary per-payment account picker. The GM/VGM/FM meeting or accounting owner must confirm the actual account classification before live posting is enabled. Do not invent an account code or create a new account merely to complete implementation.
 
 ## 3. Known source findings (must be revalidated against current main before coding)
 
@@ -314,7 +316,7 @@ Partial receipts are represented by the two actual component amounts entered by 
 1. **Agreement decision and evidence details:** GM, VGM, and FM will determine the agreed values in a meeting; FM enters them in the system. The meeting must still settle what reference/evidence is recorded, who may request or authorize amendments, and whether any in-system confirmation is required. Do not infer an approval hierarchy.
 2. **Existing sponsorships with no recorded fee agreement:** do not infer zero, apply today's policy, or backfill a fee without an explicit rule.
 3. **Outstanding-balance behavior:** how actual partial receipts affect any existing arrears/advance balance presentation must be verified against the existing domain rules; do not create a new balance calculation in this task.
-4. **Service-fee revenue classification:** account `4200` is currently labelled/used for administrative-fee revenue. The user/accounting owners must decide whether sponsorship service fees belong there or in a separate account; do not silently choose or invent an account code.
+4. **Service-fee revenue mapping target:** implement a controlled, auditable mapping so the destination is configurable without changing payment-entry code. Before enabling posting, an authorized accounting owner must select/confirm the actual chart-of-accounts destination. Do not assume `4200` or invent a new account code.
 5. **Migration application procedure:** confirm the repository's actual migration process before preparing/applying a new migration.
 
 Ask only the decision that blocks the next implementation stage; do not front-load all questions.
