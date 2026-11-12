@@ -20,9 +20,15 @@ function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,
     if(!$sp) throw new RuntimeException('الدفعة غير موجودة أو لم تعد معلقة.');
     $purposeLabel=$purposeLabels[$sp['payment_type']]??$sp['payment_type'];
     $transactionType=$typeMap[$sp['payment_type']]??'other';
-    $description='تحصيل مشرف ('.$purposeLabel.')'.(!empty($sp['payment_period'])?' للفترة: '.$sp['payment_period']:'').(!empty($sp['purpose_note'])?' — '.$sp['purpose_note']:'');
+    $description='تحصيل مشرف ('.$purposeLabel.')'.(!empty($sp['payment_period'])?' للفترة: '.$sp['payment_period']:'').(!empty($sp['purpose_note'])?' — '.$sp['purpose_note']:'').(!empty($sp['notes'])?' — '.$sp['notes']:'');
     $transactionCode='SP-'.str_pad((string)$sp['id'],6,'0',STR_PAD_LEFT);
     $amount=round((float)$sp['amount'],2);
+    $transactionDate=!empty($sp['transaction_date'])
+        ? (string)$sp['transaction_date']
+        : date('Y-m-d',strtotime((string)$sp['created_at']));
+    $externalReceiptNumber=!empty($sp['receipt_number'])
+        ? (string)$sp['receipt_number']
+        : (((string)($sp['component_model']??'legacy')==='monthly_agreement') ? null : $transactionCode);
     if($amount<=0) throw new RuntimeException('مبلغ التحصيل غير صالح.');
     $componentModel=(string)($sp['component_model']??'legacy');
     if($componentModel==='monthly_agreement'){
@@ -35,8 +41,8 @@ function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,
         $calc=ak_calculate_admin_fee_prepared($amount,$policy);
         if($transactionType!=='sponsorship_payment'&&$transactionType!=='admin_fee') $calc=['method'=>'none','value'=>0.00,'amount'=>0.00,'net_amount'=>$amount,'policy_id'=>null];
     }
-    $sql="INSERT INTO transactions (sponsorship_id,amount,currency_code,payment_method,transaction_date,receipt_number,description,months_covered,transaction_type,receipt_path,unified_receipt_path,status,created_by,transaction_code,sponsor_id,project_id,payment_period,purpose_note,purpose,admin_fee_percent,admin_fee_amount,net_amount,admin_fee_method,admin_fee_value,admin_fee_policy_id,component_model,monthly_agreement_id,agreed_sponsorship_amount,agreed_service_fee_amount,actual_sponsorship_received,actual_service_fee_received) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-    dbExecute($sql,[$sp['sponsorship_id'],$amount,$sp['currency_code']?:'SDG',$sp['payment_method']?:'cash',date('Y-m-d',strtotime((string)$sp['created_at'])),$transactionCode,$description,1.00,$transactionType,$sp['receipt_file_path'],$sp['unified_receipt_path'],'posted',$reviewerUserId,$transactionCode,$sp['sponsor_id'],$sp['project_id'],$sp['payment_period'],$sp['purpose_note'],$sp['payment_type'],0.00,$calc['amount'],$calc['net_amount'],$calc['method'],$calc['value'],$calc['policy_id'],$componentModel,$sp['monthly_agreement_id']??null,$sp['agreed_sponsorship_amount']??null,$sp['agreed_service_fee_amount']??null,$sp['actual_sponsorship_received']??null,$sp['actual_service_fee_received']??null]);
+    $sql="INSERT INTO transactions (sponsorship_id,amount,currency_code,payment_method,transaction_date,receipt_number,reference_number,description,months_covered,transaction_type,receipt_path,unified_receipt_path,status,created_by,transaction_code,sponsor_id,project_id,payment_period,purpose_note,purpose,admin_fee_percent,admin_fee_amount,net_amount,admin_fee_method,admin_fee_value,admin_fee_policy_id,component_model,monthly_agreement_id,agreed_sponsorship_amount,agreed_service_fee_amount,actual_sponsorship_received,actual_service_fee_received) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+    dbExecute($sql,[$sp['sponsorship_id'],$amount,$sp['currency_code']?:'SDG',$sp['payment_method']?:'cash',$transactionDate,$externalReceiptNumber,$sp['reference_number']??null,$description,1.00,$transactionType,$sp['receipt_file_path'],$sp['unified_receipt_path'],'posted',$reviewerUserId,$transactionCode,$sp['sponsor_id'],$sp['project_id'],$sp['payment_period'],$sp['purpose_note'],$sp['payment_type'],0.00,$calc['amount'],$calc['net_amount'],$calc['method'],$calc['value'],$calc['policy_id'],$componentModel,$sp['monthly_agreement_id']??null,$sp['agreed_sponsorship_amount']??null,$sp['agreed_service_fee_amount']??null,$sp['actual_sponsorship_received']??null,$sp['actual_service_fee_received']??null]);
     $transactionId=(int)dbLastInsertId();
     if($transactionId<=0) throw new RuntimeException('تعذر إنشاء المعاملة المحاسبية.');
     $journalId=ak_post_transaction_journal_prepared($transactionId,$reviewerUserId,(int)$sp['supervisor_id']);
