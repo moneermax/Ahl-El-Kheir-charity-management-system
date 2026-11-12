@@ -244,7 +244,17 @@ if (!$errors) {
                 $transactionId = (int)dbLastInsertId();
                 ak_transaction_review_audit(
                     $uid, 'SUBMIT_FM', $transactionId, null,
-                    ['status'=>'pending_fm_review', 'transaction_code'=>$code]
+                    [
+                        'status'=>'pending_fm_review',
+                        'transaction_code'=>$code,
+                        'component_model'=>$componentSnapshot['component_model'] ?? 'legacy',
+                        'monthly_agreement_id'=>$componentSnapshot['monthly_agreement_id'] ?? null,
+                        'agreed_sponsorship_amount'=>$componentSnapshot['agreed_sponsorship_amount'] ?? null,
+                        'agreed_service_fee_amount'=>$componentSnapshot['agreed_service_fee_amount'] ?? null,
+                        'actual_sponsorship_received'=>$componentSnapshot['actual_sponsorship_received'] ?? null,
+                        'actual_service_fee_received'=>$componentSnapshot['actual_service_fee_received'] ?? null,
+                        'amount'=>$line['amount']
+                    ]
                 );
                 $count++;
             }
