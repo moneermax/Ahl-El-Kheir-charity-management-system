@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS sponsorship_monthly_agreements (
 
 ALTER TABLE transactions
     ADD COLUMN IF NOT EXISTS component_model ENUM('legacy','monthly_agreement') NOT NULL DEFAULT 'legacy',
-    ADD COLUMN IF NOT EXISTS service_fee_agreement_id INT(10) UNSIGNED DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS monthly_agreement_id INT(10) UNSIGNED DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS agreed_sponsorship_amount DECIMAL(12,2) DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS agreed_service_fee_amount DECIMAL(12,2) DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS actual_sponsorship_received DECIMAL(12,2) DEFAULT NULL,
@@ -40,7 +40,7 @@ ALTER TABLE transactions
 
 ALTER TABLE sponsor_payments
     ADD COLUMN IF NOT EXISTS component_model ENUM('legacy','monthly_agreement') NOT NULL DEFAULT 'legacy',
-    ADD COLUMN IF NOT EXISTS service_fee_agreement_id INT(10) UNSIGNED DEFAULT NULL,
+    ADD COLUMN IF NOT EXISTS monthly_agreement_id INT(10) UNSIGNED DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS agreed_sponsorship_amount DECIMAL(12,2) DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS agreed_service_fee_amount DECIMAL(12,2) DEFAULT NULL,
     ADD COLUMN IF NOT EXISTS actual_sponsorship_received DECIMAL(12,2) DEFAULT NULL,
@@ -53,7 +53,7 @@ SET @spma_txn_fk_sql = IF(
      WHERE CONSTRAINT_SCHEMA = DATABASE()
        AND TABLE_NAME = 'transactions'
        AND CONSTRAINT_NAME = 'fk_transactions_spma') = 0,
-    'ALTER TABLE transactions ADD CONSTRAINT fk_transactions_spma FOREIGN KEY (service_fee_agreement_id) REFERENCES sponsorship_monthly_agreements (id) ON UPDATE CASCADE ON DELETE RESTRICT',
+    'ALTER TABLE transactions ADD CONSTRAINT fk_transactions_spma FOREIGN KEY (monthly_agreement_id) REFERENCES sponsorship_monthly_agreements (id) ON UPDATE CASCADE ON DELETE RESTRICT',
     'SELECT 1'
 );
 PREPARE spma_txn_fk_stmt FROM @spma_txn_fk_sql;
@@ -65,7 +65,7 @@ SET @spma_payment_fk_sql = IF(
      WHERE CONSTRAINT_SCHEMA = DATABASE()
        AND TABLE_NAME = 'sponsor_payments'
        AND CONSTRAINT_NAME = 'fk_sponsor_payments_spma') = 0,
-    'ALTER TABLE sponsor_payments ADD CONSTRAINT fk_sponsor_payments_spma FOREIGN KEY (service_fee_agreement_id) REFERENCES sponsorship_monthly_agreements (id) ON UPDATE CASCADE ON DELETE RESTRICT',
+    'ALTER TABLE sponsor_payments ADD CONSTRAINT fk_sponsor_payments_spma FOREIGN KEY (monthly_agreement_id) REFERENCES sponsorship_monthly_agreements (id) ON UPDATE CASCADE ON DELETE RESTRICT',
     'SELECT 1'
 );
 PREPARE spma_payment_fk_stmt FROM @spma_payment_fk_sql;
