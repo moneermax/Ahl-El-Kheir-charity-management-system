@@ -6608,3 +6608,9 @@ The earlier open question about freezing the sponsorship/month commitment is res
 - New-model allocation and arrears/advance reporting must use the applicable monthly agreement where no allocation snapshot exists, while preserving legacy behavior.
 
 No PHP or database runtime changes are implied by this decision entry. Detailed implementation requirements are in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
+
+## 2026-11-12 — Sponsorship agreement Stage 2 source implementation
+
+Added the FM monthly-agreement management page and dashboard link. The write path locks the sponsorship row, reads the latest version, checks posted allocation snapshots, appends a new version, and records an audit_log event in the same transaction. A month with posted allocation cannot receive a conflicting sponsorship commitment; the service-fee amount can still be amended while retaining that commitment. An unallocated month can receive a new commitment. PHP 8.2 syntax CI passed (run 43231663010).
+
+Audit boundary: this page does not yet feed the payment form, Supervisor approval, allocator, arrears/advance reports, or journal posting. No local DB migration/browser runtime has occurred, and no financial records were modified. The positive service-fee posting gate and authorized accounting decisions remain open.
