@@ -6,12 +6,15 @@ on:
     paths:
       - 'database/ahl_el_kheir.sql'
       - 'database/migrations/2026-11-12_sponsorship_monthly_agreements.sql'
+      - 'database/migrations/2026-11-12_sponsorship_service_fee_account_mapping.sql'
       - 'tools/sync_sponsorship_monthly_agreements_schema.py'
+      - 'tools/sync_sponsorship_service_fee_mapping_schema.py'
       - '.github/workflows/sponsorship-monthly-agreements-migration.yml'
   pull_request:
     paths:
       - 'database/ahl_el_kheir.sql'
       - 'database/migrations/2026-11-12_sponsorship_monthly_agreements.sql'
+      - 'database/migrations/2026-11-12_sponsorship_service_fee_account_mapping.sql'
       - '.github/workflows/sponsorship-monthly-agreements-migration.yml'
   workflow_dispatch:
 
@@ -48,6 +51,9 @@ jobs:
           python3 -m py_compile tools/sync_sponsorship_monthly_agreements_schema.py
           python3 tools/sync_sponsorship_monthly_agreements_schema.py
           python3 tools/sync_sponsorship_monthly_agreements_schema.py
+          python3 -m py_compile tools/sync_sponsorship_service_fee_mapping_schema.py
+          python3 tools/sync_sponsorship_service_fee_mapping_schema.py
+          python3 tools/sync_sponsorship_service_fee_mapping_schema.py
 
       - name: Commit canonical schema synchronization to main
         if: github.event_name == 'push'
@@ -76,6 +82,8 @@ jobs:
 
           "${mysql[@]}" < database/migrations/2026-11-12_sponsorship_monthly_agreements.sql
           "${mysql[@]}" < database/migrations/2026-11-12_sponsorship_monthly_agreements.sql
+          "${mysql[@]}" < database/migrations/2026-11-12_sponsorship_service_fee_account_mapping.sql
+          "${mysql[@]}" < database/migrations/2026-11-12_sponsorship_service_fee_account_mapping.sql
 
           after_transactions=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM transactions")
           after_sponsor_payments=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM sponsor_payments")
@@ -83,7 +91,10 @@ jobs:
           legacy_sponsor_payments=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM sponsor_payments WHERE component_model='legacy' AND monthly_agreement_id IS NULL AND agreed_sponsorship_amount IS NULL AND agreed_service_fee_amount IS NULL AND actual_sponsorship_received IS NULL AND actual_service_fee_received IS NULL")
           agreement_table=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='sponsorship_monthly_agreements'")
           snapshot_columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name IN ('transactions','sponsor_payments') AND column_name IN ('component_model','monthly_agreement_id','agreed_sponsorship_amount','agreed_service_fee_amount','actual_sponsorship_received','actual_service_fee_received')")
+          service_fee_columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='transactions' AND column_name IN ('service_fee_account_mapping_id','service_fee_account_id')")
+          service_fee_mapping_table=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='sponsorship_service_fee_account_mappings'")
           agreement_fks=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.referential_constraints WHERE constraint_schema=DATABASE() AND constraint_name IN ('fk_spma_sponsorship','fk_spma_currency','fk_spma_creator','fk_transactions_spma','fk_sponsor_payments_spma')")
+          service_fee_fks=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.referential_constraints WHERE constraint_schema=DATABASE() AND constraint_name IN ('fk_ssfam_account','fk_ssfam_creator','fk_transactions_ssfam_mapping','fk_transactions_ssfam_account')")
           agreement_checks=$(${mysql[@]} --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.CHECK_CONSTRAINTS WHERE CONSTRAINT_SCHEMA=DATABASE() AND TABLE_NAME='sponsorship_monthly_agreements'")
           test "$before_transactions" = "$after_transactions"
           test "$before_sponsor_payments" = "$after_sponsor_payments"
@@ -91,5 +102,8 @@ jobs:
           test "$legacy_sponsor_payments" = "$after_sponsor_payments"
           test "$agreement_table" = "1"
           test "$snapshot_columns" = "12"
+          test "$service_fee_columns" = "2"
+          test "$service_fee_mapping_table" = "1"
           test "$agreement_fks" = "5"
+          test "$service_fee_fks" = "4"
           test "$agreement_checks" = "2"
