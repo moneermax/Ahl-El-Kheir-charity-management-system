@@ -6327,3 +6327,12 @@ This is a permanent project rule for every session. Do not make the user repeate
 ## 2026-11-12 — Sponsorship monthly agreement implementation
 
 The approved schema foundation is committed in migration `2026-11-12_sponsorship_monthly_agreements.sql`. A MariaDB 10.4.32 CI workflow was added to import the canonical schema, apply the migration twice, and assert legacy-row preservation (`78ef9a4519b22e42a67cf3ad6771fafd98de9cb4`). The workflow run `43164414238` passed on MariaDB 10.4.32. The checked-in schema dump is not yet synchronized; a GitHub blob upload attempt failed. No application PHP has been changed. This is not ready for local pull/application. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` for decisions, implementation gates, and current blockers.
+
+
+## 2026-11-12 — Sponsorship agreement preflight checkpoint
+
+Repository baseline: `main` at `e2e6a1b01930c7933cce870816bfd736172d7288`. The user supplied the focused live XAMPP schema/status output; relevant live table definitions align with the checked-in baseline dump. The agreement migration is not applied locally. No pending transaction submissions exist; returned Supervisor rows 7, 8, and 9 are legacy and must remain unchanged.
+
+Migration CI run `43164414238` passed on MariaDB 10.4.32. Before local application, rename the migration's generic agreement reference from `service_fee_agreement_id` to `monthly_agreement_id` and synchronize the canonical schema representation. The new-model allocation path must use the agreed sponsorship snapshot rather than falling back to `sponsorships.monthly_amount`; legacy allocation behavior remains unchanged. Both shared posting and Supervisor approval must bypass the global administrative-fee policy only for new-model sponsorship rows. Allocate actual sponsorship receipt only. Positive actual service-fee receipts remain unpostable until recognition timing and a valid revenue destination are approved. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` for the detailed source findings and remaining amendment/allocation decision.
+
+No PHP implementation or local schema mutation has occurred. Do not ask the user for more repository inspection or broad command output.
