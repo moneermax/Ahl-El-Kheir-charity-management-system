@@ -35,7 +35,7 @@ A monthly sponsorship payment has two distinct components:
 - **Net sponsorship amount:** the amount credited/allocated to the sponsorship obligation.
 - **Monthly service fee:** an additional fixed amount agreed with the sponsor.
 
-The agreement defines two monthly reference values: the agreed sponsorship commitment and the agreed fixed service fee. These are loaded into the payment-entry row as visible, editable defaults. The person recording the payment must be able to enter the actual amount received for each component.
+The agreement defines two monthly reference values: the agreed sponsorship commitment and the agreed fixed service fee. Both must be loaded and displayed as read-only agreement values in the payment-entry row. Alongside them, provide separate editable actual-received fields, initially populated from the agreement values. The person recording the payment edits those actual-received fields to reflect what was collected. Editing a payment must not silently amend the underlying sponsorship agreement.
 
 For each covered month:
 
@@ -112,7 +112,7 @@ The following findings were revalidated against the current `main` source and th
 
 **Supervisor parity decision — confirmed by the user on 2026-11-12:** the same sponsorship-specific agreement and calculation must govern Supervisor submissions because this is a core Supervisor responsibility. VGM and Supervisor entry routes must not charge different amounts for the same sponsorship and covered month. This parity is a mandatory acceptance criterion.
 
-**Actual-receipt entry decision — confirmed by the user on 2026-11-12:** when a VGM or Supervisor opens a sponsorship payment row, the system must load and display the agreed sponsorship amount and agreed service-fee amount as visible, editable defaults. The recorder edits the two fields to reflect the actual amounts received for that covered month and enters the remaining payment details. The system calculates the actual row/transaction total from those entered component amounts. The agreement values must remain distinguishable from actual received values and both must be snapshotted for audit/FM review. Partial receipts do not trigger an inferred fee rule: the recorder enters the actual service fee received. For example, agreement defaults 5,000 + 2,000 may be edited to actual receipts 2,500 + 1,000, producing an actual total of 3,500.
+**Actual-receipt entry decision — confirmed by the user on 2026-11-12:** when a VGM or Supervisor opens a sponsorship payment row, the system must load and display the agreed sponsorship amount and agreed service-fee amount as read-only reference values, alongside separate editable actual-received fields initially populated with those agreement values. The recorder edits only the actual-received fields to reflect the amounts collected for that covered month and enters the remaining payment details. The system calculates the actual row/transaction total from those entered component amounts. The agreement values must remain distinguishable from actual received values and both must be snapshotted for audit/FM review. Partial receipts do not trigger an inferred fee rule: the recorder enters the actual service fee received. For example, agreement defaults 5,000 + 2,000 may be edited to actual receipts 2,500 + 1,000, producing an actual total of 3,500.
 
 
 **Design direction (not yet approved for implementation):** keep the agreed fee attached to the sponsorship agreement; snapshot the agreement reference and monetary components when either route submits; preserve the two existing workflow/review paths; and make the accounting posting distinguish the sponsorship component from the additional service-fee component without changing unrelated donation or ordinary transaction behavior. Exact table/column design and accounting account classification remain subject to the remaining business decisions and migration-convention audit.
@@ -171,7 +171,7 @@ Requirements:
 Implement the backend contract before presenting the redesigned totals.
 
 For each eligible monthly sponsorship row:
-- load the agreed sponsorship commitment and agreed service fee as visible editable defaults for each covered month;
+- load and display the agreed sponsorship commitment and agreed service fee as read-only reference values for each covered month, with separate actual-received inputs initially populated from those values;
 - accept the actual sponsorship amount received and actual service-fee amount received entered by the VGM/Supervisor;
 - calculate row total as actual sponsorship received + actual service fee received;
 - calculate transaction total as the sum of row totals;
