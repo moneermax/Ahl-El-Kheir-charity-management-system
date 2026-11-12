@@ -1,5 +1,6 @@
 <?php
 // modules/accounting/lib.php - Accounting core (tables, COA seed, auto-posting, tafqit, projects)
+require_once dirname(__DIR__) . '/sponsorships/lib_monthly_agreements.php';
 require_once __DIR__ . '/lib_admin_fee_policy.php';
 require_once __DIR__ . '/lib_sponsorship_payment_accounting.php';
 
