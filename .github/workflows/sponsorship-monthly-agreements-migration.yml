@@ -7,6 +7,7 @@ on:
       - 'database/ahl_el_kheir.sql'
       - 'database/migrations/2026-11-12_sponsorship_monthly_agreements.sql'
       - 'database/migrations/2026-11-12_sponsorship_service_fee_account_mapping.sql'
+      - 'database/migrations/2026-11-12_sponsor_payment_row_evidence.sql'
       - 'tools/sync_sponsorship_monthly_agreements_schema.py'
       - 'tools/sync_sponsorship_service_fee_mapping_schema.py'
       - '.github/workflows/sponsorship-monthly-agreements-migration.yml'
@@ -15,6 +16,7 @@ on:
       - 'database/ahl_el_kheir.sql'
       - 'database/migrations/2026-11-12_sponsorship_monthly_agreements.sql'
       - 'database/migrations/2026-11-12_sponsorship_service_fee_account_mapping.sql'
+      - 'database/migrations/2026-11-12_sponsor_payment_row_evidence.sql'
       - 'tools/sync_sponsorship_monthly_agreements_schema.py'
       - 'tools/sync_sponsorship_service_fee_mapping_schema.py'
       - '.github/workflows/sponsorship-monthly-agreements-migration.yml'
@@ -86,6 +88,8 @@ jobs:
           "${mysql[@]}" < database/migrations/2026-11-12_sponsorship_monthly_agreements.sql
           "${mysql[@]}" < database/migrations/2026-11-12_sponsorship_service_fee_account_mapping.sql
           "${mysql[@]}" < database/migrations/2026-11-12_sponsorship_service_fee_account_mapping.sql
+          "${mysql[@]}" < database/migrations/2026-11-12_sponsor_payment_row_evidence.sql
+          "${mysql[@]}" < database/migrations/2026-11-12_sponsor_payment_row_evidence.sql
 
           after_transactions=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM transactions")
           after_sponsor_payments=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM sponsor_payments")
@@ -111,3 +115,5 @@ jobs:
           test "$agreement_fks" = "5"
           test "$service_fee_fks" = "4"
           test "$agreement_checks" = "2"
+          row_evidence_columns=$("${mysql[@]}" --batch --skip-column-names -e "SELECT COUNT(*) FROM information_schema.columns WHERE table_schema=DATABASE() AND table_name='sponsor_payments' AND column_name IN ('transaction_date','receipt_number','reference_number')")
+          test "$row_evidence_columns" = "3"
