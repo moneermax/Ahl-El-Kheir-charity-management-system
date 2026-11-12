@@ -1,6 +1,6 @@
 # VGM Sponsorship Payment Entry and Monthly Service Fee — Working Plan
 
-**Status:** APPROVED WORK PLAN / FM AGREEMENT SETUP CONFIRMED / MONTHLY AMENDMENT RULE CONFIRMED / STAGE 2 FM AGREEMENT PAGE IMPLEMENTED (LOCAL RUNTIME PENDING) / CONFIGURABLE SERVICE-FEE ACCOUNTING DESIGN SELECTED  
+**Status:** APPROVED WORK PLAN / MONTHLY AMENDMENT RULE CONFIRMED / STAGES 2–4 REPOSITORY IMPLEMENTATION ADDED (LOCAL RUNTIME PENDING) / EFFECTIVE-DATED SERVICE-FEE ACCOUNT MAPPING PREPARED / POSITIVE SERVICE-FEE POSTING BLOCKED PENDING RECOGNITION POLICY  
 ## Mandatory ChatGPT collaboration and execution protocol
 
 This is a permanent project rule for every session. Do not make the user repeatedly restate it.
@@ -575,3 +575,30 @@ PHP syntax verification: GitHub Actions run [43231663010](https://github.com/mon
 **Verification boundary:** repository code and PHP syntax only. The local XAMPP database has not been migrated and the page has not been runtime-tested. No payment submission, allocation, journal, or existing financial record was changed. The new agreement values are not yet consumed by payment entry, allocation, or arrears/advance reporting.
 
 **Next:** Stage 3 — load the correct agreement for each covered month, block missing agreements, capture agreement and actual receipt components in both VGM and Supervisor submission paths, preserve returned-row compatibility, and update allocation/reporting to use the monthly agreement while keeping legacy behavior unchanged. Positive service-fee journal posting remains blocked pending the authorized accounting decisions.
+
+## 2026-11-12 — Monthly agreement payment components, allocation/reporting, and service-fee safeguards
+
+Repository implementation completed on `main` for the payment-component workflow and compact entry surface:
+
+- VGM/direct transaction entry and Supervisor submission both load the latest monthly agreement for the selected sponsorship and covered month. A missing agreement blocks a new monthly sponsorship submission.
+- Each new-model submission snapshots the exact agreement ID/version, agreed sponsorship amount, agreed service-fee amount, currency, actual sponsorship received, and actual service-fee received. Transaction amount is the sum of the two actual receipt components.
+- FM review queues show the agreed and actual component breakdown.
+- Returned new-model submissions can correct actual receipt components only. Their covered month, purpose, agreement ID, and agreed values remain fixed. Legacy returned submissions retain their existing edit path.
+- The allocation resolver uses the monthly agreement's sponsorship commitment for new-model months, while a previously posted allocation snapshot remains authoritative. Legacy allocation fallback remains the sponsorship's legacy monthly amount.
+- Arrears and advances use the latest monthly agreement for months without an allocation snapshot, preserve existing allocation snapshots, and retain legacy fallback when no agreement exists.
+- The payment-entry rows are now a compact RTL responsive table with row-level receipts, add/remove controls, component inputs, and calculated row/overall totals.
+- A commitment amendment is blocked while a new-model submission for that sponsorship/month is pending or returned. This prevents a submitted payment snapshot from later conflicting with a newly amended monthly commitment. Service-fee-only amendments remain possible.
+- The effective-dated service-fee revenue mapping facility is available to the existing accounting configuration roles (admin/financial manager). Each immutable mapping version records the selected active revenue account, effective date, named authorizing person/role, mandatory decision reference, creator, and audit event. There is no default account.
+- **Positive service-fee posting remains deliberately blocked.** The project has not established whether fee revenue is recognized immediately or at the end of the covered month. Recording a revenue-account mapping alone does not authorize posting. No service-fee journal line or assumed recognition timing has been implemented. Zero-service-fee sponsorship payments can continue through the existing sponsorship accounting path.
+
+Focused verification:
+- GitHub Actions run [43236546673](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43236546673): PHP 8.2 lint and 32 isolated component/commitment/mapping contract checks passed.
+- GitHub Actions run [43236977774](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43236977774): MariaDB 10.4.32 imported the canonical schema, applied both dated migrations twice, confirmed 12 agreement snapshot columns, 2 service-fee mapping snapshot columns, the mapping table and authority field, 5 agreement foreign keys, 4 mapping foreign keys, and preserved all legacy transaction/payment rows and null snapshots. The canonical schema sync script passed twice in the runner.
+- The canonical schema synchronization was verified in CI but its generated change has not yet been committed to `database/ahl_el_kheir.sql` on `main`; the final sync commit is still pending.
+- No local XAMPP migration or browser/runtime acceptance has been performed. Repository CI is not local runtime proof.
+
+Next gates:
+1. Commit the canonical schema synchronization on `main`.
+2. Review the final source/schema diff and PHP/schema CI results.
+3. Only then provide the user the local pull/migration/browser acceptance commands.
+4. Keep positive service-fee posting blocked until an authorized accounting owner confirms recognition timing and the approved revenue destination. Do not invent an immediate/month-end policy.
