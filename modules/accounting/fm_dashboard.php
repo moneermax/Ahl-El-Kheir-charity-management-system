@@ -39,6 +39,9 @@ $headerQuickActions = [
     ['label'=>'بوابة الرواتب والحوافز','url'=>'modules/hr/salary_portal.php','icon'=>'fa-users-gear','color'=>'#0d6efd','salary_portal'=>true],
     ['label'=>'منظمة فينا الخير','url'=>'modules/accounting/fina_dashboard.php','icon'=>'fina-logo','color'=>'#6f42c1'],
 ];
+if (in_array($urole, ['financial_manager', 'fm'], true)) {
+    $headerQuickActions[] = ['label'=>'اتفاقيات الكفالات الشهرية','url'=>'modules/sponsorships/monthly_agreements.php','icon'=>'fa-file-signature','color'=>'#198754'];
+}
 
 ak_ensure_tables();
 ak_seed_accounts();
@@ -414,6 +417,9 @@ $fmActionDescriptions = [
     'بوابة موحدة لإدارة الرواتب والسلف وسياسة حوافز الموظفين',
     'لوحة مستقلة لتحصيلات وتسويات منظمة فينا الخير',
 ];
+if (in_array($urole, ['financial_manager', 'fm'], true)) {
+    $fmActionDescriptions[] = 'إدخال وإدارة القيم الشهرية التي تم الاتفاق عليها للكفالات';
+}
 ?>
 <div class="ak-fm-action-grid fade-in" aria-label="إجراءات سريعة">
     <?php foreach ($headerQuickActions as $index => $qa): ?>
