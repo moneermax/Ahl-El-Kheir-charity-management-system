@@ -5,6 +5,7 @@ declare(strict_types=1);
  * Focused unit checks for the monthly sponsorship agreement snapshot contract.
  * No database connection, schema changes, or financial writes are performed.
  */
+$GLOBALS['ak_spma_test_mapping'] = null;
 $GLOBALS['ak_spma_test_agreement'] = [
     'id'=>42,
     'sponsorship_id'=>3559,
@@ -16,6 +17,11 @@ $GLOBALS['ak_spma_test_agreement'] = [
 ];
 function dbFetchOne(string $sql, array $params = []): ?array
 {
+    if (strpos($sql, 'sponsorship_service_fee_account_mappings') !== false) {
+        $mapping = $GLOBALS['ak_spma_test_mapping'];
+        if ($mapping === null || (string)$mapping['effective_from'] > (string)($params[0] ?? '')) return null;
+        return $mapping;
+    }
     if (strpos($sql, 'sponsorship_monthly_agreements') === false) {
         throw new RuntimeException('Unexpected database query in isolated test.');
     }
@@ -56,10 +62,47 @@ $assert($posting['sponsorship_received'] === 9000.00, 'zero_fee_sponsorship_post
 $positiveFee = $zeroFee;
 $positiveFee['actual_service_fee_received'] = 1200.00;
 $positiveFee['amount'] = 10200.00;
-$positiveFeeBlocked = false;
-try { ak_spma_validate_snapshot_for_posting($positiveFee); }
-catch (RuntimeException $e) { $positiveFeeBlocked = str_contains($e->getMessage(), 'المعالجة المحاسبية'); }
-$assert($positiveFeeBlocked, 'positive_service_fee_posting_blocked');
+$positiveFee['transaction_date'] = '2026-11-12';
+$positiveComponents = ak_spma_validate_snapshot_for_posting($positiveFee);
+$assert($positiveComponents['service_fee_received'] === 1200.00, 'positive_service_fee_snapshot_validated');
+
+$mappingMissingBlocked = false;
+$GLOBALS['ak_spma_test_mapping'] = null;
+try { ak_spma_resolve_service_fee_account_mapping($positiveFee, 1200.00); }
+catch (RuntimeException $e) { $mappingMissingBlocked = str_contains($e->getMessage(), 'لا يوجد حساب إيراد معتمد'); }
+$assert($mappingMissingBlocked, 'positive_service_fee_requires_effective_mapping');
+
+$GLOBALS['ak_spma_test_mapping'] = [
+    'mapping_id'=>77,'account_id'=>420,'effective_from'=>'2026-11-01','version_no'=>1,
+    'account_code'=>'4190','account_type'=>'revenue','is_active'=>1
+];
+$resolvedMapping = ak_spma_resolve_service_fee_account_mapping($positiveFee, 1200.00);
+$assert($resolvedMapping['mapping_id'] === 77 && $resolvedMapping['account_id'] === 420, 'effective_mapping_resolved');
+$assert($resolvedMapping['account_code'] === '4190', 'configured_revenue_account_used');
+
+$futureMappingBlocked = false;
+$GLOBALS['ak_spma_test_mapping']['effective_from'] = '2026-12-01';
+try { ak_spma_resolve_service_fee_account_mapping($positiveFee, 1200.00); }
+catch (RuntimeException $e) { $futureMappingBlocked = true; }
+$assert($futureMappingBlocked, 'future_mapping_not_used_early');
+
+$GLOBALS['ak_spma_test_mapping'] = [
+    'mapping_id'=>78,'account_id'=>421,'effective_from'=>'2026-11-01','version_no'=>2,
+    'account_code'=>'5190','account_type'=>'expense','is_active'=>1
+];
+$wrongTypeBlocked = false;
+try { ak_spma_resolve_service_fee_account_mapping($positiveFee, 1200.00); }
+catch (RuntimeException $e) { $wrongTypeBlocked = str_contains($e->getMessage(), 'ليس حساب إيراد'); }
+$assert($wrongTypeBlocked, 'expense_account_rejected');
+
+$GLOBALS['ak_spma_test_mapping'] = [
+    'mapping_id'=>79,'account_id'=>422,'effective_from'=>'2026-11-01','version_no'=>3,
+    'account_code'=>'4191','account_type'=>'revenue','is_active'=>0
+];
+$inactiveBlocked = false;
+try { ak_spma_resolve_service_fee_account_mapping($positiveFee, 1200.00); }
+catch (RuntimeException $e) { $inactiveBlocked = str_contains($e->getMessage(), 'غير نشط'); }
+$assert($inactiveBlocked, 'inactive_revenue_account_rejected');
 
 $mismatchBlocked = false;
 $mismatch = $zeroFee;
