@@ -430,3 +430,46 @@ Closed adjacent work remains closed. In particular, do not rerun the completed s
 ### Next implementation-session gate
 
 Re-read all required canonical docs and the current local `main`; inspect the updated `database/ahl_el_kheir.sql` and live `ahl_el_kheir` schema; inspect the pending legacy sponsorship rows; then begin the smallest justified schema-first implementation. Do not reuse or modify `TR-000023`, `TR-000024`, or `JE-000054`. Do not repeat closed arrears/advances, GM/FM review-role, sponsorship accounting backfill, or ordinary VGM return/resubmission tests absent regression evidence.
+
+
+## 2026-11-12 — User approval and schema preflight completed
+
+**User approval:** proceed with the safe capture/review implementation on the following basis:
+
+- FM records the agreement values reached in the GM/VGM/FM meeting. This is data-entry responsibility, not unilateral FM decision authority and not a new approval hierarchy.
+- VGM/Supervisors may edit actual receipts only; agreement values remain read-only on payment entry.
+- A new monthly sponsorship submission is blocked if its covered month has no recorded agreement. Do not infer zero, copy a fee from another month, or fall back to the global administrative-fee policy.
+- Legacy returned submissions remain untouched and retain their legacy meaning. Do not reinterpret their single `amount` as either sponsorship-only or combined sponsorship-plus-fee.
+- Service-fee journal posting remains disabled until an authorized accounting owner confirms recognition timing and the destination revenue account. No account code is assumed.
+
+### Current main/schema confirmation
+
+Current `main` at the start of this implementation session is `07495c37c61c80ff712b197e9a3679119c1d2483`. The checked-in schema dump was retrieved through its Git blob because the normal file-content endpoint cannot return this large file. The exact current table definitions confirm:
+
+- `sponsorships` has `monthly_amount`, currency, status and dates, but no monthly service-fee agreement.
+- `sponsor_payments` has one `amount` per covered month and a separate pending/approved/returned lifecycle, but no component snapshot.
+- `transactions` has `amount`, `admin_fee_*` and `net_amount`, but no distinct service-fee component or agreement snapshot.
+- `accounts` has an `account_type` enum including `revenue` and an active flag; `audit_log` supports actor/action/entity and old/new JSON.
+- The 2026-11-08 sponsorship accounting migration establishes the existing allocation/event/pause tables and confirms the current migration convention of explicit SQL with no request-time DDL.
+
+The live database preflight supplied by the user found no pending `sponsor_payments` and no pending/returned sponsorship-payment transactions. It found three legacy returned Supervisor submissions (IDs 7, 8 and 9), all unlinked to transactions and without component/agreement snapshots. Preserve them unchanged. The protected financial records `TR-000023`, `TR-000024`, and `JE-000054` remain out of scope for testing.
+
+### Schema-first implementation contract
+
+The implementation should use an append-only, versioned agreement record keyed by sponsorship and covered calendar month. Each version records the agreed sponsorship amount, agreed service-fee amount, currency, creator and timestamp; a meeting reference may be stored as optional evidence until the organization defines its mandatory format. Amendments create a new version and never overwrite a version already referenced by a submission.
+
+Both existing submission paths must snapshot, per covered month:
+- agreement version and agreed sponsorship amount;
+- agreed service-fee amount;
+- actual sponsorship amount received;
+- actual service-fee amount received.
+
+Keep the existing `transactions.amount` and `sponsor_payments.amount` as the actual total received for that row. For new-model sponsorship transactions, the sponsorship allocation input must be the actual sponsorship component only. Keep the new service-fee component separate from legacy `admin_fee_*` fields. Legacy rows remain explicitly legacy; no automatic backfill or reinterpretation.
+
+The two existing FM review workflows remain separate. A new-model submission with a positive actual service-fee component must not be posted until recognition timing and a valid active revenue destination are configured and approved. No silent fallback to account 4200. If no service fee was actually received, the posting path may only post the sponsorship component using the existing sponsorship accounting rules; it must never create a service-fee journal line by inference. This exact posting gate must be enforced server-side, not only by hiding a button.
+
+Do not implement a mapping default, a service-fee journal line, or an assumed immediate/deferred treatment while those accounting decisions remain open. The agreement/payment capture and FM review can be implemented independently, with posting fail-closed.
+
+### Remaining local-only verification gate
+
+The checked-in schema and repository source have now been inspected remotely. Before applying any migration, local schema/live DB parity and the migration target must still be checked in the user's XAMPP environment. The assistant cannot execute that local database or browser. The user should not apply an unreviewed migration. The next repository work is to implement the append-only agreement store and FM management surface, then component snapshots across both submission paths and their return/review screens, with focused tests and documentation. Local migration application and browser acceptance remain a later user-side gate.
