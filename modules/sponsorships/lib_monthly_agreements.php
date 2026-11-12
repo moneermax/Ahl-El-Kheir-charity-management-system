@@ -73,7 +73,7 @@ function ak_spma_build_submission_snapshot(
 }
 
 if (!function_exists('ak_spma_resolve_service_fee_account_mapping')) {
-function ak_spma_resolve_service_fee_account_mapping(array $transaction, float $serviceFee): array
+function ak_spma_resolve_service_fee_account_mapping(array $transaction, float $serviceFee, bool $forUpdate = true): array
 {
     $serviceFee = round($serviceFee, 2);
     if ($serviceFee <= 0) {
@@ -84,16 +84,14 @@ function ak_spma_resolve_service_fee_account_mapping(array $transaction, float $
     if (!$parsed || $parsed->format('Y-m-d') !== $date) {
         throw new RuntimeException('تاريخ المعاملة غير صالح لتحديد حساب رسوم الخدمة.');
     }
-    $mapping = dbFetchOne(
-        "SELECT m.id AS mapping_id, m.account_id, m.effective_from, m.version_no,
+    $mappingSql = "SELECT m.id AS mapping_id, m.account_id, m.effective_from, m.version_no,
                 a.code AS account_code, a.account_type, a.is_active
          FROM sponsorship_service_fee_account_mappings m
          JOIN accounts a ON a.id = m.account_id
          WHERE m.effective_from <= ?
          ORDER BY m.effective_from DESC, m.version_no DESC, m.id DESC
-         LIMIT 1 FOR UPDATE",
-        [$date]
-    );
+         LIMIT 1" . ($forUpdate ? " FOR UPDATE" : "");
+    $mapping = dbFetchOne($mappingSql, [$date]);
     if (!$mapping) {
         throw new RuntimeException('لا يوجد حساب إيراد معتمد لرسوم خدمة الكفالات بتاريخ هذه الدفعة. أوقفنا الترحيل حتى يسجل المدير المالي/الإدارة المخولة مرجع الاعتماد وحساب الإيراد.');
     }
