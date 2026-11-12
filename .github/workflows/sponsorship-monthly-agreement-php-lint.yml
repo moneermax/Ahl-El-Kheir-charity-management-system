@@ -1,0 +1,29 @@
+name: Sponsorship Monthly Agreement PHP Lint
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'modules/sponsorships/monthly_agreements.php'
+      - 'modules/accounting/fm_dashboard.php'
+      - '.github/workflows/sponsorship-monthly-agreement-php-lint.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  php-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - name: Lint monthly agreement page
+        run: php -l modules/sponsorships/monthly_agreements.php
+      - name: Lint FM dashboard
+        run: php -l modules/accounting/fm_dashboard.php
