@@ -20,7 +20,7 @@ function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,
     if(!$sp) throw new RuntimeException('الدفعة غير موجودة أو لم تعد معلقة.');
     $purposeLabel=$purposeLabels[$sp['payment_type']]??$sp['payment_type'];
     $transactionType=$typeMap[$sp['payment_type']]??'other';
-    $description=!empty($sp['notes'])
+    $description=!empty($sp['transaction_date'])&&!empty($sp['notes'])
         ? (string)$sp['notes']
         : 'تحصيل مشرف ('.$purposeLabel.')'.(!empty($sp['payment_period'])?' للفترة: '.$sp['payment_period']:'').(!empty($sp['purpose_note'])?' — '.$sp['purpose_note']:'');
     $transactionCode='SP-'.str_pad((string)$sp['id'],6,'0',STR_PAD_LEFT);
