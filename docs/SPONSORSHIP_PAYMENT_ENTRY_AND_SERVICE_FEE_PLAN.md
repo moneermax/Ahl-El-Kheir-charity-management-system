@@ -620,7 +620,7 @@ Correction committed to main:
 - The stale message conflating the legacy administrative-fee path with monthly service-fee capture was replaced with an explicit distinction and the existing positive service-fee posting restriction.
 - The payment table remains one horizontal row. It now has a 1,590px fixed-width column layout, larger controls, and horizontal scrolling on narrower viewports rather than compressing the fields.
 
-A focused set of source-contract assertions was added to `tools/test_sponsorship_monthly_agreement_components.php`; the existing component workflow already lints and runs this test on changes to `modules/transactions/create.php` and the test file.
+A focused set of source-contract assertions was added to `tools/test_sponsorship_monthly_agreement_components.php`; the existing component workflow lints and runs this test on changes to `modules/transactions/create.php` and the test file. GitHub Actions run [43266671312](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43266671312) **passed**: PHP 8.2 lint and all 39 component contract checks succeeded.
 
 Commits:
 - `543567be93e8c2dbd64a3194303b3f16fb400cf7` — actual-receipt defaults and wider row layout.
