@@ -6614,3 +6614,11 @@ No PHP or database runtime changes are implied by this decision entry. Detailed 
 Added the FM monthly-agreement management page and dashboard link. The write path locks the sponsorship row, reads the latest version, checks posted allocation snapshots, appends a new version, and records an audit_log event in the same transaction. A month with posted allocation cannot receive a conflicting sponsorship commitment; the service-fee amount can still be amended while retaining that commitment. An unallocated month can receive a new commitment. PHP 8.2 syntax CI passed (run 43231663010).
 
 Audit boundary: this page does not yet feed the payment form, Supervisor approval, allocator, arrears/advance reports, or journal posting. No local DB migration/browser runtime has occurred, and no financial records were modified. The positive service-fee posting gate and authorized accounting decisions remain open.
+
+## 2026-11-12 — Sponsorship payment component and service-fee audit boundary
+
+Implemented source changes across the FM monthly-agreement page, VGM/direct and Supervisor payment submissions, FM review queues, returned-submission editors, allocation resolution, and arrears/advance calculations. Exact agreement versions and both actual receipt components are snapshotted. New-model allocation uses the agreed sponsorship component only. Existing allocation snapshots take precedence; legacy fallback remains. Pending/returned new-model submissions prevent conflicting monthly commitment amendments.
+
+Service-fee revenue mapping is effective-dated, versioned, append-only, restricted to existing accounting configuration roles, and records authorizer name plus mandatory decision reference. No default account exists. Positive service-fee posting is still explicitly blocked pending authorization of recognition timing and revenue destination. No positive fee journal line or assumed recognition timing exists in source. Legacy admin-fee posting remains on its prior path.
+
+Evidence: PHP 8.2 lint + 32 contract checks PASS (run 43236546673); MariaDB 10.4.32 schema import, both migrations twice, FK/column checks and legacy-row preservation PASS (run 43236977774). Canonical SQL dump synchronization passed twice in the runner but generated changes are not yet committed. Local migration and browser acceptance are not claimed.
