@@ -222,7 +222,7 @@ if (is_string($paymentEntrySource)) {
         'payment_components_use_fit_screen_seven_column_grid_and_sections'
     );
     $agreementSummaryStart = strpos($paymentEntrySource, '<div class="col-12" id="grpLines">');
-    $agreementSummaryEnd = strpos($paymentEntrySource, '<div class="col-md-4" id="grpSingleAmount"', $agreementSummaryStart === false ? 0 : $agreementSummaryStart);
+    $agreementSummaryEnd = strpos($paymentEntrySource, '<div class="card fade-in mb-4"><div class="card-header text-white" style="background:#276749"', $agreementSummaryStart === false ? 0 : $agreementSummaryStart);
     $agreementSummaryMarkup = ($agreementSummaryStart !== false && $agreementSummaryEnd !== false)
         ? substr($paymentEntrySource, $agreementSummaryStart, $agreementSummaryEnd - $agreementSummaryStart)
         : '';
@@ -249,15 +249,45 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, "'amount'=>'','date'=>date('Y-m-d')"),
         'unrelated_single_payment_amount_starts_blank'
     );
+    $donationFormStart = strpos($paymentEntrySource, 'name="entry_section" value="donation"');
+    $donationFormEnd = $donationFormStart !== false ? strpos($paymentEntrySource, '</form>', $donationFormStart) : false;
+    $donationFormMarkup = ($donationFormStart !== false && $donationFormEnd !== false)
+        ? substr($paymentEntrySource, $donationFormStart, $donationFormEnd - $donationFormStart)
+        : '';
+    $sponsorshipFormStart = strpos($paymentEntrySource, 'name="entry_section" value="sponsorship"');
     $assert(
-        str_contains($paymentEntrySource, 'id="grpSingleDetailsTitle"')
-        && str_contains($paymentEntrySource, 'id="singleDetailsTitleText"')
-        && str_contains($paymentEntrySource, "document.getElementById('grpSingleDetailsTitle').style.display=monthly?'none':'';")
-        && str_contains($paymentEntrySource, "t==='general_donation'?'تفاصيل التبرع العام':t==='project_donation'?'تفاصيل التبرع للمشروع':'تفاصيل المصدر الآخر'")
-        && str_contains($paymentEntrySource, "t==='admin_fee'?'بيانات الرسوم الإدارية'") ,
-        'non_monthly_payment_details_have_contextual_section_heading'
+        $sponsorshipFormStart !== false
+        && $donationFormStart !== false
+        && $sponsorshipFormStart < $donationFormStart
+        && str_contains($paymentEntrySource, 'name="type" id="payType"')
+        && str_contains($paymentEntrySource, '<option value="monthly_sponsorship" selected>تحصيل كفالة شهرية</option>')
+        && !str_contains($paymentEntrySource, '<option value="admin_fee"')
+        && str_contains($paymentEntrySource, 'name="entry_section" value="sponsorship"')
+        && str_contains($paymentEntrySource, 'name="entry_section" value="donation"')
+        && str_contains($paymentEntrySource, 'إرسال تحصيل الكفالة للمراجعة المالية')
+        && str_contains($paymentEntrySource, 'إرسال التبرع للمراجعة المالية'),
+        'two_independent_forms_and_no_standalone_admin_fee_type'
     );
     $assert(
+        str_contains($donationFormMarkup, 'class="donation-entry-table"')
+        && str_contains($donationFormMarkup, 'name="type" id="donationType"')
+        && str_contains($donationFormMarkup, 'name="amount"')
+        && str_contains($donationFormMarkup, 'name="project_id"')
+        && str_contains($donationFormMarkup, 'name="other_source_note"')
+        && str_contains($donationFormMarkup, 'name="receipt_file"')
+        && !str_contains($donationFormMarkup, 'name="pay_month[]"')
+        && !str_contains($donationFormMarkup, 'name="pay_service_fee_received[]"')
+        && str_contains($donationFormMarkup, 'value="0"><div class="payment-section-title"'),
+        'donation_form_has_own_table_and_no_sponsorship_fee_fields_or_sponsor_link'
+    );
+    $assert(
+        str_contains($paymentEntrySource, '$entrySection=') 
+        && str_contains($paymentEntrySource, "$entrySection==='sponsorship'?['monthly_sponsorship']")
+        && str_contains($paymentEntrySource, "$entrySection==='donation'?['general_donation','project_donation','other']")
+        && str_contains($paymentEntrySource, "$entrySection==='sponsorship'?(int)($_POST['sponsor_id']??0):0")
+        && str_contains($paymentEntrySource, "$role==='supervisor'&&$entrySection==='sponsorship'"),
+        'server_validates_each_form_type_and_sponsor_scope_independently'
+    );    $assert(
         str_contains($paymentEntrySource, 'class="pay-evidence-row"')
         && str_contains($paymentEntrySource, 'line-purpose-note-wrap')
         && str_contains($paymentEntrySource, 'name="pay_note[]"')
@@ -282,8 +312,8 @@ if (is_string($paymentEntrySource)) {
         && strpos($paymentEntrySource, 'name="reference"', $sharedEvidenceStart) !== false
         && strpos($paymentEntrySource, 'name="description"', $sharedEvidenceStart) !== false
         && strpos($paymentEntrySource, 'name="receipt_file"', $sharedEvidenceStart) !== false
-        && str_contains($paymentEntrySource, "document.getElementById('grpSharedEvidence').style.display=monthly?'none':'';"),
-        'shared_evidence_section_is_nonmonthly_only'
+        && str_contains($paymentEntrySource, 'function toggleDonationFields()'),
+        'donation_evidence_is_separate_and_conditional_fields_are_toggled'
     );
     $monthlyWarningPosition = strpos($paymentEntrySource, 'تنبيه:</strong> قيم الاتفاقية الشهرية مرجعية');
     $monthlySectionStart = strpos($paymentEntrySource, '<div class="col-12" id="grpLines">');
