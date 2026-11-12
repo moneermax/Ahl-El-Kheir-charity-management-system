@@ -58,6 +58,11 @@ $zeroFee['actual_service_fee_received'] = 0.00;
 $zeroFee['amount'] = 9000.00;
 $posting = ak_spma_validate_snapshot_for_posting($zeroFee);
 $assert($posting['sponsorship_received'] === 9000.00, 'zero_fee_sponsorship_posting_allowed');
+$zeroFeeMapping = ak_spma_resolve_service_fee_account_mapping(
+    ['transaction_date'=>'2026-11-12'],
+    0.00
+);
+$assert($zeroFeeMapping['mapping_id'] === null && $zeroFeeMapping['account_id'] === null, 'zero_fee_needs_no_revenue_mapping');
 
 $positiveFee = $zeroFee;
 $positiveFee['actual_service_fee_received'] = 1200.00;
