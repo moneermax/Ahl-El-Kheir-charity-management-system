@@ -48,15 +48,15 @@ def synchronize(text: str) -> str:
             "  ADD UNIQUE KEY " + q + "uq_spma_sponsorship_month_version" + q + " (" + q + "sponsorship_id" + q + "," + q + "covered_month" + q + "," + q + "version_no" + q + "),\n"
             "  ADD KEY " + q + "idx_spma_month_latest" + q + " (" + q + "sponsorship_id" + q + "," + q + "covered_month" + q + "," + q + "id" + q + ");"
         )
-        if index_statement not in text:
+        auto_pos = text.index("-- AUTO_INCREMENT for dumped tables")
+        if index_statement not in text or text.index(index_statement) > auto_pos:
             misplaced = "--\n-- Constraints for table " + q + table + q + "\n--\n" + index_statement + "\n"
-            constraint_header = "--\\n-- Constraints for table " + q + table + q + "\\n--\\n"
+            constraint_header = "--\n-- Constraints for table " + q + table + q + "\n--\n"
             text = require_once(text, misplaced, constraint_header, "move agreement indexes out of constraints section")
             header = "-- Indexes for dumped tables\n--\n\n"
             index_block = "--\n-- Indexes for table " + q + table + q + "\n--\n" + index_statement + "\n\n"
             text = require_once(text, header, header + index_block, "agreement indexes section")
         index_pos = text.index(index_statement)
-        auto_pos = text.index("-- AUTO_INCREMENT for dumped tables")
         constraint_pos = text.index("-- Constraints for table " + q + table + q)
         if not (index_pos < auto_pos < constraint_pos):
             raise RuntimeError("Agreement schema index/auto-increment/constraint ordering is invalid.")
