@@ -118,6 +118,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($allocationCount > 0 && $frozenCommitment <= 0) {
                 throw new RuntimeException('تعذر تحديد الالتزام المجمد من التخصيصات المرحلة لهذا الشهر.');
             }
+            if ($frozenCommitment !== null && $latest
+                && round((float) $latest['agreed_sponsorship_amount'], 2) !== $frozenCommitment) {
+                throw new RuntimeException('إصدار الاتفاقية الحالي لا يطابق الالتزام المثبت في التخصيصات المرحلة. يلزم فحص ومطابقة السجل قبل أي تعديل.');
+            }
             if ($frozenCommitment !== null && round((float) $agreedSponsorship, 2) !== $frozenCommitment) {
                 throw new RuntimeException(
                     'تم ترحيل تخصيص لهذا الشهر؛ لا يمكن تغيير قيمة التزام الكفالة (' .
