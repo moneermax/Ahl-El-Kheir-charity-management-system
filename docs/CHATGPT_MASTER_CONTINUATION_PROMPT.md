@@ -3948,3 +3948,7 @@ Do not start implementation/migration until the remaining schema, caller, migrat
 ### Active sponsorship payment work — agreement setup responsibility (2026-11-12)
 
 Continue from `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. GM, VGM, and FM will determine agreed sponsorship amounts and per-covered-month service fees in a meeting; FM is responsible for entering the agreed values in the system. Do not interpret this as unilateral FM approval authority or invent an approval workflow. VGM/Supervisors enter actual receipts only. Before coding, settle meeting evidence/amendment controls, service-fee revenue account classification (do not assume account 4200), and the actual migration application process. Revalidate current `main`, schema, and relevant source. No implementation has started.
+
+### Sponsorship service-fee accounting mapping decision (2026-11-12)
+
+Keep sponsorship service fees as a distinct transaction component and use a controlled, auditable, configurable accounting mapping to a valid revenue account. Do not hard-code account `4200`, invent an account code, or allow arbitrary per-payment account selection. Require an authorized accounting owner to confirm the actual destination before live posting is enabled. See the detailed work plan. Implementation has not started.
