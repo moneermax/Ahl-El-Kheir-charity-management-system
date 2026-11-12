@@ -211,9 +211,12 @@ if (is_string($paymentEntrySource)) {
         'changing_covered_month_clears_actual_receipts'
     );
     $assert(
-        str_contains($paymentEntrySource, 'payment-components-table{width:1590px;min-width:1590px;table-layout:fixed;}')
-        && str_contains($paymentEntrySource, 'payment-components-table-wrap{overflow-x:auto;'),
-        'payment_components_remain_single_wide_scrollable_row'
+        str_contains($paymentEntrySource, 'payment-components-table{width:100%;min-width:0;table-layout:fixed;}')
+        && str_contains($paymentEntrySource, 'payment-components-table-wrap{width:100%;overflow-x:hidden;}')
+        && str_contains($paymentEntrySource, '<col style="width:10%"><col style="width:11%"><col style="width:13.5%"><col style="width:13.5%"><col style="width:9%"><col style="width:17%"><col style="width:17%"><col style="width:9%">')
+        && !str_contains($paymentEntrySource, 'width:1590px')
+        && !str_contains($paymentEntrySource, 'overflow-x:auto;'),
+        'payment_components_fit_available_width_without_horizontal_scroll'
     );
     $agreementSummaryStart = strpos($paymentEntrySource, '<div class="col-12" id="grpLines">');
     $agreementSummaryEnd = strpos($paymentEntrySource, '<div class="col-md-4" id="grpSingleAmount"', $agreementSummaryStart === false ? 0 : $agreementSummaryStart);
