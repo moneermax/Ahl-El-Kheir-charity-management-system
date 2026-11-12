@@ -4041,3 +4041,8 @@ The user delegated the accounting design recommendation because they are not an 
 Continue with `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. The chart-of-accounts, mapping patterns, audit history, journal safeguards, shared helper callers, migration CI execution, and returned VGM correction path have now been reviewed. The local helper-call grep is complete for the current PHP source; current remote `main` has no PHP source changes since that grep baseline.
 
 The next session may begin schema-first implementation only after re-reading the current local schema/live DB and inspecting pending legacy sponsorship submissions. Keep service fee separate from `admin_fee_*`; require an effective mapping to an active revenue account; snapshot mapping/account on posting; block posting when mapping or accounting recognition treatment is not approved. Do not assume account 4200 or immediate recognition. No code/schema/data changes in this audit session.
+
+
+### 2026-11-12 — Sponsorship monthly agreement schema foundation
+
+Continue the approved sponsorship service-fee work from `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. The versioned monthly-agreement migration exists, and MariaDB 10.4 CI coverage was added in `.github/workflows/sponsorship-monthly-agreements-migration.yml` (commits `71622caee3df0ad6987dfcf60da43351990f3129`, `78ef9a4519b22e42a67cf3ad6771fafd98de9cb4`, and `e663dd7ba912e4358959b9394dbb1cf1a5ea3711`). CI execution is not yet verified. The canonical schema dump is still not synchronized because the GitHub blob upload failed. Do not ask the user to pull or apply the migration until schema synchronization and migration validation are complete. No PHP implementation exists yet.
