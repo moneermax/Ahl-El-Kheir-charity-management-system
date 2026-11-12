@@ -21,7 +21,7 @@ function dbFetchOne(string $sql, array $params = []): ?array
     }
     $row = $GLOBALS['ak_spma_test_agreement'];
     if ($row === null) return null;
-    if (strpos($sql, 'WHERE id = ?') !== false) {
+    if (count($params) === 1) {
         return (int)$row['id'] === (int)($params[0] ?? 0) ? $row : null;
     }
     if ((int)$row['sponsorship_id'] !== (int)($params[0] ?? 0)
