@@ -4039,3 +4039,12 @@ This is repository/CI evidence only. The user's local `ahl_el_kheir` database ha
 Next implementation work: FM agreement management, server-side agreement lookup/missing-agreement blocking, both payment submission paths, component snapshots, FM review breakdowns, returned-row compatibility, and strict legacy/new-model accounting separation. Positive actual service-fee receipts remain blocked from journal posting until an authorized accounting owner approves recognition timing and an active revenue destination. Never fall back to account `4200`.
 
 **Open decision before allocator/amendment implementation:** approve freezing the original sponsorship/month allocation commitment after its first posted allocation. A conflicting later agreement amendment would not rewrite that commitment or prior allocations; it would require an explicit audited correction before the new commitment can affect allocation. Do not implement this rule until the user confirms it.
+
+
+## 2026-11-12 — Current sponsorship implementation decision
+
+The user approved month-specific sponsorship agreement amendments. A sponsor can increase/decrease the commitment for a future covered month; 5,000 SDG in one month followed by 10,000 SDG in the next is a new monthly commitment, not an advance. An advance means cash received beyond the agreed amounts for the explicitly covered months.
+
+Freeze only the sponsorship commitment for a particular month after its first posted allocation. Block a conflicting ordinary amendment for that already-allocated month unless a separate explicit audited correction process is approved. Never rewrite posted allocations or journals. Service-fee amendments may retain the frozen sponsorship commitment; prior payment snapshots remain immutable. For new-model months without allocations, use the latest applicable monthly agreement for commitment and fee references. Preserve legacy behavior. Update allocation and arrears/advance calculations consistently.
+
+Continue from `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. Current repository work is still in the schema foundation stage; no PHP implementation or local migration/runtime verification is claimed. Work on `main` only and preserve local staged/untracked files.
