@@ -378,16 +378,12 @@ function ak_sar_month_rows(array $sponsorship, array $allocations, array $pauseE
         }
 
         $snapshot = $allocations[$monthStart] ?? null;
-        if ($snapshot && (int)$snapshot['commitment_versions'] > 1) {
-            throw new RuntimeException('توجد قيم التزام متعارضة لهذا الشهر.');
-        }
         $agreement = $agreements[$monthStart] ?? null;
-        $commitment = $snapshot && (int)$snapshot['commitment_versions'] === 1
-            ? round((float)$snapshot['commitment_amount'], 2)
-            : ($agreement
-                ? round((float)$agreement['agreed_sponsorship_amount'], 2)
-                : round((float)$sponsorship['monthly_amount'], 2));
-        if ($commitment <= 0) throw new RuntimeException('قيمة الالتزام الشهري غير صالحة.');
+        $commitment = ak_spma_resolve_report_commitment(
+            $snapshot,
+            $agreement,
+            (float)$sponsorship['monthly_amount']
+        );
         $paid = $snapshot ? round((float)$snapshot['allocated_amount'], 2) : 0.00;
         $rows[] = [
             'month'=>$monthStart,
