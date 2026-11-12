@@ -1,6 +1,6 @@
 # VGM Sponsorship Payment Entry and Monthly Service Fee — Working Plan
 
-**Status:** APPROVED WORK PLAN / IMPLEMENTATION NOT STARTED  
+**Status:** APPROVED WORK PLAN / AGREEMENT-ENTRY RESPONSIBILITY CONFIRMED / IMPLEMENTATION NOT STARTED  
 **Baseline:** 2026-11-11  
 **Target branch:** `main` only  
 **Primary page:** `modules/transactions/create.php`  
@@ -74,6 +74,8 @@ A change to the agreement for a future month must not rewrite earlier months or 
 The global administrative-fee policy is **not the source of sponsorship service-fee amounts and must not calculate, override, prorate, gross-up, or deduct this fee on either sponsorship payment route**. Preserve the existing global administrative-fee policy and its callers for other transaction types unless a separate caller audit proves it can safely be retired. Do not delete or globally disable it as part of this task.
 
 The exact storage/history mechanism for per-sponsorship, per-covered-month agreements is **not yet established**. Inspect current schema, migration conventions, and create/amend workflows before choosing the smallest justified data model.
+
+**Agreement setup responsibility — confirmed by the user on 2026-11-12:** the GM, VGM, and FM will determine the agreed sponsorship amount and service fee in a meeting. The **FM is responsible for entering/setting up those agreed values in the system**. This assigns system data-entry responsibility; it does not establish unilateral FM decision authority or an in-system approval hierarchy. Do not invent either. Supervisors and VGM may enter actual receipt amounts in payment rows but must not amend agreement values through payment entry. Record agreement creation/amendment metadata and its meeting/decision reference where the final audit design supports it. The meeting's decision/evidence requirements remain to be confirmed before implementation.
 
 ### 2.4 Accounting separation
 
@@ -183,7 +185,8 @@ Implement only if Stage 1 proves storage is absent or insufficient.
 Requirements:
 - Store the agreed service-fee amount by sponsorship and covered month; different months may have different agreed values.
 - Make each month's agreed fee visible to authorized users at the appropriate create/edit/detail points.
-- Define who may establish/amend each month's agreement, its effective covered month, and how prior agreement values remain auditable.
+- Implement FM-owned setup/entry of each month's agreed values, reflecting decisions made jointly by GM, VGM, and FM. Do not encode unilateral FM approval authority or a separate approval workflow unless the meeting explicitly establishes one.
+- Define how the decision/meeting reference, effective covered month, amendments, and prior agreement values remain auditable.
 - Preserve existing sponsorships and historical transactions; do not backfill guessed fees.
 - Use an explicit migration for any database change.
 - Ensure a fee change cannot silently change an already-submitted payment.
@@ -308,9 +311,11 @@ Partial receipts are represented by the two actual component amounts entered by 
 
 ## 6. Explicit open questions / decisions not to invent
 
-1. **Agreement amendment authority:** which role can establish or amend a sponsorship's agreed fee for a covered month, and what evidence/reason is required? The effective covered month must be explicit; prior months and submitted snapshots must remain unchanged.
+1. **Agreement decision and evidence details:** GM, VGM, and FM will determine the agreed values in a meeting; FM enters them in the system. The meeting must still settle what reference/evidence is recorded, who may request or authorize amendments, and whether any in-system confirmation is required. Do not infer an approval hierarchy.
 2. **Existing sponsorships with no recorded fee agreement:** do not infer zero, apply today's policy, or backfill a fee without an explicit rule.
 3. **Outstanding-balance behavior:** how actual partial receipts affect any existing arrears/advance balance presentation must be verified against the existing domain rules; do not create a new balance calculation in this task.
+4. **Service-fee revenue classification:** account `4200` is currently labelled/used for administrative-fee revenue. The user/accounting owners must decide whether sponsorship service fees belong there or in a separate account; do not silently choose or invent an account code.
+5. **Migration application procedure:** confirm the repository's actual migration process before preparing/applying a new migration.
 
 Ask only the decision that blocks the next implementation stage; do not front-load all questions.
 
