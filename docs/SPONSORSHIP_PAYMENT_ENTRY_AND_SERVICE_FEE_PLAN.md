@@ -473,3 +473,12 @@ Do not implement a mapping default, a service-fee journal line, or an assumed im
 ### Remaining local-only verification gate
 
 The checked-in schema and repository source have now been inspected remotely. Before applying any migration, local schema/live DB parity and the migration target must still be checked in the user's XAMPP environment. The assistant cannot execute that local database or browser. The user should not apply an unreviewed migration. The next repository work is to implement the append-only agreement store and FM management surface, then component snapshots across both submission paths and their return/review screens, with focused tests and documentation. Local migration application and browser acceptance remain a later user-side gate.
+
+
+### Repository-side schema milestone — 2026-11-12
+
+Created migration `database/migrations/2026-11-12_sponsorship_monthly_agreements.sql` (commit `71622caee3df0ad6987dfcf60da43351990f3129`). It introduces an append-only monthly agreement-version table and nullable component-model/snapshot columns on both existing submission tables. Existing rows default to `component_model='legacy'`; no historical values are backfilled. Agreement references are protected by foreign keys. The migration uses explicit SQL only and contains no request-time DDL.
+
+**Not yet verified:** the migration has not been executed against MariaDB 10.4, linted by the repository CI, or applied locally. The checked-in 5.9 MB schema dump was successfully read via Git blob, but the GitHub write connector failed when attempting to upload a modified 5.9 MB replacement. Therefore `database/ahl_el_kheir.sql` is not yet synchronized with this new migration. Do not treat this schema milestone as pull-and-test ready or apply the migration until the dump synchronization and SQL validation are completed.
+
+No PHP application code has yet been changed. The FM agreement page, server-side agreement lookup/locking, payment component capture, returned-row compatibility, FM review display, and posting guard remain unimplemented. The migration is a schema foundation only, not a completed feature.
