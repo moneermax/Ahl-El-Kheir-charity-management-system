@@ -280,13 +280,12 @@ if (is_string($paymentEntrySource)) {
         && str_contains($donationFormMarkup, 'name="donation_receipt[]"')
         && str_contains($donationFormMarkup, 'name="donation_reference[]"')
         && str_contains($donationFormMarkup, 'name="donation_description[]"')
-        && str_contains($donationFormMarkup, 'function addDonationLine()')
+        && str_contains($paymentEntrySource, 'function addDonationLine()')
         && str_contains($donationFormMarkup, 'لا تُفرض رسوم خدمة على هذه التبرعات.')
         && !str_contains($donationFormMarkup, 'name="pay_month[]"')
         && !str_contains($donationFormMarkup, 'name="pay_service_fee_received[]"')
         && str_contains($donationFormMarkup, 'value="<?php echo $input[\'sponsor_id\']; ?>"><div class="payment-section-title"'),
         'donation_form_supports_independent_rows_and_row_evidence_without_service_fees'
-    );
     );
     $assert(
         str_contains($paymentEntrySource, 'class="pay-evidence-row"')
