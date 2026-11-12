@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS sponsorship_service_fee_account_mappings (
     effective_from DATE NOT NULL,
     version_no INT(10) UNSIGNED NOT NULL,
     account_id INT(10) UNSIGNED NOT NULL,
+    authorized_by_name VARCHAR(150) NOT NULL,
     authorization_reference VARCHAR(255) NOT NULL,
     authorization_note TEXT DEFAULT NULL,
     created_by INT(10) UNSIGNED NOT NULL,
@@ -24,6 +25,9 @@ CREATE TABLE IF NOT EXISTS sponsorship_service_fee_account_mappings (
     CONSTRAINT fk_ssfam_creator FOREIGN KEY (created_by)
         REFERENCES users (id) ON UPDATE CASCADE ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+ALTER TABLE sponsorship_service_fee_account_mappings
+    ADD COLUMN IF NOT EXISTS authorized_by_name VARCHAR(150) NOT NULL DEFAULT '';
 
 ALTER TABLE transactions
     ADD COLUMN IF NOT EXISTS service_fee_account_mapping_id INT(10) UNSIGNED DEFAULT NULL,
