@@ -323,11 +323,18 @@ Ask only the decision that blocks the next implementation stage; do not front-lo
 
 ## 7. Current starting point
 
-The last documented next step before this plan was read-only inspection of the VGM-accessible sponsorship detail page to confirm whether Register payment is available. After that, continue the existing Advances → payment submission → FM approval/posting workflow.
+The read-only source/accounting architecture audit is complete and recorded in the 2026-11-12 section below. The next session is the implementation session, but it must begin with local preflight rather than immediately editing files:
 
-The VGM payment form and accounting implementation had been inspected in an earlier source review, but the current main/schema must be revalidated before coding. The redesign and monthly additive fee implementation have **not** been implemented or runtime verified.
+1. Confirm the actual local checkout path/environment and inspect `git status`, current branch, and HEAD. Preserve all local changes; use `main` only.
+2. Re-read the four required canonical documents and this plan from current `main`.
+3. Inspect the VGM-accessible sponsorship detail page in the browser as VGM and confirm the Register payment action in the real local application.
+4. Inspect the current checked-in `database/ahl_el_kheir.sql` and live `ahl_el_kheir` schema. The latest schema dump changed after the source grep baseline; do not rely on an older copy.
+5. Inspect pending/returned sponsorship rows in both `transactions` and `sponsor_payments` to define compatibility before changing shared posting behavior.
+6. Confirm the authorized accounting owner's service-fee recognition timing and destination account before enabling live posting. If these decisions are unavailable, keep the service-fee posting path blocked while implementing safe agreement/payment capture and review.
 
-Closed adjacent work remains closed. In particular, do not rerun the completed sponsorship accounting backfill, arrears/advances calculation suites, GM/FM sponsor-review acceptance, or VGM ordinary-transaction return/resubmission acceptance without concrete regression evidence.
+The redesign, monthly agreement storage, distinct actual-receipt components, and accounting integration have **not** been implemented or runtime verified. No schema migration has been created or applied.
+
+Closed adjacent work remains closed. In particular, do not rerun the completed sponsorship accounting backfill, arrears/advances calculation suites, GM/FM sponsor-review acceptance, or VGM ordinary-transaction return/resubmission acceptance without concrete regression evidence. Preserve `TR-000023`, `TR-000024`, and `JE-000054`.
 
 
 ## 2026-11-12 — Read-only accounting architecture audit completed
