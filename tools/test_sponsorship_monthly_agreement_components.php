@@ -211,7 +211,7 @@ if (is_string($paymentEntrySource)) {
         'changing_covered_month_clears_actual_receipts'
     );
     $assert(
-        str_contains($paymentEntrySource, 'payment-components-table{width:100%;min-width:0;table-layout:fixed;}')
+        str_contains($paymentEntrySource, 'payment-components-table{width:100%;min-width:0;table-layout:fixed;margin-bottom:0;')
         && str_contains($paymentEntrySource, 'payment-components-table-wrap{width:100%;max-width:100%;overflow:visible;}')
         && str_contains($paymentEntrySource, '<col style="width:12%"><col style="width:14%"><col style="width:16%"><col style="width:16%"><col style="width:12%"><col style="width:20%"><col style="width:10%">')
         && str_contains($paymentEntrySource, '<td colspan="7">')
