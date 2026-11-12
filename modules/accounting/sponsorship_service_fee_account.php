@@ -129,7 +129,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 <?php if ($errors): ?><div class="alert alert-danger"><ul class="mb-0"><?php foreach ($errors as $error): ?><li><?php echo e($error); ?></li><?php endforeach; ?></ul></div><?php endif; ?>
 
 <div class="alert alert-warning">
-    لا يكفي اختيار حساب من دليل الحسابات. يجب أن يستند الإعداد إلى قرار محاسبي معتمد. لا يؤثر تغيير الإعداد على القيود المرحلة؛ كل معاملة جديدة تحفظ رقم إصدار الإعداد والحساب المستخدم عند الترحيل.
+    لا يكفي اختيار حساب من دليل الحسابات. يجب أن يستند الإعداد إلى قرار محاسبي معتمد. هذا الإعداد وحده لا يفعّل ترحيل رسوم الخدمة: يجب أيضاً اعتماد توقيت الاعتراف المحاسبي (فوري أو نهاية شهر التغطية). إلى أن يُعتمد التوقيت، تبقى أي دفعة تتضمن رسوماً فعلية إيجابية غير قابلة للترحيل. لا يؤثر تغيير الإعداد على القيود المرحلة؛ وعند تفعيل الترحيل لاحقاً ستحفظ كل معاملة إصدار الإعداد والحساب المستخدم.
 </div>
 
 <div class="card mb-4 fade-in">
@@ -172,7 +172,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
             <strong><?php echo e($current['account_code'] . ' — ' . $current['account_name']); ?></strong>
             <div class="small text-muted">ساري من <?php echo e($current['effective_from']); ?> — الإصدار <?php echo (int)$current['version_no']; ?> — مرجع الاعتماد: <?php echo e($current['authorization_reference']); ?></div>
         <?php else: ?>
-            <div class="text-danger">لم يتم تسجيل حساب إيراد معتمد حتى الآن. أي دفعة تحتوي على رسوم خدمة فعلية ستبقى غير قابلة للترحيل حتى تسجيل الإعداد.</div>
+            <div class="text-danger">لم يتم تسجيل حساب إيراد معتمد حتى الآن. أي دفعة تحتوي على رسوم خدمة فعلية ستبقى غير قابلة للترحيل حتى تسجيل الإعداد واعتماد توقيت الاعتراف المحاسبي.</div>
         <?php endif; ?>
     </div>
 </div>
