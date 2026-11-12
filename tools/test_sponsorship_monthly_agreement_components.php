@@ -250,6 +250,14 @@ if (is_string($paymentEntrySource)) {
         'unrelated_single_payment_amount_starts_blank'
     );
     $assert(
+        str_contains($paymentEntrySource, 'id="grpSingleDetailsTitle"')
+        && str_contains($paymentEntrySource, 'id="singleDetailsTitleText"')
+        && str_contains($paymentEntrySource, "document.getElementById('grpSingleDetailsTitle').style.display=monthly?'none':'';")
+        && str_contains($paymentEntrySource, "t==='general_donation'?'تفاصيل التبرع العام':t==='project_donation'?'تفاصيل التبرع للمشروع':'تفاصيل المصدر الآخر'")
+        && str_contains($paymentEntrySource, "t==='admin_fee'?'بيانات الرسوم الإدارية'") ,
+        'non_monthly_payment_details_have_contextual_section_heading'
+    );
+    $assert(
         str_contains($paymentEntrySource, 'class="pay-evidence-row"')
         && str_contains($paymentEntrySource, 'line-purpose-note-wrap')
         && str_contains($paymentEntrySource, 'name="pay_note[]"')
