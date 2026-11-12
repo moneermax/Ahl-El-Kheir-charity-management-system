@@ -193,12 +193,12 @@ $paymentEntrySource = file_get_contents(dirname(__DIR__) . '/modules/transaction
 $assert(is_string($paymentEntrySource), 'payment_entry_source_readable');
 if (is_string($paymentEntrySource)) {
     $assert(
-        str_contains($paymentEntrySource, "$actualS=(string)($ln['sponsorship_received']??'');")
-        && str_contains($paymentEntrySource, "$actualF=(string)($ln['service_fee_received']??'');"),
+        str_contains($paymentEntrySource, '$actualS=(string)($ln[\'sponsorship_received\']??\'\');')
+        && str_contains($paymentEntrySource, '$actualF=(string)($ln[\'service_fee_received\']??\'\');'),
         'initial_actual_receipts_never_fall_back_to_agreement'
     );
     $assert(
-        str_contains($paymentEntrySource, "$lineTotal=$isMonthlyLine?round((float)$actualS+(float)$actualF,2):$ln['amount'];"),
+        str_contains($paymentEntrySource, '$lineTotal=$isMonthlyLine?round((float)$actualS+(float)$actualF,2):$ln[\'amount\'];'),
         'initial_monthly_line_total_uses_actual_receipts_only'
     );
     $assert(
