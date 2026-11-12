@@ -16,7 +16,7 @@ This file remains the master status/audit history. Its dated evidence is retaine
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-10-06
+**Current checkpoint:** 2026-11-12 — sponsorship monthly-agreement schema foundation verified in CI; payment workflow implementation active
 
 This is the single high-level **START HERE** status and continuation summary for the existing project. The detailed audit record is consolidated into `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`.
 
@@ -26,6 +26,14 @@ This is the single high-level **START HERE** status and continuation summary for
 - Fina core settlement acceptance: **COMPLETE at its documented boundary**.
 - Current repository branch boundary: **main only**.
 
+
+
+
+## Current continuation boundary — 2026-11-12
+
+The active task is implementation of monthly sponsorship agreements and the sponsorship/service-fee receipt workflow. Stage 1 is complete on `main`: migration naming corrected to `monthly_agreement_id`, canonical `database/ahl_el_kheir.sql` synchronized, and MariaDB 10.4.32 CI run `43227177755` passed repeatability, schema, FK/CHECK, and legacy-preservation assertions. The migration is **not applied to the local database**. No application PHP changes have yet been made.
+
+Next: implement append-only FM-managed monthly agreements and the shared agreement/component contract for VGM and Supervisor submissions. Preserve legacy behavior and protected financial evidence. Positive actual service-fee receipts must fail closed in shared posting until recognition timing and a valid revenue destination are approved. Allocation-amendment policy is awaiting the user's decision; see the detailed plan.
 
 ## 1. Project rule
 
@@ -6336,3 +6344,18 @@ Repository baseline: `main` at `e2e6a1b01930c7933cce870816bfd736172d7288`. The u
 Migration CI run `43164414238` passed on MariaDB 10.4.32. Before local application, rename the migration's generic agreement reference from `service_fee_agreement_id` to `monthly_agreement_id` and synchronize the canonical schema representation. The new-model allocation path must use the agreed sponsorship snapshot rather than falling back to `sponsorships.monthly_amount`; legacy allocation behavior remains unchanged. Both shared posting and Supervisor approval must bypass the global administrative-fee policy only for new-model sponsorship rows. Allocate actual sponsorship receipt only. Positive actual service-fee receipts remain unpostable until recognition timing and a valid revenue destination are approved. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` for the detailed source findings and remaining amendment/allocation decision.
 
 No PHP implementation or local schema mutation has occurred. Do not ask the user for more repository inspection or broad command output.
+
+
+## 2026-11-12 — Sponsorship monthly-agreement schema gate completed
+
+Current repository `main` head at this checkpoint: `a81a1c5edcbb2f372e41dbb0bcc0318853d8c1d0`.
+
+The monthly-agreement migration and canonical schema representation are now synchronized. The agreement reference is named `monthly_agreement_id` in both payment tables, the migration, canonical dump, and CI assertions. The canonical dump includes the append-only `sponsorship_monthly_agreements` table, its primary/unique/index definitions, five foreign keys, and both non-negative amount CHECK constraints. Both `transactions` and `sponsor_payments` contain the six new component/snapshot columns.
+
+GitHub Actions run `43227177755` passed on MariaDB 10.4.32: canonical schema import, synchronization-script repeatability, two consecutive migration applications, 12 snapshot columns, five foreign keys, two CHECK constraints, and preservation of legacy transaction/Supervisor-payment row counts and legacy defaults. The schema synchronization commit is `a81a1c5edcbb2f372e41dbb0bcc0318853d8c1d0`. No historical component backfill occurred.
+
+This is repository/CI evidence only. The user's local `ahl_el_kheir` database has not been migrated, and no local browser/runtime verification is claimed. No application PHP has yet been changed. Protected transactions `TR-000023`, `TR-000024`, and `JE-000054` remain out of scope; legacy returned Supervisor rows 7–9 must retain their original meaning.
+
+Next implementation work: FM agreement management, server-side agreement lookup/missing-agreement blocking, both payment submission paths, component snapshots, FM review breakdowns, returned-row compatibility, and strict legacy/new-model accounting separation. Positive actual service-fee receipts remain blocked from journal posting until an authorized accounting owner approves recognition timing and an active revenue destination. Never fall back to account `4200`.
+
+**Open decision before allocator/amendment implementation:** approve freezing the original sponsorship/month allocation commitment after its first posted allocation. A conflicting later agreement amendment would not rewrite that commitment or prior allocations; it would require an explicit audited correction before the new commitment can affect allocation. Do not implement this rule until the user confirms it.

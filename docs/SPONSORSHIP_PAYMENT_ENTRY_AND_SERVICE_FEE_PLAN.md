@@ -369,7 +369,7 @@ The read-only source/accounting architecture audit is complete and recorded in t
 5. Inspect pending/returned sponsorship rows in both `transactions` and `sponsor_payments` to define compatibility before changing shared posting behavior.
 6. Confirm the authorized accounting owner's service-fee recognition timing and destination account before enabling live posting. If these decisions are unavailable, keep the service-fee posting path blocked while implementing safe agreement/payment capture and review.
 
-The redesign, monthly agreement storage, distinct actual-receipt components, and accounting integration have **not** been implemented or runtime verified. No schema migration has been created or applied.
+The versioned monthly-agreement migration and canonical schema representation are implemented and CI-verified on MariaDB 10.4.32. The migration has not been applied to the user's local database. No application PHP, payment UI, review display, or accounting integration has yet been implemented or locally runtime-verified.
 
 Closed adjacent work remains closed. In particular, do not rerun the completed sponsorship accounting backfill, arrears/advances calculation suites, GM/FM sponsor-review acceptance, or VGM ordinary-transaction return/resubmission acceptance without concrete regression evidence. Preserve `TR-000023`, `TR-000024`, and `JE-000054`.
 
@@ -479,7 +479,7 @@ The checked-in schema and repository source have now been inspected remotely. Be
 
 Created migration `database/migrations/2026-11-12_sponsorship_monthly_agreements.sql` (commit `71622caee3df0ad6987dfcf60da43351990f3129`). It introduces an append-only monthly agreement-version table and nullable component-model/snapshot columns on both existing submission tables. Existing rows default to `component_model='legacy'`; no historical values are backfilled. Agreement references are protected by foreign keys. The migration uses explicit SQL only and contains no request-time DDL.
 
-**Not yet verified:** the migration has not been executed against MariaDB 10.4, linted by the repository CI, or applied locally. The checked-in 5.9 MB schema dump was successfully read via Git blob, but the GitHub write connector failed when attempting to upload a modified 5.9 MB replacement. Therefore `database/ahl_el_kheir.sql` is not yet synchronized with this new migration. Do not treat this schema milestone as pull-and-test ready or apply the migration until the dump synchronization and SQL validation are completed.
+**Superseded by the 2026-11-12 Stage 1 completion below:** the migration was renamed to `monthly_agreement_id`, the canonical 5.9 MB dump was synchronized through an idempotent repository maintenance script, and MariaDB 10.4.32 CI now imports the canonical dump and applies the migration twice. The local database remains untouched.
 
 No PHP application code has yet been changed. The FM agreement page, server-side agreement lookup/locking, payment component capture, returned-row compatibility, FM review display, and posting guard remain unimplemented. The migration is a schema foundation only, not a completed feature.
 
@@ -494,7 +494,7 @@ Added `.github/workflows/sponsorship-monthly-agreements-migration.yml` in commit
 - transaction and Supervisor submission row counts are unchanged;
 - existing rows remain `component_model='legacy'` with NULL agreement/component snapshots.
 
-**Not yet verified:** the workflow has been committed but its GitHub Actions run has not yet been inspected. The canonical schema dump remains unsynchronized: the GitHub Git-blob upload attempt for the 5.9 MB dump failed with a transport error. No alternate write path has yet succeeded. The migration has not been applied to the user's local database. Do not pull/apply this migration yet.
+**Superseded by the 2026-11-12 Stage 1 completion below:** the final synchronization and migration CI run passed. The migration has not been applied to the user's local database.
 
 The migration itself is still a schema foundation only. PHP agreement management, payment snapshots, review display, returned-payment compatibility, and posting safeguards are not implemented.
 
@@ -514,7 +514,7 @@ GitHub Actions run `43164414238` for commit `78ef9a4519b22e42a67cf3ad6771fafd98d
 
 ### Additional source findings that must shape implementation
 
-1. The current migration calls the generic agreement foreign key `service_fee_agreement_id` on both payment tables. That column actually identifies the entire monthly agreement version, not a service-fee-only record. Rename it to `monthly_agreement_id` in the migration and CI assertions before local application; no live DB has this column yet.
+1. **Resolved:** the generic agreement reference is named `monthly_agreement_id` in both payment tables, the migration, canonical schema, and CI assertions. No local DB migration has been applied.
 2. `ak_sp_create_payment_allocation_prepared()` currently uses an earlier allocation's `commitment_amount`, otherwise falls back to `sponsorships.monthly_amount`. For `monthly_agreement` rows, the agreed sponsorship amount snapshot must be the first-allocation commitment source. Preserve the existing earlier-allocation snapshot behavior and all legacy behavior; do not silently use `sponsorships.monthly_amount` for new-model rows.
 3. `ak_apply_admin_fee_snapshot_prepared()` still calculates the organization-wide fee for `sponsorship_payment` rows without a stored policy snapshot. `ak_approve_sponsor_payment()` independently calculates the same policy before inserting Supervisor-approved transactions. Both paths need an explicit `component_model` branch: legacy and unrelated payment behavior stays unchanged; new agreement-based sponsorship rows bypass that global fee calculation.
 4. `ak_post_transaction_journal_prepared()` currently passes the post-fee net amount to sponsorship allocation and credits any fee to hard-coded `4200`. New-model rows must pass only `actual_sponsorship_received` to allocation. Positive `actual_service_fee_received` must fail closed until an authorized accounting owner approves recognition timing and an active revenue-account destination. No fallback to `4200`.
@@ -523,6 +523,21 @@ GitHub Actions run `43164414238` for commit `78ef9a4519b22e42a67cf3ad6771fafd98d
 
 ### Remaining design gate
 
-Before implementation changes the allocator, define how an agreement amendment is handled for a covered month that already has a posted partial allocation. Existing allocation records preserve one commitment snapshot per sponsorship/month. A later agreement version must not silently create a conflicting commitment or rewrite the prior allocation. The safe default is to block/require an explicit controlled correction once a posted allocation exists, but do not implement that policy without recording the agreed organizational rule.
+**Awaiting user decision before allocator/amendment implementation:** existing allocation records preserve one commitment snapshot per sponsorship/month. Recommended treatment: freeze the original commitment after the first posted allocation; a conflicting later agreement amendment must not rewrite prior allocations or silently affect further allocation, and must require an explicit audited correction. Do not implement this rule until the user confirms it.
 
 The actual service-fee recognition timing and revenue destination remain unapproved. Capture/review may be built with server-side posting blocked for positive service-fee receipts. No local migration command or further local inspection is required during repository-side implementation planning; local backup/application and browser acceptance remain later gates.
+
+
+## 2026-11-12 — Sponsorship monthly-agreement schema gate completed
+
+Current repository `main` head at this checkpoint: `a81a1c5edcbb2f372e41dbb0bcc0318853d8c1d0`.
+
+The monthly-agreement migration and canonical schema representation are now synchronized. The agreement reference is named `monthly_agreement_id` in both payment tables, the migration, canonical dump, and CI assertions. The canonical dump includes the append-only `sponsorship_monthly_agreements` table, its primary/unique/index definitions, five foreign keys, and both non-negative amount CHECK constraints. Both `transactions` and `sponsor_payments` contain the six new component/snapshot columns.
+
+GitHub Actions run `43227177755` passed on MariaDB 10.4.32: canonical schema import, synchronization-script repeatability, two consecutive migration applications, 12 snapshot columns, five foreign keys, two CHECK constraints, and preservation of legacy transaction/Supervisor-payment row counts and legacy defaults. The schema synchronization commit is `a81a1c5edcbb2f372e41dbb0bcc0318853d8c1d0`. No historical component backfill occurred.
+
+This is repository/CI evidence only. The user's local `ahl_el_kheir` database has not been migrated, and no local browser/runtime verification is claimed. No application PHP has yet been changed. Protected transactions `TR-000023`, `TR-000024`, and `JE-000054` remain out of scope; legacy returned Supervisor rows 7–9 must retain their original meaning.
+
+Next implementation work: FM agreement management, server-side agreement lookup/missing-agreement blocking, both payment submission paths, component snapshots, FM review breakdowns, returned-row compatibility, and strict legacy/new-model accounting separation. Positive actual service-fee receipts remain blocked from journal posting until an authorized accounting owner approves recognition timing and an active revenue destination. Never fall back to account `4200`.
+
+**Open decision before allocator/amendment implementation:** approve freezing the original sponsorship/month allocation commitment after its first posted allocation. A conflicting later agreement amendment would not rewrite that commitment or prior allocations; it would require an explicit audited correction before the new commitment can affect allocation. Do not implement this rule until the user confirms it.
