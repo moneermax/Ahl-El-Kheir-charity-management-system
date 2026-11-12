@@ -6285,3 +6285,40 @@ Confirmed:
 No PHP, schema, migration, or financial data was changed. No local runtime tests were run as this was a read-only design audit.
 
 **Before live posting is enabled**, an authorized accounting owner must confirm service-fee revenue recognition timing and the destination revenue account. Agreement amendment/evidence controls and behavior when an agreement is missing also require explicit confirmation. See the detailed plan. Do not reopen closed adjacent work.
+
+## Mandatory ChatGPT collaboration and execution protocol
+
+This is a permanent project rule for every session. Do not make the user repeatedly restate it.
+
+### Division of work
+- ChatGPT is responsible for doing as much of the repository work as its available tools permit: inspect current source, schema, documentation, tests and Git history; trace root causes; design the smallest justified change; edit/add code, migrations, tests and documentation; review diffs; run available checks; and report exact evidence.
+- The user is **not** a manual file-reading, searching, or copy/paste intermediary. Do not ask the user to open and paste whole files, entire documents, large SQL dumps, or hundreds of lines of command output when repository/connector/file tools can retrieve them.
+- Ask the user to do only work that genuinely requires their local machine or authority: local XAMPP/MariaDB access, applying an explicitly reviewed migration, local browser acceptance, or providing a business/accounting decision that cannot be inferred from source.
+- Be truthful about tool boundaries. Never claim access to the user's local filesystem, browser, or database unless a tool actually provides it.
+
+### Minimize user effort
+- Prefer direct repository inspection and edits through available GitHub/repository tools. Do not delegate work to the user merely because terminal commands are familiar.
+- Before asking for local evidence, inspect everything available remotely and explain exactly why the remaining fact is local-only.
+- Give one small, focused command at a time. Keep output bounded with targeted paths, line ranges, grep filters, counts, or concise summaries.
+- Never request an unfiltered dump of a large document, file, schema, database, or Git diff. Do not ask the user to paste full file contents; fetch the file directly when repository access permits.
+- If a local command is necessary, make it read-only unless the user has explicitly approved the operation. Avoid commands that emit secrets or unrelated data.
+- If direct repository write access is unavailable, state that limitation and provide the smallest practical patch or narrowly scoped command. Do not turn the user into the implementation operator.
+
+### Mandatory new-session startup
+1. Read this file and the current canonical project documents from the current `main` branch before project work.
+2. Identify the current open task from the latest repository evidence; do not assume chat history or stale summaries are current.
+3. Inspect current repository state and relevant source/schema using available tools first.
+4. Establish local branch/HEAD/status only when local execution or synchronization makes it necessary. Request a concise status summary; preserve staged, unstaged, untracked, backup and user data.
+5. Do not ask the user to repeat documentation or source inspection already completed through repository tools.
+6. Continue from the next verified step. Do not reopen closed work without concrete regression evidence.
+
+### Existing engineering safeguards still apply
+- Work in this repository only and on `main`; never create branches.
+- Never use destructive Git commands, force-push, or overwrite user work.
+- Inspect actual source/schema/docs before changes; `database/ahl_el_kheir.sql` is schema truth.
+- Database changes require explicit migrations; never run DDL at application runtime.
+- Preserve existing architecture and unrelated modules. Make the smallest evidence-backed change.
+- Verify with relevant syntax checks, focused tests, and local runtime acceptance when required.
+- Update the canonical and relevant module documentation after meaningful milestones.
+- Never claim a change or test succeeded without actual evidence.
+
