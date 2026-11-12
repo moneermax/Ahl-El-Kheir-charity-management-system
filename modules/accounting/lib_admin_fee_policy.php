@@ -127,6 +127,19 @@ if (!function_exists('ak_apply_admin_fee_snapshot_prepared')) {
         $t = dbFetchOne("SELECT * FROM transactions WHERE id=? FOR UPDATE", [$txnId]);
         if (!$t) throw new RuntimeException('المعاملة غير موجودة.');
         $type = (string)($t['transaction_type'] ?? 'sponsorship_payment');
+        if ((string)($t['component_model'] ?? 'legacy') === 'monthly_agreement') {
+            $components = ak_spma_validate_snapshot_for_posting($t);
+            if ($type !== 'sponsorship_payment') {
+                throw new RuntimeException('نموذج الاتفاقية الشهرية لا يتوافق مع نوع المعاملة المحاسبي.');
+            }
+            return [
+                'method'=>'none',
+                'value'=>0.00,
+                'amount'=>0.00,
+                'net_amount'=>$components['sponsorship_received'],
+                'policy_id'=>null
+            ];
+        }
         if (!in_array($type, ['sponsorship_payment','admin_fee'], true)) {
             return ['method'=>'none','value'=>0.00,'amount'=>0.00,'net_amount'=>(float)$t['amount'],'policy_id'=>null];
         }
