@@ -242,6 +242,33 @@ if (is_string($paymentEntrySource)) {
         'agreement_summary_follows_selected_month_row'
     );
     $assert(
+        !str_contains($paymentEntrySource, "$input['amount']=(string)((float)$pre['monthly_amount'])")
+        && str_contains($paymentEntrySource, "'amount'=>'','date'=>date('Y-m-d)'"),
+        'unrelated_single_payment_amount_starts_blank'
+    );
+    $paymentEvidenceHeading = strpos($paymentEntrySource, 'بيانات توثيق الدفعة');
+    $assert(
+        $paymentEvidenceHeading !== false
+        && strpos($paymentEntrySource, 'name="date"', $paymentEvidenceHeading) !== false
+        && strpos($paymentEntrySource, 'name="method"', $paymentEvidenceHeading) !== false
+        && strpos($paymentEntrySource, 'name="receipt"', $paymentEvidenceHeading) !== false
+        && strpos($paymentEntrySource, 'name="reference"', $paymentEvidenceHeading) !== false
+        && strpos($paymentEntrySource, 'name="description"', $paymentEvidenceHeading) !== false
+        && strpos($paymentEntrySource, 'name="receipt_file"', $paymentEvidenceHeading) !== false,
+        'shared_payment_metadata_grouped_under_heading'
+    );
+    $monthlyWarningPosition = strpos($paymentEntrySource, 'قيم الاتفاقية الشهرية مرجعية');
+    $monthlySectionStart = strpos($paymentEntrySource, '<div class="col-12" id="grpLines">');
+    $monthlySectionEnd = strpos($paymentEntrySource, '<div class="col-md-4" id="grpSingleAmount"', $monthlySectionStart === false ? 0 : $monthlySectionStart);
+    $assert(
+        $monthlyWarningPosition !== false
+        && $monthlySectionStart !== false
+        && $monthlySectionEnd !== false
+        && $monthlyWarningPosition > $monthlySectionStart
+        && $monthlyWarningPosition < $monthlySectionEnd,
+        'agreement_warning_stays_with_monthly_sponsorship_section'
+    );
+    $assert(
         !str_contains($paymentEntrySource, 'الرسوم الإدارية لا تُدخل يدوياً.'),
         'stale_admin_fee_message_removed'
     );
