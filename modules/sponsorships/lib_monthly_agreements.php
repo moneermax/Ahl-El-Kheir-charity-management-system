@@ -72,6 +72,50 @@ function ak_spma_build_submission_snapshot(
 }
 }
 
+if (!function_exists('ak_spma_resolve_allocation_commitment')) {
+function ak_spma_resolve_allocation_commitment(array $transaction, array $snapshots, array $sponsorship): float
+{
+    if (count($snapshots) > 1) {
+        throw new RuntimeException('توجد لالتزامات الشهر قيم متعارضة في تخصيصات سابقة.');
+    }
+    $hasSnapshot = count($snapshots) === 1;
+    $snapshotCommitment = $hasSnapshot ? round((float)$snapshots[0]['commitment_amount'], 2) : null;
+    if ((string)($transaction['component_model'] ?? 'legacy') === 'monthly_agreement') {
+        $agreedCommitment = round((float)($transaction['agreed_sponsorship_amount'] ?? 0), 2);
+        $agreementId = (int)($transaction['monthly_agreement_id'] ?? 0);
+        if ($agreementId <= 0 || $agreedCommitment <= 0) {
+            throw new RuntimeException('لقطة اتفاق الكفالة الشهرية غير مكتملة؛ تعذر إنشاء التخصيص.');
+        }
+        $commitment = $hasSnapshot ? $snapshotCommitment : $agreedCommitment;
+        if ($commitment !== $agreedCommitment) {
+            throw new RuntimeException('قيمة الاتفاقية لا تطابق الالتزام المثبت بتخصيص سابق لهذا الشهر.');
+        }
+    } else {
+        $commitment = $hasSnapshot ? $snapshotCommitment : round((float)$sponsorship['monthly_amount'], 2);
+    }
+    if ($commitment <= 0) throw new RuntimeException('قيمة الالتزام الشهري للكفالة غير صالحة.');
+    return $commitment;
+}
+}
+
+if (!function_exists('ak_spma_resolve_report_commitment')) {
+function ak_spma_resolve_report_commitment(?array $allocation, ?array $agreement, float $legacyMonthlyAmount): float
+{
+    if ($allocation && (int)($allocation['commitment_versions'] ?? 0) > 1) {
+        throw new RuntimeException('توجد قيم التزام متعارضة لهذا الشهر.');
+    }
+    if ($allocation && (int)($allocation['commitment_versions'] ?? 0) === 1) {
+        $commitment = round((float)$allocation['commitment_amount'], 2);
+    } elseif ($agreement) {
+        $commitment = round((float)$agreement['agreed_sponsorship_amount'], 2);
+    } else {
+        $commitment = round($legacyMonthlyAmount, 2);
+    }
+    if ($commitment <= 0) throw new RuntimeException('قيمة الالتزام الشهري غير صالحة.');
+    return $commitment;
+}
+}
+
 if (!function_exists('ak_spma_validate_snapshot_for_posting')) {
 function ak_spma_validate_snapshot_for_posting(array $transaction): array
 {
