@@ -25,6 +25,34 @@ def insert_statements(text: str) -> list[str]:
 def synchronize(text: str) -> str:
     if "CREATE TABLE " + chr(96) + "sponsorship_monthly_agreements" + chr(96) in text:
         q = chr(96)
+        evidence_columns = [
+            q + "transaction_date" + q + " date DEFAULT NULL",
+            q + "receipt_number" + q + " varchar(50) DEFAULT NULL",
+            q + "reference_number" + q + " varchar(100) DEFAULT NULL",
+        ]
+        sponsor_table_start = text.find("CREATE TABLE " + q + "sponsor_payments" + q)
+        if sponsor_table_start < 0:
+            raise RuntimeError("sponsor_payments table is missing from canonical schema.")
+        sponsor_table_end = text.find(";", sponsor_table_start)
+        sponsor_table_block = text[sponsor_table_start:sponsor_table_end]
+        if any(column not in sponsor_table_block for column in evidence_columns):
+            payment_method_line = "  " + q + "payment_method" + q + " varchar(30) NOT NULL DEFAULT 'cash',"
+            if payment_method_line not in sponsor_table_block:
+                payment_method_line = "  " + q + "payment_method" + q + " varchar(30) NOT NULL DEFAULT 'cash'"
+            if payment_method_line not in sponsor_table_block:
+                raise RuntimeError("Cannot find the payment_method anchor in sponsor_payments.")
+            replacement = (
+                "  " + q + "payment_method" + q + " varchar(30) NOT NULL DEFAULT 'cash',\n"
+                "  " + q + "transaction_date" + q + " date DEFAULT NULL,\n"
+                "  " + q + "receipt_number" + q + " varchar(50) DEFAULT NULL,\n"
+                "  " + q + "reference_number" + q + " varchar(100) DEFAULT NULL,"
+            )
+            if payment_method_line.endswith(","):
+                replacement = replacement
+            else:
+                replacement = replacement[:-1]
+            sponsor_table_block = sponsor_table_block.replace(payment_method_line, replacement, 1)
+            text = text[:sponsor_table_start] + sponsor_table_block + text[sponsor_table_end:]
         required = [
             q + "component_model" + q + " enum('legacy','monthly_agreement') NOT NULL DEFAULT 'legacy'",
             q + "monthly_agreement_id" + q + " int(10) UNSIGNED DEFAULT NULL",
