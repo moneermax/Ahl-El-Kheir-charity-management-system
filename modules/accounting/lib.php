@@ -72,12 +72,9 @@ function ak_post_transaction_journal_prepared(int $txnId, ?int $createdByUserId 
         $lines[] = [$revenueAccount, 0.0, $net, ($type === 'sponsorship_payment' ? 'إيراد كفالات مؤجل ' : 'إيراد كفالات ') . $t['transaction_code']];
         if ($fee > 0) {
             if ((string)($t['component_model'] ?? 'legacy') === 'monthly_agreement') {
-                $serviceFeeCode = (string)($snapshot['service_fee_account_code'] ?? '');
-                if ($serviceFeeCode === '') throw new RuntimeException('حساب إيراد رسوم الخدمة غير مثبت في لقطة المعاملة.');
-                $lines[] = [$serviceFeeCode, 0.0, $fee, 'رسوم خدمة كفالة ' . $t['transaction_code']];
-            } else {
-                $lines[] = ['4200', 0.0, $fee, 'رسوم إدارية ' . $t['transaction_code']];
+                throw new RuntimeException('لا يمكن ترحيل رسوم خدمة الكفالات قبل اعتماد توقيت الاعتراف المحاسبي وحساب الإيراد.');
             }
+            $lines[] = ['4200', 0.0, $fee, 'رسوم إدارية ' . $t['transaction_code']];
         }
     }
     $resolvedLines = []; $totalDebit = 0.0; $totalCredit = 0.0;
