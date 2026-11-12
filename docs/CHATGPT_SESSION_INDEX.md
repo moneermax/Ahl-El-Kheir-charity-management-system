@@ -3973,3 +3973,19 @@ Verified lifecycle and audit trail:
 Local PHP 8.2 syntax checks for modules/transactions/index.php and modules/transactions/edit_returned.php passed before browser/database acceptance. No schema, migration, accounting-policy, journal, or allocation code was changed for this source fix or acceptance.
 
 Acceptance disposition: CLOSED for the VGM creator's FM-returned ordinary-transaction correction/resubmission and subsequent FM approval/posting path. Preserve TR-000024 / JE-000054 as test evidence; do not edit, void, return, or reuse them. The separate creator-cancellation branch and an independent runtime check of Transaction History action visibility were not part of this executed scenario and are not claimed as runtime-proven. Do not rerun this acceptance without concrete regression evidence.
+
+
+## 2026-11-12 — Sponsorship payment entry and per-month service fee (active)
+
+Continuation plan: `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`.
+
+Business decisions confirmed:
+- The agreed service fee is stored per sponsorship and covered month; different months may have different agreed amounts.
+- Both VGM and Supervisor routes must load the applicable month's agreement as read-only reference values, with editable actual sponsorship/service-fee receipt inputs initially populated from those values.
+- Actual receipt total is the sum of the two actual components. No percentage, gross-up, deduction, or inferred fee calculation applies.
+- The global administrative-fee policy must not calculate or override the sponsorship service fee. Preserve the shared policy for unrelated transaction types until all callers are mapped; do not delete it speculatively.
+- Agreement values and actual receipt components must be snapshotted for FM review and accounting.
+
+Source audit confirms both current sponsorship payment routes still invoke the gross-to-net policy model at posting/approval. The common posting helper allocates `net_amount` to the sponsorship and credits `4200` for the policy fee. The allocation helper must instead receive the actual sponsorship component. Returned VGM transactions also have a legacy percentage-fee editor that must be reconciled.
+
+No application/schema changes or financial mutations have been made. Remaining design decisions include agreement amendment authority/effective-month controls and whether service-fee revenue belongs in existing account `4200` or a distinct account. A complete repository-wide helper caller inventory remains blocked by unavailable GitHub code-search indexing and must be completed before changing shared helpers.
