@@ -32,6 +32,7 @@ if (!preg_match('/^\d{4}-(0[1-9]|1[0-2])$/', $monthInput)) {
     $monthInput = date('Y-m');
 }
 $coveredMonth = $monthInput . '-01';
+$paymentPeriodLabel = DateTimeImmutable::createFromFormat('!Y-m', $monthInput)->format('F/Y');
 $selectedId = (int) ($_GET['sponsorship_id'] ?? $_POST['sponsorship_id'] ?? 0);
 
 function ak_sma_amount(string $raw, bool $allowZero, string $label): string
@@ -121,7 +122,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                        AND component_model = 'monthly_agreement'
                        AND status IN ('pending','returned')
                        AND transaction_id IS NULL) AS pending_count",
-                [$selectedId, $monthInput, $selectedId, $monthInput]
+                [$selectedId, $paymentPeriodLabel, $selectedId, $paymentPeriodLabel]
             );
             $pendingComponentCount = (int)($pendingComponents['pending_count'] ?? 0);
             if ((int) ($allocation['commitment_versions'] ?? 0) > 1) {
@@ -294,7 +295,7 @@ if ($selected) {
                AND component_model = 'monthly_agreement'
                AND status IN ('pending','returned')
                AND transaction_id IS NULL) AS pending_count",
-        [$selectedId, $coveredMonth, $selectedId, $coveredMonth]
+        [$selectedId, $paymentPeriodLabel, $selectedId, $paymentPeriodLabel]
     );
     $pendingComponentCount = (int)($pendingComponents['pending_count'] ?? 0);
 }
