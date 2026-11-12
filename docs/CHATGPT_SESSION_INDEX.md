@@ -3993,3 +3993,7 @@ No application/schema changes or financial mutations have been made. Remaining d
 ### 2026-11-12 — Sponsorship payment / monthly service-fee agreement setup responsibility
 
 The user confirmed that GM, VGM, and FM will determine the agreed sponsorship amount and service fee in a meeting, and **FM is responsible for entering/setting up the agreed values in the system**. This is an operational data-entry assignment, not evidence that FM has unilateral decision authority or that an in-system approval hierarchy exists. Supervisors/VGM enter actual received amounts during payment entry; they do not amend the agreement there. Meeting evidence, amendment authorization, and any in-system confirmation requirements remain to be defined. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` for the active implementation plan and remaining gates. Implementation has not started.
+
+### 2026-11-12 — Sponsorship service-fee accounting destination
+
+The user delegated the accounting design recommendation because they are not an accountant. Selected direction: keep sponsorship service fees distinct in transaction data and use a controlled, auditable, configurable accounting mapping to a valid revenue account. Do not hard-code account `4200`, invent a new account code, or permit arbitrary per-payment account selection. An authorized accounting owner must confirm the actual chart-of-accounts destination before live posting is enabled. See `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`. Implementation remains not started.
