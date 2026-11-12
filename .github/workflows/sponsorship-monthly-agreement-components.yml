@@ -1,0 +1,49 @@
+name: Sponsorship Monthly Agreement Components
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'modules/sponsorships/lib_monthly_agreements.php'
+      - 'modules/sponsorships/lib_payment_status.php'
+      - 'modules/transactions/create.php'
+      - 'modules/transactions/edit_returned.php'
+      - 'modules/accounting/lib.php'
+      - 'modules/accounting/lib_admin_fee_policy.php'
+      - 'modules/accounting/lib_sponsorship_payment_accounting.php'
+      - 'modules/accounting/lib_sponsor_payment_approval.php'
+      - 'modules/accounting/fm_review_queue.php'
+      - 'modules/accounting/fm_transaction_review.php'
+      - 'tools/test_sponsorship_monthly_agreement_components.php'
+      - '.github/workflows/sponsorship-monthly-agreement-components.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  php-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+      - name: Set up PHP 8.2
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - name: Lint changed sponsorship workflow files
+        run: |
+          php -l modules/sponsorships/lib_monthly_agreements.php
+          php -l modules/sponsorships/lib_payment_status.php
+          php -l modules/transactions/create.php
+          php -l modules/transactions/edit_returned.php
+          php -l modules/accounting/lib.php
+          php -l modules/accounting/lib_admin_fee_policy.php
+          php -l modules/accounting/lib_sponsorship_payment_accounting.php
+          php -l modules/accounting/lib_sponsor_payment_approval.php
+          php -l modules/accounting/fm_review_queue.php
+          php -l modules/accounting/fm_transaction_review.php
+          php -l tools/test_sponsorship_monthly_agreement_components.php
+      - name: Run monthly agreement component contract tests
+        run: php tools/test_sponsorship_monthly_agreement_components.php
