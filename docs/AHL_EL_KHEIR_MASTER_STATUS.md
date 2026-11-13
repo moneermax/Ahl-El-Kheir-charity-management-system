@@ -145,6 +145,12 @@ The substantial ACC1/nanny accounting integration is already completed, includin
 
 The Arabic encoding issue is already solved. Do not restart old ACC1 tests unless a documented open item or genuine regression appears.
 
+### 2026-11-13 — Accountant Staff Nanny disbursement execution authority
+
+The user confirmed that Accountant Staff must be able to execute outgoing Nanny disbursements, upload the transfer receipt, and complete the existing transfer/posting step. The dedicated workflow now permits ACC1 to perform the transfer only when the batch's Nanny is in that accountant's `accountant_nanny_assignments` scope. The existing pending-state and mandatory receipt checks remain. ACC1's batch void authority remains denied; voiding stays with Admin/Financial Manager.
+
+Implementation and focused contract checks are committed on `main`; CI and local Apache/database acceptance are pending. This is an outgoing disbursement path, not permission to record incoming collections or issue generic receipt vouchers.
+
 ## 7. Current active direction
 
 **Supervisor ↔ Accounting integration review** remains the broader audit direction. The latest completed work includes fresh Supervisor bank-transfer and mobile-wallet/payment-method/accounting-path tests, including the administrative-fee policy check for the bank-transfer transaction and the FM treasury reconciliation test.
