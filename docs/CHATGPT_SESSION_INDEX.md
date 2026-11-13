@@ -4372,3 +4372,10 @@ GitHub Actions evidence:
 - Flutter run `43392661644`: `flutter analyze --no-fatal-infos` passed. All six `voucher_page_test.dart` tests passed, including Accountant Staff payment-only UI. The full suite had 185 passing tests and one unrelated existing failure in `payroll_management_page_test.dart` (expected 10, actual 11); APK build was therefore skipped. Do not alter payroll tests as part of this voucher task without separate regression investigation.
 
 The web/API voucher audit-write correction is source-contract verified; no deterministic runtime audit-insert failure was injected, so rollback-on-audit-failure remains source-verified rather than runtime-proven. Local Apache/mobile API role acceptance also remains pending. No local database, voucher, journal or cash balance was changed.
+
+
+## 2026-11-13 — Accountant Staff Nanny disbursement execution authority
+
+The user clarified that Accountant Staff must execute outgoing monthly Nanny transfers, upload transfer receipts, and complete the existing disbursement transfer/posting workflow. The transfer POST and UI are now available to ACC1 only within the accountant's assigned-Nanny scope; the server rechecks `accountant_nanny_assignments` for the selected batch. Pending status and mandatory transfer receipt remain required. Admin/Financial Manager-only batch void authority is preserved. This does not grant incoming collection or generic receipt-voucher authority.
+
+Source and contract changes are on `main`. CI and local Apache/database acceptance remain pending. See `docs/ACCOUNTING_NANNY_DISBURSEMENT_AUTHORITY_CONTINUATION.md`.
