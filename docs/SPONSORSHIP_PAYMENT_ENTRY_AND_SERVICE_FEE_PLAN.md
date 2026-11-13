@@ -881,3 +881,5 @@ No application business logic or database schema was changed. The preflight must
 ## 2026-11-13 — VGM collection authority boundary
 
 The user has clarified that VGM is report-only for collections. VGM must not submit monthly sponsorship or other-donation collections, edit/resubmit returned collection transactions, or cancel returned collection transactions. Existing VGM access to non-financial sponsor/sponsorship operations and read-only reports remains. Supervisor collection submission is a separate `sponsor_payments` path and is not removed. Accountant Staff and the separate Accountant-to-Nanny disbursement route remain outside this VGM authority change. This does not authorize automatic posting or resolve positive monthly-agreement service-fee accounting policy.
+
+Verification update (2026-11-13): the VGM report-only source boundary and focused contract are CI-verified in run `43381253320` (6/6 VGM checks; PHP lint passed). Local Apache/browser role acceptance remains pending. This does not change Supervisor submission or FM posting behavior.
