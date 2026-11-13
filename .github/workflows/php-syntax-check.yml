@@ -231,6 +231,9 @@ jobs:
             modules/hr/salary_advance_processing.php
             modules/hr/salary_advance_request.php
             modules/accounting/lib_transaction_review.php
+            modules/accounting/lib_disbursement_approval.php
+            modules/accounting/disbursements.php
+            modules/accounting/disbursement_void_guard.php
             modules/families/orphan_form.php
             modules/families/suspensions.php
             modules/accounting/group_verification.php
