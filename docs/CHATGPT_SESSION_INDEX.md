@@ -4204,3 +4204,10 @@ The accounting work may now continue. This UI acceptance is **not** an accountin
 Current repository head at this checkpoint: `7195623cdd6808e9dc2c071a67a21db6ee7a622`. The payment-entry refinement, focused layout contract test, and documentation commits are present on `main`; GitHub Actions runs `43351641281` (PHP 8.2 lint + 54 focused checks) and `43351641198` (PHP syntax and migration workflow jobs) passed.
 
 **Next exact gate:** establish the user's current local `main`/working-tree state and recheck the live `ahl_el_kheir` database for the three 2026-11-12 payment/agreement migrations and any pending/returned legacy sponsorship submissions. Earlier preflight evidence from 2026-11-12 said those migrations were not yet applied and identified legacy returned Supervisor rows 7–9; do not assume the local state is unchanged. Preserve all local modifications and financial records. Do not apply migrations or post payments until this read-only preflight is reviewed.
+
+
+## 2026-11-13 — Monthly-agreement zero-fee posting gate
+
+The user ran `tools/test_sponsorship_monthly_agreement_zero_fee_posting_rollback.php` locally and confirmed PASS for SH-003508 / November 2026: actual sponsorship 10,000 SDG, actual service fee 0, allocation 10,000/0, journal Dr 1100 / Cr 2200, no fee-revenue line, rollback PASS. This closes only the direct prepared-posting zero-fee gate.
+
+A second rollback-only test, `tools/test_sponsorship_monthly_agreement_positive_fee_block_rollback.php`, has been added to verify positive service-fee posting is rejected before allocation/journal creation. It is included in the selected PHP lint list; local runtime execution is pending. Positive-fee posting remains blocked pending authorized recognition timing and approved revenue destination. Next separate verification after the guard test: Supervisor-to-FM zero-fee approval path.
