@@ -366,6 +366,7 @@ if (is_string($paymentEntrySource)) {
     $reviewQueueSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/fm_review_queue.php');
     $migrationSource = file_get_contents(dirname(__DIR__) . '/database/migrations/2026-11-12_sponsor_payment_row_evidence.sql');
     $transactionReviewSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_transaction_review.php');
+    $returnedEditorSource = file_get_contents(dirname(__DIR__) . '/modules/transactions/edit_returned.php');
     $assert(
         is_string($approvalSource)
         && str_contains($approvalSource, "\$sp['transaction_date']")
@@ -405,6 +406,17 @@ if (is_string($paymentEntrySource)) {
         && str_contains($paymentEntrySource, "'component_model','monthly_agreement_id','agreed_sponsorship_amount','agreed_service_fee_amount','actual_sponsorship_received','actual_service_fee_received'")
         && str_contains($paymentEntrySource, '$pdo->commit();'),
         'supervisor_correction_audits_actuals_and_preserves_agreement_snapshot'
+    );
+    $assert(
+        is_string($returnedEditorSource)
+        && str_contains($returnedEditorSource, "if($componentModel==='monthly_agreement')")
+        && str_contains($returnedEditorSource, "'actual_sponsorship_received'") === false
+        && str_contains($returnedEditorSource, "ak_transaction_review_audit($uid,'RESUBMIT_FM',$tid,$t,$upd)")
+        && str_contains($returnedEditorSource, "$upd['actual_sponsorship_received']=$actualS")
+        && !str_contains($returnedEditorSource, "$upd['monthly_agreement_id']")
+        && !str_contains($returnedEditorSource, "$upd['agreed_sponsorship_amount']")
+        && !str_contains($returnedEditorSource, "$upd['agreed_service_fee_amount']"),
+        'vgm_returned_monthly_correction_changes_actuals_only_and_audits_snapshot'
     );
     $assert(
         is_string($transactionReviewSource)
