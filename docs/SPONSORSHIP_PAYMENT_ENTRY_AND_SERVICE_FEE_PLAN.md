@@ -761,3 +761,14 @@ The accounting work may now continue. This UI acceptance is **not** an accountin
 Current repository head at this checkpoint: `7195623cdd6808e9dc2c071a67a21db6ee7a622`. The payment-entry refinement, focused layout contract test, and documentation commits are present on `main`; GitHub Actions runs `43351641281` (PHP 8.2 lint + 54 focused checks) and `43351641198` (PHP syntax and migration workflow jobs) passed.
 
 **Next exact gate:** establish the user's current local `main`/working-tree state and recheck the live `ahl_el_kheir` database for the three 2026-11-12 payment/agreement migrations and any pending/returned legacy sponsorship submissions. Earlier preflight evidence from 2026-11-12 said those migrations were not yet applied and identified legacy returned Supervisor rows 7–9; do not assume the local state is unchanged. Preserve all local modifications and financial records. Do not apply migrations or post payments until this read-only preflight is reviewed.
+
+## 2026-11-13 — Monthly-agreement zero-service-fee posting harness prepared
+
+A focused rollback-only integration harness was added:
+`tools/test_sponsorship_monthly_agreement_zero_fee_posting_rollback.php`
+
+It targets the preflighted November 2026 agreement for `SH-003508` (agreement 1): agreed sponsorship 10,000 SDG, agreed service-fee reference 2,000 SDG, actual sponsorship receipt 10,000 SDG, and actual service fee received 0 SDG. The harness inserts a temporary already-posted transaction inside one InnoDB transaction and calls the real `ak_post_transaction_journal_prepared()` path. It asserts the zero-fee snapshot, full 10,000 allocation, exactly two journal lines (Dr 1100 / Cr 2200), no 4200 service-fee revenue line, balanced totals, and rollback cleanup.
+
+The harness performs no DDL, account seeding, agreement/sponsorship updates, or permanent payment submission. It refuses to run if the selected agreement, sponsorship eligibility, pause/allocation history, linked transactions/submissions, or required active accounts no longer match the preflight. Because the production journal-number allocator uses `MAX(entry_code)+1` without serialization, the test must be run only while no other user/process is posting transactions.
+
+**Runtime status: PENDING local XAMPP execution.** The harness does not prove the full FM approval workflow; it specifically verifies the monthly-agreement zero-service-fee posting, allocation, and journal path. Positive service-fee posting remains intentionally blocked pending authorized accounting policy.
