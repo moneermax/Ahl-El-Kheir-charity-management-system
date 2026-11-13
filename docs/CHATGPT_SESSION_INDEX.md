@@ -4280,3 +4280,19 @@ GitHub Actions run `43375119701` (Sponsorship Monthly Agreement Components) comp
 No schema or migration changes were made. No local database, payment, agreement, receipt, journal or allocation was changed. This is repository/CI verification only; local XAMPP PHP execution and browser/runtime acceptance remain pending. Preserve legacy returned Supervisor rows 7–9, agreement 1 / SH-003508, and protected TR-000023, TR-000024 and JE-000054. Do not use them as test fixtures.
 
 **Next gate:** after pulling the latest `main`, run PHP lint for `modules/accounting/fm_review_queue.php`, `modules/accounting/lib_transaction_review.php`, `modules/transactions/create.php`, and `modules/transactions/edit_returned.php`, then run `tools/test_sponsorship_monthly_agreement_components.php`. Only after those pass, establish a distinct safe local fixture for FM return and Supervisor correction runtime verification. Do not submit a real organizational payment.
+
+
+## 2026-11-13 — Read-only preflight for sponsorship return/correction runtime fixture
+
+After the user pulled `9e29a4e8`, all four local PHP syntax checks passed and `tools/test_sponsorship_monthly_agreement_components.php` returned `RESULT | 59 checks | PASS`.
+
+Added `tools/preflight_sponsorship_return_fixture.php` as a strictly read-only next step. It:
+- Requires CLI + development environment and the configured `ahl_el_kheir` database.
+- Checks required table/column presence and InnoDB engines for the payment/audit/accounting tables.
+- Reports only counts for protected payment rows 7–9, transactions TR-000023/TR-000024 and journal JE-000054.
+- Lists up to 10 latest-version monthly agreements only where the sponsorship and sponsor are active, an active assigned Supervisor exists, the sponsorship covers the month, and no pause history, allocation, prior sponsor-payment submission, or transaction exists for that sponsorship/month or agreement.
+- Performs SELECTs only; it does not create fixtures, change data, or apply migrations.
+
+Updated `.github/workflows/sponsorship-monthly-agreement-components.yml` to lint the new preflight script. Workflow run `43376094989` is the CI verification for this addition; record its final result after completion.
+
+No application business logic or database schema was changed. The preflight must be run locally before selecting any fixture. A listed candidate is only a candidate for further review, not authorization to submit a payment. Preserve all protected records and do not run browser acceptance against agreement 1 / SH-003508.
