@@ -51,9 +51,10 @@ function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,
     if($journalId<=0) throw new RuntimeException('فشل إنشاء القيد المحاسبي.');
     $affected=dbExecute("UPDATE sponsor_payments SET status='approved',reviewed_by_user_id=?,reviewed_at=NOW(),transaction_id=? WHERE id=? AND status='pending'",[$reviewerUserId,$transactionId,$paymentId]);
     if($affected!==1) throw new RuntimeException('تعذر اعتماد الدفعة.');
-    try {
-        dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'APPROVE','sponsor_payments',?,?,?,?,?)",[$reviewerUserId,$paymentId,json_encode(['status'=>'pending'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'approved','txn_id'=>$transactionId,'journal_id'=>$journalId,'admin_fee_amount'=>$calc['amount'],'admin_fee_method'=>$calc['method'],'payment_method'=>$sp['payment_method']],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);
-    } catch(Throwable $auditError) {}
+    // Approval audit is part of the financial state transition. If it cannot
+    // be recorded, propagate the failure so the caller rolls back the journal,
+    // allocation, transaction and approval together.
+    dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'APPROVE','sponsor_payments',?,?,?,?,?)",[$reviewerUserId,$paymentId,json_encode(['status'=>'pending'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'approved','txn_id'=>$transactionId,'journal_id'=>$journalId,'admin_fee_amount'=>$calc['amount'],'admin_fee_method'=>$calc['method'],'payment_method'=>$sp['payment_method']],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);
     if((string)$sp['payment_type']==='monthly_sponsorship'){
         if($newSponsorRecorder!==null) $newSponsorRecorder($pdo,$paymentId,$reviewerUserId);
         else hrIncentiveRecordNewSponsorPaymentEvent($pdo,$paymentId,$reviewerUserId);
