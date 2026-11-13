@@ -6933,8 +6933,8 @@ Implemented on `main`:
 Schema inspection confirmed the canonical SQL dump already has the required `draft`, `pending_approval`, and `approved` enum values plus nullable `submitted_by`, `submitted_at`, `reviewed_by_user_id`, and `reviewed_at`. No migration or runtime DDL is required.
 
 Verification:
-- GitHub Actions run `43465126565`: PHP 8.2 lint and component workflow passed; existing sponsorship suite `63 checks | PASS`, VGM read-only contract `6/6 PASS`, and expanded Accountant Staff/disbursement contract `29/29 PASS`.
-- PHP lint job `132022066880` in workflow run `43465118272` passed, including `disbursements.php`, `disbursement_void_guard.php`, and the new approval helper. Other unrelated jobs in that broader workflow were still running at the time of this checkpoint; do not call the entire workflow complete.
+- GitHub Actions run `43466326165`: PHP 8.2 lint and component workflow passed; existing sponsorship suite `63 checks | PASS`, VGM read-only contract `6/6 PASS`, and expanded Accountant Staff/disbursement contract `29/29 PASS`.
+- PHP lint job in full workflow run `43466326141` passed, including `disbursements.php`, `disbursement_void_guard.php`, and the new approval helper. Other unrelated jobs in that broader workflow were still running at the time of this checkpoint; do not call the entire workflow complete.
 - These are source/static and syntax checks only. Local Apache/browser/database acceptance is still required. No local batch, transaction, journal, receipt, or cash balance was changed by this implementation.
 
 Local acceptance must verify draft creation/edit, FM notification, approval without posting/cash movement, rejection reason and resubmission, post-approval edit denial, assigned/unassigned ACC1 boundaries, and one approved transfer followed by controlled Admin/FM void. The earlier test batch `#13` was confirmed transferred and financially posted in the previous session; verify it has been voided through the supported Admin/FM flow before further local testing. Never delete or directly edit its transaction/journal evidence.
@@ -6947,3 +6947,6 @@ Relevant files:
 - `.github/workflows/php-syntax-check.yml`
 - `.github/workflows/sponsorship-monthly-agreement-components.yml`
 - `docs/ACCOUNTING_NANNY_DISBURSEMENT_AUTHORITY_CONTINUATION.md`
+
+
+CI note: An earlier attempt (`43466074018`) failed before running the sponsor-request migration test because the Ubuntu 26.04 runner's package index reported no installation candidate for `mariadb-client` (`apt-get install` exit 100). The subsequent full workflow run `43466326141` on the updated main commit completed successfully, including that job; this was a runner package-availability failure, not a PHP or migration assertion failure.
