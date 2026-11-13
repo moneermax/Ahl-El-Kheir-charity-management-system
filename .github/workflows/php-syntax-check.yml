@@ -234,6 +234,9 @@ jobs:
             modules/accounting/lib_disbursement_approval.php
             modules/accounting/disbursements.php
             modules/accounting/disbursement_void_guard.php
+            modules/accounting/lib_disbursement_approval.php
+            modules/accounting/disbursements.php
+            modules/accounting/disbursement_void_guard.php
             modules/families/orphan_form.php
             modules/families/suspensions.php
             modules/accounting/group_verification.php
