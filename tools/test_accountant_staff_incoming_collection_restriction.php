@@ -1,6 +1,7 @@
 <?php
 declare(strict_types=1);
 $root = dirname(__DIR__);
+require_once $root . '/modules/accounting/lib_vouchers.php';
 $files = [
     'create' => $root . '/modules/transactions/create.php',
     'edit' => $root . '/modules/transactions/edit_returned.php',
@@ -27,6 +28,11 @@ $checks['web_receipt_voucher_post_is_server_denied'] = strpos($files['voucher_we
 $checks['web_receipt_option_is_permission_gated'] = strpos($files['voucher_web'], 'if ($canIssueReceipt):') !== false;
 $checks['mobile_receipt_voucher_post_is_server_denied'] = strpos($files['voucher_api'], 'ak_voucher_can(\'issue_receipt\', $role)') !== false;
 $checks['mobile_voucher_capabilities_are_direction_specific'] = strpos($files['voucher_api'], '\'can_issue_receipt\' => ak_voucher_can(\'issue_receipt\', $role)') !== false && strpos($files['voucher_api'], '\'can_issue_payment\' => ak_voucher_can(\'issue_payment\', $role)') !== false;
+$checks['runtime_acc1_payment_only_capability'] = ak_voucher_can('issue', 'accountant_staff') && ak_voucher_can('issue_payment', 'accountant_staff') && !ak_voucher_can('issue_receipt', 'accountant_staff');
+$checks['runtime_admin_and_fm_keep_both_voucher_directions'] = ak_voucher_can('issue_receipt', 'admin') && ak_voucher_can('issue_payment', 'admin') && ak_voucher_can('issue_receipt', 'financial_manager') && ak_voucher_can('issue_payment', 'financial_manager');
+$checks['runtime_gm_and_vgm_cannot_issue_vouchers'] = !ak_voucher_can('issue', 'general_manager') && !ak_voucher_can('issue', 'vice_general_manager');
+$checks['web_voucher_audit_failures_propagate_to_transaction'] = strpos($files['voucher_web'], 'catch (Throwable $auditError) {}') === false && substr_count($files['voucher_web'], 'INSERT INTO audit_log') === 2;
+$checks['mobile_voucher_audit_failures_propagate_to_transaction'] = strpos($files['voucher_api'], 'catch(Throwable $auditError) {}') === false && substr_count($files['voucher_api'], 'INSERT INTO audit_log') === 2;
 $passed = 0;
 foreach ($checks as $name => $ok) { echo ($ok ? 'PASS' : 'FAIL') . " | {$name}\n"; if ($ok) $passed++; }
 echo "RESULT | {$passed}/" . count($checks) . " checks | " . ($passed === count($checks) ? 'PASS' : 'FAIL') . "\n";

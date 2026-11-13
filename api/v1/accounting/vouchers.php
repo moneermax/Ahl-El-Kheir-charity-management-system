@@ -71,7 +71,8 @@ if ($method === 'POST') {
             $stmt=$pdo->prepare('SELECT COUNT(*) n,COALESCE(SUM(debit),0) d,COALESCE(SUM(credit),0) c FROM journal_lines WHERE entry_id=?'); $stmt->execute([$entryId]); $totals=$stmt->fetch(PDO::FETCH_ASSOC);
             if((int)$totals['n']!==2||abs((float)$totals['d']-$amount)>0.000001||abs((float)$totals['c']-$amount)>0.000001) throw new RuntimeException('Voucher journal entry failed balance verification.');
             $pdo->prepare('UPDATE vouchers SET entry_id=? WHERE id=?')->execute([$entryId,$voucherId]);
-            try { $stmt=$pdo->prepare("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?,'CREATE','vouchers',?,NULL,?,?,?)"); $stmt->execute([(int)$user['id'],$voucherId,json_encode(['no'=>$no,'type'=>$type,'amount'=>$amount,'entry'=>$entryCode],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']); } catch(Throwable $auditError) {}
+            $stmt=$pdo->prepare("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?,'CREATE','vouchers',?,NULL,?,?,?)");
+            $stmt->execute([(int)$user['id'],$voucherId,json_encode(['no'=>$no,'type'=>$type,'amount'=>$amount,'entry'=>$entryCode],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);
             $pdo->commit();
             ak_api_json(201,['ok'=>true,'data'=>['id'=>$voucherId,'voucher_no'=>$no,'voucher_type'=>$type,'amount'=>$amount,'entry_id'=>$entryId,'entry_code'=>$entryCode,'status'=>'posted']]);
         } catch(DomainException $e) {
@@ -118,7 +119,8 @@ if ($method === 'POST') {
             if((int)$totals['n']!==count($lines)||(float)$totals['d']<=0||abs((float)$totals['d']-(float)$totals['c'])>0.000001) throw new RuntimeException('Voucher reversal journal entry failed balance verification.');
             $stmt=$pdo->prepare("UPDATE vouchers SET status='voided' WHERE id=? AND status='posted'"); $stmt->execute([(int)$id]);
             if($stmt->rowCount()!==1) throw new DomainException('Voucher status changed before it could be voided.');
-            try { $stmt=$pdo->prepare("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?,'VOID','vouchers',?,?,?,?,?)"); $stmt->execute([(int)$user['id'],(int)$id,json_encode(['status'=>'posted','entry_id'=>(int)$je['id']],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'voided','entry_id'=>(int)$je['id'],'reversal_journal_id'=>$reverseId,'reason'=>$reason],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']); } catch(Throwable $auditError) {}
+            $stmt=$pdo->prepare("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?,'VOID','vouchers',?,?,?,?,?)");
+            $stmt->execute([(int)$user['id'],(int)$id,json_encode(['status'=>'posted','entry_id'=>(int)$je['id']],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'voided','entry_id'=>(int)$je['id'],'reversal_journal_id'=>$reverseId,'reason'=>$reason],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);
             $pdo->commit();
             ak_api_json(200,['ok'=>true,'data'=>['id'=>(int)$id,'status'=>'voided','reversal_entry_id'=>$reverseId,'reversal_entry_code'=>$code]]);
         } catch(DomainException $e) {

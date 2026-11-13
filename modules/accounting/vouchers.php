@@ -120,12 +120,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($canIssue || $canVoid)) {
                 }
                 dbExecute("UPDATE vouchers SET entry_id = ? WHERE id = ?", [$eid, $vId]);
 
-                try {
-                    dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                               VALUES (?, 'CREATE', 'vouchers', ?, NULL, ?, ?, ?)",
-                        [Session::getUserId(), $vId, json_encode(['no' => $vNo, 'type' => $vType, 'amount' => $amount, 'entry' => $jeCode], JSON_UNESCAPED_UNICODE),
-                         $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-                } catch (Throwable $auditError) {}
+                dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                           VALUES (?, 'CREATE', 'vouchers', ?, NULL, ?, ?, ?)",
+                    [Session::getUserId(), $vId, json_encode(['no' => $vNo, 'type' => $vType, 'amount' => $amount, 'entry' => $jeCode], JSON_UNESCAPED_UNICODE),
+                     $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
 
                 db()->commit();
                 $newVoucherId = $vId;
@@ -215,14 +213,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($canIssue || $canVoid)) {
             if (dbExecute("UPDATE vouchers SET status='voided' WHERE id=? AND status='posted'", [$vId]) !== 1) {
                 throw new RuntimeException('تعذر تحديث حالة السند إلى مبطل.');
             }
-            try {
-                dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                           VALUES (?, 'VOID', 'vouchers', ?, ?, ?, ?, ?)",
-                    [Session::getUserId(), $vId,
-                     json_encode(['status' => 'posted', 'entry_id' => (int)$journal['id']], JSON_UNESCAPED_UNICODE),
-                     json_encode(['status' => 'voided', 'entry_id' => (int)$journal['id'], 'reversal_journal_id' => $reversalId, 'reason' => $voidReason], JSON_UNESCAPED_UNICODE),
-                     $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-            } catch (Throwable $auditError) {}
+            dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+                       VALUES (?, 'VOID', 'vouchers', ?, ?, ?, ?, ?)",
+                [Session::getUserId(), $vId,
+                 json_encode(['status' => 'posted', 'entry_id' => (int)$journal['id']], JSON_UNESCAPED_UNICODE),
+                 json_encode(['status' => 'voided', 'entry_id' => (int)$journal['id'], 'reversal_journal_id' => $reversalId, 'reason' => $voidReason], JSON_UNESCAPED_UNICODE),
+                 $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
 
             db()->commit();
             flash('success', 'تم إبطال السند ' . $vLocked['voucher_no'] . ' وإنشاء القيد العكسي ' . $reversalCode);
