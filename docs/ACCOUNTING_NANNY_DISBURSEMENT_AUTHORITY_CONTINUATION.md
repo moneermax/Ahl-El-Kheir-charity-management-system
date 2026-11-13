@@ -1,62 +1,71 @@
 # Accountant Staff — Monthly Nanny Disbursement Authority
 
-**Status:** Source change committed; CI and local runtime acceptance pending  
+**Status:** Source and CI contract verified; local runtime acceptance pending  
 **Date:** 2026-11-13  
 **Branch:** `main`
 
 ## Approved business rule
 
-Accountant Staff must be allowed to execute outgoing monthly Nanny disbursements, upload the bank/cash transfer receipt, and complete the existing transfer/posting step.
+Accountant Staff (ACC1) may execute outgoing monthly Nanny transfers only for Nannies assigned through `accountant_nanny_assignments(accountant_id, nanny_id)`. A real Financial Manager approval must occur before money leaves the organization's cash/bank balance.
 
-This authority is limited to each Accountant Staff user's assigned Nannies. The assignment relation is `accountant_nanny_assignments(accountant_id, nanny_id)`.
+The workflow is:
 
-This does not grant authority to:
+`draft → pending_approval → approved → transferred`
+
+- ACC1 creates a batch for an assigned Nanny. It starts as `draft`.
+- ACC1 may correct the amounts on the existing family rows while the batch is `draft` or `pending_approval`. Every correction requires a reason and a mandatory audit record.
+- Corrections cannot change the Nanny, group, month, or family membership. Each amount must be positive and no greater than the family's currently active sponsorship total for that group/month, with all three monthly verification flags set.
+- ACC1 submits a valid draft. The batch enters `pending_approval` and active FM-role users are notified. If ACC1 corrects a pending batch, it remains pending and FM is notified of the revision.
+- Only roles `financial_manager`, `fm`, and `finance` may approve/reject. Admin, GM, and VGM are not approval substitutes. An FM cannot approve/reject a batch they submitted themselves.
+- Approval changes the state to `approved` and records reviewer/time/audit evidence. It does **not** create a transaction or journal and does **not** deduct cash.
+- Rejection requires a reason, records it in the audit log, notifies the submitter, and returns the batch to `draft` for correction and resubmission.
+- Once approved, ACC1 cannot edit the batch. Transfer POST and UI require `approved` and a mandatory transfer receipt. The transfer transaction, balanced journal, batch state, and audit record commit in one transaction.
+- ACC1 cannot void. Admin/FM retain controlled void authority for draft, pending, approved, and transferred batches. A posted transfer is reversed through the existing reversing-journal process.
+- Nanny-side family confirmations, family receipts, returns, and closure remain separate.
+
+This authority does not grant ACC1 permission to:
 - enter incoming collections or donations;
 - issue generic incoming receipt vouchers;
-- void a monthly disbursement batch;
+- approve or reject a disbursement;
+- edit after FM approval;
+- void/cancel a batch;
 - operate outside the assigned-Nanny scope.
 
-Batch void remains restricted to Admin and Financial Manager as a segregation-of-duties control. Existing Nanny-side family confirmation, family receipts, partial return, final receipt, and closure behavior remain separate.
+## Source and schema findings
 
-## Source findings
+The previous source created batches directly as `pending_approval`, while the transfer POST accepted that same state and immediately posted a transaction and journal. There was no distinct FM approval action.
 
-Before the change, `modules/accounting/disbursements.php`:
-- admitted ACC1 to the page and limited batch visibility to assigned Nannies;
-- allowed ACC1 to create/manage assigned-scope batches and reopen closed batches/items;
-- restricted the transfer POST and transfer receipt UI to `$canManage` (Admin, GM, FM), excluding ACC1;
-- already restricted ACC1 batch void through a separate Admin/Financial Manager-only guard.
+The canonical `database/ahl_el_kheir.sql` already defines `draft`, `pending_approval`, and `approved` in the status enum, and includes nullable `submitted_by`, `submitted_at`, `reviewed_by_user_id`, and `reviewed_at`. No migration or runtime DDL was required. The existing `return_note` field was not reused because it is also part of the Nanny return workflow.
 
-The result was inconsistent with the approved role: ACC1 could manage assigned batch preparation/reopening but could not perform the actual outgoing transfer, receipt upload, or transaction/journal posting.
+## Implementation on main
 
-## Implementation
-
-- Transfer POST now uses the existing `$canManageAssigned` role gate.
-- Before accepting an ACC1 transfer, the server verifies the batch's `nanny_id` is assigned to the current accountant in `accountant_nanny_assignments`.
-- The transfer UI is displayed through the same assigned-scope page gate. The view route already suppresses unassigned ACC1 batches; the POST independently rechecks assignment to prevent forged requests.
-- `modules/accounting/serve_receipt.php` no longer treats ACC1 as a globally authorized receipt viewer. It resolves the receipt's parent Nanny and grants ACC1 access only when that Nanny is assigned to the current accountant.
-- Existing `pending_approval` state validation and mandatory receipt upload remain.
-- Existing transaction and balanced journal posting logic is unchanged.
-- Batch void remains Admin/Financial Manager only.
-
-No schema or migration change is required. No database rows, receipts, transactions, journals, or cash balances were changed by this source edit.
+- Added `modules/accounting/lib_disbursement_approval.php` for strict FM role detection, assignment checks, mandatory audit writes, and active/verified sponsorship amount validation.
+- Changed batch creation to transactional draft creation.
+- Added ACC1 pre-approval amount correction, explicit submission, FM approval, and reason-required rejection actions. All state-changing actions lock the batch row.
+- FM approval does not insert into `transactions` or `journal_entries`.
+- Changed transfer UI and POST to accept only `approved`, re-lock the batch, reject duplicate transaction references, and write the transfer audit record inside the posting transaction.
+- Extended the protected void guard to support draft/pending/approved/transferred states. Admin/FM only; ACC1 remains denied.
+- Added rejection-reason display and status labels.
+- Extended `tools/test_accountant_staff_incoming_collection_restriction.php` and the existing CI workflows to lint/test the new helper, page, and void guard.
 
 ## Verification
 
-Added contract checks to `tools/test_accountant_staff_incoming_collection_restriction.php` for:
-1. ACC1 transfer access under the assigned-scope role gate;
-2. server-side assigned-Nanny validation;
-3. transfer UI visibility;
-4. pending-state and mandatory receipt checks;
-5. retained Admin/Financial Manager-only batch void restriction;
-6. assigned-scope authorization for direct batch/item receipt URLs.
+GitHub Actions:
+- Run `43465126565`: PHP 8.2 lint passed; sponsorship component contract `63 checks | PASS`; VGM read-only contract `6/6 PASS`; Accountant Staff/disbursement contract `28/28 PASS`.
+- PHP lint job `132022066880` in workflow run `43465118272` passed for `modules/accounting/lib_disbursement_approval.php`, `modules/accounting/disbursements.php`, and `modules/accounting/disbursement_void_guard.php`. Other jobs in that broad workflow were still running at this checkpoint; do not claim the whole workflow completed.
 
-**Pending:** GitHub Actions PHP lint and focused contract execution, followed by local Apache acceptance using a controlled test batch. Runtime acceptance must verify:
-- assigned ACC1 can see the transfer form and complete a test transfer with a valid receipt;
-- unassigned ACC1 cannot transfer by direct POST;
-- a non-pending batch cannot be transferred again;
-- missing/invalid receipt is rejected;
-- Admin/FM existing transfer behavior remains;
-- ACC1 cannot void the batch;
-- assigned ACC1 can view that batch's transfer receipt, while an unassigned ACC1 is denied a forged batch/item receipt URL.
+These are static/source and syntax checks. No local Apache/browser/database runtime acceptance has been performed. No database rows, transactions, journals, receipts, or cash balances were changed by the implementation.
 
-Do not use a real operational payment merely to test permissions. Do not repeat unrelated closed accounting tests.
+## Local acceptance still required
+
+1. Pull the latest `main`.
+2. Verify the earlier test batch `#13` has been voided through Admin/FM and its posted transaction/journal reversed. Never delete or edit those records directly.
+3. Use a genuinely eligible group/month shown by the application's pre-creation checklist. Do not manufacture eligibility.
+4. As ACC1, create a draft, correct an existing family amount within its active sponsorship ceiling with a reason, and submit it.
+5. As FM, verify notification, review the rows, and approve. Confirm no transaction/journal was created and cash did not change at approval.
+6. As ACC1, verify an edit is rejected after approval, then upload the required transfer receipt and execute the approved transfer. Verify one posted transaction and balanced journal.
+7. Test rejection with a reason and resubmission on a separate eligible draft if needed.
+8. Verify an unassigned ACC1 cannot edit/submit/transfer or open the corresponding receipt by direct URL.
+9. As Admin/FM, void the test transfer and verify the reversing journal and restored cash balance. Do not repeat unrelated closed accounting tests.
+
+No local acceptance should use a real operational payment. If no eligible test group is available, stop and prepare a controlled rollback-only fixture after inspecting the live local data.

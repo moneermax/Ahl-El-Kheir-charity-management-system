@@ -112,6 +112,14 @@ After signing in, first confirm that the displayed dashboard matches your job ro
 
 ## 5. Accountant / Accountant Staff
 
+### Monthly Nanny disbursement
+1. Create a monthly batch only for a Nanny assigned to your account; the batch starts as a draft.
+2. Before FM approval, correct amounts only on the existing family rows. Give a reason for every correction. The system checks the current active sponsorship amount and the month's three verification flags.
+3. Submit the batch for Financial Manager review. Do not treat submission or FM approval as a cash transfer; approval creates no transaction or journal.
+4. If FM rejects the batch, read the recorded reason, correct it, and resubmit.
+5. After FM approval, the batch is locked against ACC1 edits. Upload the required transfer receipt and execute the transfer; this is the step that posts the transaction and balanced journal.
+6. ACC1 cannot void a batch. Escalate void/reversal requests to Admin or FM.
+
 ### Accounting processing
 1. Open the assigned accounting queue.
 2. Review source and evidence.

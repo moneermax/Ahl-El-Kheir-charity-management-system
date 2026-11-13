@@ -16,7 +16,7 @@ This file remains the master status/audit history. Its dated evidence is retaine
 
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-11-12 — sponsorship monthly-agreement schema foundation verified in CI; payment workflow implementation active
+**Current checkpoint:** 2026-11-13 — monthly Nanny disbursement FM approval gate source- and CI-verified; local runtime acceptance pending
 
 This is the single high-level **START HERE** status and continuation summary for the existing project. The detailed audit record is consolidated into `docs/AHL_EL_KHEIR_MASTER_AUDIT.md`.
 
@@ -6674,3 +6674,36 @@ GitHub Actions evidence:
 - Flutter run `43392661644`: `flutter analyze --no-fatal-infos` passed. All six `voucher_page_test.dart` tests passed, including Accountant Staff payment-only UI. The full suite had 185 passing tests and one unrelated existing failure in `payroll_management_page_test.dart` (expected 10, actual 11); APK build was therefore skipped. Do not alter payroll tests as part of this voucher task without separate regression investigation.
 
 The web/API voucher audit-write correction is source-contract verified; no deterministic runtime audit-insert failure was injected, so rollback-on-audit-failure remains source-verified rather than runtime-proven. Local Apache/mobile API role acceptance also remains pending. No local database, voucher, journal or cash balance was changed.
+
+
+## 2026-11-13 — Monthly Nanny disbursement FM approval gate
+
+The user approved a separate Financial Manager decision before any outgoing Nanny transfer. The previous workflow was unsafe: batch creation set `pending_approval`, but ACC1 could transfer directly from that state, immediately posting the transaction and journal.
+
+Implemented on `main`:
+- Batch creation now creates a `draft`; ACC1 (within assigned-Nanny scope) can correct the amounts on the batch's existing family rows while the batch is `draft` or `pending_approval`. Each correction requires a reason and a mandatory audit row.
+- The edit is deliberately bounded: it cannot change the Nanny, group, month, or family membership; every amount must be positive and no greater than that family's active sponsorship amount for the batch month, with all three monthly verification flags set. The server requires the submitted item IDs to match the complete existing batch.
+- Submission moves a valid draft to `pending_approval` and notifies active FM-role users. ACC1 edits made while pending remain pending and notify FM; batch row locking serializes edits against approval/rejection.
+- Only the Financial Manager role codes (`financial_manager`, `fm`, `finance`) can approve or reject. Admin, GM, and VGM are not approval substitutes. An FM cannot approve/reject a batch they submitted themselves.
+- FM approval moves the batch to `approved` and records reviewer/time/audit evidence only. It creates no transaction, journal, or cash movement. Rejection requires a reason, records it in the audit log, notifies the submitter, and returns the batch to editable `draft`.
+- ACC1 cannot edit an approved batch. Transfer UI and POST now require `approved`; the mandatory transfer receipt remains. The transfer transaction, balanced journal, batch status, and required audit record commit together. Duplicate transfer is blocked by the batch lock and transaction-reference check.
+- Admin/FM retain controlled void authority for draft, pending, approved, and transferred batches. ACC1 still cannot void. A posted transfer is reversed through the existing reversal journal path; draft/pending/approved batches have no financial posting to reverse.
+- Nanny-side family confirmation, receipts, return, and closure remain separate.
+
+Schema inspection confirmed the canonical SQL dump already has the required `draft`, `pending_approval`, and `approved` enum values plus nullable `submitted_by`, `submitted_at`, `reviewed_by_user_id`, and `reviewed_at`. No migration or runtime DDL is required.
+
+Verification:
+- GitHub Actions run `43465126565`: PHP 8.2 lint and component workflow passed; existing sponsorship suite `63 checks | PASS`, VGM read-only contract `6/6 PASS`, and expanded Accountant Staff/disbursement contract `28/28 PASS`.
+- PHP lint job `132022066880` in workflow run `43465118272` passed, including `disbursements.php`, `disbursement_void_guard.php`, and the new approval helper. Other unrelated jobs in that broader workflow were still running at the time of this checkpoint; do not call the entire workflow complete.
+- These are source/static and syntax checks only. Local Apache/browser/database acceptance is still required. No local batch, transaction, journal, receipt, or cash balance was changed by this implementation.
+
+Local acceptance must verify draft creation/edit, FM notification, approval without posting/cash movement, rejection reason and resubmission, post-approval edit denial, assigned/unassigned ACC1 boundaries, and one approved transfer followed by controlled Admin/FM void. The earlier test batch `#13` was confirmed transferred and financially posted in the previous session; verify it has been voided through the supported Admin/FM flow before further local testing. Never delete or directly edit its transaction/journal evidence.
+
+Relevant files:
+- `modules/accounting/disbursements.php`
+- `modules/accounting/lib_disbursement_approval.php`
+- `modules/accounting/disbursement_void_guard.php`
+- `tools/test_accountant_staff_incoming_collection_restriction.php`
+- `.github/workflows/php-syntax-check.yml`
+- `.github/workflows/sponsorship-monthly-agreement-components.yml`
+- `docs/ACCOUNTING_NANNY_DISBURSEMENT_AUTHORITY_CONTINUATION.md`

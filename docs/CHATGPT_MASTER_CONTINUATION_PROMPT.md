@@ -37,21 +37,50 @@ This is a permanent project rule for every session. Do not make the user repeate
 - Never claim a change or test succeeded without actual evidence.
 
 
-## Current active task — 2026-11-12
+## Current active task — 2026-11-13 — Monthly Nanny disbursement FM approval gate
 
-Continue the existing monthly sponsorship agreement and service-fee payment workflow in this repository. At session start, resolve the current `main` branch head directly; do not rely on a historical hash embedded in this continuation document.
+The user's latest approved requirement is a real FM approval boundary before any monthly Nanny transfer. Continue from the latest `main` state, not from historical hashes.
 
-Stage 1 is complete: migration column naming corrected to `monthly_agreement_id`, canonical schema synchronized, and the MariaDB 10.4.32 migration workflow passed. The migration has **not** been applied to the local XAMPP database. Application PHP changes are now present on `main`: the split payment-entry page has row-specific monthly sponsorship evidence, and Section 2 supports multiple independent donations with per-row type, amount, project/source, payment evidence and receipt attachment. Each donation is saved as its own pending record through the existing Supervisor or VGM review path; no service fee applies to donations. GitHub Actions run `43300051479` passed PHP 8.2 lint and 53 focused payment-entry contract checks. Local XAMPP/browser/database acceptance remains pending.
+The new workflow is implemented on `main`: `draft → pending_approval → approved → transferred`. ACC1 may correct existing family-row amounts (not beneficiary membership, Nanny, group, or month) while draft/pending, with a mandatory reason/audit and a server-side ceiling based on active sponsorships and all three monthly verification flags. FM-only role codes approve/reject; rejection requires a reason and returns the batch to draft. Approval does not post a transaction, journal, or cash movement. ACC1 can transfer only after approval and must upload the receipt; transaction, balanced journal, and audit commit together. ACC1 cannot edit after approval or void; Admin/FM retain controlled void authority. VGM is not an approver.
 
-Continue the remaining monthly-agreement accounting/review stages: verify FM-entered append-only agreements, missing-agreement validation, immutable agreement/actual snapshots, both FM review breakdowns, returned-payment compatibility, and strict legacy/new-model posting separation. The entry form and row-specific evidence are already implemented; do not redo them without regression evidence. The shared posting path must block positive actual service-fee receipts until recognition timing and an authorized active revenue destination are approved; never default to account `4200`. Preserve `TR-000023`, `TR-000024`, `JE-000054`, and legacy returned Supervisor rows 7–9.
+No migration is needed: canonical SQL already contains the required statuses and review/submission fields. GitHub Actions run `43465126565` passed PHP lint and the relevant component/role contracts, including the expanded disbursement contract `28/28 PASS`. PHP lint job `132022066880` also passed for the new/modified PHP files. This is source/static verification only; local Apache/browser/database acceptance is still pending.
 
-One business decision is pending before allocator/amendment handling: whether to freeze the month's original allocation commitment after its first posted allocation and require an explicit audited correction for a conflicting amendment. Ask once; do not implement that rule before approval.
+Before local acceptance, verify the previously posted test batch `#13` has been reversed using the supported Admin/FM void flow. Do not delete or directly edit its transaction/journal. Use a genuinely eligible test group; do not force a family into eligibility. Verify: ACC1 draft/edit/submit; FM notification and approval without posting; FM rejection with reason and resubmission; ACC1 edit denial after approval; receipt-required transfer and balanced posting; Admin/FM void reversal; and unassigned ACC1 denial.
 
-## Additional approved accounting task — 2026-11-13
+The monthly sponsorship agreement/service-fee work remains a separate workstream documented in `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md`; do not automatically switch back to it unless the user asks.
 
-The user has also approved Accountant Staff execution of outgoing monthly Nanny disbursements: transfer execution, mandatory transfer-receipt upload, and the existing transaction/journal posting step. The implementation must be limited to Nannies assigned to the current ACC1 through `accountant_nanny_assignments`, with server-side validation on the transfer POST. Preserve the pending-state and receipt requirements. Do not grant ACC1 batch void authority (Admin/Financial Manager only), incoming collection entry, or generic receipt vouchers. See `docs/ACCOUNTING_NANNY_DISBURSEMENT_AUTHORITY_CONTINUATION.md` for source findings and verification gates.
+## 2026-11-13 — Monthly Nanny disbursement FM approval gate
 
-Read `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` for detailed stages, tests, source findings, and gates. Continue on `main` only, inspect before editing, and do not ask the user for repository code/schema output already available through repository tools.
+The user approved a separate Financial Manager decision before any outgoing Nanny transfer. The previous workflow was unsafe: batch creation set `pending_approval`, but ACC1 could transfer directly from that state, immediately posting the transaction and journal.
+
+Implemented on `main`:
+- Batch creation now creates a `draft`; ACC1 (within assigned-Nanny scope) can correct the amounts on the batch's existing family rows while the batch is `draft` or `pending_approval`. Each correction requires a reason and a mandatory audit row.
+- The edit is deliberately bounded: it cannot change the Nanny, group, month, or family membership; every amount must be positive and no greater than that family's active sponsorship amount for the batch month, with all three monthly verification flags set. The server requires the submitted item IDs to match the complete existing batch.
+- Submission moves a valid draft to `pending_approval` and notifies active FM-role users. ACC1 edits made while pending remain pending and notify FM; batch row locking serializes edits against approval/rejection.
+- Only the Financial Manager role codes (`financial_manager`, `fm`, `finance`) can approve or reject. Admin, GM, and VGM are not approval substitutes. An FM cannot approve/reject a batch they submitted themselves.
+- FM approval moves the batch to `approved` and records reviewer/time/audit evidence only. It creates no transaction, journal, or cash movement. Rejection requires a reason, records it in the audit log, notifies the submitter, and returns the batch to editable `draft`.
+- ACC1 cannot edit an approved batch. Transfer UI and POST now require `approved`; the mandatory transfer receipt remains. The transfer transaction, balanced journal, batch status, and required audit record commit together. Duplicate transfer is blocked by the batch lock and transaction-reference check.
+- Admin/FM retain controlled void authority for draft, pending, approved, and transferred batches. ACC1 still cannot void. A posted transfer is reversed through the existing reversal journal path; draft/pending/approved batches have no financial posting to reverse.
+- Nanny-side family confirmation, receipts, return, and closure remain separate.
+
+Schema inspection confirmed the canonical SQL dump already has the required `draft`, `pending_approval`, and `approved` enum values plus nullable `submitted_by`, `submitted_at`, `reviewed_by_user_id`, and `reviewed_at`. No migration or runtime DDL is required.
+
+Verification:
+- GitHub Actions run `43465126565`: PHP 8.2 lint and component workflow passed; existing sponsorship suite `63 checks | PASS`, VGM read-only contract `6/6 PASS`, and expanded Accountant Staff/disbursement contract `28/28 PASS`.
+- PHP lint job `132022066880` in workflow run `43465118272` passed, including `disbursements.php`, `disbursement_void_guard.php`, and the new approval helper. Other unrelated jobs in that broader workflow were still running at the time of this checkpoint; do not call the entire workflow complete.
+- These are source/static and syntax checks only. Local Apache/browser/database acceptance is still required. No local batch, transaction, journal, receipt, or cash balance was changed by this implementation.
+
+Local acceptance must verify draft creation/edit, FM notification, approval without posting/cash movement, rejection reason and resubmission, post-approval edit denial, assigned/unassigned ACC1 boundaries, and one approved transfer followed by controlled Admin/FM void. The earlier test batch `#13` was confirmed transferred and financially posted in the previous session; verify it has been voided through the supported Admin/FM flow before further local testing. Never delete or directly edit its transaction/journal evidence.
+
+Relevant files:
+- `modules/accounting/disbursements.php`
+- `modules/accounting/lib_disbursement_approval.php`
+- `modules/accounting/disbursement_void_guard.php`
+- `tools/test_accountant_staff_incoming_collection_restriction.php`
+- `.github/workflows/php-syntax-check.yml`
+- `.github/workflows/sponsorship-monthly-agreement-components.yml`
+- `docs/ACCOUNTING_NANNY_DISBURSEMENT_AUTHORITY_CONTINUATION.md`
+
 
 ## Start here
 
