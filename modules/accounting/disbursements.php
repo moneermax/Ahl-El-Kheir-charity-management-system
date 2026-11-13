@@ -375,7 +375,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                     $skip_reasons[] = "المجموعة ID {$gid}: تعذر إنشاء المسودة بسبب خطأ داخلي.";
                 }
             }
-            $msg = "تم إنشاء {$created} دفعة بنجاح.";
+            $msg = "تم إنشاء {$created} مسودة دفعة بنجاح.";
             if ($skipped > 0) {
                 $msg .= " (تم تخطي {$skipped} مجموعة. الأسباب: " . implode(' | ', $skip_reasons) . ")";
             }
@@ -391,13 +391,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
         $requestedAmounts = $_POST['item_amounts'] ?? [];
         try {
             if ($reason === '') throw new RuntimeException('يرجى كتابة سبب التصحيح.');
+            if (!is_array($requestedAmounts) || !$requestedAmounts) throw new RuntimeException('يرجى إدخال مبالغ التصحيح لكل أسرة في الدفعة.');
             dbExecute('START TRANSACTION');
             $batch = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ? FOR UPDATE", [$id]);
             if (!$batch || !in_array($batch['status'], ['draft', 'pending_approval'], true)) {
                 throw new RuntimeException('لا يمكن تعديل الدفعة بعد اعتماد المدير المالي أو تحويلها.');
             }
             ak_disbursement_assert_assigned($uid, (int)$batch['nanny_id']);
-            $snapshot = ak_disbursement_preapproval_snapshot($batch, is_array($requestedAmounts) ? $requestedAmounts : null, true);
+            $snapshot = ak_disbursement_preapproval_snapshot($batch, $requestedAmounts, true);
             foreach ($snapshot['new_items'] as $item) {
                 dbExecute("UPDATE disbursement_items SET amount = ? WHERE id = ? AND disbursement_id = ? AND status = 'pending'",
                     [$item['amount'], $item['item_id'], $id]);
@@ -1347,7 +1348,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
     <?php endif; ?>
     <!-- Admin/Financial Manager: Void a mistakenly created/transferred batch -->
-    <?php if (in_array($role, ['admin', 'financial_manager'], true) && !in_array($viewBatch['status'], ['voided', 'cancelled', 'draft'])): ?>
+    <?php if (in_array($role, ['admin', 'financial_manager'], true) && !in_array($viewBatch['status'], ['voided', 'cancelled'])): ?>
     <div class="mt-4 p-3 bg-danger bg-opacity-10 rounded border border-danger">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
