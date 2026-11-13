@@ -13,8 +13,8 @@ foreach ($files as $key => $path) {
     $files[$key] = file_get_contents($path);
 }
 $checks = [];
-$checks['direct_incoming_entry_denied'] = strpos($files['create'], "if (!in_array($role, ['admin', 'financial_manager', 'supervisor'], true))") !== false && strpos($files['create'], "'accountant_staff'") === false;
-$checks['returned_edit_and_resubmission_denied'] = strpos($files['edit'], "if (!in_array($role, ['admin'], true))") !== false && strpos($files['edit'], "'accountant_staff'") === false;
+$checks['direct_incoming_entry_denied'] = strpos($files['create'], 'if (!in_array($role, [\'admin\', \'financial_manager\', \'supervisor\'], true))') !== false && strpos($files['create'], "'accountant_staff'") === false;
+$checks['returned_edit_and_resubmission_denied'] = strpos($files['edit'], 'if (!in_array($role, [\'admin\'], true))') !== false && strpos($files['edit'], "'accountant_staff'") === false;
 $checks['transaction_register_read_only'] = strpos($files['index'], "['admin','vice_general_manager','general_manager','supervisor','accountant_staff','financial_manager']") !== false && strpos($files['index'], "\$canEditReturned = in_array(\$role, ['admin'], true);") !== false && strpos($files['index'], "if(in_array(\$role,['financial_manager','admin','supervisor'],true))") !== false;
 $checks['creator_cancellation_post_denied'] = strpos($files['cancel'], "if (\$role === 'accountant_staff')") !== false && strpos($files['cancel'], "http_response_code(403)") !== false;
 $checks['outgoing_disbursement_access_preserved'] = strpos($files['disbursements'], "['admin', 'accountant_staff', 'financial_manager', 'general_manager', 'vice_general_manager', 'nanny']") !== false && strpos($files['disbursements'], "\$isAccountantStaff = (\$role === 'accountant_staff');") !== false;
