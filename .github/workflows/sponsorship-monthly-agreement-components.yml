@@ -13,6 +13,7 @@ on:
       - 'modules/sponsors/view.php'
       - 'modules/sponsorships/view.php'
       - 'tools/test_vgm_collection_read_only_contract.php'
+      - 'tools/test_accountant_staff_incoming_collection_restriction.php'
       - 'modules/accounting/lib.php'
       - 'modules/accounting/accounts.php'
       - 'modules/accounting/sponsorship_service_fee_account.php'
@@ -51,6 +52,7 @@ jobs:
           php -l modules/sponsors/view.php
           php -l modules/sponsorships/view.php
           php -l tools/test_vgm_collection_read_only_contract.php
+          php -l tools/test_accountant_staff_incoming_collection_restriction.php
           php -l modules/accounting/lib.php
           php -l modules/accounting/accounts.php
           php -l modules/accounting/sponsorship_service_fee_account.php
@@ -65,3 +67,5 @@ jobs:
         run: php tools/test_sponsorship_monthly_agreement_components.php
       - name: Run VGM collection read-only contract tests
         run: php tools/test_vgm_collection_read_only_contract.php
+      - name: Run Accountant Staff incoming collection restriction contract tests
+        run: php tools/test_accountant_staff_incoming_collection_restriction.php
