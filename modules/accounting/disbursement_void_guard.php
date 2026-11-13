@@ -59,7 +59,7 @@ try {
     // A returned/received batch may already have a separate disbursement_return
     // accounting event. Do not let the old generic void route create an incomplete
     // accounting history. Only the pre-return states are eligible here.
-    if (!in_array($batch['status'], ['pending_approval', 'transferred'], true)) {
+    if (!in_array($batch['status'], ['pending_approval', 'approved', 'transferred'], true)) {
         throw new RuntimeException('لا يمكن إبطال الدفعة من حالتها الحالية.');
     }
 
@@ -174,7 +174,7 @@ try {
     dbExecute(
         "UPDATE monthly_disbursements
          SET status = 'voided', voided_by_user_id = ?, voided_at = NOW(), void_reason = ?, reversal_journal_id = ?
-         WHERE id = ? AND status IN ('pending_approval','transferred')",
+         WHERE id = ? AND status IN ('pending_approval','approved','transferred')",
         [$uid, $reason, $journalId, $id]
     );
 
