@@ -34,13 +34,13 @@ $checks['returned_cancel_post_denied'] =
     && strpos($files['cancel'], "http_response_code(403)") !== false;
 $checks['transaction_register_remains_read_only_report'] =
     strpos($files['index'], "['admin','vice_general_manager','general_manager','supervisor','accountant_staff','financial_manager']") !== false
-    && strpos($files['index'], "$canEditReturned = in_array($role, ['admin','accountant_staff'], true);") !== false
+    && strpos($files['index'], '$canEditReturned = in_array($role, [\'admin\',\'accountant_staff\'], true);') !== false
     && strpos($files['index'], "['accountant_staff','financial_manager','admin','supervisor']") !== false;
 $checks['sponsor_payment_entry_link_hidden_for_vgm'] =
-    strpos($files['sponsor'], "if($role!=='vice_general_manager')") !== false
+    strpos($files['sponsor'], 'if($role!==\'vice_general_manager\')') !== false
     && strpos($files['sponsor'], "modules/transactions/create.php?sponsor_id=") !== false;
 $checks['sponsorship_payment_entry_link_hidden_for_vgm'] =
-    strpos($files['sponsorship'], "$canManage&&$role!=='vice_general_manager'&&in_array") !== false
+    strpos($files['sponsorship'], '$canManage&&$role!==\'vice_general_manager\'&&in_array') !== false
     && strpos($files['sponsorship'], "modules/transactions/create.php?sponsorship_id=") !== false;
 
 $passed = 0;
