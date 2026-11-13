@@ -8,10 +8,15 @@ require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.p
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 
-// VGM is report-only for collection records; reject direct/forged creator cancellation.
-if (in_array((string)Session::getUserRole(), ['vice_general_manager', 'vgm'], true)) {
+// VGM and Accountant Staff are not collection-entry actors; reject direct/forged creator cancellation.
+$role = (string)Session::getUserRole();
+if (in_array($role, ['vice_general_manager', 'vgm'], true)) {
     http_response_code(403);
     exit('VGM collection access is read-only.');
+}
+if ($role === 'accountant_staff') {
+    http_response_code(403);
+    exit('Accountant Staff cannot create or manage incoming collection records.');
 }
 
 $uid = (int)Session::getUserId();
