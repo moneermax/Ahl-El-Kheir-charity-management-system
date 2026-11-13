@@ -4,7 +4,7 @@
 **Arabic name:** نظام أهل الخير لإدارة الجمعيات الخيرية  
 **Repository:** `moneermax/Ahl-El-Kheir-charity-management-system`  
 **Branch:** `main`  
-**Current checkpoint:** 2026-11-12 — multi-line donation entry implemented; PHP 8.2 lint and 53 focused payment-entry contract checks passed in CI; local runtime acceptance pending  
+**Current checkpoint:** 2026-11-13 — Monthly Nanny disbursement FM approval gate is source/CI verified; local acceptance is in progress and paused at draft batch #14 before ACC1 submission. Detailed state: `docs/checkpoints/2026-11-13-monthly-nanny-disbursement-fm-approval.md`  
 **Environment:** Windows / XAMPP / Apache / PHP 8.2 / MariaDB/MySQL  
 **Application style:** Procedural PHP + Bootstrap 5.3 RTL + Vanilla JavaScript + Font Awesome 6 + Cairo  
 **Document role:** **Single master audit record** for system review, architecture, Accounting Audit, Notification Audit, organizational lifecycle, HR navigation, completed evidence, open findings, and continuation rules.  
