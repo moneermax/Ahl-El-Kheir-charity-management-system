@@ -244,7 +244,7 @@ The current disbursement implementation already contains the single-family item 
 
 **Business decision:** Accountant Staff must be allowed to execute the outgoing monthly Nanny transfer, upload its bank/cash transfer receipt, and complete the existing financial posting step.
 
-**Source change:** the transfer POST is now available to the existing `$canManageAssigned` authority set. For ACC1, the server additionally checks the target batch's `nanny_id` against `accountant_nanny_assignments` before accepting the upload or posting. The transfer UI uses the same assigned-scope display gate. Existing pending-batch validation, required receipt, transaction/journal creation, and Admin/Financial Manager-only batch void control remain unchanged.
+**Source change:** the transfer POST is now available to the existing `$canManageAssigned` authority set. For ACC1, the server additionally checks the target batch's `nanny_id` against `accountant_nanny_assignments` before accepting the upload or posting. The transfer UI uses the same assigned-scope display gate. Existing pending-batch validation, required receipt, transaction/journal creation, and Admin/Financial Manager-only batch void control remain unchanged. The secure receipt-serving route also now excludes ACC1 from its global accountant allowlist and grants receipt access only after checking the batch's assigned Nanny.
 
 **Boundary:** this does not authorize incoming collection entry, generic receipt vouchers, or VGM accounting actions. ACC1's assignment scope is mandatory; an unassigned Nanny batch must remain inaccessible to the transfer POST.
 
