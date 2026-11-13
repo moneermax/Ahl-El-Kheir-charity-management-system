@@ -17,7 +17,7 @@ if (!Session::isLoggedIn()) {
 
 $uid = (int)Session::getUserId();
 $role = (string)Session::getUserRole();
-$allowed = in_array($role, ['admin', 'financial_manager', 'general_manager', 'vice_general_manager', 'accountant', 'accountant_staff'], true);
+$allowed = in_array($role, ['admin', 'financial_manager', 'general_manager', 'vice_general_manager', 'accountant'], true);
 
 $id = (int)($_GET['id'] ?? 0);
 $kind = (string)($_GET['kind'] ?? 'batch');
@@ -35,6 +35,13 @@ if ($kind === 'item') {
     $kind = 'batch';
     $row = ak_out_row('monthly_disbursements', $id);
     $receiptPath = trim((string)($row['receipt_file_path'] ?? ''));
+}
+
+if ($role === 'accountant_staff' && $row) {
+    $allowed = (bool)dbFetchOne(
+        "SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?",
+        [$uid, (int)$row['nanny_id']]
+    );
 }
 
 if (!$row || !((int)$row['nanny_id'] === $uid || $allowed)) {
