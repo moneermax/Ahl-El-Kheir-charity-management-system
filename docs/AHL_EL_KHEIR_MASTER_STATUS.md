@@ -6608,9 +6608,9 @@ The user delegated the account classification decision because they do not have 
 Implemented narrowly on `main`:
 - New VGM/direct other-source donation rows now persist as `general_donation` while retaining their source note and donation evidence.
 - Supervisor `sponsor_payments.payment_type='other'` becomes `general_donation` only when FM approves it through the existing approval helper.
-- A returned direct transaction with legacy type `other` is reclassified on resubmission only when its saved `purpose_note` identifies the other-source donation. Ambiguous legacy rows without that source evidence retain `other`.
+- Returned direct transactions with legacy type `other` remain unchanged. The legacy data does not reliably distinguish every historical other-source donation from older uses of the generic `other` type, so returned records are not reclassified by guessing.
 - The existing journal poster therefore routes these donation transactions to `4300`; project donations and monthly sponsorship posting remain unchanged. No journal/history rewrite, schema change, migration, or database write was performed.
 
-Commits: `e087e179b31f2e6d3efd4a5d9a374cd2e03e0c45` (direct submission and returned correction), `814d299263b2ed2330d4b9b5d67eae9734d2f8ee` (Supervisor FM approval mapping), and `974deb155f9368eed7e51b15e7e227b47f463ba4` (focused contract assertions).
+Commits: `e087e179b31f2e6d3efd4a5d9a374cd2e03e0c45` (direct submission mapping), `814d299263b2ed2330d4b9b5d67eae9734d2f8ee` (Supervisor FM approval mapping), `974deb155f9368eed7e51b15e7e227b47f463ba4` / `b702fbbf7dda855fece6c759225a41c9d804ef23` (contract assertions and refinement), and `621c77deef2010686b0265fb46b9784e442148f7` (preserve ambiguous legacy returned transactions).
 
 Verification boundary at this checkpoint: source changes are committed directly to `main`; GitHub Actions result has not yet been inspected. Local PHP/XAMPP runtime verification remains pending. The authoritative SQL dump fetch returned empty content in this session, so no fresh schema verification is claimed; this correction does not alter or depend on schema changes.
