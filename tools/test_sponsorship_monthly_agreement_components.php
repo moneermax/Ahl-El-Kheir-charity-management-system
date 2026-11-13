@@ -441,6 +441,8 @@ if (is_string($paymentEntrySource)) {
 $donationEntrySource = file_get_contents(dirname(__DIR__) . '/modules/transactions/create.php');
 $supervisorApprovalSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_sponsor_payment_approval.php');
 $journalPostingSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib.php');
+$supervisorReviewQueueSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/fm_review_queue.php');
+$ordinaryReviewQueueSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/fm_transaction_review.php');
 $assert(
     is_string($donationEntrySource)
     && str_contains($donationEntrySource, "'other'=>'general_donation'"),
@@ -456,6 +458,17 @@ $assert(
     && str_contains($journalPostingSource, "if (\$type === 'general_donation') { \$lines[] = ['4300'")
     && str_contains($journalPostingSource, "\$revenueAccount = \$type === 'sponsorship_payment' ? '2200' : '4100';"),
     'general_donations_post_to_4300_without_reclassifying_ambiguous_legacy_other_transactions'
+);
+
+
+$assert(
+    is_string($supervisorReviewQueueSource)
+    && str_contains($supervisorReviewQueueSource, 'مصدر التبرع الآخر:')
+    && str_contains($supervisorReviewQueueSource, "\$p['other_source_note']")
+    && is_string($ordinaryReviewQueueSource)
+    && str_contains($ordinaryReviewQueueSource, 'مصدر التبرع الآخر:')
+    && str_contains($ordinaryReviewQueueSource, "\$t['purpose_note']"),
+    'fm_review_queues_show_other_donation_source_before_approval'
 );
 
 $failed = array_keys(array_filter($checks, static fn(bool $passed): bool => !$passed));
