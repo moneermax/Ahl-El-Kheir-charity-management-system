@@ -6933,7 +6933,7 @@ Implemented on `main`:
 Schema inspection confirmed the canonical SQL dump already has the required `draft`, `pending_approval`, and `approved` enum values plus nullable `submitted_by`, `submitted_at`, `reviewed_by_user_id`, and `reviewed_at`. No migration or runtime DDL is required.
 
 Verification:
-- GitHub Actions run `43465126565`: PHP 8.2 lint and component workflow passed; existing sponsorship suite `63 checks | PASS`, VGM read-only contract `6/6 PASS`, and expanded Accountant Staff/disbursement contract `28/28 PASS`.
+- GitHub Actions run `43465126565`: PHP 8.2 lint and component workflow passed; existing sponsorship suite `63 checks | PASS`, VGM read-only contract `6/6 PASS`, and expanded Accountant Staff/disbursement contract `29/29 PASS`.
 - PHP lint job `132022066880` in workflow run `43465118272` passed, including `disbursements.php`, `disbursement_void_guard.php`, and the new approval helper. Other unrelated jobs in that broader workflow were still running at the time of this checkpoint; do not call the entire workflow complete.
 - These are source/static and syntax checks only. Local Apache/browser/database acceptance is still required. No local batch, transaction, journal, receipt, or cash balance was changed by this implementation.
 

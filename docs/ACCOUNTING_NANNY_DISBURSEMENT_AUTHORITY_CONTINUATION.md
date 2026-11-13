@@ -51,8 +51,8 @@ The canonical `database/ahl_el_kheir.sql` already defines `draft`, `pending_appr
 ## Verification
 
 GitHub Actions:
-- Run `43465126565`: PHP 8.2 lint passed; sponsorship component contract `63 checks | PASS`; VGM read-only contract `6/6 PASS`; Accountant Staff/disbursement contract `28/28 PASS`.
-- PHP lint job `132022066880` in workflow run `43465118272` passed for `modules/accounting/lib_disbursement_approval.php`, `modules/accounting/disbursements.php`, and `modules/accounting/disbursement_void_guard.php`. Other jobs in that broad workflow were still running at this checkpoint; do not claim the whole workflow completed.
+- Run `43465126565`: PHP 8.2 lint passed; sponsorship component contract `63 checks | PASS`; VGM read-only contract `6/6 PASS`; Accountant Staff/disbursement contract `29/29 PASS`.
+- Full GitHub Actions workflow run `43466082674` completed successfully, including the PHP lint job for `modules/accounting/lib_disbursement_approval.php`, `modules/accounting/disbursements.php`, and `modules/accounting/disbursement_void_guard.php`, plus the existing MariaDB migration and integration jobs.
 
 These are static/source and syntax checks. No local Apache/browser/database runtime acceptance has been performed. No database rows, transactions, journals, receipts, or cash balances were changed by the implementation.
 

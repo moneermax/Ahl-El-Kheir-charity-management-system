@@ -43,7 +43,7 @@ The user's latest approved requirement is a real FM approval boundary before any
 
 The new workflow is implemented on `main`: `draft → pending_approval → approved → transferred`. ACC1 may correct existing family-row amounts (not beneficiary membership, Nanny, group, or month) while draft/pending, with a mandatory reason/audit and a server-side ceiling based on active sponsorships and all three monthly verification flags. FM-only role codes approve/reject; rejection requires a reason and returns the batch to draft. Approval does not post a transaction, journal, or cash movement. ACC1 can transfer only after approval and must upload the receipt; transaction, balanced journal, and audit commit together. ACC1 cannot edit after approval or void; Admin/FM retain controlled void authority. VGM is not an approver.
 
-No migration is needed: canonical SQL already contains the required statuses and review/submission fields. GitHub Actions run `43465126565` passed PHP lint and the relevant component/role contracts, including the expanded disbursement contract `28/28 PASS`. PHP lint job `132022066880` also passed for the new/modified PHP files. This is source/static verification only; local Apache/browser/database acceptance is still pending.
+No migration is needed: canonical SQL already contains the required statuses and review/submission fields. GitHub Actions run `43465126565` passed PHP lint and the relevant component/role contracts, including the expanded disbursement contract `29/29 PASS`. PHP lint job `132022066880` also passed for the new/modified PHP files. This is source/static verification only; local Apache/browser/database acceptance is still pending.
 
 Before local acceptance, verify the previously posted test batch `#13` has been reversed using the supported Admin/FM void flow. Do not delete or directly edit its transaction/journal. Use a genuinely eligible test group; do not force a family into eligibility. Verify: ACC1 draft/edit/submit; FM notification and approval without posting; FM rejection with reason and resubmission; ACC1 edit denial after approval; receipt-required transfer and balanced posting; Admin/FM void reversal; and unassigned ACC1 denial.
 
@@ -66,7 +66,7 @@ Implemented on `main`:
 Schema inspection confirmed the canonical SQL dump already has the required `draft`, `pending_approval`, and `approved` enum values plus nullable `submitted_by`, `submitted_at`, `reviewed_by_user_id`, and `reviewed_at`. No migration or runtime DDL is required.
 
 Verification:
-- GitHub Actions run `43465126565`: PHP 8.2 lint and component workflow passed; existing sponsorship suite `63 checks | PASS`, VGM read-only contract `6/6 PASS`, and expanded Accountant Staff/disbursement contract `28/28 PASS`.
+- GitHub Actions run `43465126565`: PHP 8.2 lint and component workflow passed; existing sponsorship suite `63 checks | PASS`, VGM read-only contract `6/6 PASS`, and expanded Accountant Staff/disbursement contract `29/29 PASS`.
 - PHP lint job `132022066880` in workflow run `43465118272` passed, including `disbursements.php`, `disbursement_void_guard.php`, and the new approval helper. Other unrelated jobs in that broader workflow were still running at the time of this checkpoint; do not call the entire workflow complete.
 - These are source/static and syntax checks only. Local Apache/browser/database acceptance is still required. No local batch, transaction, journal, receipt, or cash balance was changed by this implementation.
 
