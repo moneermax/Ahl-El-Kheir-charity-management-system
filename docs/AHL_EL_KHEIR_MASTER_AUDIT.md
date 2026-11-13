@@ -6805,8 +6805,9 @@ Implemented directly on `main`:
 - `8b74f9c` — FM return locks the pending Supervisor payment; status change and a `RETURN` audit snapshot (including monthly-agreement ID, agreed values and actual values) commit atomically. Notification remains post-commit.
 - `ea32705` — Supervisor returned-payment correction locks the returned row; correction and a `RESUBMIT` audit snapshot commit atomically. Monthly-agreement ID and agreed values are retained; only actual receipt components are updated for the new model.
 - `0e00094` — three focused source-contract assertions cover the FM return transaction/audit, Supervisor correction snapshot/audit, and propagation of transaction-review audit failures.
+- `e196ba9` / `b20e966` — added and corrected a contract assertion for the VGM returned-transaction editor: monthly-agreement corrections change actual receipt components only, retain the original agreement snapshot, and write the resubmission audit.
 
-GitHub Actions run `43374966072` (Sponsorship Monthly Agreement Components) completed successfully, including PHP lint of the affected sponsorship workflow files and the component contract test. The separate PHP syntax workflow `43374965977` was still running when this checkpoint was recorded.
+GitHub Actions run `43375119701` (Sponsorship Monthly Agreement Components) completed successfully: all 59 contract checks passed, including the new VGM returned-correction assertion, and PHP lint passed for the changed sponsorship workflow files. The separate PHP syntax workflow `43374965977` also completed successfully.
 
 No schema or migration changes were made. No local database, payment, agreement, receipt, journal or allocation was changed. This is repository/CI verification only; local XAMPP PHP execution and browser/runtime acceptance remain pending. Preserve legacy returned Supervisor rows 7–9, agreement 1 / SH-003508, and protected TR-000023, TR-000024 and JE-000054. Do not use them as test fixtures.
 
