@@ -244,6 +244,26 @@ try {
         && !isset($lineByCode['4200']),
         'The FM approval journal is not exactly Dr 1100 / Cr 2200 with no service-fee revenue line.');
 
+    $approvalAudit = dbFetchOne(
+        "SELECT user_id, action, entity_type, entity_id, new_values
+         FROM audit_log
+         WHERE entity_type = 'sponsor_payments' AND entity_id = ? AND action = 'APPROVE'
+         ORDER BY id DESC LIMIT 1",
+        [$paymentId]
+    );
+    spmaFmApprovalAssert($approvalAudit
+        && (int)$approvalAudit['user_id'] === (int)$reviewer['id']
+        && (string)$approvalAudit['action'] === 'APPROVE'
+        && (string)$approvalAudit['entity_type'] === 'sponsor_payments'
+        && (int)$approvalAudit['entity_id'] === $paymentId,
+        'FM approval did not persist its mandatory audit event.');
+    $auditValues = json_decode((string)$approvalAudit['new_values'], true);
+    spmaFmApprovalAssert(is_array($auditValues)
+        && ($auditValues['status'] ?? null) === 'approved'
+        && (int)($auditValues['txn_id'] ?? 0) === $transactionId
+        && (int)($auditValues['journal_id'] ?? 0) === $journalId,
+        'FM approval audit does not identify the approved transaction and journal.');
+
     $totals = dbFetchOne(
         "SELECT ROUND(COALESCE(SUM(debit),0),2) AS debit_total,
                 ROUND(COALESCE(SUM(credit),0),2) AS credit_total, COUNT(*) AS line_count
