@@ -365,6 +365,7 @@ if (is_string($paymentEntrySource)) {
     $approvalSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_sponsor_payment_approval.php');
     $reviewQueueSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/fm_review_queue.php');
     $migrationSource = file_get_contents(dirname(__DIR__) . '/database/migrations/2026-11-12_sponsor_payment_row_evidence.sql');
+    $transactionReviewSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_transaction_review.php');
     $assert(
         is_string($approvalSource)
         && str_contains($approvalSource, "\$sp['transaction_date']")
@@ -389,6 +390,28 @@ if (is_string($paymentEntrySource)) {
         && str_contains($reviewQueueSource, "\$h['agreed_sponsorship_amount']")
         && str_contains($reviewQueueSource, "\$h['agreed_service_fee_amount']"),
         'fm_review_history_preserves_monthly_agreement_component_breakdown'
+    );
+    $assert(
+        str_contains($reviewQueueSource, "SELECT * FROM sponsor_payments WHERE id=? AND status='pending' FOR UPDATE")
+        && str_contains($reviewQueueSource, '$pdo->beginTransaction();')
+        && str_contains($reviewQueueSource, "'RETURN','sponsor_payments'")
+        && str_contains($reviewQueueSource, "'monthly_agreement_id','agreed_sponsorship_amount','agreed_service_fee_amount','actual_sponsorship_received','actual_service_fee_received'")
+        && str_contains($reviewQueueSource, '$pdo->commit();'),
+        'fm_return_locks_payment_and_commits_required_snapshot_audit_atomically'
+    );
+    $assert(
+        str_contains($paymentEntrySource, "SELECT * FROM sponsor_payments WHERE id = ? AND status = 'returned' AND supervisor_id = ? FOR UPDATE")
+        && str_contains($paymentEntrySource, "'RESUBMIT','sponsor_payments'")
+        && str_contains($paymentEntrySource, "'component_model','monthly_agreement_id','agreed_sponsorship_amount','agreed_service_fee_amount','actual_sponsorship_received','actual_service_fee_received'")
+        && str_contains($paymentEntrySource, '$pdo->commit();'),
+        'supervisor_correction_audits_actuals_and_preserves_agreement_snapshot'
+    );
+    $assert(
+        is_string($transactionReviewSource)
+        && str_contains($transactionReviewSource, 'function ak_transaction_review_audit')
+        && str_contains($transactionReviewSource, 'dbExecute("INSERT INTO audit_log')
+        && !str_contains(substr($transactionReviewSource, strpos($transactionReviewSource, 'function ak_transaction_review_audit'), 900), 'catch (Throwable'),
+        'transaction_review_audit_failures_propagate_to_caller_transaction'
     );
     $assert(
         is_string($migrationSource)
