@@ -1159,7 +1159,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                             'approved' => ['معتمدة — بانتظار التحويل', 'info'],
                             'transferred' => ['محوّل', 'primary'],
                             'received' => ['مستلم', 'success'],
-                            'returned' => ['مغلق مع إرجاع', 'danger']
+                            'returned' => ['مغلق مع إرجاع', 'danger'],
+                            'voided' => ['مبطلة', 'danger']
                         ];
                         $s = $viewBatch['status'];
                         [$label, $color] = $st[$s] ?? [$s, 'secondary'];
@@ -1247,13 +1248,19 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <td><?php echo number_format((float)$it['amount'], 0); ?> ج.س</td>
                     <td>
                         <?php
-                        $its = [
-                            'pending' => ['قيد الانتظار', 'warning'],
-                            'paid' => ['مُصرَف', 'success'],
-                            'returned' => ['مُعاد للصندوق', 'danger'],
-                            'return_requested' => ['طلب إرجاع', 'warning']
-                        ];
-                        [$il, $ic] = $its[$it['status']] ?? [$it['status'], 'secondary'];
+                        if ($viewBatch['status'] === 'voided') {
+                            // Preserve the original item status in storage/audit, but do not
+                            // present it as actionable after its parent batch was voided.
+                            [$il, $ic] = ['غير ساري — الدفعة مبطلة', 'danger'];
+                        } else {
+                            $its = [
+                                'pending' => ['قيد الانتظار', 'warning'],
+                                'paid' => ['مُصرَف', 'success'],
+                                'returned' => ['مُعاد للصندوق', 'danger'],
+                                'return_requested' => ['طلب إرجاع', 'warning']
+                            ];
+                            [$il, $ic] = $its[$it['status']] ?? [$it['status'], 'secondary'];
+                        }
                         ?>
                         <span class="badge bg-<?php echo $ic; ?>"><?php echo $il; ?></span>
                     </td>
@@ -1668,12 +1675,16 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <td><?php echo e($b['nanny_name'] ?? '—'); ?></td>
                         <td><?php echo number_format((float)$b['total_amount'], 0); ?> ج.س</td>
                         <td>
+                            <?php if ($b['status'] === 'voided'): ?>
+                            <span class="badge bg-danger">دفعة مبطلة</span>
+                            <?php else: ?>
                             <div class="progress" style="height:8px;min-width:80px">
                                 <div class="progress-bar <?php echo ($b['items_total'] > 0 && $b['items_paid'] == $b['items_total']) ? 'bg-success' : 'bg-info'; ?>"
                                     style="width:<?php echo $b['items_total'] ? round(100 * $b['items_paid'] / $b['items_total']) : 0; ?>%">
                                 </div>
                             </div>
                             <small class="text-muted"><?php echo (int)$b['items_paid']; ?>/<?php echo (int)$b['items_total']; ?></small>
+                            <?php endif; ?>
                             <?php if ($isNanny && $b['status'] === 'transferred' && $b['items_pending'] > 0): ?>
                             <span class="badge bg-warning text-dark ms-1"><?php echo (int)$b['items_pending']; ?> في الانتظار</span>
                             <?php elseif ($b['status'] === 'returned' && !empty($b['items_returned'])): ?>
