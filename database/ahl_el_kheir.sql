@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Nov 12, 2026 at 04:45 AM
+-- Generation Time: Nov 13, 2026 at 03:43 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -1472,7 +1472,14 @@ INSERT INTO `audit_log` (`id`, `user_id`, `action`, `entity_type`, `entity_id`, 
 (2588, 29, 'FM_RETURN', 'transactions', 53, '{\"status\":\"pending_fm_review\"}', '{\"status\":\"returned\",\"reason\":\"يرجى تصحيح وصف العملية وإعادة الإرسال بعد استكمال بيانات التوضيح\"}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:42:06'),
 (2589, 3, 'RESUBMIT_FM', 'transactions', 53, '{\"id\":53,\"sponsorship_id\":3535,\"amount\":\"1000.00\",\"currency_code\":\"SDG\",\"payment_method\":\"cash\",\"transaction_date\":\"2026-11-11\",\"receipt_number\":null,\"description\":\"اختبار دورة إرجاع وتصحيح دفعة — VGM (اختبار دورة إرجاع وتصحيح دفعة — VGM)\",\"months_covered\":\"0.00\",\"payment_period\":null,\"purpose_note\":\"اختبار دورة إرجاع وتصحيح دفعة — VGM\",\"purpose\":null,\"admin_fee_percent\":\"0.00\",\"admin_fee_amount\":\"0.00\",\"net_amount\":\"1000.00\",\"status\":\"returned\",\"voided_at\":null,\"voided_by\":null,\"void_reason\":null,\"created_by\":3,\"fm_reviewed_by\":29,\"fm_reviewed_at\":\"2026-11-11 19:42:06\",\"fm_review_reason\":\"يرجى تصحيح وصف العملية وإعادة الإرسال بعد استكمال بيانات التوضيح\",\"submitted_at\":\"2026-11-11 19:40:08\",\"resubmitted_at\":null,\"cancelled_at\":null,\"cancelled_by\":null,\"cancel_reason\":null,\"created_at\":\"2026-11-11 19:40:08\",\"updated_at\":\"2026-11-11 19:42:06\",\"transaction_code\":\"TR-000024\",\"transaction_type\":\"general_donation\",\"family_id\":null,\"sponsor_id\":2842,\"project_id\":null,\"child_id\":null,\"reference_number\":null,\"month_start\":null,\"month_end\":null,\"admin_fee_separate\":\"0.00\",\"legacy_admin_fee_deducted\":null,\"receipt_path\":\"storage\\/receipts\\/TR-20261111194008-86aa01.jpg\",\"unified_receipt_path\":null,\"admin_fee_method\":\"none\",\"admin_fee_value\":\"0.00\",\"admin_fee_policy_id\":null,\"sponsor_name\":\"هويدا ابراهيم عبد المنعم\",\"sponsor_code\":\"SP-002842\"}', '{\"sponsorship_id\":null,\"project_id\":null,\"transaction_type\":\"general_donation\",\"sponsor_id\":2842,\"payment_period\":null,\"purpose\":\"other\",\"purpose_note\":\"اختبار دورة إرجاع وتصحيح دفعة — VGM\",\"amount\":1000,\"admin_fee_percent\":0,\"admin_fee_amount\":0,\"net_amount\":1000,\"transaction_date\":\"2026-11-11\",\"payment_method\":\"cash\",\"receipt_number\":null,\"reference_number\":null,\"description\":\"اختبار دورة إرجاع وتصحيح دفعة — VGM (اختبار دورة إرجاع وتصحيح دفعة — VGM)\",\"status\":\"pending_fm_review\",\"fm_reviewed_by\":null,\"fm_reviewed_at\":null,\"fm_review_reason\":null,\"resubmitted_at\":\"2026-11-11 19:43:42\"}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:43:42'),
 (2590, 29, 'FM_APPROVE', 'transactions', 53, '{\"status\":\"pending_fm_review\",\"fm_reviewed_by\":null,\"fm_reviewed_at\":null,\"fm_review_reason\":null}', '{\"status\":\"posted\",\"journal_id\":210}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-11 19:52:42'),
-(2591, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-12 05:33:49');
+(2591, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-12 05:33:49'),
+(2592, 29, 'LOGIN', 'users', 29, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-12 16:59:21'),
+(2593, 29, 'CREATE', 'sponsorship_monthly_agreements', 1, '[]', '{\"version_no\":1,\"covered_month\":\"2026-11-01\",\"agreed_sponsorship_amount\":10000,\"agreed_service_fee_amount\":2000,\"meeting_reference\":null,\"amendment_reason\":null,\"frozen_commitment\":null}', '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-12 18:33:57'),
+(2594, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-12 18:37:42'),
+(2595, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-13 03:50:36'),
+(2596, 3, 'LOGOUT', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-13 03:51:57'),
+(2597, 29, 'LOGIN', 'users', 29, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-13 03:52:07'),
+(2598, 3, 'LOGIN', 'users', 3, NULL, NULL, '::1', 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/157.0.0.0 Safari/537.36', '2026-11-13 04:14:16');
 
 -- --------------------------------------------------------
 
@@ -22329,6 +22336,33 @@ INSERT INTO `sponsorship_children` (`sponsorship_id`, `family_child_id`) VALUES
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `sponsorship_monthly_agreements`
+--
+
+CREATE TABLE `sponsorship_monthly_agreements` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `sponsorship_id` int(10) UNSIGNED NOT NULL,
+  `covered_month` date NOT NULL COMMENT 'First day of the covered calendar month',
+  `version_no` int(10) UNSIGNED NOT NULL,
+  `agreed_sponsorship_amount` decimal(12,2) NOT NULL,
+  `agreed_service_fee_amount` decimal(12,2) NOT NULL,
+  `currency_code` char(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+  `meeting_reference` varchar(255) DEFAULT NULL,
+  `amendment_reason` text DEFAULT NULL,
+  `created_by` int(10) UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ;
+
+--
+-- Dumping data for table `sponsorship_monthly_agreements`
+--
+
+INSERT INTO `sponsorship_monthly_agreements` (`id`, `sponsorship_id`, `covered_month`, `version_no`, `agreed_sponsorship_amount`, `agreed_service_fee_amount`, `currency_code`, `meeting_reference`, `amendment_reason`, `created_by`, `created_at`) VALUES
+(1, 3508, '2026-11-01', 1, 10000.00, 2000.00, 'SDG', NULL, NULL, 29, '2026-11-12 18:33:57');
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `sponsorship_pause_events`
 --
 
@@ -22378,6 +22412,24 @@ INSERT INTO `sponsorship_payment_allocations` (`id`, `transaction_id`, `sponsors
 (19, 28, 3538, 19, 'September/2026', '2026-09-01', 10000.00, 10000.00, 10000.00, 0.00, 'allocated', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
 (20, 29, 3534, 19, 'September/2026', '2026-09-01', 10000.00, 10000.00, 10000.00, 0.00, 'allocated', 'historical_backfill', NULL, '2026-11-09 08:16:58'),
 (21, 52, 3557, 3, 'November/2026', '2026-11-01', 4000.00, 4000.00, 4000.00, 0.00, 'allocated', 'live', 29, '2026-11-10 20:39:09');
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `sponsorship_service_fee_account_mappings`
+--
+
+CREATE TABLE `sponsorship_service_fee_account_mappings` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `effective_from` date NOT NULL,
+  `version_no` int(10) UNSIGNED NOT NULL,
+  `account_id` int(10) UNSIGNED NOT NULL,
+  `authorized_by_name` varchar(150) NOT NULL,
+  `authorization_reference` varchar(255) NOT NULL,
+  `authorization_note` text DEFAULT NULL,
+  `created_by` int(10) UNSIGNED NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -29962,9 +30014,6 @@ CREATE TABLE `sponsor_payments` (
   `transaction_id` int(10) UNSIGNED DEFAULT NULL COMMENT 'رابط القيد المحاسبي في جدول transactions بعد الاعتماد',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `payment_method` varchar(30) NOT NULL DEFAULT 'cash',
-  `transaction_date` date DEFAULT NULL,
-  `receipt_number` varchar(50) DEFAULT NULL,
-  `reference_number` varchar(100) DEFAULT NULL,
   `component_model` enum('legacy','monthly_agreement') NOT NULL DEFAULT 'legacy',
   `monthly_agreement_id` int(10) UNSIGNED DEFAULT NULL,
   `agreed_sponsorship_amount` decimal(12,2) DEFAULT NULL,
@@ -29977,18 +30026,18 @@ CREATE TABLE `sponsor_payments` (
 -- Dumping data for table `sponsor_payments`
 --
 
-INSERT INTO `sponsor_payments` (`id`, `payment_type`, `sponsorship_id`, `sponsor_id`, `project_id`, `other_source_note`, `purpose_note`, `supervisor_id`, `payment_period`, `amount`, `currency_code`, `receipt_file_path`, `unified_receipt_path`, `notes`, `status`, `reviewed_by_user_id`, `reviewed_at`, `return_note`, `transaction_id`, `created_at`, `payment_method`) VALUES
-(1, 'monthly_sponsorship', 1429, 1317, NULL, NULL, NULL, 19, 'July/2027', 11000.00, 'SDG', 'storage/receipts/TR-20260816122626-b71be3.png', NULL, NULL, 'approved', 29, '2026-08-17 15:38:11', NULL, 1, '2026-08-16 10:26:26', 'cash'),
-(2, 'monthly_sponsorship', 1429, 1317, NULL, NULL, NULL, 19, 'August/2026', 11000.00, 'SDG', 'storage/receipts/TR-20260816122626-b71be3.png', NULL, NULL, 'approved', 29, '2026-08-17 15:38:18', NULL, 2, '2026-08-16 10:26:26', 'cash'),
-(3, 'medicine', 1429, 1317, NULL, NULL, NULL, 19, 'August/2026', 10000.00, 'SDG', 'storage/receipts/TR-20260816122626-b71be3.png', NULL, NULL, 'approved', 29, '2026-08-17 15:38:22', NULL, 3, '2026-08-16 10:26:26', 'cash'),
-(4, 'monthly_sponsorship', 2947, 2584, NULL, NULL, NULL, 19, 'September/2026', 15000.00, 'SDG', 'storage/receipts/TR-20260826044305-ffc95b.jpg', 'storage/receipts/TR-20260826044305-e7427c.jpg', NULL, 'approved', 29, '2026-08-26 05:48:14', NULL, 17, '2026-08-26 02:43:05', 'cash'),
-(5, 'monthly_sponsorship', 2935, 2572, NULL, NULL, NULL, 19, 'September/2026', 15000.00, 'SDG', 'storage/receipts/TR-20260826044658-ec8005.jpg', 'storage/receipts/TR-20260826044658-13400f.jpg', NULL, 'approved', 29, '2026-08-26 05:48:21', NULL, 18, '2026-08-26 02:46:58', 'cash'),
-(6, 'monthly_sponsorship', 328, 323, NULL, NULL, NULL, 19, 'September/2026', 15000.00, 'SDG', 'storage/receipts/TR-20260915071448-14a68c.jpg', NULL, NULL, 'approved', 29, '2026-09-15 09:46:11', NULL, 27, '2026-09-15 05:14:48', 'cash'),
-(7, 'monthly_sponsorship', 3538, 2844, NULL, NULL, NULL, 19, 'September/2026', 10000.00, 'SDG', 'storage/receipts/TR-20260915073225-a729ae.jpg', NULL, NULL, 'returned', 29, '2026-09-15 09:58:10', 'test', NULL, '2026-09-15 05:32:25', 'cash'),
-(8, 'monthly_sponsorship', 3213, 2746, NULL, NULL, NULL, 19, 'September/2026', 16000.00, 'SDG', 'storage/receipts/TR-20260915073709-089920.jpg', NULL, NULL, 'returned', 29, '2026-09-15 09:58:07', 'test', NULL, '2026-09-15 05:37:09', 'cash'),
-(9, 'monthly_sponsorship', 3110, 2691, NULL, NULL, NULL, 19, 'September/2026', 15000.00, 'SDG', 'storage/receipts/TR-20260915075525-772f86.jpg', NULL, NULL, 'returned', 29, '2026-09-15 09:58:03', 'test', NULL, '2026-09-15 05:55:25', 'cash'),
-(10, 'monthly_sponsorship', 3538, 2844, NULL, NULL, NULL, 19, 'September/2026', 10000.00, 'SDG', 'storage/receipts/TR-20260915085953-52a92b.jpg', NULL, NULL, 'approved', 29, '2026-09-15 10:01:36', NULL, 28, '2026-09-15 06:59:53', 'bank_transfer'),
-(11, 'monthly_sponsorship', 3534, 2841, NULL, NULL, NULL, 19, 'September/2026', 10000.00, 'SDG', 'storage/receipts/TR-20260915101345-90aad0.jpg', NULL, NULL, 'approved', 29, '2026-09-15 11:14:15', NULL, 29, '2026-09-15 08:13:45', 'mobile');
+INSERT INTO `sponsor_payments` (`id`, `payment_type`, `sponsorship_id`, `sponsor_id`, `project_id`, `other_source_note`, `purpose_note`, `supervisor_id`, `payment_period`, `amount`, `currency_code`, `receipt_file_path`, `unified_receipt_path`, `notes`, `status`, `reviewed_by_user_id`, `reviewed_at`, `return_note`, `transaction_id`, `created_at`, `payment_method`, `component_model`, `monthly_agreement_id`, `agreed_sponsorship_amount`, `agreed_service_fee_amount`, `actual_sponsorship_received`, `actual_service_fee_received`) VALUES
+(1, 'monthly_sponsorship', 1429, 1317, NULL, NULL, NULL, 19, 'July/2027', 11000.00, 'SDG', 'storage/receipts/TR-20260816122626-b71be3.png', NULL, NULL, 'approved', 29, '2026-08-17 15:38:11', NULL, 1, '2026-08-16 10:26:26', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(2, 'monthly_sponsorship', 1429, 1317, NULL, NULL, NULL, 19, 'August/2026', 11000.00, 'SDG', 'storage/receipts/TR-20260816122626-b71be3.png', NULL, NULL, 'approved', 29, '2026-08-17 15:38:18', NULL, 2, '2026-08-16 10:26:26', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(3, 'medicine', 1429, 1317, NULL, NULL, NULL, 19, 'August/2026', 10000.00, 'SDG', 'storage/receipts/TR-20260816122626-b71be3.png', NULL, NULL, 'approved', 29, '2026-08-17 15:38:22', NULL, 3, '2026-08-16 10:26:26', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(4, 'monthly_sponsorship', 2947, 2584, NULL, NULL, NULL, 19, 'September/2026', 15000.00, 'SDG', 'storage/receipts/TR-20260826044305-ffc95b.jpg', 'storage/receipts/TR-20260826044305-e7427c.jpg', NULL, 'approved', 29, '2026-08-26 05:48:14', NULL, 17, '2026-08-26 02:43:05', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(5, 'monthly_sponsorship', 2935, 2572, NULL, NULL, NULL, 19, 'September/2026', 15000.00, 'SDG', 'storage/receipts/TR-20260826044658-ec8005.jpg', 'storage/receipts/TR-20260826044658-13400f.jpg', NULL, 'approved', 29, '2026-08-26 05:48:21', NULL, 18, '2026-08-26 02:46:58', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(6, 'monthly_sponsorship', 328, 323, NULL, NULL, NULL, 19, 'September/2026', 15000.00, 'SDG', 'storage/receipts/TR-20260915071448-14a68c.jpg', NULL, NULL, 'approved', 29, '2026-09-15 09:46:11', NULL, 27, '2026-09-15 05:14:48', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(7, 'monthly_sponsorship', 3538, 2844, NULL, NULL, NULL, 19, 'September/2026', 10000.00, 'SDG', 'storage/receipts/TR-20260915073225-a729ae.jpg', NULL, NULL, 'returned', 29, '2026-09-15 09:58:10', 'test', NULL, '2026-09-15 05:32:25', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(8, 'monthly_sponsorship', 3213, 2746, NULL, NULL, NULL, 19, 'September/2026', 16000.00, 'SDG', 'storage/receipts/TR-20260915073709-089920.jpg', NULL, NULL, 'returned', 29, '2026-09-15 09:58:07', 'test', NULL, '2026-09-15 05:37:09', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(9, 'monthly_sponsorship', 3110, 2691, NULL, NULL, NULL, 19, 'September/2026', 15000.00, 'SDG', 'storage/receipts/TR-20260915075525-772f86.jpg', NULL, NULL, 'returned', 29, '2026-09-15 09:58:03', 'test', NULL, '2026-09-15 05:55:25', 'cash', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(10, 'monthly_sponsorship', 3538, 2844, NULL, NULL, NULL, 19, 'September/2026', 10000.00, 'SDG', 'storage/receipts/TR-20260915085953-52a92b.jpg', NULL, NULL, 'approved', 29, '2026-09-15 10:01:36', NULL, 28, '2026-09-15 06:59:53', 'bank_transfer', 'legacy', NULL, NULL, NULL, NULL, NULL),
+(11, 'monthly_sponsorship', 3534, 2841, NULL, NULL, NULL, 19, 'September/2026', 10000.00, 'SDG', 'storage/receipts/TR-20260915101345-90aad0.jpg', NULL, NULL, 'approved', 29, '2026-09-15 11:14:15', NULL, 29, '2026-09-15 08:13:45', 'mobile', 'legacy', NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -30593,31 +30642,31 @@ CREATE TABLE `transactions` (
 -- Dumping data for table `transactions`
 --
 
-INSERT INTO `transactions` (`id`, `sponsorship_id`, `amount`, `currency_code`, `payment_method`, `transaction_date`, `receipt_number`, `description`, `months_covered`, `payment_period`, `purpose_note`, `purpose`, `admin_fee_percent`, `admin_fee_amount`, `net_amount`, `status`, `voided_at`, `voided_by`, `void_reason`, `created_by`, `fm_reviewed_by`, `fm_reviewed_at`, `fm_review_reason`, `submitted_at`, `resubmitted_at`, `cancelled_at`, `cancelled_by`, `cancel_reason`, `created_at`, `updated_at`, `transaction_code`, `transaction_type`, `family_id`, `sponsor_id`, `project_id`, `child_id`, `reference_number`, `month_start`, `month_end`, `admin_fee_separate`, `legacy_admin_fee_deducted`, `receipt_path`, `unified_receipt_path`, `admin_fee_method`, `admin_fee_value`, `admin_fee_policy_id`) VALUES
-(1, 1429, 11000.00, 'SDG', 'other', '2026-08-16', 'SP-000001', 'تحصيل مشرف (كفالة شهرية) للفترة: July/2027', 1.00, 'July/2027', NULL, 'monthly_sponsorship', 0.00, 0.00, 11000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-17 15:38:11', NULL, NULL, NULL, NULL, '2026-08-17 15:38:11', '2026-09-09 08:12:39', 'SP-000001', 'sponsorship_payment', NULL, 1317, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260816122626-b71be3.png', NULL, 'none', 0.00, NULL),
-(2, 1429, 11000.00, 'SDG', 'other', '2026-08-16', 'SP-000002', 'تحصيل مشرف (كفالة شهرية) للفترة: August/2026', 1.00, 'August/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 11000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-17 15:38:18', NULL, NULL, NULL, NULL, '2026-08-17 15:38:18', '2026-09-09 08:12:39', 'SP-000002', 'sponsorship_payment', NULL, 1317, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260816122626-b71be3.png', NULL, 'none', 0.00, NULL),
-(3, 1429, 10000.00, 'SDG', 'other', '2026-08-16', 'SP-000003', 'تحصيل مشرف (علاج وأدوية) للفترة: August/2026', 1.00, 'August/2026', NULL, 'medicine', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-17 15:38:22', NULL, NULL, NULL, NULL, '2026-08-17 15:38:22', '2026-09-09 08:12:39', 'SP-000003', 'general_donation', NULL, 1317, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260816122626-b71be3.png', NULL, 'none', 0.00, NULL),
-(4, NULL, 833000.00, 'SDG', 'cash', '2026-08-17', NULL, 'صرف شهري #2', 1.00, '2026-08', NULL, 'صرف شهري للأسر', 0.00, 0.00, 833000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-17 18:13:17', NULL, NULL, NULL, NULL, '2026-08-17 18:13:17', '2026-09-09 08:12:39', NULL, 'outflow', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(5, NULL, 195000.00, 'SDG', 'cash', '2026-08-18', NULL, 'صرف شهري #3', 1.00, '2026-09', NULL, 'صرف شهري للأسر', 0.00, 0.00, 195000.00, 'voided', '2026-08-18 08:49:39', NULL, NULL, 29, NULL, NULL, NULL, '2026-08-18 07:04:11', NULL, NULL, NULL, NULL, '2026-08-18 07:04:11', '2026-09-09 08:12:39', 'TXN-OUT-000005', 'outflow', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(8, NULL, 59000.00, 'SDG', 'bank_transfer', '2026-08-21', NULL, 'صرف دفعة #5 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 59000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, '2026-08-21 09:57:39', NULL, NULL, NULL, NULL, '2026-08-21 09:57:39', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-5', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(13, NULL, 59000.00, 'SDG', 'bank_transfer', '2026-08-21', NULL, 'صرف دفعة #6 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 59000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, '2026-08-21 10:44:29', NULL, NULL, NULL, NULL, '2026-08-21 10:44:29', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-6', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(14, NULL, 833000.00, 'SDG', 'bank_transfer', '2026-08-23', NULL, 'صرف دفعة #7 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 833000.00, 'voided', '2026-08-23 14:07:49', 1, 'مرتبطة بدفعة #7 التي تم إبطالها - راجع journal_entries.id=16', 17, NULL, NULL, NULL, '2026-08-23 08:27:45', NULL, NULL, NULL, NULL, '2026-08-23 08:27:45', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-7', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(15, NULL, 738000.00, 'SDG', 'bank_transfer', '2026-08-23', NULL, 'صرف دفعة #8 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 738000.00, 'voided', '2026-08-23 20:04:59', 29, 'dgggdfgg', 17, NULL, NULL, NULL, '2026-08-23 19:41:17', NULL, NULL, NULL, NULL, '2026-08-23 19:41:17', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-8', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(16, NULL, 738000.00, 'SDG', 'bank_transfer', '2026-08-23', NULL, 'صرف دفعة #9 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 738000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, '2026-08-23 20:50:42', NULL, NULL, NULL, NULL, '2026-08-23 20:50:42', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-9', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(17, 2947, 15000.00, 'SDG', 'other', '2026-08-26', 'SP-000004', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 15000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-26 05:48:13', NULL, NULL, NULL, NULL, '2026-08-26 05:48:13', '2026-09-09 08:12:39', 'SP-000004', 'sponsorship_payment', NULL, 2584, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260826044305-ffc95b.jpg', 'storage/receipts/TR-20260826044305-e7427c.jpg', 'none', 0.00, NULL),
-(18, 2935, 15000.00, 'SDG', 'other', '2026-08-26', 'SP-000005', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 15000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-26 05:48:21', NULL, NULL, NULL, NULL, '2026-08-26 05:48:21', '2026-09-09 08:12:39', 'SP-000005', 'sponsorship_payment', NULL, 2572, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260826044658-ec8005.jpg', 'storage/receipts/TR-20260826044658-13400f.jpg', 'none', 0.00, NULL),
-(19, NULL, 50000.00, 'SDG', 'bank_transfer', '2026-09-08', NULL, 'دفعة', 0.00, NULL, NULL, NULL, 0.00, 0.00, 50000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, '2026-09-08 22:34:25', NULL, NULL, NULL, NULL, '2026-09-08 22:34:25', '2026-09-09 08:12:39', 'TR-000013', 'general_donation', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260908213425-cefcf8.jpg', NULL, 'none', 0.00, NULL),
-(20, NULL, 250000.00, 'SDG', 'mobile', '2026-09-09', '154658789', 'donation to feed the hungry', 0.00, 'September/2026', NULL, 'other', 0.00, 0.00, 250000.00, 'posted', NULL, NULL, NULL, 17, 29, '2026-09-09 11:18:20', NULL, '2026-09-09 08:27:55', '2026-09-09 10:17:54', NULL, NULL, NULL, '2026-09-09 08:27:55', '2026-09-09 11:18:20', 'TR-000014', 'general_donation', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, NULL, 'storage/receipts/TR-20260909101754-a642a0.jpg', 'none', 0.00, NULL),
-(21, 1716, 25000.00, 'SDG', 'bank_transfer', '2026-09-09', '987654321', 'دفعة', 0.00, NULL, NULL, NULL, 0.00, 0.00, 25000.00, 'cancelled', NULL, NULL, NULL, 17, 29, '2026-09-09 16:26:12', 'اختبار رقابي — تم الإرجاع للاختبار قبل الإلغاء', '2026-09-09 16:23:04', NULL, '2026-09-09 16:30:38', 17, 'إلغاء من المنشئ بعد الإرجاع', '2026-09-09 16:23:04', '2026-09-09 16:30:38', 'TR-000015', 'project_donation', NULL, 1561, 2, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260909152304-6d8b20.jpg', NULL, 'none', 0.00, NULL),
-(22, NULL, 1000.00, 'SDG', 'cash', '2026-09-09', NULL, 'دفعة', 0.00, NULL, NULL, NULL, 0.00, 0.00, 1000.00, 'voided', '2026-09-09 18:31:25', 29, 'اختبار رقابي — إبطال TR-000016', 17, 29, '2026-09-09 17:24:00', NULL, '2026-09-09 17:04:31', NULL, NULL, NULL, NULL, '2026-09-09 17:04:31', '2026-09-09 18:31:25', 'TR-000016', 'general_donation', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260909160431-76d449.jpg', NULL, 'none', 0.00, NULL),
-(23, NULL, 100.00, 'SDG', 'bank_transfer', '2026-09-11', NULL, 'AUDIT-VOID-FIXTURE batch #11', 1.00, '2026-10', 'AUDIT-VOID-FIXTURE', NULL, 0.00, 0.00, 100.00, 'voided', '2026-09-11 19:34:12', 29, 'wrong value', 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-11 19:08:23', '2026-09-11 19:34:12', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'AUDIT-DISB-VOID-11', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(24, NULL, 3000.00, 'SDG', 'bank_transfer', '2026-09-14', NULL, 'اختبار محاسبي - صرف دفعة الإرجاع #12', 1.00, '2026-10', 'Controlled returned-funds lifecycle test', NULL, 0.00, 0.00, 3000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:12:45', '2026-09-14 09:12:45', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'TEST-DISB-OUT-12', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(26, NULL, 3000.00, 'SDG', 'cash', '2026-09-14', NULL, 'إعادة صرف مبلغ مرتجع للأسرة 817 - شهر 2026-10', 1.00, '2026-10', 'إعادة صرف مبلغ مرتجع بعد إعادة فتحه', NULL, 0.00, 0.00, 3000.00, 'posted', NULL, NULL, NULL, 16, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:38:06', '2026-09-14 09:38:06', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-REDISB-ITEM-30', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL),
-(27, 328, 15000.00, 'SDG', 'cash', '2026-09-15', 'SP-000006', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 15000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 09:46:11', '2026-09-15 09:46:11', 'SP-000006', 'sponsorship_payment', NULL, 323, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915071448-14a68c.jpg', NULL, 'none', 0.00, NULL),
-(28, 3538, 10000.00, 'SDG', 'bank_transfer', '2026-09-15', 'SP-000010', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 10:01:36', '2026-09-15 10:01:36', 'SP-000010', 'sponsorship_payment', NULL, 2844, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915085953-52a92b.jpg', NULL, 'none', 0.00, NULL),
-(29, 3534, 10000.00, 'SDG', 'mobile', '2026-09-15', 'SP-000011', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 11:14:15', '2026-09-15 11:14:15', 'SP-000011', 'sponsorship_payment', NULL, 2841, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915101345-90aad0.jpg', NULL, 'none', 0.00, NULL),
-(52, 3557, 4000.00, 'SDG', 'cash', '2026-11-10', NULL, 'دفعة — كفالة شهرية عن شهر November/2026', 1.00, 'November/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 4000.00, 'posted', NULL, NULL, NULL, 3, 29, '2026-11-10 20:39:09', NULL, '2026-11-10 20:22:59', NULL, NULL, NULL, NULL, '2026-11-10 20:22:59', '2026-11-10 20:39:09', 'TR-000023', 'sponsorship_payment', NULL, 2856, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20261110202259-630ec9.jpeg', NULL, 'none', 0.00, NULL),
-(53, NULL, 1000.00, 'SDG', 'cash', '2026-11-11', NULL, 'اختبار دورة إرجاع وتصحيح دفعة — VGM (اختبار دورة إرجاع وتصحيح دفعة — VGM)', 0.00, NULL, 'اختبار دورة إرجاع وتصحيح دفعة — VGM', 'other', 0.00, 0.00, 1000.00, 'posted', NULL, NULL, NULL, 3, 29, '2026-11-11 19:52:42', NULL, '2026-11-11 19:40:08', '2026-11-11 19:43:42', NULL, NULL, NULL, '2026-11-11 19:40:08', '2026-11-11 19:52:42', 'TR-000024', 'general_donation', NULL, 2842, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20261111194008-86aa01.jpg', NULL, 'none', 0.00, NULL);
+INSERT INTO `transactions` (`id`, `sponsorship_id`, `amount`, `currency_code`, `payment_method`, `transaction_date`, `receipt_number`, `description`, `months_covered`, `payment_period`, `purpose_note`, `purpose`, `admin_fee_percent`, `admin_fee_amount`, `net_amount`, `status`, `voided_at`, `voided_by`, `void_reason`, `created_by`, `fm_reviewed_by`, `fm_reviewed_at`, `fm_review_reason`, `submitted_at`, `resubmitted_at`, `cancelled_at`, `cancelled_by`, `cancel_reason`, `created_at`, `updated_at`, `transaction_code`, `transaction_type`, `family_id`, `sponsor_id`, `project_id`, `child_id`, `reference_number`, `month_start`, `month_end`, `admin_fee_separate`, `legacy_admin_fee_deducted`, `receipt_path`, `unified_receipt_path`, `admin_fee_method`, `admin_fee_value`, `admin_fee_policy_id`, `component_model`, `monthly_agreement_id`, `agreed_sponsorship_amount`, `agreed_service_fee_amount`, `actual_sponsorship_received`, `actual_service_fee_received`, `service_fee_account_mapping_id`, `service_fee_account_id`) VALUES
+(1, 1429, 11000.00, 'SDG', 'other', '2026-08-16', 'SP-000001', 'تحصيل مشرف (كفالة شهرية) للفترة: July/2027', 1.00, 'July/2027', NULL, 'monthly_sponsorship', 0.00, 0.00, 11000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-17 15:38:11', NULL, NULL, NULL, NULL, '2026-08-17 15:38:11', '2026-09-09 08:12:39', 'SP-000001', 'sponsorship_payment', NULL, 1317, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260816122626-b71be3.png', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(2, 1429, 11000.00, 'SDG', 'other', '2026-08-16', 'SP-000002', 'تحصيل مشرف (كفالة شهرية) للفترة: August/2026', 1.00, 'August/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 11000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-17 15:38:18', NULL, NULL, NULL, NULL, '2026-08-17 15:38:18', '2026-09-09 08:12:39', 'SP-000002', 'sponsorship_payment', NULL, 1317, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260816122626-b71be3.png', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(3, 1429, 10000.00, 'SDG', 'other', '2026-08-16', 'SP-000003', 'تحصيل مشرف (علاج وأدوية) للفترة: August/2026', 1.00, 'August/2026', NULL, 'medicine', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-17 15:38:22', NULL, NULL, NULL, NULL, '2026-08-17 15:38:22', '2026-09-09 08:12:39', 'SP-000003', 'general_donation', NULL, 1317, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260816122626-b71be3.png', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(4, NULL, 833000.00, 'SDG', 'cash', '2026-08-17', NULL, 'صرف شهري #2', 1.00, '2026-08', NULL, 'صرف شهري للأسر', 0.00, 0.00, 833000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-17 18:13:17', NULL, NULL, NULL, NULL, '2026-08-17 18:13:17', '2026-09-09 08:12:39', NULL, 'outflow', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(5, NULL, 195000.00, 'SDG', 'cash', '2026-08-18', NULL, 'صرف شهري #3', 1.00, '2026-09', NULL, 'صرف شهري للأسر', 0.00, 0.00, 195000.00, 'voided', '2026-08-18 08:49:39', NULL, NULL, 29, NULL, NULL, NULL, '2026-08-18 07:04:11', NULL, NULL, NULL, NULL, '2026-08-18 07:04:11', '2026-09-09 08:12:39', 'TXN-OUT-000005', 'outflow', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(8, NULL, 59000.00, 'SDG', 'bank_transfer', '2026-08-21', NULL, 'صرف دفعة #5 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 59000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, '2026-08-21 09:57:39', NULL, NULL, NULL, NULL, '2026-08-21 09:57:39', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-5', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(13, NULL, 59000.00, 'SDG', 'bank_transfer', '2026-08-21', NULL, 'صرف دفعة #6 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 59000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, '2026-08-21 10:44:29', NULL, NULL, NULL, NULL, '2026-08-21 10:44:29', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-6', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(14, NULL, 833000.00, 'SDG', 'bank_transfer', '2026-08-23', NULL, 'صرف دفعة #7 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 833000.00, 'voided', '2026-08-23 14:07:49', 1, 'مرتبطة بدفعة #7 التي تم إبطالها - راجع journal_entries.id=16', 17, NULL, NULL, NULL, '2026-08-23 08:27:45', NULL, NULL, NULL, NULL, '2026-08-23 08:27:45', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-7', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(15, NULL, 738000.00, 'SDG', 'bank_transfer', '2026-08-23', NULL, 'صرف دفعة #8 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 738000.00, 'voided', '2026-08-23 20:04:59', 29, 'dgggdfgg', 17, NULL, NULL, NULL, '2026-08-23 19:41:17', NULL, NULL, NULL, NULL, '2026-08-23 19:41:17', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-8', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(16, NULL, 738000.00, 'SDG', 'bank_transfer', '2026-08-23', NULL, 'صرف دفعة #9 شهر 2026-08', 1.00, '2026-08', 'صرف دفعة كفالات', NULL, 0.00, 0.00, 738000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, '2026-08-23 20:50:42', NULL, NULL, NULL, NULL, '2026-08-23 20:50:42', '2026-09-09 08:12:39', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-OUT-9', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(17, 2947, 15000.00, 'SDG', 'other', '2026-08-26', 'SP-000004', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 15000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-26 05:48:13', NULL, NULL, NULL, NULL, '2026-08-26 05:48:13', '2026-09-09 08:12:39', 'SP-000004', 'sponsorship_payment', NULL, 2584, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260826044305-ffc95b.jpg', 'storage/receipts/TR-20260826044305-e7427c.jpg', 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(18, 2935, 15000.00, 'SDG', 'other', '2026-08-26', 'SP-000005', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 15000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, '2026-08-26 05:48:21', NULL, NULL, NULL, NULL, '2026-08-26 05:48:21', '2026-09-09 08:12:39', 'SP-000005', 'sponsorship_payment', NULL, 2572, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260826044658-ec8005.jpg', 'storage/receipts/TR-20260826044658-13400f.jpg', 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(19, NULL, 50000.00, 'SDG', 'bank_transfer', '2026-09-08', NULL, 'دفعة', 0.00, NULL, NULL, NULL, 0.00, 0.00, 50000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, '2026-09-08 22:34:25', NULL, NULL, NULL, NULL, '2026-09-08 22:34:25', '2026-09-09 08:12:39', 'TR-000013', 'general_donation', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260908213425-cefcf8.jpg', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(20, NULL, 250000.00, 'SDG', 'mobile', '2026-09-09', '154658789', 'donation to feed the hungry', 0.00, 'September/2026', NULL, 'other', 0.00, 0.00, 250000.00, 'posted', NULL, NULL, NULL, 17, 29, '2026-09-09 11:18:20', NULL, '2026-09-09 08:27:55', '2026-09-09 10:17:54', NULL, NULL, NULL, '2026-09-09 08:27:55', '2026-09-09 11:18:20', 'TR-000014', 'general_donation', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, NULL, 'storage/receipts/TR-20260909101754-a642a0.jpg', 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(21, 1716, 25000.00, 'SDG', 'bank_transfer', '2026-09-09', '987654321', 'دفعة', 0.00, NULL, NULL, NULL, 0.00, 0.00, 25000.00, 'cancelled', NULL, NULL, NULL, 17, 29, '2026-09-09 16:26:12', 'اختبار رقابي — تم الإرجاع للاختبار قبل الإلغاء', '2026-09-09 16:23:04', NULL, '2026-09-09 16:30:38', 17, 'إلغاء من المنشئ بعد الإرجاع', '2026-09-09 16:23:04', '2026-09-09 16:30:38', 'TR-000015', 'project_donation', NULL, 1561, 2, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260909152304-6d8b20.jpg', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(22, NULL, 1000.00, 'SDG', 'cash', '2026-09-09', NULL, 'دفعة', 0.00, NULL, NULL, NULL, 0.00, 0.00, 1000.00, 'voided', '2026-09-09 18:31:25', 29, 'اختبار رقابي — إبطال TR-000016', 17, 29, '2026-09-09 17:24:00', NULL, '2026-09-09 17:04:31', NULL, NULL, NULL, NULL, '2026-09-09 17:04:31', '2026-09-09 18:31:25', 'TR-000016', 'general_donation', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260909160431-76d449.jpg', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(23, NULL, 100.00, 'SDG', 'bank_transfer', '2026-09-11', NULL, 'AUDIT-VOID-FIXTURE batch #11', 1.00, '2026-10', 'AUDIT-VOID-FIXTURE', NULL, 0.00, 0.00, 100.00, 'voided', '2026-09-11 19:34:12', 29, 'wrong value', 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-11 19:08:23', '2026-09-11 19:34:12', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'AUDIT-DISB-VOID-11', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(24, NULL, 3000.00, 'SDG', 'bank_transfer', '2026-09-14', NULL, 'اختبار محاسبي - صرف دفعة الإرجاع #12', 1.00, '2026-10', 'Controlled returned-funds lifecycle test', NULL, 0.00, 0.00, 3000.00, 'posted', NULL, NULL, NULL, 17, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:12:45', '2026-09-14 09:12:45', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'TEST-DISB-OUT-12', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(26, NULL, 3000.00, 'SDG', 'cash', '2026-09-14', NULL, 'إعادة صرف مبلغ مرتجع للأسرة 817 - شهر 2026-10', 1.00, '2026-10', 'إعادة صرف مبلغ مرتجع بعد إعادة فتحه', NULL, 0.00, 0.00, 3000.00, 'posted', NULL, NULL, NULL, 16, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-14 09:38:06', '2026-09-14 09:38:06', NULL, 'disbursement', NULL, NULL, NULL, NULL, 'DISB-REDISB-ITEM-30', NULL, NULL, 0.00, NULL, NULL, NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(27, 328, 15000.00, 'SDG', 'cash', '2026-09-15', 'SP-000006', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 15000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 09:46:11', '2026-09-15 09:46:11', 'SP-000006', 'sponsorship_payment', NULL, 323, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915071448-14a68c.jpg', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(28, 3538, 10000.00, 'SDG', 'bank_transfer', '2026-09-15', 'SP-000010', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 10:01:36', '2026-09-15 10:01:36', 'SP-000010', 'sponsorship_payment', NULL, 2844, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915085953-52a92b.jpg', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(29, 3534, 10000.00, 'SDG', 'mobile', '2026-09-15', 'SP-000011', 'تحصيل مشرف (كفالة شهرية) للفترة: September/2026', 1.00, 'September/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 10000.00, 'posted', NULL, NULL, NULL, 29, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, '2026-09-15 11:14:15', '2026-09-15 11:14:15', 'SP-000011', 'sponsorship_payment', NULL, 2841, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20260915101345-90aad0.jpg', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(52, 3557, 4000.00, 'SDG', 'cash', '2026-11-10', NULL, 'دفعة — كفالة شهرية عن شهر November/2026', 1.00, 'November/2026', NULL, 'monthly_sponsorship', 0.00, 0.00, 4000.00, 'posted', NULL, NULL, NULL, 3, 29, '2026-11-10 20:39:09', NULL, '2026-11-10 20:22:59', NULL, NULL, NULL, NULL, '2026-11-10 20:22:59', '2026-11-10 20:39:09', 'TR-000023', 'sponsorship_payment', NULL, 2856, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20261110202259-630ec9.jpeg', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL),
+(53, NULL, 1000.00, 'SDG', 'cash', '2026-11-11', NULL, 'اختبار دورة إرجاع وتصحيح دفعة — VGM (اختبار دورة إرجاع وتصحيح دفعة — VGM)', 0.00, NULL, 'اختبار دورة إرجاع وتصحيح دفعة — VGM', 'other', 0.00, 0.00, 1000.00, 'posted', NULL, NULL, NULL, 3, 29, '2026-11-11 19:52:42', NULL, '2026-11-11 19:40:08', '2026-11-11 19:43:42', NULL, NULL, NULL, '2026-11-11 19:40:08', '2026-11-11 19:52:42', 'TR-000024', 'general_donation', NULL, 2842, NULL, NULL, NULL, NULL, NULL, 0.00, NULL, 'storage/receipts/TR-20261111194008-86aa01.jpg', NULL, 'none', 0.00, NULL, 'legacy', NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -30661,7 +30710,7 @@ CREATE TABLE `users` (
 INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, `email`, `phone`, `is_active`, `supervisor_status`, `password_change_required`, `last_login_at`, `created_by`, `created_at`, `updated_at`, `legacy_status`, `avatar_path`, `address`, `birth_date`, `gender`, `department_id`, `manager_id`, `theme_preference`, `language_preference`, `email_notifications`, `push_notifications`, `email_newsletter`) VALUES
 (1, 1, 'sudo', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'منير علي طه صالح', 'sudo@ahlelkheir.org', '0966616614', 1, '', 0, '2026-11-09 08:55:40', NULL, '2026-08-02 16:49:35', '2026-11-09 08:55:40', 'active', 'storage/avatars/user_1_1789753554.png', NULL, NULL, 'ذكر', 1, 1, 'auto', 'ar', 1, 1, 1),
 (2, 2, 'gm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'المدير العام', 'gm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-10 06:31:50', NULL, '2026-08-02 16:49:35', '2026-11-10 06:31:50', 'active', 'storage/avatars/user_2_1787805764.png', NULL, NULL, NULL, 1, NULL, 'light', 'ar', 1, 1, 1),
-(3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-12 05:33:49', NULL, '2026-08-02 16:49:35', '2026-11-12 05:33:49', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
+(3, 3, 'vgm', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'لمياء علي طه صالح', 'vgm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-13 04:14:16', NULL, '2026-08-02 16:49:35', '2026-11-13 04:14:16', 'active', 'storage/avatars/user_3_1787556761.png', NULL, NULL, 'female', 1, 2, 'light', 'ar', 1, 1, 1),
 (4, 10, 'accountant', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'محاسب (موظف)', 'accountant@ahlelkheir.org', '0123456789', 1, '', 0, '2026-08-17 14:11:48', NULL, '2026-08-08 12:33:29', '2026-08-17 14:30:38', 'active', NULL, NULL, NULL, NULL, 6, 29, 'light', 'ar', 1, 1, 1),
 (14, 4, 'Mad_Max', '$2y$10$2Pps4jCppxKBhdFrBRi94.FmCAYDqhUWd.vOLH4CnCIZDWbWrLhTC', 'أحمد محمد', 'moneerali2000@gmail.com', '0912345100', 0, 'archived', 0, '2026-08-16 09:20:38', 3, '2026-08-09 10:41:43', '2026-09-04 08:02:07', 'active', NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
 (15, 4, 'medo', '$2y$10$8XL6WcxWHuHZ2MB0XKlWReI28/2VUY0P9TJNWIM1chyov7mi9vZGy', 'مديحه عبد الماجد', 'madiha@example.com', '096664568', 0, 'archived', 0, NULL, 3, '2026-08-10 10:31:56', '2026-09-04 08:01:57', NULL, NULL, NULL, NULL, NULL, NULL, NULL, 'light', 'ar', 1, 1, 1),
@@ -30677,7 +30726,7 @@ INSERT INTO `users` (`id`, `role_id`, `username`, `password_hash`, `full_name`, 
 (26, 4, 'sv8', '$2y$10$iRZLB9UdIggAJqKsR.eoPuwyMFfS4w3RgVjZ4XjvxxUynOuhMAc/i', 'ساره خلف الله', 'sarah@gmail.com', '015468972', 1, 'active', 0, NULL, 3, '2026-08-14 09:28:14', '2026-09-04 08:38:22', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (27, 4, 'sv9', '$2y$10$oBV.8O1UW/yiwOAcPMxbqeH8Xh/PJhNtq.tIkyOqh55v1v7GzjSJW', 'هناء خلف الله', 'hanah@gmail.com', '78999456789', 1, 'active', 0, NULL, 3, '2026-08-14 09:31:19', '2026-09-03 15:28:42', NULL, NULL, NULL, NULL, 'female', 5, 3, 'light', 'ar', 1, 1, 1),
 (28, 9, 'sm1', '$2y$10$gtVZcFBfL2yMhNXOPpkr5e7up/SiAnE7KfjJ8tq4JFocePuGjcr0C', 'أحمد حسين', 'ahmed@gmail.com', '8545567865', 1, '', 0, '2026-09-28 16:38:49', 1, '2026-08-14 13:06:45', '2026-09-28 16:38:49', NULL, NULL, NULL, NULL, 'male', 4, 3, 'light', 'ar', 1, 1, 1),
-(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-11 19:35:06', 1, '2026-08-17 14:26:40', '2026-11-11 19:35:06', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
+(29, 6, 'fm', '$2y$10$K2.yA1kpqLaGWrqH/QOQ2uXv0PJhvWTMC55tW5kSkU6u5iaz6JmVW', 'المدير المالي', 'fm@ahlelkheir.org', NULL, 1, '', 0, '2026-11-13 03:52:07', 1, '2026-08-17 14:26:40', '2026-11-13 03:52:07', NULL, 'storage/avatars/user_29_1787555658.jpg', NULL, NULL, 'أنثى', 1, 2, 'light', 'ar', 1, 1, 1),
 (32, 11, 'hrh', '$2y$10$Z3uc9VD8pp3.YEjguuWYseyvG03aBC6bN8WoP1FxEoF7BMzx4conq', 'مدير الموارد البشرية', 'hr@ahlelkheir.org', '00112233445566', 1, '', 0, '2026-10-25 09:45:51', NULL, '2026-08-18 21:49:04', '2026-10-25 09:45:51', NULL, 'storage/avatars/user_32_1788630391.png', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
 (33, 13, 'gpm', '$2y$10$ftQaFFCk4DF1UrdPlpGtd.OVR.2pyxPxKlIcZ7KhRxa7VMP/FXC/G', 'projects manager', 'pm@gmail.com', '00012344456678', 1, '', 0, '2026-10-19 08:33:28', 1, '2026-08-28 18:33:31', '2026-10-19 08:33:28', NULL, 'storage/avatars/user_33_1787943667.jpg', NULL, NULL, 'male', 1, 2, 'light', 'ar', 1, 1, 1),
 (34, 14, 'ps1', '$2y$10$y6GVpoe/hF9GxE8zyezAPORKNgBn5n65Ct.tUHI0r6lnkyHEdkrZi', 'project supervisor', 'gps@gmail.com', '987654321', 1, '', 0, '2026-10-15 18:05:58', 1, '2026-08-28 18:35:16', '2026-10-15 18:05:58', NULL, NULL, NULL, NULL, 'male', 8, 33, 'light', 'ar', 1, 1, 1),
@@ -30848,60 +30897,8 @@ INSERT INTO `winback_contacts` (`id`, `campaign_id`, `contacted_by`, `contact_da
 (1, 2, 18, '2026-09-19 14:13:29', 'phone', 'no_answer', NULL);
 
 --
---
--- Table structure for table `sponsorship_monthly_agreements`
---
-CREATE TABLE `sponsorship_monthly_agreements` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `sponsorship_id` int(10) UNSIGNED NOT NULL,
-  `covered_month` date NOT NULL COMMENT 'First day of the covered calendar month',
-  `version_no` int(10) UNSIGNED NOT NULL,
-  `agreed_sponsorship_amount` decimal(12,2) NOT NULL,
-  `agreed_service_fee_amount` decimal(12,2) NOT NULL,
-  `currency_code` char(3) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
-  `meeting_reference` varchar(255) DEFAULT NULL,
-  `amendment_reason` text DEFAULT NULL,
-  `created_by` int(10) UNSIGNED NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp(),
-  CONSTRAINT `chk_spma_sponsorship_amount` CHECK (agreed_sponsorship_amount >= 0),
-  CONSTRAINT `chk_spma_service_fee_amount` CHECK (agreed_service_fee_amount >= 0)
-
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
---
--- Table structure for table `sponsorship_service_fee_account_mappings`
---
-CREATE TABLE `sponsorship_service_fee_account_mappings` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `effective_from` date NOT NULL,
-  `version_no` int(10) UNSIGNED NOT NULL,
-  `account_id` int(10) UNSIGNED NOT NULL,
-  `authorized_by_name` varchar(150) NOT NULL,
-  `authorization_reference` varchar(255) NOT NULL,
-  `authorization_note` text DEFAULT NULL,
-  `created_by` int(10) UNSIGNED NOT NULL,
-  `created_at` datetime NOT NULL DEFAULT current_timestamp()
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 -- Indexes for dumped tables
 --
-
---
--- Indexes for table `sponsorship_monthly_agreements`
---
-ALTER TABLE `sponsorship_monthly_agreements`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_spma_sponsorship_month_version` (`sponsorship_id`,`covered_month`,`version_no`),
-  ADD KEY `idx_spma_month_latest` (`sponsorship_id`,`covered_month`,`id`);
-
---
--- Indexes for table `sponsorship_service_fee_account_mappings`
---
-ALTER TABLE `sponsorship_service_fee_account_mappings`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `uq_ssfam_effective_version` (`effective_from`,`version_no`),
-  ADD KEY `idx_ssfam_account` (`account_id`),
-  ADD KEY `idx_ssfam_effective_latest` (`effective_from`,`version_no`,`id`);
 
 --
 -- Indexes for table `accountant_nanny_assignments`
@@ -31925,6 +31922,16 @@ ALTER TABLE `sponsorship_children`
   ADD KEY `idx_sponsorship_children_family_child_id` (`family_child_id`);
 
 --
+-- Indexes for table `sponsorship_monthly_agreements`
+--
+ALTER TABLE `sponsorship_monthly_agreements`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_spma_sponsorship_month_version` (`sponsorship_id`,`covered_month`,`version_no`),
+  ADD KEY `idx_spma_month_latest` (`sponsorship_id`,`covered_month`,`id`),
+  ADD KEY `fk_spma_currency` (`currency_code`),
+  ADD KEY `fk_spma_creator` (`created_by`);
+
+--
 -- Indexes for table `sponsorship_pause_events`
 --
 ALTER TABLE `sponsorship_pause_events`
@@ -31944,6 +31951,16 @@ ALTER TABLE `sponsorship_payment_allocations`
   ADD KEY `fk_spa_creator` (`created_by`);
 
 --
+-- Indexes for table `sponsorship_service_fee_account_mappings`
+--
+ALTER TABLE `sponsorship_service_fee_account_mappings`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_ssfam_effective_version` (`effective_from`,`version_no`),
+  ADD KEY `idx_ssfam_account` (`account_id`),
+  ADD KEY `idx_ssfam_effective_latest` (`effective_from`,`version_no`,`id`),
+  ADD KEY `fk_ssfam_creator` (`created_by`);
+
+--
 -- Indexes for table `sponsor_import_exceptions`
 --
 ALTER TABLE `sponsor_import_exceptions`
@@ -31961,7 +31978,7 @@ ALTER TABLE `sponsor_payments`
   ADD KEY `idx_sp_transaction` (`transaction_id`),
   ADD KEY `idx_sp_payment_type` (`payment_type`),
   ADD KEY `idx_sp_sponsor_id` (`sponsor_id`),
-  ADD KEY `idx_sp_monthly_agreement` (`monthly_agreement_id`);
+  ADD KEY `fk_sponsor_payments_spma` (`monthly_agreement_id`);
 
 --
 -- Indexes for table `sponsor_requests`
@@ -32065,8 +32082,9 @@ ALTER TABLE `transactions`
   ADD KEY `idx_txn_period` (`payment_period`),
   ADD KEY `idx_transactions_fm_review_status` (`status`),
   ADD KEY `idx_transactions_created_by_status` (`created_by`,`status`),
-  ADD KEY `idx_transactions_monthly_agreement` (`monthly_agreement_id`),
-  ADD KEY `idx_transactions_service_fee_mapping` (`service_fee_account_mapping_id`);
+  ADD KEY `fk_transactions_spma` (`monthly_agreement_id`),
+  ADD KEY `idx_transactions_service_fee_mapping` (`service_fee_account_mapping_id`),
+  ADD KEY `fk_transactions_ssfam_account` (`service_fee_account_id`);
 
 --
 -- Indexes for table `users`
@@ -32124,18 +32142,6 @@ ALTER TABLE `winback_contacts`
 --
 -- AUTO_INCREMENT for dumped tables
 --
---
--- AUTO_INCREMENT for table `sponsorship_service_fee_account_mappings`
---
-ALTER TABLE `sponsorship_service_fee_account_mappings`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT for table `sponsorship_monthly_agreements`
---
-ALTER TABLE `sponsorship_monthly_agreements`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
-
 
 --
 -- AUTO_INCREMENT for table `accountant_nanny_assignments`
@@ -32177,7 +32183,7 @@ ALTER TABLE `attendance`
 -- AUTO_INCREMENT for table `audit_log`
 --
 ALTER TABLE `audit_log`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2592;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2599;
 
 --
 -- AUTO_INCREMENT for table `contracts`
@@ -32762,6 +32768,12 @@ ALTER TABLE `sponsorship_accounting_events`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=30;
 
 --
+-- AUTO_INCREMENT for table `sponsorship_monthly_agreements`
+--
+ALTER TABLE `sponsorship_monthly_agreements`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `sponsorship_pause_events`
 --
 ALTER TABLE `sponsorship_pause_events`
@@ -32772,6 +32784,12 @@ ALTER TABLE `sponsorship_pause_events`
 --
 ALTER TABLE `sponsorship_payment_allocations`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
+
+--
+-- AUTO_INCREMENT for table `sponsorship_service_fee_account_mappings`
+--
+ALTER TABLE `sponsorship_service_fee_account_mappings`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `sponsor_import_exceptions`
@@ -33207,6 +33225,14 @@ ALTER TABLE `sponsorship_children`
   ADD CONSTRAINT `fk_sponsorship_children_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
+-- Constraints for table `sponsorship_monthly_agreements`
+--
+ALTER TABLE `sponsorship_monthly_agreements`
+  ADD CONSTRAINT `fk_spma_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_spma_currency` FOREIGN KEY (`currency_code`) REFERENCES `currencies` (`code`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_spma_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON UPDATE CASCADE;
+
+--
 -- Constraints for table `sponsorship_pause_events`
 --
 ALTER TABLE `sponsorship_pause_events`
@@ -33226,16 +33252,8 @@ ALTER TABLE `sponsorship_payment_allocations`
 -- Constraints for table `sponsorship_service_fee_account_mappings`
 --
 ALTER TABLE `sponsorship_service_fee_account_mappings`
-  ADD CONSTRAINT `fk_ssfam_account` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  ADD CONSTRAINT `fk_ssfam_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
-
---
--- Constraints for table `sponsorship_monthly_agreements`
---
-ALTER TABLE `sponsorship_monthly_agreements`
-  ADD CONSTRAINT `fk_spma_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  ADD CONSTRAINT `fk_spma_currency` FOREIGN KEY (`currency_code`) REFERENCES `currencies` (`code`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  ADD CONSTRAINT `fk_spma_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+  ADD CONSTRAINT `fk_ssfam_account` FOREIGN KEY (`account_id`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_ssfam_creator` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `sponsor_payments`
@@ -33245,7 +33263,7 @@ ALTER TABLE `sponsor_payments`
   ADD CONSTRAINT `fk_payment_supervisor` FOREIGN KEY (`supervisor_id`) REFERENCES `users` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_sp_reviewed_by` FOREIGN KEY (`reviewed_by_user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_sp_transaction` FOREIGN KEY (`transaction_id`) REFERENCES `transactions` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_sponsor_payments_spma` FOREIGN KEY (`monthly_agreement_id`) REFERENCES `sponsorship_monthly_agreements` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+  ADD CONSTRAINT `fk_sponsor_payments_spma` FOREIGN KEY (`monthly_agreement_id`) REFERENCES `sponsorship_monthly_agreements` (`id`) ON UPDATE CASCADE;
 
 --
 -- Constraints for table `sponsor_supervisor_assignments`
@@ -33311,11 +33329,11 @@ ALTER TABLE `suspension_cases`
 ALTER TABLE `transactions`
   ADD CONSTRAINT `fk_transactions_created_by` FOREIGN KEY (`created_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_transactions_currency` FOREIGN KEY (`currency_code`) REFERENCES `currencies` (`code`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_transactions_spma` FOREIGN KEY (`monthly_agreement_id`) REFERENCES `sponsorship_monthly_agreements` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_transactions_sponsorship` FOREIGN KEY (`sponsorship_id`) REFERENCES `sponsorships` (`id`) ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_transactions_voided_by` FOREIGN KEY (`voided_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
-  ADD CONSTRAINT `fk_transactions_spma` FOREIGN KEY (`monthly_agreement_id`) REFERENCES `sponsorship_monthly_agreements` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  ADD CONSTRAINT `fk_transactions_ssfam_mapping` FOREIGN KEY (`service_fee_account_mapping_id`) REFERENCES `sponsorship_service_fee_account_mappings` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT,
-  ADD CONSTRAINT `fk_transactions_ssfam_account` FOREIGN KEY (`service_fee_account_id`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE ON DELETE RESTRICT;
+  ADD CONSTRAINT `fk_transactions_ssfam_account` FOREIGN KEY (`service_fee_account_id`) REFERENCES `accounts` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_transactions_ssfam_mapping` FOREIGN KEY (`service_fee_account_mapping_id`) REFERENCES `sponsorship_service_fee_account_mappings` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_transactions_voided_by` FOREIGN KEY (`voided_by`) REFERENCES `users` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Constraints for table `users`
