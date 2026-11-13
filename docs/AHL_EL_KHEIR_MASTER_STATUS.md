@@ -6481,3 +6481,14 @@ The previous same-day note describing a contextual heading over a shared non-mon
 The split payment form's Section 2 now supports multiple independent donation records. Each donation row captures its own type, amount, project/source details, payment date, method, receipt number, reference, description and attachment. Supervisor submissions persist one pending `sponsor_payments` row per donation; VGM submissions persist one pending `transactions` row per donation. Existing review routes, sponsor context and Supervisor sponsor-scope validation remain in place. No service fee is applied to donations and no schema change was needed.
 
 GitHub Actions run 43300051479 passed PHP 8.2 lint and all 53 focused payment-entry contract checks. This is repository/CI evidence only. Local XAMPP/browser and database acceptance remain pending; no donation was submitted during implementation. The separate monthly-agreement accounting work remains active, including its existing positive-service-fee posting restriction pending approved recognition timing and revenue mapping.
+
+
+## 2026-11-13 — Payment-entry visual acceptance gate CLOSED
+
+The user reviewed the updated payment-entry form and stated that, although the layout was not exactly the original preference, it was substantially better and the visual issue should be considered done. Treat the payment-entry visual refinement as accepted/closed; do not reopen it without a concrete regression or a new request. No payment was submitted as part of this acceptance.
+
+The accounting work may now continue. This UI acceptance is **not** an accounting-policy authorization: positive actual sponsorship service-fee posting remains blocked until an authorized accounting owner confirms both recognition timing (immediate or covered-month end) and the approved active revenue destination. Do not infer either decision, use account 4200 as a fallback, or treat the existence of an account-mapping row as approval of recognition timing.
+
+Current repository head at this checkpoint: `7195623cdd6808e9dc2c071a67a21db6ee7a622`. The payment-entry refinement, focused layout contract test, and documentation commits are present on `main`; GitHub Actions runs `43351641281` (PHP 8.2 lint + 54 focused checks) and `43351641198` (PHP syntax and migration workflow jobs) passed.
+
+**Next exact gate:** establish the user's current local `main`/working-tree state and recheck the live `ahl_el_kheir` database for the three 2026-11-12 payment/agreement migrations and any pending/returned legacy sponsorship submissions. Earlier preflight evidence from 2026-11-12 said those migrations were not yet applied and identified legacy returned Supervisor rows 7–9; do not assume the local state is unchanged. Preserve all local modifications and financial records. Do not apply migrations or post payments until this read-only preflight is reviewed.
