@@ -750,3 +750,14 @@ Commits:
 - `6244dd402a604a76cdd90d392ce3b54efcddcd87` — focused layout/search contract assertions.
 
 Verification: GitHub Actions run [43351641281](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43351641281) passed PHP 8.2 lint for the affected sponsorship/payment workflow files and all 54 focused component contract checks. Local XAMPP/browser visual acceptance is still required. The separate PHP syntax workflow run [43351641198](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43351641198) also passed. Do not begin accounting implementation until the user accepts the updated payment form.
+
+
+## 2026-11-13 — Payment-entry visual acceptance gate CLOSED
+
+The user reviewed the updated payment-entry form and stated that, although the layout was not exactly the original preference, it was substantially better and the visual issue should be considered done. Treat the payment-entry visual refinement as accepted/closed; do not reopen it without a concrete regression or a new request. No payment was submitted as part of this acceptance.
+
+The accounting work may now continue. This UI acceptance is **not** an accounting-policy authorization: positive actual sponsorship service-fee posting remains blocked until an authorized accounting owner confirms both recognition timing (immediate or covered-month end) and the approved active revenue destination. Do not infer either decision, use account 4200 as a fallback, or treat the existence of an account-mapping row as approval of recognition timing.
+
+Current repository head at this checkpoint: `7195623cdd6808e9dc2c071a67a21db6ee7a622`. The payment-entry refinement, focused layout contract test, and documentation commits are present on `main`; GitHub Actions runs `43351641281` (PHP 8.2 lint + 54 focused checks) and `43351641198` (PHP syntax and migration workflow jobs) passed.
+
+**Next exact gate:** establish the user's current local `main`/working-tree state and recheck the live `ahl_el_kheir` database for the three 2026-11-12 payment/agreement migrations and any pending/returned legacy sponsorship submissions. Earlier preflight evidence from 2026-11-12 said those migrations were not yet applied and identified legacy returned Supervisor rows 7–9; do not assume the local state is unchanged. Preserve all local modifications and financial records. Do not apply migrations or post payments until this read-only preflight is reviewed.
