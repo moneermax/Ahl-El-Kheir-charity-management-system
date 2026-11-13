@@ -9,7 +9,7 @@ require_once dirname(__DIR__, 2) . '/modules/sponsorships/lib_monthly_agreements
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 $role = Session::getUserRole();
-if (!in_array($role, ['admin', 'accountant_staff', 'vice_general_manager'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
+if (!in_array($role, ['admin', 'accountant_staff'], true)) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 
 // Preserve only known transaction-list filters; never accept an arbitrary return URL.
 $returnParams = [];
