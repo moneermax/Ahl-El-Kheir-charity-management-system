@@ -319,15 +319,31 @@ if (is_string($paymentEntrySource)) {
         'donation_evidence_and_server_persistence_are_per_line'
     );
     $monthlyWarningPosition = strpos($paymentEntrySource, 'تنبيه:</strong> قيم الاتفاقية الشهرية مرجعية');
+    $paymentSetupPosition = strpos($paymentEntrySource, '<div class="payment-setup-panel">');
     $monthlySectionStart = strpos($paymentEntrySource, '<div class="col-12" id="grpLines">');
-    $agreementSummaryPosition = strpos($paymentEntrySource, 'id="agreementSummary"');
     $assert(
         $monthlyWarningPosition !== false
+        && $paymentSetupPosition !== false
         && $monthlySectionStart !== false
-        && $agreementSummaryPosition !== false
-        && $monthlyWarningPosition > $monthlySectionStart
-        && $monthlyWarningPosition < $agreementSummaryPosition,
-        'exact_agreement_warning_at_top_of_monthly_section'
+        && $monthlyWarningPosition < $paymentSetupPosition
+        && $paymentSetupPosition < $monthlySectionStart,
+        'exact_agreement_warning_before_section_one'
+    );
+    $typeFieldPosition = strpos($paymentEntrySource, '<div class="col-12"><label class="form-label">نوع الدفعة *</label>');
+    $sponsorshipFieldPosition = strpos($paymentEntrySource, '<div class="col-md-5" id="grpShip">');
+    $sponsorshipSearchPosition = strpos($paymentEntrySource, 'id="sponsorshipSearch"');
+    $assert(
+        $typeFieldPosition !== false
+        && $sponsorshipFieldPosition !== false
+        && $sponsorshipSearchPosition !== false
+        && $typeFieldPosition < $sponsorshipFieldPosition
+        && $sponsorshipFieldPosition < $sponsorshipSearchPosition
+        && str_contains($paymentEntrySource, 'id="sponsorshipSelect" class="form-select form-select-sm"')
+        && str_contains($paymentEntrySource, 'class="col-md-7"><label class="form-label sponsorship-field-label" for="sponsorshipSearch">')
+        && str_contains($paymentEntrySource, 'placeholder="ابحث باسم الكفيل أو اليتيم أو كود الكفالة..."')
+        && str_contains($paymentEntrySource, 'يمكنك البحث باسم الكفيل أو اليتيم أو كود الكفالة.')
+        && str_contains($paymentEntrySource, "option.textContent.toLocaleLowerCase('ar').includes(term)"),
+        'payment_type_top_row_and_compact_searchable_sponsorship_field'
     );
     $assert(
         str_contains($paymentEntrySource, "\$line['date']")
