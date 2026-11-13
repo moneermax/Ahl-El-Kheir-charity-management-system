@@ -4233,3 +4233,18 @@ Evidence boundary: the previous local FM-approval rollback harness passed for th
 The positive service-fee posting guard remains deliberate. `ak_apply_admin_fee_snapshot_prepared()` validates the monthly-agreement snapshot and blocks a positive actual service fee before allocation/journal posting; the global gross-to-net administrative-fee policy is bypassed for this model. A service-fee mapping resolver and migration exist, but the current posting path does not invoke that resolver while positive fees remain blocked. Do not enable posting, assume account 4200, or infer immediate versus covered-month-end recognition.
 
 Previously confirmed business rules remain: service/administrative fees apply only to monthly sponsorship; the fee is agreed per sponsorship and covered month; actual receipts are entered separately; the normal combined sponsorship-plus-fee payment uses the same receipt. A later payment of accumulated fees for multiple covered months may be separate, but the system's exact fee-only/multi-month/one-receipt workflow has not been approved. Do not implement it by assumption. The authorized accounting owner must confirm (1) recognition timing and (2) the approved active revenue destination; the organization must also settle whether a separate accumulated-fee payment is one transaction with month-level fee allocations and one shared proof, or multiple independently evidenced monthly rows.
+
+
+## 2026-11-13 — Updated monthly-agreement FM approval rollback gate PASSED locally
+
+The user pulled `main` through `8f41ba3e` with `git pull --ff-only origin main`; the existing staged Monthly Data Entry additions, untracked `backups/`, and two untracked receipt files remained present. Local PHP 8.2 lint passed for `modules/accounting/lib_sponsor_payment_approval.php` and `tools/test_sponsorship_monthly_agreement_fm_approval_rollback.php`. The updated rollback-only harness then passed all assertions:
+
+```
+PASS | Supervisor_pending_payment=PASS | FM_approval=PASS | transaction=POSTED | payment=APPROVED
+PASS | allocation=10000.00/0.00 | collector=SUPERVISOR | journal=Dr1100:10000.00,Cr2200:10000.00 | balanced=PASS
+PASS | no_service_fee_revenue=PASS | approval_audit_rollback=PASS | incentive_rollback=PASS | rollback=PASS
+```
+
+This closes the shared FM approval operation's local rollback acceptance, including mandatory approval audit persistence and rollback. It still does not prove authenticated browser submission, CSRF/session/sponsor-scope behavior, live FM queue interaction, or notification delivery. The next gate is a read-only local preflight of agreement/payment/transaction rows and migration state, followed by a controlled browser submission using a distinct, verified unused agreement fixture. Do not reuse SH-003508 / agreement 1, do not submit a real organizational payment, and do not disturb legacy returned Supervisor rows 7–9 or protected transactions TR-000023/TR-000024/JE-000054.
+
+No CI result is claimed for these two source commits; the GitHub workflow-run lookup returned no runs for the harness commit. Local PHP syntax and rollback runtime evidence above are authoritative for this gate.
