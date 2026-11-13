@@ -9,7 +9,7 @@ if (!function_exists('ak_disbursement_is_fm_approver')) {
 if (!function_exists('ak_disbursement_assert_assigned')) {
     function ak_disbursement_assert_assigned(int $accountantId, int $nannyId): void {
         $assigned = dbFetchOne(
-            "SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?",
+            "SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ? FOR UPDATE",
             [$accountantId, $nannyId]
         );
         if (!$assigned) throw new RuntimeException('هذه الدفعة ليست ضمن الدفعات المسندة إليك.');
