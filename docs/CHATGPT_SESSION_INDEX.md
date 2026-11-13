@@ -4318,3 +4318,18 @@ Implemented narrowly on `main`:
 Commits: `e087e179b31f2e6d3efd4a5d9a374cd2e03e0c45` (direct submission mapping), `814d299263b2ed2330d4b9b5d67eae9734d2f8ee` (Supervisor FM approval mapping), `974deb155f9368eed7e51b15e7e227b47f463ba4` / `b702fbbf7dda855fece6c759225a41c9d804ef23` / `ca5c196884ee801a758afd64401cd472b3c7ed58` (contract assertions and refinement), `621c77deef2010686b0265fb46b9784e442148f7` (preserve ambiguous legacy returned transactions), `91d8a9f668ff144bdfd271684a0834254f7a390f` and `1134e3ef009f22dda8234fc5237eca6cfe53e1ba` (show source detail in both FM queues).
 
 Verification boundary at this checkpoint: source changes are committed directly to `main`; GitHub Actions result has not yet been inspected. Local PHP/XAMPP runtime verification remains pending. The authoritative SQL dump fetch returned empty content in this session, so no fresh schema verification is claimed; this correction does not alter or depend on schema changes.
+
+## 2026-11-13 — Accountant Staff incoming collection restriction
+
+The user confirmed that ordinary Accountant Staff do not record incoming money. Incoming sponsorship collections and donations are recorded by Supervisors or other explicitly authorized collection staff and reviewed by FM. Accountant Staff retain authorized outgoing accounting/disbursement work, including the existing Accountant-to-Nanny monthly-disbursement workflow.
+
+Source changes on `main`:
+- Removed `accountant_staff` from the server-side role allowlist for `modules/transactions/create.php`, covering direct incoming sponsorship/donation entry and its POST handler.
+- Restricted the standalone returned-transaction editor to Admin; Accountant Staff can no longer edit/resubmit incoming records.
+- Removed the Accountant Staff create-payment shortcut and returned edit/cancel controls from the transaction register. Accountant Staff retain read-only access to their own transaction history.
+- Added a server-side 403 guard to the returned-transaction cancellation endpoint for Accountant Staff, rejecting forged direct POSTs.
+- Left `modules/accounting/disbursements.php` and its Accountant Staff permissions/operations unchanged.
+
+Added a focused static authorization contract and included it in the existing CI workflow. Updated the VGM contract assertions to match the narrowed authorization. No schema, migration, accounting posting, journal, or historical data changes were made.
+
+Verification boundary: source/static contract and GitHub Actions checks are pending. Local Apache/browser role acceptance remains pending. Do not submit test collections using an Accountant Staff account.
