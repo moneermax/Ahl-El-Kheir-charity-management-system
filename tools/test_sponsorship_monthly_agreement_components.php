@@ -409,13 +409,13 @@ if (is_string($paymentEntrySource)) {
     );
     $assert(
         is_string($returnedEditorSource)
-        && str_contains($returnedEditorSource, "if($componentModel==='monthly_agreement')")
-        && str_contains($returnedEditorSource, "'actual_sponsorship_received'") === false
-        && str_contains($returnedEditorSource, "ak_transaction_review_audit($uid,'RESUBMIT_FM',$tid,$t,$upd)")
-        && str_contains($returnedEditorSource, "$upd['actual_sponsorship_received']=$actualS")
-        && !str_contains($returnedEditorSource, "$upd['monthly_agreement_id']")
-        && !str_contains($returnedEditorSource, "$upd['agreed_sponsorship_amount']")
-        && !str_contains($returnedEditorSource, "$upd['agreed_service_fee_amount']"),
+        && str_contains($returnedEditorSource, "if(\$componentModel==='monthly_agreement')")
+        && str_contains($returnedEditorSource, "ak_transaction_review_audit(\$uid,'RESUBMIT_FM',\$tid,\$t,\$upd)")
+        && str_contains($returnedEditorSource, "\$upd['actual_sponsorship_received']=\$actualS")
+        && str_contains($returnedEditorSource, "\$upd['actual_service_fee_received']=\$actualF")
+        && !str_contains($returnedEditorSource, "\$upd['monthly_agreement_id']")
+        && !str_contains($returnedEditorSource, "\$upd['agreed_sponsorship_amount']")
+        && !str_contains($returnedEditorSource, "\$upd['agreed_service_fee_amount']"),
         'vgm_returned_monthly_correction_changes_actuals_only_and_audits_snapshot'
     );
     $assert(
