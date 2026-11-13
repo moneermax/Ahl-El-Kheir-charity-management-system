@@ -839,3 +839,23 @@ A focused contract assertion was added to `tools/test_sponsorship_monthly_agreem
 Verification boundary: current `main` source and test files were re-fetched and inspected after the commits. No CI status was reported yet for the assertion commit, and no PHP runtime execution or local browser acceptance is claimed. No schema, migration, database record, journal, allocation, or payment was changed. Positive service-fee posting remains blocked pending authorized recognition timing and revenue-account approval.
 
 Local fixture boundary from the 2026-11-13 read-only preflight: agreement 1 / SH-003508 is reserved for prior rollback-only tests and must not be used for browser submission; no pending monthly-agreement Supervisor payment was present in the displayed pending/returned query; legacy returned rows 7–9 remain protected. No safe disposable browser fixture has yet been established, so no payment was submitted.
+
+
+## 2026-11-13 — FM return and returned-payment correction audit integrity
+
+The user pulled commit `8f61365f` and ran `tools/test_sponsorship_monthly_agreement_components.php`; all 55 existing checks passed. The subsequent source audit found three audit-integrity gaps:
+- FM return of a pending Supervisor `sponsor_payments` row updated status outside a transaction and swallowed failure to insert its `RETURN` audit event.
+- Supervisor resubmission/correction of a returned `sponsor_payments` row had no `RESUBMIT` audit event.
+- The shared transaction-review audit helper swallowed audit-write failures, allowing its caller's transaction to commit without mandatory review evidence.
+
+Implemented directly on `main`:
+- `62dcbbf` — transaction-review audit writes now propagate failures to the caller's transaction.
+- `8b74f9c` — FM return locks the pending Supervisor payment; status change and a `RETURN` audit snapshot (including monthly-agreement ID, agreed values and actual values) commit atomically. Notification remains post-commit.
+- `ea32705` — Supervisor returned-payment correction locks the returned row; correction and a `RESUBMIT` audit snapshot commit atomically. Monthly-agreement ID and agreed values are retained; only actual receipt components are updated for the new model.
+- `0e00094` — three focused source-contract assertions cover the FM return transaction/audit, Supervisor correction snapshot/audit, and propagation of transaction-review audit failures.
+
+GitHub Actions run `43374966072` (Sponsorship Monthly Agreement Components) completed successfully, including PHP lint of the affected sponsorship workflow files and the component contract test. The separate PHP syntax workflow `43374965977` was still running when this checkpoint was recorded.
+
+No schema or migration changes were made. No local database, payment, agreement, receipt, journal or allocation was changed. This is repository/CI verification only; local XAMPP PHP execution and browser/runtime acceptance remain pending. Preserve legacy returned Supervisor rows 7–9, agreement 1 / SH-003508, and protected TR-000023, TR-000024 and JE-000054. Do not use them as test fixtures.
+
+**Next gate:** after pulling the latest `main`, run PHP lint for `modules/accounting/fm_review_queue.php`, `modules/accounting/lib_transaction_review.php`, and `modules/transactions/create.php`, then run `tools/test_sponsorship_monthly_agreement_components.php`. Only after those pass, establish a distinct safe local fixture for FM return and Supervisor correction runtime verification. Do not submit a real organizational payment.
