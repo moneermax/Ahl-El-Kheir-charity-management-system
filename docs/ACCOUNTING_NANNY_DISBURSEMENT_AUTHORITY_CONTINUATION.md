@@ -52,7 +52,7 @@ The canonical `database/ahl_el_kheir.sql` already defines `draft`, `pending_appr
 
 GitHub Actions:
 - Run `43465126565`: PHP 8.2 lint passed; sponsorship component contract `63 checks | PASS`; VGM read-only contract `6/6 PASS`; Accountant Staff/disbursement contract `29/29 PASS`.
-- Full GitHub Actions workflow run `43466326141` completed successfully, including the PHP lint job for `modules/accounting/lib_disbursement_approval.php`, `modules/accounting/disbursements.php`, and `modules/accounting/disbursement_void_guard.php`, plus the existing MariaDB migration and integration jobs.
+- Full GitHub Actions workflow run `43466946661` completed successfully, including the PHP lint job for `modules/accounting/lib_disbursement_approval.php`, `modules/accounting/disbursements.php`, and `modules/accounting/disbursement_void_guard.php`, plus the existing MariaDB migration and integration jobs.
 
 These are static/source and syntax checks. No local Apache/browser/database runtime acceptance has been performed. No database rows, transactions, journals, receipts, or cash balances were changed by the implementation.
 
@@ -71,4 +71,7 @@ These are static/source and syntax checks. No local Apache/browser/database runt
 No local acceptance should use a real operational payment. If no eligible test group is available, stop and prepare a controlled rollback-only fixture after inspecting the live local data.
 
 
-CI note: An earlier attempt (`43466074018`) failed before running the sponsor-request migration test because the Ubuntu 26.04 runner's package index reported no installation candidate for `mariadb-client` (`apt-get install` exit 100). The subsequent full workflow run `43466326141` on the updated main commit completed successfully, including that job; this was a runner package-availability failure, not a PHP or migration assertion failure.
+CI note: An earlier attempt (`43466074018`) failed before running the sponsor-request migration test because the Ubuntu 26.04 runner's package index reported no installation candidate for `mariadb-client` (`apt-get install` exit 100). The subsequent full workflow run `43466946661` on the updated main commit completed successfully, including that job; this was a runner package-availability failure, not a PHP or migration assertion failure.
+
+
+CI sequencing note: Intermediate component run `43466938716` failed one role assertion because the helper was changed to the canonical `financial_manager` role before the corresponding static contract assertion was updated in the next commit. The next commit updated the test, and component run `43466946535` passed `29/29`. Full workflow run `43466946661` then completed successfully. No CI failure remains outstanding.
