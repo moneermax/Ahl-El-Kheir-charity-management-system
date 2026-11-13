@@ -4193,3 +4193,14 @@ The previous same-day note describing a contextual heading over a shared non-mon
 The Section 2 other-donation form in `modules/transactions/create.php` now supports multiple independent donation rows. Each row has its own type, amount, conditional project/source details, date, payment method, external receipt number, reference, description and receipt attachment. Supervisor and VGM paths persist one pending payment record per row through their existing FM review routes; per-row validation, total calculation, and the existing sponsor-scope checks are preserved. No service fee applies and no schema change was required.
 
 CI evidence: run 43300051479 passed PHP 8.2 lint and 53 focused contract checks. Local browser/database acceptance is still pending. Do not submit a real payment during visual acceptance.
+
+
+## 2026-11-13 — Payment-entry visual acceptance gate CLOSED
+
+The user reviewed the updated payment-entry form and stated that, although the layout was not exactly the original preference, it was substantially better and the visual issue should be considered done. Treat the payment-entry visual refinement as accepted/closed; do not reopen it without a concrete regression or a new request. No payment was submitted as part of this acceptance.
+
+The accounting work may now continue. This UI acceptance is **not** an accounting-policy authorization: positive actual sponsorship service-fee posting remains blocked until an authorized accounting owner confirms both recognition timing (immediate or covered-month end) and the approved active revenue destination. Do not infer either decision, use account 4200 as a fallback, or treat the existence of an account-mapping row as approval of recognition timing.
+
+Current repository head at this checkpoint: `7195623cdd6808e9dc2c071a67a21db6ee7a622`. The payment-entry refinement, focused layout contract test, and documentation commits are present on `main`; GitHub Actions runs `43351641281` (PHP 8.2 lint + 54 focused checks) and `43351641198` (PHP syntax and migration workflow jobs) passed.
+
+**Next exact gate:** establish the user's current local `main`/working-tree state and recheck the live `ahl_el_kheir` database for the three 2026-11-12 payment/agreement migrations and any pending/returned legacy sponsorship submissions. Earlier preflight evidence from 2026-11-12 said those migrations were not yet applied and identified legacy returned Supervisor rows 7–9; do not assume the local state is unchanged. Preserve all local modifications and financial records. Do not apply migrations or post payments until this read-only preflight is reviewed.
