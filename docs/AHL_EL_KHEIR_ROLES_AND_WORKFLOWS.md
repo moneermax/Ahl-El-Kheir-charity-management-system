@@ -58,7 +58,7 @@ PRJ-0015 Phase 5 is the closed controlled acceptance example: 300,000 released, 
 
 Operational request -> accounting review -> authorized approval/posting -> balanced journal -> evidence -> ledger/report.
 
-FM controls financial review and final financial actions, except for explicitly delegated operational disbursement execution. Accountant Staff may execute outgoing monthly Nanny transfers, upload the mandatory transfer receipt, and complete the existing transfer/posting step only for Nannies assigned to that accountant. This scoped authority does not permit incoming collection entry, generic receipt vouchers, or batch voiding. Batch void remains Admin/Financial Manager only. Operational users must not bypass FM outside an explicitly approved workflow.
+FM controls financial review and final financial actions, except for explicitly delegated operational disbursement execution. Accountant Staff may execute outgoing monthly Nanny transfers, upload the mandatory transfer receipt, and complete the existing transfer/posting step only for Nannies assigned to that accountant. Direct batch/item receipt viewing is limited to that same assigned-Nanny scope. This scoped authority does not permit incoming collection entry, generic receipt vouchers, or batch voiding. Batch void remains Admin/Financial Manager only. Operational users must not bypass FM outside an explicitly approved workflow.
 
 ## 5. Fina
 
