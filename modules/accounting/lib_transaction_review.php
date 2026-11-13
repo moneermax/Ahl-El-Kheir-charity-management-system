@@ -251,14 +251,14 @@ ak_register_project_approval_notifications();
 
 if (!function_exists('ak_transaction_review_audit')) {
 function ak_transaction_review_audit(int $userId, string $action, int $entityId, $old, $new): void {
-    try {
-        dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
-                   VALUES (?, ?, 'transactions', ?, ?, ?, ?, ?)",
-            [$userId, $action, $entityId,
-             json_encode($old, JSON_UNESCAPED_UNICODE),
-             json_encode($new, JSON_UNESCAPED_UNICODE),
-             $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
-    } catch (Throwable $e) {}
+    // Review audit is part of the transaction state transition. Let failures
+    // propagate so the caller's transaction rolls back the business change.
+    dbExecute("INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent)
+               VALUES (?, ?, 'transactions', ?, ?, ?, ?, ?)",
+        [$userId, $action, $entityId,
+         json_encode($old, JSON_UNESCAPED_UNICODE),
+         json_encode($new, JSON_UNESCAPED_UNICODE),
+         $_SERVER['REMOTE_ADDR'] ?? '', $_SERVER['HTTP_USER_AGENT'] ?? '']);
 }
 }
 
