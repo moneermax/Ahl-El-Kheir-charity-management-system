@@ -6505,3 +6505,10 @@ This proves only the direct prepared-posting path for a zero-fee monthly-agreeme
 Added `tools/test_sponsorship_monthly_agreement_positive_fee_block_rollback.php` and included it in `.github/workflows/php-syntax-check.yml`'s selected PHP lint list. Its local runtime result is pending. It must prove that a 2,000 SDG positive service-fee receipt is rejected with no allocation or journal and complete rollback.
 
 Positive service-fee posting remains blocked pending authorized confirmation of recognition timing (immediate vs covered-month end) and an approved active revenue destination. No account fallback is permitted. The next separate technical verification after the positive-fee guard is the Supervisor-to-FM zero-fee approval route.
+
+
+## 2026-11-13 — Monthly-agreement Supervisor/FM approval harness prepared
+
+A rollback-only local harness now targets the shared FM approval operation for a monthly-agreement Supervisor submission: `tools/test_sponsorship_monthly_agreement_fm_approval_rollback.php`. It checks pending `sponsor_payments` → approved payment/linked posted transaction → full sponsorship allocation → balanced Dr 1100 / Cr 2200 journal for the zero-service-fee November fixture, with the Supervisor retained as collector. It also verifies rollback of payment, transaction, allocation, journal, approval audit and any incentive event.
+
+Source review traced the Supervisor submission insert in `modules/transactions/create.php` and the FM queue call in `modules/accounting/fm_review_queue.php`. The harness is an integration test of the shared approval operation using a synthetic pending row, not a browser/session/CSRF/sponsor-scope acceptance test. PHP lint workflow inclusion is committed; local lint/runtime execution is pending. Run only while no other transaction is posting. Positive actual service-fee posting remains blocked pending authorized accounting decisions.
