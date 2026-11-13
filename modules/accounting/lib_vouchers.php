@@ -5,8 +5,10 @@
 if (!defined('AK_VOUCHER_VIEW_ROLES')) {
     // may open the register and print a voucher
     define('AK_VOUCHER_VIEW_ROLES', ['admin', 'financial_manager', 'accountant_staff', 'accountant', 'general_manager', 'vice_general_manager']);
-    // may issue (create + post) a voucher: the Financial Manager and the accounting staff
+    // Accountant Staff may issue outgoing payments, not incoming receipts.
     define('AK_VOUCHER_ISSUE_ROLES', ['admin', 'financial_manager', 'accountant_staff']);
+    define('AK_VOUCHER_RECEIPT_ROLES', ['admin', 'financial_manager']);
+    define('AK_VOUCHER_PAYMENT_ROLES', ['admin', 'financial_manager', 'accountant_staff']);
     // may void a voucher
     define('AK_VOUCHER_VOID_ROLES', ['admin', 'financial_manager']);
     // one lock shared with the manual journal screen, so entry codes never collide
@@ -16,7 +18,13 @@ if (!defined('AK_VOUCHER_VIEW_ROLES')) {
 if (!function_exists('ak_voucher_can')) {
     function ak_voucher_can(string $action, ?string $role): bool
     {
-        $map = ['view' => AK_VOUCHER_VIEW_ROLES, 'issue' => AK_VOUCHER_ISSUE_ROLES, 'void' => AK_VOUCHER_VOID_ROLES];
+        $map = [
+            'view' => AK_VOUCHER_VIEW_ROLES,
+            'issue' => AK_VOUCHER_ISSUE_ROLES,
+            'issue_receipt' => AK_VOUCHER_RECEIPT_ROLES,
+            'issue_payment' => AK_VOUCHER_PAYMENT_ROLES,
+            'void' => AK_VOUCHER_VOID_ROLES,
+        ];
         return $role !== null && isset($map[$action]) && in_array($role, $map[$action], true);
     }
 }

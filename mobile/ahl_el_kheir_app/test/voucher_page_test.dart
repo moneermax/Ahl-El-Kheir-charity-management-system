@@ -33,6 +33,8 @@ void main() {
         {'id': 5, 'code': '5100', 'name_ar': 'Office expense', 'account_type': 'expense'},
       ],
       'can_issue': true,
+      'can_issue_receipt': true,
+      'can_issue_payment': true,
       'can_void': false,
       'limit': 300,
     },
@@ -75,6 +77,8 @@ void main() {
               'vouchers': type == 'payment' ? [] : sample['data']['vouchers'],
               'cash_accounts': sample['data']['cash_accounts'],
               'can_issue': false,
+              'can_issue_receipt': false,
+              'can_issue_payment': false,
               'can_void': false,
               'limit': 300,
             },
@@ -117,7 +121,7 @@ void main() {
     final submitted=<Map<String,dynamic>>[]; var loads=0;
     await tester.pumpWidget(MaterialApp(home:VoucherPage(english:true,
       issueVoucher:(input)async{submitted.add(input);return {'ok':true};},voidVoucher:(_,__)async=>{'ok':true},
-      loadVouchers:(_)async{loads++;return {'ok':true,'data':{'vouchers':sample['data']['vouchers'],'cash_accounts':sample['data']['cash_accounts'],'other_accounts':sample['data']['other_accounts'],'can_issue':true,'can_void':false,'limit':300}};}
+      loadVouchers:(_)async{loads++;return {'ok':true,'data':{'vouchers':sample['data']['vouchers'],'cash_accounts':sample['data']['cash_accounts'],'other_accounts':sample['data']['other_accounts'],'can_issue':true,'can_issue_receipt':true,'can_issue_payment':true,'can_void':false,'limit':300}};}
     )));
     await tester.pumpAndSettle(); await tester.tap(find.text('New voucher')); await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('voucher-amount')),'12.50');
@@ -129,12 +133,34 @@ void main() {
     expect(submitted.single['cash_account_id'],1); expect(submitted.single['other_account_id'],4); expect(loads,2);
   });
 
+  testWidgets('accountant staff can issue payment vouchers but cannot choose receipt vouchers', (tester) async {
+    final submitted=<Map<String,dynamic>>[];
+    await tester.pumpWidget(MaterialApp(home:VoucherPage(english:true,
+      issueVoucher:(input)async{submitted.add(input);return {'ok':true};},
+      loadVouchers:(_)async=>{'ok':true,'data':{
+        'vouchers':[],'cash_accounts':sample['data']['cash_accounts'],'other_accounts':sample['data']['other_accounts'],
+        'can_issue':true,'can_issue_receipt':false,'can_issue_payment':true,'can_void':false,'limit':300,
+      }}
+    )));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('New voucher')); await tester.pumpAndSettle();
+    expect(find.text('Receipt'), findsNothing);
+    expect(find.text('Payment'), findsOneWidget);
+    await tester.enterText(find.byKey(const Key('voucher-amount')),'25.00');
+    await tester.enterText(find.byKey(const Key('voucher-party')),'Nanny payment');
+    await tester.enterText(find.byKey(const Key('voucher-description')),'Approved monthly disbursement');
+    await tester.tap(find.text('Issue and post')); await tester.pumpAndSettle();
+    expect(submitted,hasLength(1));
+    expect(submitted.single['voucher_type'],'payment');
+    expect(submitted.single['amount'],25.0);
+  });
+
   testWidgets('authorized reviewer can void a posted voucher with a reason', (tester) async {
     final voided=<List<Object>>[]; var loads=0;
     await tester.pumpWidget(MaterialApp(home:VoucherPage(english:true,issueVoucher:(_)async=>{'ok':true},
       voidVoucher:(id,reason)async{voided.add([id,reason]);return {'ok':true};},
       loadVouchers:(_)async{loads++;final v=Map<String,dynamic>.from(sample['data']['vouchers'][0] as Map);v['entry_id']=90;if(loads>1)v['status']='voided';
-        return {'ok':true,'data':{'vouchers':[v],'cash_accounts':sample['data']['cash_accounts'],'other_accounts':sample['data']['other_accounts'],'can_issue':false,'can_void':true,'limit':300}};}
+        return {'ok':true,'data':{'vouchers':[v],'cash_accounts':sample['data']['cash_accounts'],'other_accounts':sample['data']['other_accounts'],'can_issue':false,'can_issue_receipt':false,'can_issue_payment':false,'can_void':true,'limit':300}};}
     )));
     await tester.pumpAndSettle(); await tester.drag(find.byType(ListView).first, const Offset(0, -400)); await tester.pumpAndSettle(); await tester.tap(find.text('Void voucher')); await tester.pump(); await tester.pump(const Duration(milliseconds: 300));
     await tester.enterText(find.byKey(const Key('voucher-void-reason')),'Duplicate receipt');

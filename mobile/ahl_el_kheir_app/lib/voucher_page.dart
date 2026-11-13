@@ -24,6 +24,8 @@ class _VoucherPageState extends State<VoucherPage> {
   List<Map<String, dynamic>> _otherAccounts = [];
   bool _actionBusy = false;
   bool _canIssue = false;
+  bool _canIssueReceipt = false;
+  bool _canIssuePayment = false;
   bool _canVoid = false;
 
   String t(String ar, String en) => widget.english ? en : ar;
@@ -52,6 +54,8 @@ class _VoucherPageState extends State<VoucherPage> {
         _cashAccounts = rawAccounts.whereType<Map>().map((v) => Map<String, dynamic>.from(v)).toList();
         _otherAccounts = rawOtherAccounts.whereType<Map>().map((v) => Map<String, dynamic>.from(v)).toList();
         _canIssue = data['can_issue'] == true;
+        _canIssueReceipt = data['can_issue_receipt'] == true;
+        _canIssuePayment = data['can_issue_payment'] == true;
         _canVoid = data['can_void'] == true;
         _loading = false;
       });
@@ -64,7 +68,8 @@ class _VoucherPageState extends State<VoucherPage> {
   Future<void> _openIssueDialog() async {
     if (!_canIssue || _actionBusy || _loading || widget.issueVoucher == null) return;
     final ok = await showDialog<bool>(context: context, builder: (_) => VoucherIssueDialog(
-      english: widget.english, cashAccounts: _cashAccounts, otherAccounts: _otherAccounts, onSubmit: widget.issueVoucher!));
+      english: widget.english, cashAccounts: _cashAccounts, otherAccounts: _otherAccounts,
+      allowReceipt: _canIssueReceipt, allowPayment: _canIssuePayment, onSubmit: widget.issueVoucher!));
     if (ok == true && mounted) await _load();
   }
 
@@ -259,8 +264,8 @@ class _VoucherPageState extends State<VoucherPage> {
 
 
 class VoucherIssueDialog extends StatefulWidget {
-  const VoucherIssueDialog({super.key,required this.english,required this.cashAccounts,required this.otherAccounts,required this.onSubmit});
-  final bool english;
+  const VoucherIssueDialog({super.key,required this.english,required this.cashAccounts,required this.otherAccounts,required this.onSubmit,this.allowReceipt=true,this.allowPayment=true});
+  final bool english, allowReceipt, allowPayment;
   final List<Map<String,dynamic>> cashAccounts, otherAccounts;
   final IssueVoucher onSubmit;
   @override State<VoucherIssueDialog> createState()=>_VoucherIssueDialogState();
@@ -272,7 +277,7 @@ class _VoucherIssueDialogState extends State<VoucherIssueDialog> {
   String t(String ar,String en)=>widget.english?en:ar;
   List<Map<String,dynamic>> get _eligible=>widget.otherAccounts.where((a)=>a['account_type']?.toString()==(_type=='receipt'?'revenue':'expense')).toList();
   String _dateText(DateTime d)=>'${d.year.toString().padLeft(4,'0')}-${d.month.toString().padLeft(2,'0')}-${d.day.toString().padLeft(2,'0')}';
-  @override void initState(){super.initState();if(widget.cashAccounts.isNotEmpty)_cashId=int.tryParse(widget.cashAccounts.first['id'].toString());if(_eligible.isNotEmpty)_otherId=int.tryParse(_eligible.first['id'].toString());}
+  @override void initState(){super.initState();if(!widget.allowReceipt&&widget.allowPayment)_type='payment';if(widget.cashAccounts.isNotEmpty)_cashId=int.tryParse(widget.cashAccounts.first['id'].toString());if(_eligible.isNotEmpty)_otherId=int.tryParse(_eligible.first['id'].toString());}
   @override void dispose(){_amount.dispose();_party.dispose();_description.dispose();_reference.dispose();super.dispose();}
   Future<void> _submit() async {
     if(_busy||!_key.currentState!.validate())return;
@@ -288,7 +293,10 @@ class _VoucherIssueDialogState extends State<VoucherIssueDialog> {
   @override Widget build(BuildContext context){
     final eligible=_eligible;
     return AlertDialog(title:Text(t('إصدار سند مالي','Issue voucher')),content:SizedBox(width:520,child:SingleChildScrollView(child:Form(key:_key,child:Column(mainAxisSize:MainAxisSize.min,crossAxisAlignment:CrossAxisAlignment.stretch,children:[
-      SegmentedButton<String>(segments:[ButtonSegment(value:'receipt',label:Text(t('قبض','Receipt'))),ButtonSegment(value:'payment',label:Text(t('صرف','Payment')))],selected:{_type},onSelectionChanged: _busy ? null : (s) { setState(() { _type = s.first; _otherId = _eligible.isEmpty ? null : int.tryParse(_eligible.first['id'].toString()); }); }),
+      SegmentedButton<String>(segments:[
+        if(widget.allowReceipt) ButtonSegment(value:'receipt',label:Text(t('قبض','Receipt'))),
+        if(widget.allowPayment) ButtonSegment(value:'payment',label:Text(t('صرف','Payment'))),
+      ],selected:{_type},onSelectionChanged: _busy ? null : (s) { setState(() { _type = s.first; _otherId = _eligible.isEmpty ? null : int.tryParse(_eligible.first['id'].toString()); }); }),
       const SizedBox(height:12),
       DropdownButtonFormField<int>(initialValue:_cashId,decoration:InputDecoration(labelText:t('حساب النقدية','Cash account'),border:const OutlineInputBorder()),items:widget.cashAccounts.map((a)=>DropdownMenuItem<int>(value:int.tryParse(a['id'].toString()),child:Text('${a['code']??''} · ${a['name_ar']??''}'))).toList(),onChanged:_busy?null:(v)=>setState(()=>_cashId=v),validator:(v)=>v==null?t('اختر حساب النقدية.','Choose a cash account.'):null),
       const SizedBox(height:12),

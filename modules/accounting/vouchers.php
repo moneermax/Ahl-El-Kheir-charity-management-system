@@ -17,6 +17,8 @@ if (!Session::isLoggedIn() || !ak_voucher_can('view', $voucherRole)) {
     exit();
 }
 $canIssue = ak_voucher_can('issue', $voucherRole);
+$canIssueReceipt = ak_voucher_can('issue_receipt', $voucherRole);
+$canIssuePayment = ak_voucher_can('issue_payment', $voucherRole);
 $canVoid  = ak_voucher_can('void', $voucherRole);
 $pageTitle = 'السندات المالية';
 $active    = 'vouchers';
@@ -36,6 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($canIssue || $canVoid)) {
     } elseif (isset($_POST['save_voucher']) && $canIssue) {
         $old = $_POST;
         $vType   = ($_POST['voucher_type'] ?? 'receipt') === 'payment' ? 'payment' : 'receipt';
+        if ($vType === 'receipt' && !ak_voucher_can('issue_receipt', $voucherRole)) {
+            $errors[] = 'ليس لديك صلاحية إصدار سند قبض؛ يمكن لموظفي الحسابات إصدار سندات الصرف فقط.';
+        } elseif ($vType === 'payment' && !ak_voucher_can('issue_payment', $voucherRole)) {
+            $errors[] = 'ليس لديك صلاحية إصدار سند صرف.';
+        }
         $date    = trim($_POST['voucher_date'] ?? '') ?: $today;
         $amount  = round((float)str_replace(',', '', (string)($_POST['amount'] ?? 0)), 2);
         $cashId  = (int)($_POST['cash_account_id'] ?? 0);
@@ -270,15 +277,19 @@ include dirname(__DIR__, 2) . '/includes/header.php';
 </div>
 
 <?php if ($tab === 'new' && $canIssue): ?>
-<?php $oType = ($old['voucher_type'] ?? 'receipt') === 'payment' ? 'payment' : 'receipt'; ?>
+<?php
+$oType = ($old['voucher_type'] ?? ($canIssueReceipt ? 'receipt' : 'payment')) === 'payment' ? 'payment' : 'receipt';
+if ($oType === 'receipt' && !$canIssueReceipt) $oType = 'payment';
+if ($oType === 'payment' && !$canIssuePayment && $canIssueReceipt) $oType = 'receipt';
+?>
 <div class="card fade-in"><div class="card-header"><i class="fas fa-file-invoice me-2"></i>إصدار سند</div><div class="card-body">
 <form method="post" id="voucherForm" autocomplete="off">
 <?php echo csrf_field(); ?>
 <div class="row g-3">
 <div class="col-md-3"><label class="form-label">نوع السند *</label>
     <select name="voucher_type" id="vType" class="form-select" required>
-        <option value="receipt" <?php echo $oType === 'receipt' ? 'selected' : ''; ?>>سند قبض (نقد داخل)</option>
-        <option value="payment" <?php echo $oType === 'payment' ? 'selected' : ''; ?>>سند صرف (نقد خارج)</option>
+        <?php if ($canIssueReceipt): ?><option value="receipt" <?php echo $oType === 'receipt' ? 'selected' : ''; ?>>سند قبض (نقد داخل)</option><?php endif; ?>
+        <?php if ($canIssuePayment): ?><option value="payment" <?php echo $oType === 'payment' ? 'selected' : ''; ?>>سند صرف (نقد خارج)</option><?php endif; ?>
     </select></div>
 <div class="col-md-3"><label class="form-label">مكان النقد *</label>
     <select name="cash_account_id" id="vCash" class="form-select" required>

@@ -7,6 +7,9 @@ $files = [
     'index' => $root . '/modules/transactions/index.php',
     'cancel' => $root . '/modules/transactions/cancel_returned.php',
     'disbursements' => $root . '/modules/accounting/disbursements.php',
+    'voucher_permissions' => $root . '/modules/accounting/lib_vouchers.php',
+    'voucher_web' => $root . '/modules/accounting/vouchers.php',
+    'voucher_api' => $root . '/api/v1/accounting/vouchers.php',
 ];
 foreach ($files as $key => $path) {
     if (!is_file($path)) { fwrite(STDERR, "FAIL | missing_source={$key}\n"); exit(1); }
@@ -18,6 +21,12 @@ $checks['returned_edit_and_resubmission_denied'] = strpos($files['edit'], 'if (!
 $checks['transaction_register_read_only'] = strpos($files['index'], "['admin','vice_general_manager','general_manager','supervisor','accountant_staff','financial_manager']") !== false && strpos($files['index'], "\$canEditReturned = in_array(\$role, ['admin'], true);") !== false && strpos($files['index'], "if(in_array(\$role,['financial_manager','admin','supervisor'],true))") !== false;
 $checks['creator_cancellation_post_denied'] = strpos($files['cancel'], "if (\$role === 'accountant_staff')") !== false && strpos($files['cancel'], "http_response_code(403)") !== false;
 $checks['outgoing_disbursement_access_preserved'] = strpos($files['disbursements'], "['admin', 'accountant_staff', 'financial_manager', 'general_manager', 'vice_general_manager', 'nanny']") !== false && strpos($files['disbursements'], "\$isAccountantStaff = (\$role === 'accountant_staff');") !== false;
+$checks['accountant_staff_can_issue_payment_vouchers'] = strpos($files['voucher_permissions'], "define('AK_VOUCHER_PAYMENT_ROLES', ['admin', 'financial_manager', 'accountant_staff'])") !== false;
+$checks['accountant_staff_cannot_issue_receipt_vouchers'] = strpos($files['voucher_permissions'], "define('AK_VOUCHER_RECEIPT_ROLES', ['admin', 'financial_manager'])") !== false;
+$checks['web_receipt_voucher_post_is_server_denied'] = strpos($files['voucher_web'], "ak_voucher_can('issue_receipt', \\$voucherRole)") !== false;
+$checks['web_receipt_option_is_permission_gated'] = strpos($files['voucher_web'], 'if ($canIssueReceipt):') !== false;
+$checks['mobile_receipt_voucher_post_is_server_denied'] = strpos($files['voucher_api'], "ak_voucher_can('issue_receipt',\\$role)") !== false;
+$checks['mobile_voucher_capabilities_are_direction_specific'] = strpos($files['voucher_api'], "'can_issue_receipt' => ak_voucher_can('issue_receipt', $role)") !== false && strpos($files['voucher_api'], "'can_issue_payment' => ak_voucher_can('issue_payment', $role)") !== false;
 $passed = 0;
 foreach ($checks as $name => $ok) { echo ($ok ? 'PASS' : 'FAIL') . " | {$name}\n"; if ($ok) $passed++; }
 echo "RESULT | {$passed}/" . count($checks) . " checks | " . ($passed === count($checks) ? 'PASS' : 'FAIL') . "\n";

@@ -34,6 +34,8 @@ if ($method === 'POST') {
         $party=trim((string)($input['party_name']??'')); $description=trim((string)($input['description']??'')); $reference=trim((string)($input['reference_number']??''));
         $dateObject=DateTimeImmutable::createFromFormat('!Y-m-d',$date);
         if(!in_array($type,['receipt','payment'],true)) ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_voucher_type','message'=>'Voucher type must be receipt or payment.']]);
+        if($type==='receipt'&&!ak_voucher_can('issue_receipt',$role)) ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Receipt voucher issuance is not allowed for this account.']]);
+        if($type==='payment'&&!ak_voucher_can('issue_payment',$role)) ak_api_json(403,['ok'=>false,'error'=>['code'=>'forbidden','message'=>'Payment voucher issuance is not allowed for this account.']]);
         if(!$dateObject||$dateObject->format('Y-m-d')!==$date||$date>date('Y-m-d')) ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_voucher_date','message'=>'Voucher date must be valid and cannot be in the future.']]);
         if(!is_numeric($amountInput)||!is_finite((float)$amountInput)) ak_api_json(422,['ok'=>false,'error'=>['code'=>'invalid_voucher_amount','message'=>'Voucher amount must be a valid number.']]);
         $amount=round((float)$amountInput,2);
@@ -182,6 +184,8 @@ try {
         'cash_accounts' => $cashAccounts,
         'other_accounts' => $otherAccounts,
         'can_issue' => ak_voucher_can('issue', $role),
+        'can_issue_receipt' => ak_voucher_can('issue_receipt', $role),
+        'can_issue_payment' => ak_voucher_can('issue_payment', $role),
         'can_void' => ak_voucher_can('void', $role),
         'limit' => 300,
     ]]);
