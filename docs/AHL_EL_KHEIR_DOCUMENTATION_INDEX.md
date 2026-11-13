@@ -179,6 +179,10 @@ Read `SPONSOR_REQUEST_CONVERSION_CONTINUATION.md` before continuing the sponsor 
 Sponsor Trees:
 - SPONSOR_TREES_CONTINUATION.md — Tree/member model, shared orphan sponsorship isolation, implementation and local acceptance checklist.
 
+## Accounting — Accountant Staff Nanny disbursement authority
+
+- ACCOUNTING_NANNY_DISBURSEMENT_AUTHORITY_CONTINUATION.md — approved ACC1 transfer/receipt/posting authority, assigned-Nanny server-side scope, retained batch-void restriction, and verification gates.
+
 ## Sponsorship arrears and advances
 
 - SPONSORSHIP_ARREARS_ADVANCES_CONTINUATION.md — sponsorship allocation/reporting rules, two-month arrears eligibility, advances, pending-duplicate protection, full-result arrears dashboard, test evidence and local acceptance gates.
