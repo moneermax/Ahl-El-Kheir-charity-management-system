@@ -17,6 +17,7 @@ on:
       - 'modules/accounting/fm_review_queue.php'
       - 'modules/accounting/fm_transaction_review.php'
       - 'tools/test_sponsorship_monthly_agreement_components.php'
+      - 'tools/preflight_sponsorship_return_fixture.php'
       - '.github/workflows/sponsorship-monthly-agreement-components.yml'
   workflow_dispatch:
 
@@ -49,5 +50,6 @@ jobs:
           php -l modules/accounting/fm_review_queue.php
           php -l modules/accounting/fm_transaction_review.php
           php -l tools/test_sponsorship_monthly_agreement_components.php
+          php -l tools/preflight_sponsorship_return_fixture.php
       - name: Run monthly agreement component contract tests
         run: php tools/test_sponsorship_monthly_agreement_components.php
