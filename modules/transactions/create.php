@@ -43,7 +43,7 @@ if((string)($old['component_model']??'legacy')==='monthly_agreement'){
 }else{$updComponents=[];}
 if($txnType==='sponsorship_payment'||$isSpon)$txnType=$isSpon?'sponsorship_payment':'general_donation';
 if($old['transaction_type']==='project_donation')$txnType='project_donation';
-if($old['transaction_type']==='other'&&!$isSpon)$txnType='other';
+if($old['transaction_type']==='other'&&!$isSpon)$txnType=trim((string)($old['purpose_note']??''))!==''?'general_donation':'other';
 $upd=['payment_period'=>$newMonth!==''?$newMonth:null,'purpose'=>$newPurpose,'purpose_note'=>$newNote!==''?$newNote:null,'amount'=>$newAmount,'admin_fee_percent'=>0,'admin_fee_amount'=>$feeAmt,'net_amount'=>$net,'admin_fee_method'=>'none','admin_fee_value'=>0,'admin_fee_policy_id'=>null,'transaction_type'=>$txnType,'status'=>'pending_fm_review','fm_reviewed_by'=>null,'fm_reviewed_at'=>null,'fm_review_reason'=>null,'resubmitted_at'=>date('Y-m-d H:i:s')]+$updComponents;if($lineReceiptPath)$upd['receipt_path']=$lineReceiptPath;if($uniReceiptPath)$upd['unified_receipt_path']=$uniReceiptPath;$oldReceipt=$old['receipt_path']??null;$oldUnified=$old['unified_receipt_path']??null;$sets=[];$params=[];foreach($upd as $k=>$v){$sets[]="`$k` = ?";$params[]=$v;}try{db()->beginTransaction();$affected=dbExecute("UPDATE transactions SET ".implode(', ',$sets)." WHERE id = ? AND status = 'returned' AND created_by = ?",array_merge($params,[$rid,$uid]));if($affected!==1)throw new RuntimeException('تعذر تحديث الدفعة المُعادة.');ak_transaction_review_audit($uid,'RESUBMIT_FM',$rid,$old,$upd);db()->commit();}catch(Throwable $e){if(db()->inTransaction())db()->rollBack();$errors[]='تعذر إعادة إرسال الدفعة للمراجعة المالية بشكل ذري.';}if(!$errors){if($lineReceiptPath&&$oldReceipt&&$oldReceipt!==$lineReceiptPath)ak_transaction_review_delete_receipt_if_unreferenced($oldReceipt);if($uniReceiptPath&&$oldUnified&&$oldUnified!==$uniReceiptPath)ak_transaction_review_delete_receipt_if_unreferenced($oldUnified);ak_transaction_review_notify_fm(1,Session::getUserName()??'');flash('success','تم تعديل الدفعة وإعادة إرسالها للمدير المالي للمراجعة.');header('Location: '.APP_URL.'modules/transactions/create.php?sponsor_id='.$input['sponsor_id']);exit();}}}
 elseif(!$errors&&$src==='pending'){$old=dbFetchOne("SELECT * FROM sponsor_payments WHERE id = ? AND status = 'returned'",[$rid]);if($old){
 $updComponents=[];
@@ -246,7 +246,7 @@ if (!$errors) {
             'admin_fee'=>'other',
             'general_donation'=>'general_donation',
             'project_donation'=>'project_donation',
-            'other'=>'other'
+            'other'=>'general_donation'
         ];
         $count = 0;
         if ($input['type'] === 'monthly_sponsorship') {
