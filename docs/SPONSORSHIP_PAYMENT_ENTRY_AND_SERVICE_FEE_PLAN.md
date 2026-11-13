@@ -828,3 +828,14 @@ PASS | no_service_fee_revenue=PASS | approval_audit_rollback=PASS | incentive_ro
 This closes the shared FM approval operation's local rollback acceptance, including mandatory approval audit persistence and rollback. It still does not prove authenticated browser submission, CSRF/session/sponsor-scope behavior, live FM queue interaction, or notification delivery. The next gate is a read-only local preflight of agreement/payment/transaction rows and migration state, followed by a controlled browser submission using a distinct, verified unused agreement fixture. Do not reuse SH-003508 / agreement 1, do not submit a real organizational payment, and do not disturb legacy returned Supervisor rows 7–9 or protected transactions TR-000023/TR-000024/JE-000054.
 
 No CI result is claimed for these two source commits; the GitHub workflow-run lookup returned no runs for the harness commit. Local PHP syntax and rollback runtime evidence above are authoritative for this gate.
+
+
+## 2026-11-13 — FM monthly-agreement review-history breakdown
+
+The FM review queue's recent-review history now preserves the monthly-agreement component breakdown for approved and returned Supervisor payments: total amount, actual sponsorship received, actual service fee received, and the two agreed reference amounts. Legacy payment rows retain the previous single-total display. The pending queue behavior and all posting/approval/accounting rules are unchanged.
+
+A focused contract assertion was added to `tools/test_sponsorship_monthly_agreement_components.php` to require the history breakdown. Repository commits: `8e91054afa47f9e1a8c575d4225a2c73b9896068` (FM history display) and `0d009ac0c3d5dcd8024f78abace9863db362dff9` (regression assertion).
+
+Verification boundary: current `main` source and test files were re-fetched and inspected after the commits. No CI status was reported yet for the assertion commit, and no PHP runtime execution or local browser acceptance is claimed. No schema, migration, database record, journal, allocation, or payment was changed. Positive service-fee posting remains blocked pending authorized recognition timing and revenue-account approval.
+
+Local fixture boundary from the 2026-11-13 read-only preflight: agreement 1 / SH-003508 is reserved for prior rollback-only tests and must not be used for browser submission; no pending monthly-agreement Supervisor payment was present in the displayed pending/returned query; legacy returned rows 7–9 remain protected. No safe disposable browser fixture has yet been established, so no payment was submitted.
