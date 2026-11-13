@@ -15,7 +15,7 @@ function ak_approve_sponsor_payment(PDO $pdo,int $paymentId,int $reviewerUserId,
     if ($pdo !== db()) throw new LogicException('اعتماد التحصيل يجب أن يستخدم اتصال قاعدة البيانات نفسه.');
     if ($paymentId<=0||$reviewerUserId<=0) throw new InvalidArgumentException('معرّف التحصيل أو المراجع غير صالح.');
     $purposeLabels=['monthly_sponsorship'=>'كفالة شهرية','school_fees'=>'رسوم دراسية','medicine'=>'علاج وأدوية','gift'=>'هدية/عيدية','other'=>'أخرى','admin_fee'=>'رسوم إدارية','general_donation'=>'تبرع عام','project_donation'=>'تبرع مشروع'];
-    $typeMap=['monthly_sponsorship'=>'sponsorship_payment','school_fees'=>'general_donation','medicine'=>'general_donation','gift'=>'general_donation','other'=>'other','admin_fee'=>'admin_fee','general_donation'=>'general_donation','project_donation'=>'project_donation'];
+    $typeMap=['monthly_sponsorship'=>'sponsorship_payment','school_fees'=>'general_donation','medicine'=>'general_donation','gift'=>'general_donation','other'=>'general_donation','admin_fee'=>'admin_fee','general_donation'=>'general_donation','project_donation'=>'project_donation'];
     $sp=dbFetchOne("SELECT * FROM sponsor_payments WHERE id=? AND status='pending' FOR UPDATE",[$paymentId]);
     if(!$sp) throw new RuntimeException('الدفعة غير موجودة أو لم تعد معلقة.');
     $purposeLabel=$purposeLabels[$sp['payment_type']]??$sp['payment_type'];
