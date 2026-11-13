@@ -44,12 +44,28 @@ if($_SERVER['REQUEST_METHOD']==='POST'&&verify_csrf()){
         $sp_id=(int)$_POST['return_payment'];$note=trim($_POST['return_note_'.$sp_id]??'');
         if($note===''){flash('error','يجب كتابة سبب الإرجاع.');}
         else{
-            $sp=dbFetchOne("SELECT * FROM sponsor_payments WHERE id=? AND status='pending'",[$sp_id]);
-            if(!$sp)flash('error','الدفعة غير موجودة أو لم تعد معلقة.');
-            else{
-                $affected=dbExecute("UPDATE sponsor_payments SET status='returned',reviewed_by_user_id=?,reviewed_at=NOW(),return_note=? WHERE id=? AND status='pending'",[$uid,$note,$sp_id]);
-                if($affected===1){try{dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'RETURN','sponsor_payments',?,?,?,?,?)",[$uid,$sp_id,json_encode(['status'=>'pending'],JSON_UNESCAPED_UNICODE),json_encode(['status'=>'returned','note'=>$note],JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);}catch(Throwable $e){}try{ak_transaction_review_notify_event((int)$sp['supervisor_id'],'تم إرجاع تحصيل مشرف #'.$sp_id,'تم إرجاع التحصيل للمراجعة والتعديل. سبب الإرجاع: '.$note,APP_URL.'modules/transactions/create.php?sponsor_id='.(int)($sp['sponsor_id']??0).'&returned_payment='.$sp_id,$sp_id,'sponsor_payment_returned');}catch(Throwable $e){}flash('success','تم إرجاع الدفعة للمشرف.');}
-                else flash('error','تعذر إرجاع الدفعة لأنها تغيرت بالفعل.');
+            $pdo=db();$sp=null;
+            try{
+                $pdo->beginTransaction();
+                $sp=dbFetchOne("SELECT * FROM sponsor_payments WHERE id=? AND status='pending' FOR UPDATE",[$sp_id]);
+                if(!$sp){
+                    $pdo->rollBack();
+                    flash('error','الدفعة غير موجودة أو لم تعد معلقة.');
+                }else{
+                    $affected=dbExecute("UPDATE sponsor_payments SET status='returned',reviewed_by_user_id=?,reviewed_at=NOW(),return_note=? WHERE id=? AND status='pending'",[$uid,$note,$sp_id]);
+                    if($affected!==1)throw new RuntimeException('تعذر إرجاع الدفعة لأنها تغيرت بالفعل.');
+                    $auditFields=['status','payment_type','payment_period','amount','purpose_note','return_note','component_model','monthly_agreement_id','agreed_sponsorship_amount','agreed_service_fee_amount','actual_sponsorship_received','actual_service_fee_received'];
+                    $oldAudit=array_intersect_key($sp,array_flip($auditFields));
+                    $newAudit=array_merge($oldAudit,['status'=>'returned','return_note'=>$note]);
+                    dbExecute("INSERT INTO audit_log (user_id,action,entity_type,entity_id,old_values,new_values,ip_address,user_agent) VALUES (?, 'RETURN','sponsor_payments',?,?,?,?,?)",[$uid,$sp_id,json_encode($oldAudit,JSON_UNESCAPED_UNICODE),json_encode($newAudit,JSON_UNESCAPED_UNICODE),$_SERVER['REMOTE_ADDR']??'',$_SERVER['HTTP_USER_AGENT']??'']);
+                    $pdo->commit();
+                    try{ak_transaction_review_notify_event((int)$sp['supervisor_id'],'تم إرجاع تحصيل مشرف #'.$sp_id,'تم إرجاع التحصيل للمراجعة والتعديل. سبب الإرجاع: '.$note,APP_URL.'modules/transactions/create.php?sponsor_id='.(int)($sp['sponsor_id']??0).'&returned_payment='.$sp_id,$sp_id,'sponsor_payment_returned');}catch(Throwable $e){}
+                    flash('success','تم إرجاع الدفعة للمشرف.');
+                }
+            }catch(Throwable $e){
+                if($pdo->inTransaction())$pdo->rollBack();
+                error_log('FM sponsor payment return failed: '.$e->getMessage());
+                flash('error','تعذر إرجاع الدفعة وحفظ سجل المراجعة بشكل ذري. لم يتم إرجاع أي جزء.');
             }
         }
         header('Location: '.APP_URL.'modules/accounting/fm_review_queue.php');exit();
