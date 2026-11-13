@@ -1699,7 +1699,8 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                                 'approved' => ['معتمدة — بانتظار التحويل', 'info'],
                                 'transferred' => ['محوّل', 'primary'],
                                 'received' => ['مستلم', 'success'],
-                                'returned' => ['مغلق مع إرجاع', 'danger']
+                                'returned' => ['مغلق مع إرجاع', 'danger'],
+                                'voided' => ['مبطلة', 'danger']
                             ];
                             $s = $b['status'];
                             [$label, $color] = $st[$s] ?? [$s, 'secondary'];
