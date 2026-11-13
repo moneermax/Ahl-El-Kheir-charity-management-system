@@ -438,8 +438,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                 "UPDATE monthly_disbursements
                  SET status = 'pending_approval', total_amount = ?, submitted_by = ?, submitted_at = NOW(),
                      reviewed_by_user_id = NULL, reviewed_at = NULL
-                 WHERE id = ' . $id . ' AND status = 'draft'",
-                [$snapshot['total_amount'], $uid]
+                 WHERE id = ? AND status = 'draft'",
+                [$snapshot['total_amount'], $uid, $id]
             );
             ak_disbursement_audit_required($uid, 'DISBURSEMENT_SUBMIT_FM', $id,
                 ['status' => 'draft', 'total_amount' => round((float)$batch['total_amount'], 2)],
