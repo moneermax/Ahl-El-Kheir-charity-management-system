@@ -8,6 +8,11 @@ on:
       - 'modules/sponsorships/lib_payment_status.php'
       - 'modules/transactions/create.php'
       - 'modules/transactions/edit_returned.php'
+      - 'modules/transactions/index.php'
+      - 'modules/transactions/cancel_returned.php'
+      - 'modules/sponsors/view.php'
+      - 'modules/sponsorships/view.php'
+      - 'tools/test_vgm_collection_read_only_contract.php'
       - 'modules/accounting/lib.php'
       - 'modules/accounting/accounts.php'
       - 'modules/accounting/sponsorship_service_fee_account.php'
@@ -41,6 +46,11 @@ jobs:
           php -l modules/sponsorships/lib_payment_status.php
           php -l modules/transactions/create.php
           php -l modules/transactions/edit_returned.php
+          php -l modules/transactions/index.php
+          php -l modules/transactions/cancel_returned.php
+          php -l modules/sponsors/view.php
+          php -l modules/sponsorships/view.php
+          php -l tools/test_vgm_collection_read_only_contract.php
           php -l modules/accounting/lib.php
           php -l modules/accounting/accounts.php
           php -l modules/accounting/sponsorship_service_fee_account.php
@@ -53,3 +63,5 @@ jobs:
           php -l tools/preflight_sponsorship_return_fixture.php
       - name: Run monthly agreement component contract tests
         run: php tools/test_sponsorship_monthly_agreement_components.php
+      - name: Run VGM collection read-only contract tests
+        run: php tools/test_vgm_collection_read_only_contract.php
