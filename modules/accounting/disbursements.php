@@ -367,12 +367,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             exit();
         }
     }
-    // 2. Accountant: Upload transfer receipt AND mark as transferred (DEDUCTS FROM SAFE)
-    if ($canManage && isset($_POST['transfer_with_receipt'])) {
+    // 2. Accountant Staff may execute transfers only for assigned nannies; other existing managers retain their current scope.
+    if ($canManageAssigned && isset($_POST['transfer_with_receipt'])) {
         $id = (int)$_POST['transfer_with_receipt'];
         $b = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ?", [$id]);
         if (!$b || $b['status'] !== 'pending_approval') {
             flash('error', 'الدفعة غير متاحة أو ليست بحالة انتظار.');
+        } elseif ($isAccountantStaff && !dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, (int)$b['nanny_id']])) {
+            flash('error', 'هذه الدفعة ليست ضمن الدفعات المسندة إليك.');
         } elseif (empty($_FILES['transfer_receipt']['tmp_name'])) {
             flash('error', 'يرجى اختيار ملف إيصال التحويل (إجباري).');
         } else {
@@ -1192,7 +1194,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
     <?php endif; ?>
     <!-- Accountant: Transfer receipt upload -->
-    <?php if ($canManage && $viewBatch['status'] === 'pending_approval'): ?>
+    <?php if ($canManageAssigned && $viewBatch['status'] === 'pending_approval'): ?>
     <div class="mt-4 p-4 border rounded bg-light">
         <h6 class="mb-3"><i class="fas fa-exclamation-triangle text-warning me-2"></i>تأكيد التحويل ورفع الإيصال</h6>
         <p class="text-muted small mb-3"><strong>مهم:</strong> يجب رفع إيصال التحويل البنكي/الكاش قبل تأكيد عملية التحويل. سيتم خصم المبلغ تلقائياً من رصيد المنظمة.</p>
