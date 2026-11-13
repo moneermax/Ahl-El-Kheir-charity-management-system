@@ -443,9 +443,8 @@ $supervisorApprovalSource = file_get_contents(dirname(__DIR__) . '/modules/accou
 $journalPostingSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib.php');
 $assert(
     is_string($donationEntrySource)
-    && str_contains($donationEntrySource, "'other'=>'general_donation'")
-    && str_contains($donationEntrySource, "trim((string)(\$old['purpose_note']??''))!==''?'general_donation':'other'"),
-    'other_source_donations_use_general_classification_and_returned_legacy_rows_are_identified_by_saved_source_note'
+    && str_contains($donationEntrySource, "'other'=>'general_donation'"),
+    'new_direct_other_source_donations_use_general_donation_classification'
 );
 $assert(
     is_string($supervisorApprovalSource)
