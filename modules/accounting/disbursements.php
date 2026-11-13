@@ -475,7 +475,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                 throw new RuntimeException('إجمالي الدفعة لا يطابق مجموع بنود الأسر؛ أُوقفت الموافقة لحماية السجل.');
             }
             $existingTransaction = dbFetchOne("SELECT id FROM transactions WHERE reference_number = ? LIMIT 1", ['DISB-OUT-' . $id]);
-            if ($existingTransaction) throw new RuntimeException('توجد معاملة مالية سابقة مرتبطة بهذه الدفعة؛ لا يمكن اعتمادها مرة أخرى.');
+            $existingJournal = dbFetchOne(
+                "SELECT id FROM journal_entries WHERE reference_type = 'disbursement' AND reference_id = ? AND status = 'posted' LIMIT 1",
+                [$id]
+            );
+            if (!empty($batch['transaction_id']) || $existingTransaction || $existingJournal) {
+                throw new RuntimeException('توجد معاملة أو قيود مالية سابقة مرتبطة بهذه الدفعة؛ لا يمكن اعتمادها مرة أخرى.');
+            }
             dbExecute(
                 "UPDATE monthly_disbursements SET status = 'approved', reviewed_by_user_id = ?, reviewed_at = NOW()
                  WHERE id = ? AND status = 'pending_approval'",
@@ -563,7 +569,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                         if (!$b || $b['status'] !== 'approved') throw new RuntimeException('تغيرت حالة الدفعة قبل التحويل؛ يجب أن تبقى معتمدة.');
                         if ($isAccountantStaff) ak_disbursement_assert_assigned($uid, (int)$b['nanny_id']);
                         $existingTransaction = dbFetchOne("SELECT id FROM transactions WHERE reference_number = ? LIMIT 1", ['DISB-OUT-' . $id]);
-                        if ($existingTransaction) throw new RuntimeException('توجد معاملة مالية مرتبطة بهذه الدفعة مسبقاً.');
+                        $existingJournal = dbFetchOne(
+                            "SELECT id FROM journal_entries WHERE reference_type = 'disbursement' AND reference_id = ? AND status = 'posted' LIMIT 1",
+                            [$id]
+                        );
+                        if (!empty($b['transaction_id']) || $existingTransaction || $existingJournal) {
+                            throw new RuntimeException('توجد معاملة أو قيود مالية مرتبطة بهذه الدفعة مسبقاً.');
+                        }
                         dbExecute(
                             "UPDATE monthly_disbursements
                              SET status = 'transferred', transferred_at = NOW(), receipt_file_path = ?, transfer_receipt_by_user_id = ?, transfer_receipt_at = NOW()
@@ -900,7 +912,7 @@ flash('success', 'تم إعادة فتح سجل الأسرة للتعديل بن
         $id = (int)$_POST['void_batch'];
         $reason = trim((string)($_POST['void_batch_reason'] ?? ''));
         $b = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ?", [$id]);
-        if (!$b || in_array($b['status'], ['voided', 'cancelled', 'draft'], true)) {
+        if (!$b || !in_array($b['status'], ['draft', 'pending_approval', 'approved', 'transferred'], true)) {
             flash('error', 'لا يمكن إبطال هذه الدفعة من حالتها الحالية.');
         } elseif ($reason === '') {
             flash('error', 'يرجى كتابة سبب الإبطال.');
@@ -1348,7 +1360,7 @@ include dirname(__DIR__, 2) . '/includes/header.php';
     </div>
     <?php endif; ?>
     <!-- Admin/Financial Manager: Void a mistakenly created/transferred batch -->
-    <?php if (in_array($role, ['admin', 'financial_manager'], true) && !in_array($viewBatch['status'], ['voided', 'cancelled'])): ?>
+    <?php if (in_array($role, ['admin', 'financial_manager'], true) && in_array($viewBatch['status'], ['draft', 'pending_approval', 'approved', 'transferred'], true)): ?>
     <div class="mt-4 p-3 bg-danger bg-opacity-10 rounded border border-danger">
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
             <div>
