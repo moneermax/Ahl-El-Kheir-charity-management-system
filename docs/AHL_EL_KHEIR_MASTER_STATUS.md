@@ -6592,3 +6592,8 @@ Added `tools/preflight_sponsorship_return_fixture.php` as a strictly read-only n
 Updated `.github/workflows/sponsorship-monthly-agreement-components.yml` to lint the new preflight script. GitHub Actions run `43376094989` completed successfully: PHP 8.2 lint passed for the preflight script and all existing sponsorship component contract checks remained `RESULT | 59 checks | PASS`.
 
 No application business logic or database schema was changed. The preflight must be run locally before selecting any fixture. A listed candidate is only a candidate for further review, not authorization to submit a payment. Preserve all protected records and do not run browser acceptance against agreement 1 / SH-003508.
+
+
+## 2026-11-13 — VGM collection role boundary
+
+User-approved rule: VGM is report-only for incoming collections. VGM cannot create/submit collections, edit/resubmit FM-returned transactions, or cancel returned transactions. Existing read-only transaction-register/report access remains. Existing sponsor/sponsorship operational permissions remain except for payment-entry actions. Accountant Staff and the separate accountant-to-Nanny monthly disbursement workflow are out of scope and unchanged. Source changes and a focused contract test have been committed to `main`; CI and local role acceptance remain pending. The automatic-posting redesign remains unimplemented. Positive monthly-agreement service-fee posting remains blocked pending authorized recognition timing and revenue-account approval.
