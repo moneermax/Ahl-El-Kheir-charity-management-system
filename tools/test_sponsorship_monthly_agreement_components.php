@@ -437,6 +437,28 @@ if (is_string($paymentEntrySource)) {
         'stale_admin_fee_message_removed'
     );
 }
+
+$donationEntrySource = file_get_contents(dirname(__DIR__) . '/modules/transactions/create.php');
+$supervisorApprovalSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib_sponsor_payment_approval.php');
+$journalPostingSource = file_get_contents(dirname(__DIR__) . '/modules/accounting/lib.php');
+$assert(
+    is_string($donationEntrySource)
+    && str_contains($donationEntrySource, "'other'=>'general_donation'")
+    && str_contains($donationEntrySource, "trim((string)(\$old['purpose_note']??''))!==''?'general_donation':'other'"),
+    'other_source_donations_use_general_classification_and_returned_legacy_rows_are_identified_by_saved_source_note'
+);
+$assert(
+    is_string($supervisorApprovalSource)
+    && str_contains($supervisorApprovalSource, "'other'=>'general_donation'"),
+    'supervisor_other_source_donations_become_general_donations_on_fm_approval'
+);
+$assert(
+    is_string($journalPostingSource)
+    && str_contains($journalPostingSource, "if (\$type === 'general_donation') { \$lines[] = ['4300'")
+    && str_contains($journalPostingSource, "\$revenueAccount = \$type === 'sponsorship_payment' ? '2200' : '4100';"),
+    'general_donations_post_to_4300_without_reclassifying_ambiguous_legacy_other_transactions'
+);
+
 $failed = array_keys(array_filter($checks, static fn(bool $passed): bool => !$passed));
 foreach ($checks as $name=>$passed) {
     echo ($passed ? 'PASS' : 'FAIL') . ' | ' . $name . PHP_EOL;
