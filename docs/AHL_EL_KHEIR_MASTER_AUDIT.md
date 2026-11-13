@@ -6885,3 +6885,12 @@ The source-contract suite passed in GitHub Actions run `43392364883`: 63 sponsor
 The first Flutter workflow attempt `43392308038` stopped at `flutter analyze` before widget tests. Its 151 reported diagnostics were info-level `material.dart` deprecation notices across the existing app; no warning/error diagnostic was reported. The workflow now runs `flutter analyze --no-fatal-infos`, preserving failure on warnings/errors while allowing the widget tests and build to execute. This is a CI compatibility adjustment, not a suppression of analyzer warnings/errors. The independent mobile API integration run `43392308091` failed at its disposable-database backup test; the logged failure is unrelated to voucher issuance and is not treated as evidence against this change.
 
 Next verification: await fresh PHP and Flutter workflow runs for this commit. Do not claim Flutter widget tests passed until the `flutter test` step actually completes.
+
+
+## 2026-11-13 — Voucher audit-write atomicity correction
+
+Further FM audit inspection found that both web and mobile voucher issue/void handlers swallowed `audit_log` INSERT failures and still committed the voucher/journal transition. This violated the required evidence boundary for an immediately posted financial voucher.
+
+Removed the swallowed audit catches from all four paths. The audit write now participates in the existing database transaction: if the audit insert fails, the outer handler rolls back the voucher status, original/reversal journal writes and lines together. No schema or migration change was needed. The existing Accountant Staff direction contract was expanded with executable role-capability checks and assertions that both interfaces propagate voucher audit failures.
+
+Source commit: `5c9bc488f5b70592eac7e334c1db2f9ae04e96eb`. PHP CI and contract verification pending. No local voucher, journal, cash balance or historical record was changed.
