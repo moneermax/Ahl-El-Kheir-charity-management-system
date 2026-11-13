@@ -6629,3 +6629,5 @@ Source changes on `main`:
 Added a focused static authorization contract and included it in the existing CI workflow. Updated the VGM contract assertions to match the narrowed authorization. No schema, migration, accounting posting, journal, or historical data changes were made.
 
 Verification boundary: source/static contract and GitHub Actions checks are pending. Local Apache/browser role acceptance remains pending. Do not submit test collections using an Accountant Staff account.
+
+Verification update (2026-11-13): GitHub Actions workflow run `43387206852` passed. PHP 8.2 lint passed for all workflow-listed files; the monthly agreement component suite remained `63 checks | PASS`; VGM collection read-only contract passed `6/6`; Accountant Staff incoming-collection restriction contract passed `5/5`. This verifies static source contracts only. Local Apache/browser role acceptance remains pending. No database/runtime test is claimed.
