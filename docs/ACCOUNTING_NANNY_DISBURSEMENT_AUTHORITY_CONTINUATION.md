@@ -16,7 +16,7 @@ The workflow is:
 - ACC1 may correct the amounts on the existing family rows while the batch is `draft` or `pending_approval`. Every correction requires a reason and a mandatory audit record.
 - Corrections cannot change the Nanny, group, month, or family membership. Each amount must be positive and no greater than the family's currently active sponsorship total for that group/month, with all three monthly verification flags set.
 - ACC1 submits a valid draft. The batch enters `pending_approval` and active FM-role users are notified. If ACC1 corrects a pending batch, it remains pending and FM is notified of the revision.
-- Only roles `financial_manager`, `fm`, and `finance` may approve/reject. Admin, GM, and VGM are not approval substitutes. An FM cannot approve/reject a batch they submitted themselves.
+- Only the canonical `financial_manager` role may approve/reject. Admin, GM, and VGM are not approval substitutes. An FM cannot approve/reject a batch they submitted themselves.
 - Approval changes the state to `approved` and records reviewer/time/audit evidence. It does **not** create a transaction or journal and does **not** deduct cash.
 - Rejection requires a reason, records it in the audit log, notifies the submitter, and returns the batch to `draft` for correction and resubmission.
 - Once approved, ACC1 cannot edit the batch. Transfer POST and UI require `approved` and a mandatory transfer receipt. The transfer transaction, balanced journal, batch state, and audit record commit in one transaction.
