@@ -132,6 +132,9 @@ jobs:
             api/v1/accounting/fm_review_queue.php
             api/v1/accounting/fm_review_queue_action.php
             api/v1/accounting/vouchers.php
+            modules/accounting/lib_vouchers.php
+            modules/accounting/vouchers.php
+            tools/test_accountant_staff_incoming_collection_restriction.php
             api/v1/sponsorships/index.php
             api/v1/sponsorships/detail.php
             api/v1/account/avatar.php

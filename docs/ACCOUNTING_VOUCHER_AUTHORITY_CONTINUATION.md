@@ -38,3 +38,12 @@ Pending:
 4. Local mobile/API acceptance: same type-specific denial and payment allowance.
 
 Do not submit a real receipt or payment to test this restriction. Preserve existing voucher/journal evidence.
+
+
+## 2026-11-13 — Voucher authorization CI follow-up
+
+The source-contract suite passed in GitHub Actions run `43392364883`: 63 sponsorship checks, 6/6 VGM checks, and the expanded Accountant Staff contract `11/11 PASS`. PHP syntax workflow run `43392365013` passed, but its selected-file list did not yet lint the modified web voucher page/helper or the expanded role-contract script; those files are now explicitly included.
+
+The first Flutter workflow attempt `43392308038` stopped at `flutter analyze` before widget tests. Its 151 reported diagnostics were info-level `material.dart` deprecation notices across the existing app; no warning/error diagnostic was reported. The workflow now runs `flutter analyze --no-fatal-infos`, preserving failure on warnings/errors while allowing the widget tests and build to execute. This is a CI compatibility adjustment, not a suppression of analyzer warnings/errors. The independent mobile API integration run `43392308091` failed at its disposable-database backup test; the logged failure is unrelated to voucher issuance and is not treated as evidence against this change.
+
+Next verification: await fresh PHP and Flutter workflow runs for this commit. Do not claim Flutter widget tests passed until the `flutter test` step actually completes.
