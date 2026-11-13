@@ -737,3 +737,16 @@ The separate Section 2 donation form now accepts one or more independent donatio
 Persistence preserves the existing role-specific review routes: Supervisor submissions create one pending `sponsor_payments` record per donation row and notify FM for each record; VGM/direct submissions create one pending `transactions` record per donation row and retain the existing FM review flow. Existing sponsor context and Supervisor sponsor-scope checks remain in place. Validation is performed per row, with a 50-row request cap. The donation total is calculated in the form. These donation rows do not carry or calculate service fees.
 
 Verification: GitHub Actions run [43300051479](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43300051479) passed PHP 8.2 lint and all 53 focused monthly-agreement/payment-entry contract checks. No schema or migration change was made for this feature. Local XAMPP/browser acceptance and a controlled test submission remain pending; no payment was submitted during repository work.
+
+
+## 2026-11-13 — Payment-entry setup layout refinement
+
+The user requested a small visual refinement to the existing sponsorship payment-entry form. The exact monthly-agreement warning now appears before Section 1. The payment-type selector occupies its own full-width first row. Beneath it, the sponsorship selector and a dedicated search field sit side by side on desktop; the sponsorship label and selector use compact sizing. The search field filters the existing sponsorship options by the displayed combined sponsor name, child name, or sponsorship code, without changing the submitted `sponsorship_id` value or the existing selection/reload workflow.
+
+No POST field names, role/sponsor-scope checks, agreement snapshots, payment calculations, submission routes, schema, migrations, allocation, or accounting behavior were changed. No payment was submitted.
+
+Commits:
+- `65726e1c5e3d6011720415ecc4c199a6f3401f1c` — payment-entry layout and client-side sponsorship search.
+- `6244dd402a604a76cdd90d392ce3b54efcddcd87` — focused layout/search contract assertions.
+
+Verification: GitHub Actions run [43351641281](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43351641281) passed PHP 8.2 lint for the affected sponsorship/payment workflow files and all 54 focused component contract checks. Local XAMPP/browser visual acceptance is still required. The separate PHP syntax workflow run [43351641198](https://github.com/moneermax/Ahl-El-Kheir-charity-management-system/actions/runs/43351641198) was still in progress when this note was written. Do not begin accounting implementation until the user accepts the updated payment form.
