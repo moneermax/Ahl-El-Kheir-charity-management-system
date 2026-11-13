@@ -3,7 +3,7 @@
 // Approval is a workflow-only transition; financial posting remains the transfer action.
 if (!function_exists('ak_disbursement_is_fm_approver')) {
     function ak_disbursement_is_fm_approver(string $role): bool {
-        return in_array($role, ['financial_manager', 'fm', 'finance'], true);
+        return $role === 'financial_manager';
     }
 }
 if (!function_exists('ak_disbursement_assert_assigned')) {
