@@ -56,6 +56,25 @@ GitHub Actions:
 
 These are static/source and syntax checks. No local Apache/browser/database runtime acceptance has been performed. No database rows, transactions, journals, receipts, or cash balances were changed by the implementation.
 
+## Voided-batch presentation correction — 2026-11-13
+
+After batch #13 was voided through the FM application workflow, both FM and ACC1 views showed the raw status `voided`, while the preserved family item still appeared as `pending`. Source inspection confirmed that item status is intentionally retained as historical evidence; the defect was that the UI presented it without the parent-batch context.
+
+Implemented on `main`:
+- Added the explicit Arabic status label **مبطلة** to both the batch detail and batch-list status maps.
+- For a family item whose parent batch is voided, the UI now displays **غير ساري — الدفعة مبطلة** instead of its preserved operational item status. The database item status is not changed.
+- Replaced the batch-list progress bar/count presentation for voided batches with a clear **دفعة مبطلة** label.
+- Added three focused source-contract assertions covering both status maps, family-item presentation, and suppression of live progress for voided batches.
+
+No schema, migration, item status, transaction, journal, cash balance, or audit record was changed by this UI correction. The already-voided batch #13 and its reversing accounting records remain untouched.
+
+Source commits:
+- `45141e5e17e8bd4083c8d8133277b809710308d0` — detail UI and family-item state presentation.
+- `fc703935f2743fcc694d0d720745fe00a138fb4c` — batch-list status and progress presentation.
+- `e6889532331ce7829b578d60e1117116a5989a67` — focused static contract assertions.
+
+The three new assertions have been added but have not yet been executed in CI or against the local PHP runtime. Local Apache/browser verification remains required for both FM and ACC1 views.
+
 ## Local acceptance still required
 
 1. Pull the latest `main`.
