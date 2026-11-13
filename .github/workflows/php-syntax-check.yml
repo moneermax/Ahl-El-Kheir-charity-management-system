@@ -240,6 +240,7 @@ jobs:
             tools/recognize_sponsorship_revenue_month_end.php
             tools/backfill_sponsorship_payment_accounting.php
             tools/test_sponsorship_payment_accounting_rollback.php
+            tools/test_sponsorship_monthly_agreement_zero_fee_posting_rollback.php
             modules/accounting/lib_outflows.php
             modules/accounting/fm_review_queue.php
             modules/accounting/lib_sponsor_payment_approval.php
