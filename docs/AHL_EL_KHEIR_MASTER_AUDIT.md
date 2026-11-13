@@ -240,6 +240,16 @@ Known assignment test context: Accountant Staff user `17` assigned to nanny `16`
 
 The current disbursement implementation already contains the single-family item reopen path with assigned-nanny authorization, required reason, state rollback, parent reopening when needed, audit logging, and nanny notification. Do not assume an old “next test” is still pending; re-read current code and audit evidence first.
 
+### 7.1 — 2026-11-13 Accountant Staff transfer execution authority
+
+**Business decision:** Accountant Staff must be allowed to execute the outgoing monthly Nanny transfer, upload its bank/cash transfer receipt, and complete the existing financial posting step.
+
+**Source change:** the transfer POST is now available to the existing `$canManageAssigned` authority set. For ACC1, the server additionally checks the target batch's `nanny_id` against `accountant_nanny_assignments` before accepting the upload or posting. The transfer UI uses the same assigned-scope display gate. Existing pending-batch validation, required receipt, transaction/journal creation, and Admin/Financial Manager-only batch void control remain unchanged.
+
+**Boundary:** this does not authorize incoming collection entry, generic receipt vouchers, or VGM accounting actions. ACC1's assignment scope is mandatory; an unassigned Nanny batch must remain inaccessible to the transfer POST.
+
+**Verification:** source assertions were added to the Accountant Staff restriction contract for assigned-scope transfer, pending-state/receipt requirements, and retained void restriction. CI and local runtime acceptance are pending; no local financial records or database schema were changed.
+
 ---
 
 # 8. Accounting Journal Integrity — Current Checkpoint
