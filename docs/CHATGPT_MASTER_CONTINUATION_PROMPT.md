@@ -4275,3 +4275,18 @@ No application business logic or database schema was changed. The preflight must
 VGM is report-only for collections: no create/submit, returned correction/resubmission, or returned-transaction cancellation. Retain read-only transaction-register/report access and existing non-financial sponsor/sponsorship operations. Do not grant VGM FM approval/return/post/void authority. Accountant Staff and the separate Accountant-to-Nanny monthly-disbursement route must remain unchanged. The automatic-posting work is not yet implemented. Before proceeding, inspect current `main`, schema truth, all incoming-collection posting functions and account mappings. Keep positive monthly-agreement service-fee posting blocked pending authorized recognition timing and active revenue destination. Do not convert the entire ordinary transaction FM queue blindly: classify the existing collection entry routes and preserve unrelated accountant workflows.
 
 VGM report-only source boundary is committed and CI verified in run `43381253320` (PHP lint, 59 sponsorship checks, 6 VGM role-contract checks all passed). Local Apache/browser role acceptance remains pending. Do not rerun unrelated closed tests. Continue automatic collection-posting analysis only after schema and exact role-specific submission paths are verified; do not alter Accountant Staff / Nanny disbursement workflows.
+
+
+## 2026-11-13 — Other-source donation accounting classification
+
+The user delegated the account classification decision because they do not have the accounting chart-of-accounts expertise to choose it. Current posting source explicitly maps `general_donation` to account `4300`, `project_donation` to the project's configured revenue account (default `4400`), and `sponsorship_payment` to deferred account `2200`. The generic fallback for an unrecognized/legacy `other` transaction remains `4100` (sponsorship revenue); changing that fallback globally would risk reclassifying ambiguous historical transactions.
+
+Implemented narrowly on `main`:
+- New VGM/direct other-source donation rows now persist as `general_donation` while retaining their source note and donation evidence.
+- Supervisor `sponsor_payments.payment_type='other'` becomes `general_donation` only when FM approves it through the existing approval helper.
+- A returned direct transaction with legacy type `other` is reclassified on resubmission only when its saved `purpose_note` identifies the other-source donation. Ambiguous legacy rows without that source evidence retain `other`.
+- The existing journal poster therefore routes these donation transactions to `4300`; project donations and monthly sponsorship posting remain unchanged. No journal/history rewrite, schema change, migration, or database write was performed.
+
+Commits: `e087e179b31f2e6d3efd4a5d9a374cd2e03e0c45` (direct submission and returned correction), `814d299263b2ed2330d4b9b5d67eae9734d2f8ee` (Supervisor FM approval mapping), and `974deb155f9368eed7e51b15e7e227b47f463ba4` (focused contract assertions).
+
+Verification boundary at this checkpoint: source changes are committed directly to `main`; GitHub Actions result has not yet been inspected. Local PHP/XAMPP runtime verification remains pending. The authoritative SQL dump fetch returned empty content in this session, so no fresh schema verification is claimed; this correction does not alter or depend on schema changes.
