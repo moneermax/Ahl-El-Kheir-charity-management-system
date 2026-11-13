@@ -8,6 +8,12 @@ require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.p
 Session::start();
 if (!Session::isLoggedIn()) { header('Location: ' . APP_URL . 'index.php'); exit(); }
 
+// VGM is report-only for collection records; reject direct/forged creator cancellation.
+if (in_array((string)Session::getUserRole(), ['vice_general_manager', 'vgm'], true)) {
+    http_response_code(403);
+    exit('VGM collection access is read-only.');
+}
+
 $uid = (int)Session::getUserId();
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !verify_csrf()) {
     header('Location: ' . APP_URL . 'modules/transactions/index.php');
