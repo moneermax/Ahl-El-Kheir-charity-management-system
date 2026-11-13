@@ -121,3 +121,8 @@ Source correction: `821774a06aa6434a31bc4538bfe37217ebafe55c`. Bulk-selection sy
 
 **Next task from the remaining open documentation:** continue the HR employment-contract portal's pending local verification, starting with the latest `docs/HR_EMPLOYMENT_CONTRACT_CONTINUATION.md` instructions and current `main` source. Do not resume the Contract Builder toast/brief-refresh visual issue; the user explicitly closed that task.
 
+
+
+## 2026-11-13 — Accountant Staff collection boundary does not change disbursements
+
+The user's role clarification is that Accountant Staff do not record incoming donations or sponsorship collections. They retain their existing outgoing disbursement responsibilities, including the Accountant-to-Nanny monthly-disbursement workflow. The incoming transaction-entry/editor/cancellation permissions are narrowed separately; `modules/accounting/disbursements.php` is intentionally unchanged. No disbursement workflow, schema, or data was modified by this authorization change. See `docs/ACCOUNTING_ORDINARY_TRANSACTION_REVIEW_CONTINUATION.md` for the incoming-collection boundary and verification status.
