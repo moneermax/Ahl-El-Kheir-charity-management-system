@@ -25,6 +25,9 @@ on:
       - 'modules/accounting/disbursements.php'
       - 'modules/accounting/disbursement_void_guard.php'
       - 'modules/accounting/lib_disbursement_approval.php'
+      - 'modules/accounting/disbursements.php'
+      - 'modules/accounting/disbursement_void_guard.php'
+      - 'modules/accounting/lib_disbursement_approval.php'
       - 'tools/test_sponsorship_monthly_agreement_components.php'
       - 'tools/preflight_sponsorship_return_fixture.php'
       - '.github/workflows/sponsorship-monthly-agreement-components.yml'
@@ -64,6 +67,9 @@ jobs:
           php -l modules/accounting/lib_sponsor_payment_approval.php
           php -l modules/accounting/fm_review_queue.php
           php -l modules/accounting/fm_transaction_review.php
+          php -l modules/accounting/disbursements.php
+          php -l modules/accounting/disbursement_void_guard.php
+          php -l modules/accounting/lib_disbursement_approval.php
           php -l modules/accounting/disbursements.php
           php -l modules/accounting/disbursement_void_guard.php
           php -l modules/accounting/lib_disbursement_approval.php
