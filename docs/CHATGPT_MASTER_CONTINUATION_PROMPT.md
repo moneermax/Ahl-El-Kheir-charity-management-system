@@ -4383,3 +4383,12 @@ CI note: An earlier attempt (`43466074018`) failed before running the sponsor-re
 
 
 CI sequencing note: Intermediate component run `43466938716` failed one role assertion because the helper was changed to the canonical `financial_manager` role before the corresponding static contract assertion was updated in the next commit. The next commit updated the test, and component run `43466946535` passed `29/29`. Full workflow run `43466946661` then completed successfully. No CI failure remains outstanding.
+
+
+## Paused checkpoint — Monthly Nanny disbursement FM approval gate (2026-11-13)
+
+A detailed, authoritative local runtime checkpoint is maintained at `docs/checkpoints/2026-11-13-monthly-nanny-disbursement-fm-approval.md`. The user is pausing this workflow to work on a separate task in a new chat. Do not automatically switch back to it. Resume only when explicitly requested.
+
+At the pause point, VGM had created **Fm Acceptance Test** and assigned it to **nany1**; ACC1 had created **draft batch #14**, month 2026-11, five test-only family rows totaling **139,000 ج.س**. User confirmed all data is test-only. Last screen: **مسودة قابلة للتصحيح**. The draft had not been submitted to FM. No correction, FM notification/decision, transfer, transaction, journal, receipt, or cash movement for #14 has been verified. The previous setup must not be repeated.
+
+On return: read current canonical docs and checkpoint from latest main; inspect live #14 status; if still draft, continue with ACC1 submission, then real FM notification/rejection/resubmission/approval tests, approval no-posting proof, post-approval edit denial, and transfer only after explicit authorization, followed by journal/cash verification and supported Admin/FM void reversal. Never use Admin/GM/VGM as FM. Preserve #13/#12/#11/#9/#8/#7/#6 history. Do not rerun passed CI tests or repeat the VGM/ACC1 setup. The next chat's new task is independent and takes priority until user explicitly requests checkpoint resumption.

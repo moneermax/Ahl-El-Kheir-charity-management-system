@@ -6953,3 +6953,14 @@ CI note: An earlier attempt (`43466074018`) failed before running the sponsor-re
 
 
 CI sequencing note: Intermediate component run `43466938716` failed one role assertion because the helper was changed to the canonical `financial_manager` role before the corresponding static contract assertion was updated in the next commit. The next commit updated the test, and component run `43466946535` passed `29/29`. Full workflow run `43466946661` then completed successfully. No CI failure remains outstanding.
+
+
+## 2026-11-13 — Monthly Nanny disbursement FM approval gate: local test checkpoint
+
+The user restarted local acceptance from the beginning to ensure a clean, realistic Nanny 1 scenario. As VGM, the user created **Fm Acceptance Test** and assigned it to **nany1**. As ACC1, the user created **batch #14** for **2026-11**, total **139,000 ج.س**, with five test families. The user explicitly confirmed that the data is test-only. The displayed row values total correctly: 13,000 + 48,000 + 43,000 + 25,000 + 10,000 = 139,000 ج.س.
+
+The last observed UI state is **draft / مسودة قابلة للتصحيح**. The batch has not yet been submitted to FM. No amount correction was made in the evidence supplied. No FM notification, approval/rejection, transaction, journal, receipt, transfer, or cash movement for #14 has been verified. Therefore the local acceptance is **IN PROGRESS — PAUSED BEFORE ACC1 SUBMISSION**, not complete.
+
+The previous history displayed #13 voided, #12 closed with return, #11 voided, #9 received, #8/#7 voided, and #6 transferred. These records must remain unchanged. Earlier November eligibility was empty; the new VGM-created test group is the chosen controlled path. No verification flags were altered or fabricated in the evidence supplied.
+
+The exact family codes, names, amounts, resume sequence, boundaries, source/CI references, and no-repeat safeguards are recorded in `docs/checkpoints/2026-11-13-monthly-nanny-disbursement-fm-approval.md`. Resume only when the user explicitly returns; inspect batch #14 live status first and do not recreate it.

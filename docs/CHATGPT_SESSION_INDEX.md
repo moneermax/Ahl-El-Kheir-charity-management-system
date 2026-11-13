@@ -4418,3 +4418,10 @@ CI note: An earlier attempt (`43466074018`) failed before running the sponsor-re
 
 
 CI sequencing note: Intermediate component run `43466938716` failed one role assertion because the helper was changed to the canonical `financial_manager` role before the corresponding static contract assertion was updated in the next commit. The next commit updated the test, and component run `43466946535` passed `29/29`. Full workflow run `43466946661` then completed successfully. No CI failure remains outstanding.
+
+
+### 2026-11-13 — Monthly Nanny disbursement FM approval local checkpoint
+
+A local test workflow was restarted deliberately from VGM group setup. VGM created group **Fm Acceptance Test** and assigned it to **nany1**. ACC1 then created **batch #14**, month **2026-11**, total **139,000 ج.س**, containing five test families (IMP-FAM-001126: 13,000; IMP-FAM-001115: 48,000; IMP-FAM-001729: 43,000; IMP-FAM-001398: 25,000; IMP-FAM-001901: 10,000). The user explicitly confirmed all these records are test data. The last screen showed batch #14 as **مسودة قابلة للتصحيح**; it had not yet been submitted to FM. No correction, FM decision, transfer, transaction, journal, receipt, or cash movement has been evidenced for #14.
+
+**Pause/resume:** do not repeat VGM group creation or ACC1 batch creation. On explicit return, inspect the live status of batch #14 and continue from ACC1 submission if still draft. Then verify FM notification, FM rejection/resubmission if needed, FM approval without posting/cash movement, post-approval ACC1 edit denial, and only after explicit authorization test receipt-required transfer, balanced journal, and Admin/FM void reversal. Full evidence, previous batch history, exact family rows, safeguards, and sequence are in `docs/checkpoints/2026-11-13-monthly-nanny-disbursement-fm-approval.md`. The local DB/browser is not directly accessible to ChatGPT; the current facts are user-provided UI evidence.

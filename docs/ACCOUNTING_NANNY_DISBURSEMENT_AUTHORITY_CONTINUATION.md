@@ -94,3 +94,16 @@ CI note: An earlier attempt (`43466074018`) failed before running the sponsor-re
 
 
 CI sequencing note: Intermediate component run `43466938716` failed one role assertion because the helper was changed to the canonical `financial_manager` role before the corresponding static contract assertion was updated in the next commit. The next commit updated the test, and component run `43466946535` passed `29/29`. Full workflow run `43466946661` then completed successfully. No CI failure remains outstanding.
+
+
+## Local runtime checkpoint — 2026-11-13 — batch #14 created; paused before submission
+
+The user deliberately restarted the local acceptance setup to use a fresh group assigned to Nanny 1:
+1. Logged in as VGM, created **Fm Acceptance Test**, and assigned it to **nany1**.
+2. Logged in as ACC1 and created **batch #14**, month **2026-11**, total **139,000 ج.س**.
+3. The draft contained five test-only families: IMP-FAM-001126 (13,000), IMP-FAM-001115 (48,000), IMP-FAM-001729 (43,000), IMP-FAM-001398 (25,000), IMP-FAM-001901 (10,000). The displayed family names/child counts are preserved in the detailed checkpoint document.
+4. The user explicitly confirmed all data is test data. The UI showed **مسودة قابلة للتصحيح**. No amount correction or submission to FM had yet occurred.
+
+**Exact pause point:** batch #14 exists as a draft. Continue from inspecting its current live status, then submit as ACC1 if it remains draft. Do not recreate the group or batch. No FM notification, rejection, approval, transfer, transaction, journal, receipt, or cash movement has been verified for #14.
+
+The complete immutable resume record, old batch history, exact row details, sequence, and safeguards are in `docs/checkpoints/2026-11-13-monthly-nanny-disbursement-fm-approval.md`. The user is starting another task in a new chat; do not resume this workflow until explicitly asked.

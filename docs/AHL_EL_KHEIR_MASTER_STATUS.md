@@ -6713,3 +6713,10 @@ CI note: An earlier attempt (`43466074018`) failed before running the sponsor-re
 
 
 CI sequencing note: Intermediate component run `43466938716` failed one role assertion because the helper was changed to the canonical `financial_manager` role before the corresponding static contract assertion was updated in the next commit. The next commit updated the test, and component run `43466946535` passed `29/29`. Full workflow run `43466946661` then completed successfully. No CI failure remains outstanding.
+
+
+## Current local acceptance checkpoint — 2026-11-13 — Monthly Nanny disbursement batch #14
+
+The source/CI implementation of the FM approval gate remains as described above. Local acceptance has now begun: VGM created **Fm Acceptance Test**, assigned it to **nany1**, and ACC1 created **draft batch #14** for **2026-11**. The user confirmed the five family records are test data. The five displayed amounts are 13,000 + 48,000 + 43,000 + 25,000 + 10,000 = **139,000 ج.س**. The latest screen showed **مسودة قابلة للتصحيح** and the FM submission section; no submission has yet been evidenced. No FM notification/decision, transfer, transaction, journal, receipt, or cash movement for #14 has been evidenced.
+
+**Resume exactly here:** on explicit user request, inspect current batch #14 status first; if still draft, submit as ACC1. Do not repeat group setup or draft creation. Follow the full sequence and safeguards in `docs/checkpoints/2026-11-13-monthly-nanny-disbursement-fm-approval.md`. The prior #13 voided, #12 returned/closed, #11/#8/#7 voided, #9 received, and #6 transferred records remain historical evidence and must not be reused or edited.
