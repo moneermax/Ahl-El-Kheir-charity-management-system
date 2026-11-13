@@ -6631,3 +6631,12 @@ Added a focused static authorization contract and included it in the existing CI
 Verification boundary: source/static contract and GitHub Actions checks are pending. Local Apache/browser role acceptance remains pending. Do not submit test collections using an Accountant Staff account.
 
 Verification update (2026-11-13): GitHub Actions workflow run `43387206852` passed. PHP 8.2 lint passed for all workflow-listed files; the monthly agreement component suite remained `63 checks | PASS`; VGM collection read-only contract passed `6/6`; Accountant Staff incoming-collection restriction contract passed `5/5`. This verifies static source contracts only. Local Apache/browser role acceptance remains pending. No database/runtime test is claimed.
+
+
+## 2026-11-13 — Accountant Staff voucher direction restriction
+
+The clarified Accountant Staff boundary also applies to generic receipt/payment vouchers: ACC1 may issue outgoing payment vouchers (سند صرف) but must not issue incoming receipt vouchers (سند قبض). Source inspection found the previous shared `issue` capability allowed both directions in the web form and mobile API, with immediate journal posting.
+
+Implemented on `main` in `1500e9c4f40f93ad37c2a298633ec93075726064`; the focused contract assertions were corrected in `20a77e931c2aaa0d3f8d81c55f69d543b5001c96`. Separate receipt/payment capabilities now protect the web and mobile API server-side. The web form and Flutter form expose only payment vouchers for Accountant Staff. Admin and FM retain both directions. Existing voucher viewing/void permissions and the dedicated Accountant-to-Nanny disbursement workflow are unchanged.
+
+The existing Accountant Staff restriction contract now also checks voucher permissions. Flutter widget coverage was added for payment-only issuance. No schema, migration, voucher, journal, cash balance or historical record was changed. CI and local runtime acceptance remain pending. See `docs/ACCOUNTING_VOUCHER_AUTHORITY_CONTINUATION.md`.
