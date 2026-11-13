@@ -772,3 +772,18 @@ It targets the preflighted November 2026 agreement for `SH-003508` (agreement 1)
 The harness performs no DDL, account seeding, agreement/sponsorship updates, or permanent payment submission. It refuses to run if the selected agreement, sponsorship eligibility, pause/allocation history, linked transactions/submissions, or required active accounts no longer match the preflight. Because the production journal-number allocator uses `MAX(entry_code)+1` without serialization, the test must be run only while no other user/process is posting transactions.
 
 **Runtime status: PENDING local XAMPP execution.** The harness does not prove the full FM approval workflow; it specifically verifies the monthly-agreement zero-service-fee posting, allocation, and journal path. Positive service-fee posting remains intentionally blocked pending authorized accounting policy.
+
+
+## 2026-11-13 — Zero-fee posting PASS; positive-fee fail-closed test prepared
+
+The user executed `tools/test_sponsorship_monthly_agreement_zero_fee_posting_rollback.php` locally after pulling `main`. Runtime result:
+
+`PASS | monthly_agreement=1 | sponsorship=SH-003508 | covered_month=2026-11 | actual_sponsorship=10000.00 | actual_service_fee=0.00 | allocation=10000.00/0.00 | journal=Dr1100:10000.00,Cr2200:10000.00 | fee_revenue_line=NONE | rollback=PASS`
+
+This closes only the direct/VGM prepared-posting zero-service-fee gate. It does not prove the Supervisor-to-FM approval path or authorize positive service-fee recognition.
+
+A second rollback-only harness was added: `tools/test_sponsorship_monthly_agreement_positive_fee_block_rollback.php`. It uses the same guarded November agreement with actual sponsorship 10,000 SDG and actual service fee 2,000 SDG (total 12,000 SDG), calls the real prepared posting function, and requires the exact accounting-policy rejection before allocation or journal creation. It then rolls back the temporary transaction. No DDL, permanent payment, mapping, account, or production behavior is changed. The new file was added to the PHP syntax workflow's selected lint list.
+
+**Local runtime status: positive-fee guard test PENDING.** After pulling the new commits, run PHP lint and the positive-fee rollback harness while no other process is posting transactions. Expected output is `PASS | ... posting=BLOCKED_BY_ACCOUNTING_POLICY | allocation=NONE | journal=NONE | rollback=PASS`.
+
+The authorized accounting decisions remain open: whether service-fee revenue is recognized immediately or at the end of the covered month, and which active revenue account is approved. Positive-fee posting must remain blocked; do not select account 4200 or infer recognition timing. Next after this gate: inspect and verify the Supervisor/FM zero-fee approval route separately, without using a real payment.
