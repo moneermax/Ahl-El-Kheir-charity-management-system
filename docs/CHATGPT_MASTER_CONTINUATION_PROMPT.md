@@ -4265,6 +4265,6 @@ Added `tools/preflight_sponsorship_return_fixture.php` as a strictly read-only n
 - Lists up to 10 latest-version monthly agreements only where the sponsorship and sponsor are active, an active assigned Supervisor exists, the sponsorship covers the month, and no pause history, allocation, prior sponsor-payment submission, or transaction exists for that sponsorship/month or agreement.
 - Performs SELECTs only; it does not create fixtures, change data, or apply migrations.
 
-Updated `.github/workflows/sponsorship-monthly-agreement-components.yml` to lint the new preflight script. Workflow run `43376094989` is the CI verification for this addition; record its final result after completion.
+Updated `.github/workflows/sponsorship-monthly-agreement-components.yml` to lint the new preflight script. GitHub Actions run `43376094989` completed successfully: PHP 8.2 lint passed for the preflight script and all existing sponsorship component contract checks remained `RESULT | 59 checks | PASS`.
 
 No application business logic or database schema was changed. The preflight must be run locally before selecting any fixture. A listed candidate is only a candidate for further review, not authorization to submit a payment. Preserve all protected records and do not run browser acceptance against agreement 1 / SH-003508.
