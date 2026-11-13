@@ -60,3 +60,8 @@ Fresh test transaction TR-000024 (ID 53), created by VGM user ID 3 as a general_
 PHP 8.2 syntax checks for modules/transactions/index.php and modules/transactions/edit_returned.php passed before runtime acceptance. No schema, migration, accounting-policy, journal, or allocation code changed.
 
 Disposition: the VGM creator's FM-returned ordinary-transaction correction/resubmission and subsequent FM approval/posting path is runtime-verified and closed. Preserve TR-000024 and JE-000054 as test evidence; do not modify or reuse them. The separate creator-cancellation branch and an independent runtime check of Transaction History action visibility were not executed and are not claimed as proven. Do not rerun this acceptance without concrete regression evidence.
+
+
+## 2026-11-13 — Subsequent authority change: VGM is report-only for collections
+
+The prior VGM → FM return → VGM correction/resubmission → FM posting runtime acceptance above remains valid historical evidence for the code state at that time. It does not authorize the current workflow. The user has since explicitly changed VGM authority: VGM must be report-only for collection records. Current source therefore removes VGM from ordinary collection creation, the standalone returned-transaction editor, returned-transaction creator cancellation, and payment-entry links. VGM retains read-only transaction-register/report access. Preserve the historical test records TR-000024 / JE-000054 unchanged. The prior VGM correction path must not be reopened or offered as a current workflow. Accountant Staff creator-owned correction and the separate accountant-to-Nanny disbursement workflow are not changed. Focused contract/CI and local role acceptance are pending.
