@@ -6,6 +6,7 @@ require_once dirname(__DIR__, 2) . '/config/functions.php';
 require_once dirname(__DIR__, 2) . '/config/session.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_group_workflow.php';
 require_once dirname(__DIR__, 2) . '/modules/accounting/lib_transaction_review.php';
+require_once dirname(__DIR__, 2) . '/modules/accounting/lib_disbursement_approval.php';
 Session::start();
 if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'accountant_staff', 'financial_manager', 'general_manager', 'vice_general_manager', 'nanny'], true)) {
     header('Location: ' . APP_URL . 'index.php');
@@ -14,6 +15,8 @@ if (!Session::isLoggedIn() || !in_array(Session::getUserRole(), ['admin', 'accou
 $role = Session::getUserRole();
 $isNanny = ($role === 'nanny');
 $isAccountantStaff = ($role === 'accountant_staff');
+$isFinancialManager = ak_disbursement_is_fm_approver($role);
+$canSubmitDisbursement = in_array($role, ['accountant_staff', 'admin', 'general_manager'], true);
 $canManage = in_array($role, ['admin','general_manager','financial_manager'], true);
 $canManageAssigned = $canManage || $isAccountantStaff;
 if (!$isNanny && !$canManageAssigned) {
@@ -334,29 +337,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                     $skip_reasons[] = "المجموعة ID {$gid}: لا توجد عائلات موثقة بالكامل (3 خانات) لهذا الشهر.";
                     continue;
                 }
-                dbExecute("
-                INSERT INTO monthly_disbursements
-                (month, nanny_id, group_id, total_amount, status, expense_account_code, created_by, submitted_by, submitted_at)
-                VALUES (?, ?, ?, ?, 'pending_approval', '5110', ?, ?, NOW())
-                ", [$month, $groupData['nanny_id'], $gid, $groupData['total_amount'], $uid, $uid]);
-                $disbursementId = dbFetchOne("SELECT LAST_INSERT_ID() as id")['id'];
-                $families = dbFetchAll("
-                SELECT fc.family_id, COALESCE(SUM(sp.monthly_amount), 0) as amount
-                FROM group_children gc
-                INNER JOIN family_children fc ON fc.id = gc.child_id
-                INNER JOIN nanny_family_verifications v ON v.family_id = fc.family_id
-                AND v.month = ? AND v.is_orphan_verified = 1 AND v.is_mother_contact_verified = 1 AND v.is_bank_verified = 1
-                LEFT JOIN sponsorships sp ON sp.child_id = gc.child_id AND sp.status = 'active'
-                WHERE gc.group_id = ? AND gc.left_date IS NULL
-                GROUP BY fc.family_id
-                ", [$month, $gid]);
-                foreach ($families as $fam) {
-                    dbExecute(
-                        "INSERT INTO disbursement_items (disbursement_id, family_id, amount, status, is_orphan_verified, is_mother_contact_verified, is_bank_verified) VALUES (?, ?, ?, 'pending', 1, 1, 1)",
-                        [$disbursementId, $fam['family_id'], $fam['amount']]
-                    );
+                try {
+                    dbExecute('START TRANSACTION');
+                    dbExecute("
+                    INSERT INTO monthly_disbursements
+                    (month, nanny_id, group_id, total_amount, status, expense_account_code, created_by, submitted_by, submitted_at)
+                    VALUES (?, ?, ?, ?, 'draft', '5110', ?, NULL, NULL)
+                    ", [$month, $groupData['nanny_id'], $gid, $groupData['total_amount'], $uid]);
+                    $disbursementId = (int)dbFetchOne("SELECT LAST_INSERT_ID() as id")['id'];
+                    $families = dbFetchAll("
+                    SELECT fc.family_id, COALESCE(SUM(sp.monthly_amount), 0) as amount
+                    FROM group_children gc
+                    INNER JOIN family_children fc ON fc.id = gc.child_id
+                    INNER JOIN nanny_family_verifications v ON v.family_id = fc.family_id
+                    AND v.month = ? AND v.is_orphan_verified = 1 AND v.is_mother_contact_verified = 1 AND v.is_bank_verified = 1
+                    LEFT JOIN sponsorships sp ON sp.child_id = gc.child_id AND sp.status = 'active'
+                    WHERE gc.group_id = ? AND gc.left_date IS NULL
+                    GROUP BY fc.family_id
+                    ", [$month, $gid]);
+                    foreach ($families as $fam) {
+                        dbExecute(
+                            "INSERT INTO disbursement_items (disbursement_id, family_id, amount, status, is_orphan_verified, is_mother_contact_verified, is_bank_verified) VALUES (?, ?, ?, 'pending', 1, 1, 1)",
+                            [$disbursementId, $fam['family_id'], $fam['amount']]
+                        );
+                    }
+                    ak_disbursement_audit_required($uid, 'DISBURSEMENT_CREATE_DRAFT', $disbursementId, [], [
+                        'status' => 'draft', 'month' => $month, 'nanny_id' => (int)$groupData['nanny_id'],
+                        'group_id' => $gid, 'total_amount' => round((float)$groupData['total_amount'], 2),
+                        'item_count' => count($families),
+                    ]);
+                    dbExecute('COMMIT');
+                    $created++;
+                } catch (Throwable $createError) {
+                    try { dbExecute('ROLLBACK'); } catch (Throwable $rollbackError) {}
+                    error_log('Disbursement draft creation failed: ' . $createError->getMessage());
+                    $skipped++;
+                    $skip_reasons[] = "المجموعة ID {$gid}: تعذر إنشاء المسودة بسبب خطأ داخلي.";
                 }
-                $created++;
             }
             $msg = "تم إنشاء {$created} دفعة بنجاح.";
             if ($skipped > 0) {
@@ -367,12 +384,161 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
             exit();
         }
     }
-    // 2. Accountant Staff may execute transfers only for assigned nannies; other existing managers retain their current scope.
+    // 2. ACC1: correct existing family amounts before FM approval.
+    if ($isAccountantStaff && isset($_POST['edit_preapproval_items'])) {
+        $id = (int)$_POST['edit_preapproval_items'];
+        $reason = trim((string)($_POST['edit_reason'] ?? ''));
+        $requestedAmounts = $_POST['item_amounts'] ?? [];
+        try {
+            if ($reason === '') throw new RuntimeException('يرجى كتابة سبب التصحيح.');
+            dbExecute('START TRANSACTION');
+            $batch = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ? FOR UPDATE", [$id]);
+            if (!$batch || !in_array($batch['status'], ['draft', 'pending_approval'], true)) {
+                throw new RuntimeException('لا يمكن تعديل الدفعة بعد اعتماد المدير المالي أو تحويلها.');
+            }
+            ak_disbursement_assert_assigned($uid, (int)$batch['nanny_id']);
+            $snapshot = ak_disbursement_preapproval_snapshot($batch, is_array($requestedAmounts) ? $requestedAmounts : null, true);
+            foreach ($snapshot['new_items'] as $item) {
+                dbExecute("UPDATE disbursement_items SET amount = ? WHERE id = ? AND disbursement_id = ? AND status = 'pending'",
+                    [$item['amount'], $item['item_id'], $id]);
+            }
+            dbExecute("UPDATE monthly_disbursements SET total_amount = ? WHERE id = ? AND status IN ('draft', 'pending_approval')",
+                [$snapshot['total_amount'], $id]);
+            ak_disbursement_audit_required($uid, 'DISBURSEMENT_EDIT_PREAPPROVAL', $id,
+                ['total_amount' => round((float)$batch['total_amount'], 2), 'items' => $snapshot['old_items']],
+                ['total_amount' => $snapshot['total_amount'], 'items' => $snapshot['new_items'], 'reason' => $reason, 'status' => $batch['status']]
+            );
+            dbExecute('COMMIT');
+            if ($batch['status'] === 'pending_approval') {
+                ak_transaction_review_notify_fm_event($id, 'disbursement_fm_revision',
+                    'تم تعديل دفعة كفالة بانتظار مراجعتك',
+                    'تم تصحيح مبالغ بنود الأسر في الدفعة #' . $id . '. سبب التصحيح: ' . $reason,
+                    APP_URL . 'modules/accounting/disbursements.php?view=' . $id);
+            }
+            flash('success', 'تم حفظ تصحيحات مبالغ الأسر وتسجيل سبب التعديل.');
+        } catch (Throwable $e) {
+            try { dbExecute('ROLLBACK'); } catch (Throwable $rollbackError) {}
+            error_log('Disbursement pre-approval edit error: ' . $e->getMessage());
+            flash('error', 'تعذر حفظ التصحيح: ' . $e->getMessage());
+        }
+        header('Location: ' . APP_URL . 'modules/accounting/disbursements.php?view=' . $id);
+        exit();
+    }
+
+    // 3. Submit a complete draft to the Financial Manager review queue.
+    if ($canSubmitDisbursement && isset($_POST['submit_for_fm_approval'])) {
+        $id = (int)$_POST['submit_for_fm_approval'];
+        try {
+            dbExecute('START TRANSACTION');
+            $batch = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ? FOR UPDATE", [$id]);
+            if (!$batch || $batch['status'] !== 'draft') throw new RuntimeException('المسودة غير متاحة للإرسال أو تم إرسالها مسبقاً.');
+            if ($isAccountantStaff) ak_disbursement_assert_assigned($uid, (int)$batch['nanny_id']);
+            $snapshot = ak_disbursement_preapproval_snapshot($batch, null, true);
+            dbExecute(
+                "UPDATE monthly_disbursements
+                 SET status = 'pending_approval', total_amount = ?, submitted_by = ?, submitted_at = NOW(),
+                     reviewed_by_user_id = NULL, reviewed_at = NULL
+                 WHERE id = ' . $id . ' AND status = 'draft'",
+                [$snapshot['total_amount'], $uid]
+            );
+            ak_disbursement_audit_required($uid, 'DISBURSEMENT_SUBMIT_FM', $id,
+                ['status' => 'draft', 'total_amount' => round((float)$batch['total_amount'], 2)],
+                ['status' => 'pending_approval', 'total_amount' => $snapshot['total_amount'], 'submitted_by' => $uid, 'item_count' => count($snapshot['new_items'])]
+            );
+            dbExecute('COMMIT');
+            ak_transaction_review_notify_fm_event($id, 'disbursement_fm_submission', 'دفعة كفالة جديدة بانتظار اعتمادك',
+                'تم إرسال الدفعة #' . $id . ' لشهر ' . $batch['month'] . ' بمبلغ ' . number_format($snapshot['total_amount'], 2) . ' ج.س للمراجعة والاعتماد.',
+                APP_URL . 'modules/accounting/disbursements.php?view=' . $id);
+            flash('success', 'تم إرسال الدفعة إلى المدير المالي للمراجعة والاعتماد.');
+        } catch (Throwable $e) {
+            try { dbExecute('ROLLBACK'); } catch (Throwable $rollbackError) {}
+            error_log('Disbursement FM submission error: ' . $e->getMessage());
+            flash('error', 'تعذر إرسال الدفعة للمراجعة: ' . $e->getMessage());
+        }
+        header('Location: ' . APP_URL . 'modules/accounting/disbursements.php?view=' . $id);
+        exit();
+    }
+
+    // 4. FM: approve the submitted version without posting or changing cash.
+    if ($isFinancialManager && isset($_POST['approve_fm_disbursement'])) {
+        $id = (int)$_POST['approve_fm_disbursement'];
+        $submitterId = 0;
+        try {
+            dbExecute('START TRANSACTION');
+            $batch = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ? FOR UPDATE", [$id]);
+            if (!$batch || $batch['status'] !== 'pending_approval') throw new RuntimeException('الدفعة ليست بانتظار مراجعة المدير المالي.');
+            $submitterId = (int)($batch['submitted_by'] ?? 0);
+            if ($submitterId <= 0 || $submitterId === $uid) throw new RuntimeException('لا يجوز للمدير المالي اعتماد دفعة أرسلها بنفسه.');
+            $snapshot = ak_disbursement_preapproval_snapshot($batch, null, true);
+            if (abs(round((float)$batch['total_amount'], 2) - $snapshot['total_amount']) > 0.009) {
+                throw new RuntimeException('إجمالي الدفعة لا يطابق مجموع بنود الأسر؛ أُوقفت الموافقة لحماية السجل.');
+            }
+            $existingTransaction = dbFetchOne("SELECT id FROM transactions WHERE reference_number = ? LIMIT 1", ['DISB-OUT-' . $id]);
+            if ($existingTransaction) throw new RuntimeException('توجد معاملة مالية سابقة مرتبطة بهذه الدفعة؛ لا يمكن اعتمادها مرة أخرى.');
+            dbExecute(
+                "UPDATE monthly_disbursements SET status = 'approved', reviewed_by_user_id = ?, reviewed_at = NOW()
+                 WHERE id = ? AND status = 'pending_approval'",
+                [$uid, $id]
+            );
+            ak_disbursement_audit_required($uid, 'DISBURSEMENT_FM_APPROVE', $id,
+                ['status' => 'pending_approval', 'total_amount' => $snapshot['total_amount'], 'submitted_by' => $submitterId],
+                ['status' => 'approved', 'total_amount' => $snapshot['total_amount'], 'reviewed_by_user_id' => $uid, 'financial_posting_created' => false]
+            );
+            dbExecute('COMMIT');
+            ak_transaction_review_notify_event($submitterId, 'تم اعتماد دفعة الكفالة',
+                'اعتمد المدير المالي الدفعة #' . $id . '. أصبحت جاهزة للتحويل ولا يمكن تعديل بنودها.',
+                APP_URL . 'modules/accounting/disbursements.php?view=' . $id, $id, 'disbursement_fm_approved');
+            flash('success', 'تم اعتماد الدفعة. لم يُنشأ قيد محاسبي ولم يُخصم أي مبلغ؛ يتم ذلك عند تنفيذ التحويل فقط.');
+        } catch (Throwable $e) {
+            try { dbExecute('ROLLBACK'); } catch (Throwable $rollbackError) {}
+            error_log('Disbursement FM approval error: ' . $e->getMessage());
+            flash('error', 'تعذر اعتماد الدفعة: ' . $e->getMessage());
+        }
+        header('Location: ' . APP_URL . 'modules/accounting/disbursements.php?view=' . $id);
+        exit();
+    }
+
+    // 5. FM: reject with a mandatory reason and return the batch to editable draft state.
+    if ($isFinancialManager && isset($_POST['reject_fm_disbursement'])) {
+        $id = (int)$_POST['reject_fm_disbursement'];
+        $reason = trim((string)($_POST['fm_rejection_reason'] ?? ''));
+        $submitterId = 0;
+        try {
+            if ($reason === '') throw new RuntimeException('سبب الرفض إلزامي.');
+            dbExecute('START TRANSACTION');
+            $batch = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ? FOR UPDATE", [$id]);
+            if (!$batch || $batch['status'] !== 'pending_approval') throw new RuntimeException('الدفعة ليست بانتظار مراجعة المدير المالي.');
+            $submitterId = (int)($batch['submitted_by'] ?? 0);
+            if ($submitterId <= 0 || $submitterId === $uid) throw new RuntimeException('لا يجوز للمدير المالي رفض دفعة أرسلها بنفسه.');
+            dbExecute(
+                "UPDATE monthly_disbursements SET status = 'draft', reviewed_by_user_id = ?, reviewed_at = NOW()
+                 WHERE id = ? AND status = 'pending_approval'",
+                [$uid, $id]
+            );
+            ak_disbursement_audit_required($uid, 'DISBURSEMENT_FM_REJECT', $id,
+                ['status' => 'pending_approval', 'submitted_by' => $submitterId],
+                ['status' => 'draft', 'reason' => $reason, 'reviewed_by_user_id' => $uid]
+            );
+            dbExecute('COMMIT');
+            ak_transaction_review_notify_event($submitterId, 'أعاد المدير المالي دفعة الكفالة للتصحيح',
+                'أعاد المدير المالي الدفعة #' . $id . ' إلى المسودة. سبب الرفض: ' . $reason,
+                APP_URL . 'modules/accounting/disbursements.php?view=' . $id, $id, 'disbursement_fm_rejected');
+            flash('success', 'تم رفض الدفعة وإعادتها إلى المسودة مع حفظ سبب الرفض.');
+        } catch (Throwable $e) {
+            try { dbExecute('ROLLBACK'); } catch (Throwable $rollbackError) {}
+            error_log('Disbursement FM rejection error: ' . $e->getMessage());
+            flash('error', 'تعذر رفض الدفعة: ' . $e->getMessage());
+        }
+        header('Location: ' . APP_URL . 'modules/accounting/disbursements.php?view=' . $id);
+        exit();
+    }
+
+    // 6. Accountant Staff may execute transfers only after FM approval.
     if ($canManageAssigned && isset($_POST['transfer_with_receipt'])) {
         $id = (int)$_POST['transfer_with_receipt'];
         $b = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ?", [$id]);
-        if (!$b || $b['status'] !== 'pending_approval') {
-            flash('error', 'الدفعة غير متاحة أو ليست بحالة انتظار.');
+        if (!$b || $b['status'] !== 'approved') {
+            flash('error', 'لا يمكن تحويل الدفعة إلا بعد اعتماد المدير المالي.');
         } elseif ($isAccountantStaff && !dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, (int)$b['nanny_id']])) {
             flash('error', 'هذه الدفعة ليست ضمن الدفعات المسندة إليك.');
         } elseif (empty($_FILES['transfer_receipt']['tmp_name'])) {
@@ -392,7 +558,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                 if (move_uploaded_file($_FILES['transfer_receipt']['tmp_name'], $dest)) {
                     try {
                         dbExecute("START TRANSACTION");
-                        dbExecute("UPDATE monthly_disbursements SET status = 'transferred', transferred_at = NOW(), receipt_file_path = ?, transfer_receipt_by_user_id = ?, transfer_receipt_at = NOW() WHERE id = ?", ['storage/receipts/' . $fname, $uid, $id]);
+                        $b = dbFetchOne("SELECT * FROM monthly_disbursements WHERE id = ? FOR UPDATE", [$id]);
+                        if (!$b || $b['status'] !== 'approved') throw new RuntimeException('تغيرت حالة الدفعة قبل التحويل؛ يجب أن تبقى معتمدة.');
+                        if ($isAccountantStaff) ak_disbursement_assert_assigned($uid, (int)$b['nanny_id']);
+                        $existingTransaction = dbFetchOne("SELECT id FROM transactions WHERE reference_number = ? LIMIT 1", ['DISB-OUT-' . $id]);
+                        if ($existingTransaction) throw new RuntimeException('توجد معاملة مالية مرتبطة بهذه الدفعة مسبقاً.');
+                        dbExecute(
+                            "UPDATE monthly_disbursements
+                             SET status = 'transferred', transferred_at = NOW(), receipt_file_path = ?, transfer_receipt_by_user_id = ?, transfer_receipt_at = NOW()
+                             WHERE id = ? AND status = 'approved'",
+                            ['storage/receipts/' . $fname, $uid, $id]
+                        );
                         dbExecute("INSERT INTO transactions (transaction_type, reference_number, description, amount, currency_code, payment_method, transaction_date, status, created_by, created_at, payment_period, purpose_note, admin_fee_percent, admin_fee_amount, net_amount) VALUES ('disbursement', CONCAT('DISB-OUT-', ?), ?, ?, 'SDG', 'bank_transfer', CURDATE(), 'posted', ?, NOW(), ?, 'صرف دفعة كفالات', 0, 0, ?)", [$id, 'صرف دفعة #' . $id . ' شهر ' . $b['month'], $b['total_amount'], $uid, $b['month'], $b['total_amount']]);
                         $transactionId = dbFetchOne("SELECT LAST_INSERT_ID() as id")['id'];
                         $entryCode = 'JE-DISB-' . $id . '-' . uniqid();
@@ -412,6 +588,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verify_csrf()) {
                             dbExecute("INSERT INTO journal_lines (entry_id, account_id, debit, credit, description) VALUES (?, ?, 0, ?, ?)", [$journalEntryId, $cashAccount['id'], $b['total_amount'], 'خصم من الصندوق/البنك']);
                         }
                         dbExecute("UPDATE monthly_disbursements SET transaction_id = ? WHERE id = ?", [$transactionId, $id]);
+                        ak_disbursement_audit_required($uid, 'DISBURSEMENT_TRANSFER', $id,
+                            ['status' => 'approved', 'total_amount' => round((float)$b['total_amount'], 2)],
+                            ['status' => 'transferred', 'transaction_id' => (int)$transactionId, 'journal_entry_id' => (int)$journalEntryId, 'receipt_file_path' => 'storage/receipts/' . $fname]
+                        );
                         dbExecute('COMMIT');
 
 ak_transaction_review_notify_event(
@@ -424,8 +604,9 @@ ak_transaction_review_notify_event(
 );
 
 flash('success', 'تم رفع الإيصال وتأكيد التحويل وخصم المبلغ من الصندوق بنجاح.');
-                    } catch (Exception $e) {
-                        dbExecute("ROLLBACK");
+                    } catch (Throwable $e) {
+                        try { dbExecute('ROLLBACK'); } catch (Throwable $rollbackError) {}
+                        if (is_file($dest)) { @unlink($dest); }
                         error_log('Transfer error: ' . $e->getMessage());
                         flash('error', 'حدث خطأ أثناء عملية التحويل: ' . $e->getMessage());
                     }
@@ -870,6 +1051,14 @@ if ($viewId) {
         $viewBatch['paid_amount'] = array_sum(array_map(fn($it) => $it['status'] === 'paid' ? (float)$it['amount'] : 0.0, $viewItems));
         $viewBatch['pending_amount'] = array_sum(array_map(fn($it) => $it['status'] === 'pending' ? (float)$it['amount'] : 0.0, $viewItems));
         $viewBatch['returned_amount'] = array_sum(array_map(fn($it) => $it['status'] === 'returned' ? (float)$it['amount'] : 0.0, $viewItems));
+        if ($viewBatch['status'] === 'draft') {
+            $rejectionAudit = dbFetchOne(
+                "SELECT new_values FROM audit_log WHERE entity_type = 'monthly_disbursements' AND entity_id = ? AND action = 'DISBURSEMENT_FM_REJECT' ORDER BY id DESC LIMIT 1",
+                [$viewId]
+            );
+            $rejectionValues = json_decode((string)($rejectionAudit['new_values'] ?? ''), true);
+            $viewBatch['fm_rejection_reason'] = is_array($rejectionValues) ? (string)($rejectionValues['reason'] ?? '') : '';
+        }
         if (!$isNanny && $role === 'accountant_staff') {
             $ok = dbFetchOne("SELECT 1 FROM accountant_nanny_assignments WHERE accountant_id = ? AND nanny_id = ?", [$uid, $viewBatch['nanny_id']]);
             if (!$ok) $viewBatch = null;
@@ -925,6 +1114,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         <a href="<?php echo e($backUrl); ?>" class="btn btn-sm btn-outline-secondary" onclick="return akGoBack(this.href);"><i class="fas fa-arrow-left me-1"></i> رجوع</a>
     </div>
     <div class="card-body">
+        <?php if (!empty($viewBatch['fm_rejection_reason'])): ?>
+        <div class="alert alert-warning"><strong>سبب إعادة الدفعة من المدير المالي:</strong> <?php echo e($viewBatch['fm_rejection_reason']); ?></div>
+        <?php endif; ?>
         <div class="row mb-4">
             <div class="col-md-3">
                 <div class="border rounded p-2 text-center">
@@ -949,7 +1141,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                     <div class="fs-6 fw-bold">
                         <?php
                         $st = [
-                            'pending_approval' => ['بانتظار الاعتماد', 'warning'],
+                            'draft' => ['مسودة قابلة للتصحيح', 'secondary'],
+                            'pending_approval' => ['بانتظار مراجعة المدير المالي', 'warning'],
+                            'approved' => ['معتمدة — بانتظار التحويل', 'info'],
                             'transferred' => ['محوّل', 'primary'],
                             'received' => ['مستلم', 'success'],
                             'returned' => ['مغلق مع إرجاع', 'danger']
@@ -1193,8 +1387,79 @@ include dirname(__DIR__, 2) . '/includes/header.php';
         </div>
     </div>
     <?php endif; ?>
-    <!-- Accountant: Transfer receipt upload -->
-    <?php if ($canManageAssigned && $viewBatch['status'] === 'pending_approval'): ?>
+    <!-- ACC1: Correct existing family amounts while the batch is not yet approved. -->
+    <?php if ($isAccountantStaff && in_array($viewBatch['status'], ['draft', 'pending_approval'], true)): ?>
+    <div class="mt-4 p-4 border rounded bg-warning bg-opacity-10">
+        <h6 class="mb-2"><i class="fas fa-pen-to-square me-2"></i>تصحيح مبالغ الأسر قبل اعتماد المدير المالي</h6>
+        <p class="small text-muted">يمكن تصحيح مبلغ كل أسرة فقط. لا يمكن تغيير المربية أو المجموعة أو الشهر أو إضافة أسر غير موجودة في الدفعة. يجب ألا يتجاوز المبلغ إجمالي كفالات الأسرة النشطة والموثقة لهذا الشهر. كل تصحيح يتطلب سبباً ويسجل في سجل التدقيق.</p>
+        <form method="post">
+            <?php echo csrf_field(); ?>
+            <input type="hidden" name="edit_preapproval_items" value="<?php echo (int)$viewBatch['id']; ?>">
+            <div class="table-responsive">
+                <table class="table table-sm align-middle bg-white">
+                    <thead><tr><th>الأسرة</th><th>المبلغ الحالي</th><th>المبلغ المصحح</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($viewItems as $editItem): ?>
+                        <tr>
+                            <td><?php echo e($editItem['family_code'] . ' — ' . $editItem['mother_name']); ?></td>
+                            <td><?php echo number_format((float)$editItem['amount'], 2); ?> ج.س</td>
+                            <td><input type="number" class="form-control form-control-sm" style="max-width:180px" name="item_amounts[<?php echo (int)$editItem['id']; ?>]" min="0.01" step="0.01" value="<?php echo e(number_format((float)$editItem['amount'], 2, '.', '')); ?>" required></td>
+                        </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                </table>
+            </div>
+            <label class="form-label fw-bold">سبب التصحيح <span class="text-danger">*</span></label>
+            <textarea name="edit_reason" class="form-control mb-3" rows="2" required></textarea>
+            <button type="submit" class="btn btn-warning"><i class="fas fa-save me-1"></i> حفظ التصحيحات</button>
+        </form>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($viewBatch['status'] === 'draft' && $canSubmitDisbursement): ?>
+    <div class="mt-4 p-4 border rounded bg-light">
+        <h6><i class="fas fa-paper-plane me-2"></i>إرسال الدفعة للمراجعة المالية</h6>
+        <p class="small text-muted">سيتم إرسال النسخة الحالية إلى المدير المالي. لن يحدث أي خصم من الصندوق أو إنشاء قيد محاسبي عند الإرسال أو الاعتماد.</p>
+        <form method="post">
+            <?php echo csrf_field(); ?>
+            <button type="submit" name="submit_for_fm_approval" value="<?php echo (int)$viewBatch['id']; ?>" class="btn btn-primary"><i class="fas fa-paper-plane me-1"></i> إرسال للمدير المالي</button>
+        </form>
+    </div>
+    <?php endif; ?>
+
+    <?php if ($viewBatch['status'] === 'pending_approval' && $isFinancialManager): ?>
+    <div class="mt-4 p-4 border rounded bg-info bg-opacity-10">
+        <h6><i class="fas fa-clipboard-check me-2"></i>مراجعة المدير المالي</h6>
+        <p class="small text-muted">راجع بنود الأسر والمبالغ قبل القرار. الاعتماد لا ينشئ معاملة أو قيداً ولا يخصم من الصندوق. التحويل المالي يتم لاحقاً بعد الاعتماد.</p>
+        <div class="d-flex flex-wrap gap-2">
+            <form method="post">
+                <?php echo csrf_field(); ?>
+                <button type="submit" name="approve_fm_disbursement" value="<?php echo (int)$viewBatch['id']; ?>" class="btn btn-success"><i class="fas fa-check me-1"></i> اعتماد الدفعة</button>
+            </form>
+            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#rejectFmDisbursementModal"><i class="fas fa-rotate-left me-1"></i> رفض وإعادتها للتصحيح</button>
+        </div>
+    </div>
+    <div class="modal fade" id="rejectFmDisbursementModal" tabindex="-1">
+        <div class="modal-dialog">
+            <form method="post">
+                <?php echo csrf_field(); ?>
+                <input type="hidden" name="reject_fm_disbursement" value="<?php echo (int)$viewBatch['id']; ?>">
+                <div class="modal-content">
+                    <div class="modal-header"><h5 class="modal-title text-danger">إعادة الدفعة للتصحيح</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-body">
+                        <label class="form-label">سبب الرفض <span class="text-danger">*</span></label>
+                        <textarea name="fm_rejection_reason" class="form-control" rows="4" required></textarea>
+                        <small class="text-muted">ستعود الدفعة إلى المسودة، ويمكن لـ ACC1 تصحيحها وإعادة إرسالها.</small>
+                    </div>
+                    <div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">إلغاء</button><button type="submit" class="btn btn-danger">تأكيد الرفض</button></div>
+                </div>
+            </form>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <!-- Accountant: Transfer receipt upload; transfer is blocked until FM approval. -->
+    <?php if ($canManageAssigned && $viewBatch['status'] === 'approved'): ?>
     <div class="mt-4 p-4 border rounded bg-light">
         <h6 class="mb-3"><i class="fas fa-exclamation-triangle text-warning me-2"></i>تأكيد التحويل ورفع الإيصال</h6>
         <p class="text-muted small mb-3"><strong>مهم:</strong> يجب رفع إيصال التحويل البنكي/الكاش قبل تأكيد عملية التحويل. سيتم خصم المبلغ تلقائياً من رصيد المنظمة.</p>
@@ -1405,7 +1670,9 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         <td>
                             <?php
                             $st = [
-                                'pending_approval' => ['بانتظار الاعتماد', 'warning'],
+                                'draft' => ['مسودة قابلة للتصحيح', 'secondary'],
+                                'pending_approval' => ['بانتظار مراجعة المدير المالي', 'warning'],
+                                'approved' => ['معتمدة — بانتظار التحويل', 'info'],
                                 'transferred' => ['محوّل', 'primary'],
                                 'received' => ['مستلم', 'success'],
                                 'returned' => ['مغلق مع إرجاع', 'danger']
@@ -1417,8 +1684,10 @@ include dirname(__DIR__, 2) . '/includes/header.php';
                         </td>
                         <td class="text-center">
                             <a href="?view=<?php echo (int)$b['id']; ?>&return=<?php echo rawurlencode(http_build_query($_GET)); ?>" class="btn btn-sm btn-outline-primary"><i class="fas fa-eye"></i> عرض</a>
-                            <?php if ($canManage && $b['status'] === 'pending_approval'): ?>
+                            <?php if ($canManageAssigned && $b['status'] === 'approved'): ?>
                             <a href="?view=<?php echo (int)$b['id']; ?>" class="btn btn-sm btn-warning"><i class="fas fa-upload me-1"></i> تحويل</a>
+                            <?php elseif ($isFinancialManager && $b['status'] === 'pending_approval'): ?>
+                            <a href="?view=<?php echo (int)$b['id']; ?>" class="btn btn-sm btn-info"><i class="fas fa-clipboard-check me-1"></i> مراجعة</a>
                             <?php endif; ?>
                             <?php if (!empty($b['receipt_file_path'])): ?>
                             <!-- FIXED: Use serve_receipt.php instead of disbursement_receipt.php -->
