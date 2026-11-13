@@ -6743,3 +6743,8 @@ User-provided local runtime evidence confirms the direct zero-service-fee postin
 A rollback-only positive-fee rejection harness was added at `tools/test_sponsorship_monthly_agreement_positive_fee_block_rollback.php` and placed in the selected PHP lint list. Local execution is pending. Acceptance requires the 2,000 SDG service-fee component to be rejected by the existing policy guard before allocation/journal creation, followed by rollback cleanup.
 
 No positive service-fee revenue account or recognition timing has been approved. Keep posting blocked. Supervisor approval-path runtime remains a separate open verification gate.
+
+
+## 2026-11-13 — Monthly-agreement FM approval test prepared
+
+Added `tools/test_sponsorship_monthly_agreement_fm_approval_rollback.php` to exercise `ak_approve_sponsor_payment()` for a temporary pending monthly-agreement Supervisor payment. Assertions cover approval state/linkage, posted transaction snapshot, allocation amount and collector, exact balanced Dr 1100 / Cr 2200 journal, absence of a 4200 revenue line, and complete rollback including audit/incentive effects. The test is restricted to CLI/development and the `ahl_el_kheir` database, and has fixture preconditions to refuse reuse if November activity exists. It does not simulate browser submission, authorization/session/CSRF checks, or notification delivery. Local lint and runtime results are pending; no real payment or persistent data change was made.
