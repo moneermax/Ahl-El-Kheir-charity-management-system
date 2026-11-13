@@ -56,11 +56,11 @@ Fina: FINA_SETTLEMENT_PROCESS.md and FINA_STANDALONE_PAYMENT_MODEL.md.
 
 Accounting: ACCOUNTING_JOURNAL_INTEGRITY_CHECKPOINT_2026-09-15.md and AUDIT_SUPERVISOR_ACCOUNTING_INTEGRATION_20260914.md.
 
-## Current continuation point — 2026-10-06
+## Current continuation point — 2026-11-13
 
-Projects Phase 5 is closed after full controlled reconciliation and financial closure.
+The current paused local acceptance checkpoint is the Monthly Nanny Disbursement FM Approval workflow, batch #14, documented in `docs/checkpoints/2026-11-13-monthly-nanny-disbursement-fm-approval.md`. It is paused before ACC1 submits the draft to FM. A separate new task may be handled first; do not resume this checkpoint unless the user explicitly asks.
 
-Do not repeat closed fixtures without regression evidence. Continue from the next genuinely open engineering or audit item.
+Projects Phase 5 and other explicitly closed work remain closed. Do not repeat closed fixtures without regression evidence.
 
 ## Working rule
 
