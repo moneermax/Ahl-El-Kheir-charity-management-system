@@ -4183,3 +4183,8 @@ Local user execution of `tools/test_sponsorship_monthly_agreement_zero_fee_posti
 Added `tools/test_sponsorship_monthly_agreement_positive_fee_block_rollback.php` to verify a positive 2,000 SDG service-fee receipt is rejected before allocation/journal creation, with all temporary writes rolled back. The file is included in the selected PHP lint list. Local runtime result is pending.
 
 Keep positive service-fee posting blocked until an authorized accounting owner confirms immediate vs covered-month-end recognition and the approved active revenue account. Do not default to 4200. After the positive-fee guard passes, inspect and verify the Supervisor-to-FM zero-fee approval path separately. Preserve the user's local working tree and all financial records; no real payment should be submitted for these checks.
+
+
+## 2026-11-13 — Next sponsorship accounting gate
+
+The local positive-fee guard harness passed: positive actual service fee was blocked before allocation/journal and rollback passed. The next test is `tools/test_sponsorship_monthly_agreement_fm_approval_rollback.php`, a rollback-only integration of the shared Supervisor-payment FM approval operation for the guarded SH-003508 November 2026 agreement with 10,000 SDG sponsorship and zero actual service fee. After syncing `main`, run PHP lint and this harness locally while no other process is posting transactions. Inspect any failure before changing code. This test does not prove browser submission/session/CSRF/sponsor-scope gates or notifications. Keep positive service-fee posting blocked until an authorized accounting owner approves recognition timing and the active revenue destination. Preserve all unrelated staged/untracked files, backups and receipt files.
