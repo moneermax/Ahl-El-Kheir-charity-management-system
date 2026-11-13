@@ -4174,3 +4174,12 @@ The accounting work may now continue. This UI acceptance is **not** an accountin
 Current repository head at this checkpoint: `7195623cdd6808e9dc2c071a67a21db6ee7a622`. The payment-entry refinement, focused layout contract test, and documentation commits are present on `main`; GitHub Actions runs `43351641281` (PHP 8.2 lint + 54 focused checks) and `43351641198` (PHP syntax and migration workflow jobs) passed.
 
 **Next exact gate:** establish the user's current local `main`/working-tree state and recheck the live `ahl_el_kheir` database for the three 2026-11-12 payment/agreement migrations and any pending/returned legacy sponsorship submissions. Earlier preflight evidence from 2026-11-12 said those migrations were not yet applied and identified legacy returned Supervisor rows 7–9; do not assume the local state is unchanged. Preserve all local modifications and financial records. Do not apply migrations or post payments until this read-only preflight is reviewed.
+
+
+## 2026-11-13 — Monthly-agreement zero-fee posting verified; positive-fee guard pending
+
+Local user execution of `tools/test_sponsorship_monthly_agreement_zero_fee_posting_rollback.php` passed for agreement 1 / SH-003508 / November 2026: actual sponsorship 10,000 SDG, actual service fee 0, allocation 10,000/0, journal Dr 1100 / Cr 2200, no fee-revenue line, rollback PASS. This verifies only the direct prepared-posting zero-fee path.
+
+Added `tools/test_sponsorship_monthly_agreement_positive_fee_block_rollback.php` to verify a positive 2,000 SDG service-fee receipt is rejected before allocation/journal creation, with all temporary writes rolled back. The file is included in the selected PHP lint list. Local runtime result is pending.
+
+Keep positive service-fee posting blocked until an authorized accounting owner confirms immediate vs covered-month-end recognition and the approved active revenue account. Do not default to 4200. After the positive-fee guard passes, inspect and verify the Supervisor-to-FM zero-fee approval path separately. Preserve the user's local working tree and all financial records; no real payment should be submitted for these checks.
