@@ -31,11 +31,12 @@ $checks['returned_editor_denied'] =
     && strpos($files['edit'], "'vice_general_manager'") === false;
 $checks['returned_cancel_post_denied'] =
     strpos($files['cancel'], "['vice_general_manager', 'vgm']") !== false
+    && strpos($files['cancel'], "if (\$role === 'accountant_staff')") !== false
     && strpos($files['cancel'], "http_response_code(403)") !== false;
 $checks['transaction_register_remains_read_only_report'] =
     strpos($files['index'], "['admin','vice_general_manager','general_manager','supervisor','accountant_staff','financial_manager']") !== false
     && strpos($files['index'], '$canEditReturned = in_array($role, [\'admin\',\'accountant_staff\'], true);') !== false
-    && strpos($files['index'], "['accountant_staff','financial_manager','admin','supervisor']") !== false;
+    && strpos($files['index'], "['financial_manager','admin','supervisor']") !== false;
 $checks['sponsor_payment_entry_link_hidden_for_vgm'] =
     strpos($files['sponsor'], 'if($role!==\'vice_general_manager\')') !== false
     && strpos($files['sponsor'], "modules/transactions/create.php?sponsor_id=") !== false;
