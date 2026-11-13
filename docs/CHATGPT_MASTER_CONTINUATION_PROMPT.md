@@ -47,6 +47,10 @@ Continue the remaining monthly-agreement accounting/review stages: verify FM-ent
 
 One business decision is pending before allocator/amendment handling: whether to freeze the month's original allocation commitment after its first posted allocation and require an explicit audited correction for a conflicting amendment. Ask once; do not implement that rule before approval.
 
+## Additional approved accounting task — 2026-11-13
+
+The user has also approved Accountant Staff execution of outgoing monthly Nanny disbursements: transfer execution, mandatory transfer-receipt upload, and the existing transaction/journal posting step. The implementation must be limited to Nannies assigned to the current ACC1 through `accountant_nanny_assignments`, with server-side validation on the transfer POST. Preserve the pending-state and receipt requirements. Do not grant ACC1 batch void authority (Admin/Financial Manager only), incoming collection entry, or generic receipt vouchers. See `docs/ACCOUNTING_NANNY_DISBURSEMENT_AUTHORITY_CONTINUATION.md` for source findings and verification gates.
+
 Read `docs/SPONSORSHIP_PAYMENT_ENTRY_AND_SERVICE_FEE_PLAN.md` for detailed stages, tests, source findings, and gates. Continue on `main` only, inspect before editing, and do not ask the user for repository code/schema output already available through repository tools.
 
 ## Start here
