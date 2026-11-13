@@ -383,6 +383,14 @@ if (is_string($paymentEntrySource)) {
         'fm_queue_displays_row_evidence'
     );
     $assert(
+        str_contains($reviewQueueSource, "(\$h['component_model']??'legacy')==='monthly_agreement'")
+        && str_contains($reviewQueueSource, "\$h['actual_sponsorship_received']")
+        && str_contains($reviewQueueSource, "\$h['actual_service_fee_received']")
+        && str_contains($reviewQueueSource, "\$h['agreed_sponsorship_amount']")
+        && str_contains($reviewQueueSource, "\$h['agreed_service_fee_amount']"),
+        'fm_review_history_preserves_monthly_agreement_component_breakdown'
+    );
+    $assert(
         is_string($migrationSource)
         && str_contains($migrationSource, 'transaction_date DATE DEFAULT NULL')
         && str_contains($migrationSource, 'receipt_number VARCHAR(50) DEFAULT NULL')
