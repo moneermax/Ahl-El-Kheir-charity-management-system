@@ -6779,3 +6779,18 @@ This is a source implementation checkpoint only. The static PHP contract and Flu
 Additional safety check after source review: archiving a used group is also blocked when its monthly verification cycle is still open or submitted/approved/transferred/returned, even if no disbursement row exists yet. A pending group can be archived only when there is no VGM month-opening audit event. This prevents the archive action from cutting off a Nanny workflow that has started but has not reached a terminal state.
 
 The shared guard is used by both the web lifecycle archive action and the safe-delete/archive helper used by the web and mobile API.
+
+## 2026-11-14 — VGM group management CI verification update
+
+Implementation commits on `main`:
+- `2f6030cae67f6cb712eca5dd903698c706ddea03` — initial VGM month-opening, notification, safe archive/delete, mobile UI/API, tests and continuation documentation.
+- `75c901e225d6b2375af555913e5dc702582015c2` — archive guard for unfinished verification cycles and explicit mobile API response when no selected group is eligible.
+
+Verified CI:
+- GitHub Actions run `43556748481` — dedicated VGM Group Management Contract passed. PHP 8.2 lint passed for the shared helper, web VGM page, mobile API endpoint and contract test. The source-contract suite reported `16 checks | PASS`.
+- Flutter analyzer passed in run `43556576331`. All six tests in `orphan_groups_page_test.dart` passed, including the new individual month-opening and used-group archive tests. The full Flutter suite did not pass: one unrelated existing test, `payroll_management_page_test.dart`, expected 10 widgets but found 11. APK build was skipped. Do not alter that payroll test as part of this VGM task.
+- Mobile API auth integration run `43556748512` passed schema import, migration, PHP lint and all earlier service checks. The VGM-specific endpoint assertions passed (Nanny denied; VGM list/create/detail/edit; never-used draft deletion). The overall job failed only at the separate existing assertion `administrator can create a real SQL backup on the disposable database`. This run did not exercise the new month-opening action or archive of a used group; do not treat those as runtime-proven.
+
+Verification boundary: source contract, PHP syntax, Flutter analysis and the six VGM Flutter widget tests are CI-proven. Local XAMPP/Apache/browser/database acceptance is still pending. No local database rows, disbursement batches, receipts, transactions, journals or cash balances were changed. Notification delivery is not runtime-proven; the helper is failure-isolated and the implementation reports attempts, not confirmed delivery.
+
+Next gate remains local VGM acceptance only. Do not start the Nanny or Accountant pass yet, and do not resume the paused FM approval checkpoint.
