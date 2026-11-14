@@ -101,20 +101,24 @@ if ($method === 'POST') {
         $pdo->beginTransaction();
 
         if ($action === 'create_group') {
-            [$name, $description] = ak_vgm_validate_group_details(
+            $createdGroup = ak_vgm_create_group($pdo, $input['description'] ?? '', $actorId);
+            $newId = (int)$createdGroup['id'];
+            ak_vgm_log_group_created(
                 $pdo,
-                $input['group_name'] ?? null,
-                $input['description'] ?? ''
+                $newId,
+                $actorId,
+                (string)$createdGroup['group_name'],
+                (string)$createdGroup['group_code'],
+                (string)$createdGroup['description']
             );
-            dbExecute(
-                "INSERT INTO orphan_groups (group_name, description, created_by, is_active, status, updated_at)
-                 VALUES (?, ?, ?, 0, 'draft', NOW())",
-                [$name, $description, $actorId]
-            );
-            $newId = (int)$pdo->lastInsertId();
-            ak_vgm_log_group_created($pdo, $newId, $actorId, $name, $description);
             $pdo->commit();
-            ak_api_json(200, ['ok' => true, 'data' => ['action' => $action, 'group_id' => $newId, 'message' => 'Group created as a draft.']]);
+            ak_api_json(200, ['ok' => true, 'data' => [
+                'action' => $action,
+                'group_id' => $newId,
+                'group_name' => $createdGroup['group_name'],
+                'group_code' => $createdGroup['group_code'],
+                'message' => 'Group created as a draft.'
+            ]]);
         }
 
         if ($groupId < 1) throw new DomainException('A valid group ID is required.');
@@ -126,16 +130,11 @@ if ($method === 'POST') {
         $status = (string)$group['status'];
 
         if ($action === 'update_group') {
-            [$name, $description] = ak_vgm_validate_group_details(
-                $pdo,
-                $input['group_name'] ?? null,
-                $input['description'] ?? '',
-                $groupId
-            );
+            $description = ak_vgm_validate_group_description($input['description'] ?? '');
             if (in_array($status, ['closed', 'cancelled', 'archived'], true)) {
                 throw new DomainException('Closed, cancelled, and archived groups cannot be edited.');
             }
-            dbExecute('UPDATE orphan_groups SET group_name = ?, description = ?, updated_at = NOW() WHERE id = ?', [$name, $description, $groupId]);
+            dbExecute('UPDATE orphan_groups SET description = ?, updated_at = NOW() WHERE id = ?', [$description, $groupId]);
         } elseif (in_array($action, ['activate_group', 'suspend_group', 'close_group'], true)) {
             $members = dbFetchOne('SELECT COUNT(*) AS total FROM group_children WHERE group_id = ? AND left_date IS NULL', [$groupId]) ?: [];
             $memberCount = (int)($members['total'] ?? 0);
@@ -227,7 +226,7 @@ if ($method === 'POST') {
     } catch (Throwable $e) {
         if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
         if ($e instanceof PDOException && ak_vgm_is_duplicate_group_name_error($e)) {
-            ak_mobile_group_fail('duplicate_group_name', 'A group with this name already exists.', 409);
+            ak_mobile_group_fail('group_identity_collision', 'A generated group identity collided with an existing record. Please retry.', 409);
         }
         error_log('Mobile orphan-group action failed: ' . $e->getMessage());
         ak_mobile_group_fail('group_action_failed', 'The group operation could not be completed.', 500);
@@ -238,7 +237,7 @@ $month = date('Y-m');
 $groupId = filter_var($_GET['group_id'] ?? 0, FILTER_VALIDATE_INT);
 $groupId = $groupId === false ? 0 : (int)$groupId;
 $groups = dbFetchAll(
-    "SELECT og.id, og.group_name, og.description, og.is_active, og.status, og.verification_status, og.lifecycle_reason, og.created_at,
+    "SELECT og.id, og.group_name, og.group_code, og.description, og.is_active, og.status, og.verification_status, og.lifecycle_reason, og.created_at,
             COALESCE(nga.nanny_id, 0) AS nanny_id, COALESCE(u.full_name, '') AS nanny_name,
             (SELECT COUNT(*) FROM group_children gc WHERE gc.group_id = og.id AND gc.left_date IS NULL) AS orphan_count,
             (SELECT COUNT(*) FROM monthly_disbursements md WHERE md.group_id = og.id) AS disbursement_count
