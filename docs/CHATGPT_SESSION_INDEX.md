@@ -4625,3 +4625,12 @@ Contract commit: `326d1d1bfe5b0e01e6f131220c283b210efd1aa6`.
 GitHub Actions VGM Group Management Contract run `43570051595` completed **SUCCESS**. PHP syntax, JavaScript syntax, and `48 checks | PASS`, including three new assertions for the title banner, single-row creation form, and guidance placement. This is repository/CI verification only; local XAMPP browser appearance and interaction remain pending.
 
 **Next acceptance:** pull latest `main`; inspect the title banner, current-month badge, compact creation form (desktop and mobile widths), and guidance panel directly beneath the title. Confirm group creation still opens the new group details page and the table/monthly-cycle controls remain usable. No SQL is needed for this presentation-only change.
+
+
+## 2026-11-14 — VGM visual acceptance confirmed; functional gates remain
+
+The user confirmed the latest VGM groups page visual changes are good: restored title banner/current-month badge, compact responsive creation form, guidance panel below the title, centered groups table, and separated details page presentation. This is **visual acceptance only**; do not treat the VGM workflow as fully accepted or move to Nanny/Accountant yet.
+
+Next: safely inspect local `main`/working-tree state, then run the read-only duplicate-name preflight in `database/migrations/2026-11-14_vgm_unique_group_names.sql` against the local `ahl_el_kheir` database. Apply the unique index only if the preflight returns zero rows. If duplicates appear, stop for explicit review. Continue with the focused VGM functional acceptance gates after the migration is safely applied. No local DB operation was performed in recording this checkpoint.
+
+The separate Monthly Nanny Disbursement FM Approval checkpoint for batch #14 remains paused; do not resume it unless explicitly requested.
