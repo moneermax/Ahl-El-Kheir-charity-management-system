@@ -98,11 +98,11 @@ if ($method === 'POST') {
         $pdo->beginTransaction();
 
         if ($action === 'create_group') {
-            $name = trim((string)($input['group_name'] ?? ''));
-            $description = trim((string)($input['description'] ?? ''));
-            if ($name === '' || mb_strlen($name, 'UTF-8') > 150 || mb_strlen($description, 'UTF-8') > 1000) {
-                throw new DomainException('A group name (up to 150 characters) and description (up to 1000 characters) are required.');
-            }
+            [$name, $description] = ak_vgm_validate_group_details(
+                $pdo,
+                $input['group_name'] ?? null,
+                $input['description'] ?? ''
+            );
             dbExecute(
                 "INSERT INTO orphan_groups (group_name, description, created_by, is_active, status, updated_at)
                  VALUES (?, ?, ?, 0, 'draft', NOW())",
@@ -122,11 +122,12 @@ if ($method === 'POST') {
         $status = (string)$group['status'];
 
         if ($action === 'update_group') {
-            $name = trim((string)($input['group_name'] ?? ''));
-            $description = trim((string)($input['description'] ?? ''));
-            if ($name === '' || mb_strlen($name, 'UTF-8') > 150 || mb_strlen($description, 'UTF-8') > 1000) {
-                throw new DomainException('A group name (up to 150 characters) and description (up to 1000 characters) are required.');
-            }
+            [$name, $description] = ak_vgm_validate_group_details(
+                $pdo,
+                $input['group_name'] ?? null,
+                $input['description'] ?? '',
+                $groupId
+            );
             if (in_array($status, ['closed', 'cancelled', 'archived'], true)) {
                 throw new DomainException('Closed, cancelled, and archived groups cannot be edited.');
             }
@@ -150,11 +151,7 @@ if ($method === 'POST') {
             if (!ak_mobile_group_can_change_members($status)) throw new DomainException('A nanny can only be assigned to an operational group.');
             $nannyId = filter_var($input['nanny_id'] ?? null, FILTER_VALIDATE_INT);
             if (!$nannyId || $nannyId < 1) throw new DomainException('Select an active nanny.');
-            $nanny = dbFetchOne(
-                "SELECT u.id FROM users u JOIN roles r ON r.id = u.role_id WHERE u.id = ? AND r.code = 'nanny' AND u.is_active = 1 FOR UPDATE",
-                [(int)$nannyId]
-            );
-            if (!$nanny) throw new DomainException('The selected account is not an active nanny.');
+            ak_vgm_assert_active_nanny($pdo, (int)$nannyId);
             dbExecute('UPDATE nanny_group_assignments SET end_date = CURDATE() WHERE group_id = ? AND end_date IS NULL', [$groupId]);
             dbExecute('INSERT INTO nanny_group_assignments (group_id, nanny_id, start_date, assigned_by) VALUES (?, ?, CURDATE(), ?)', [$groupId, (int)$nannyId, $actorId]);
         } elseif (in_array($action, ['add_orphan', 'add_orphan_bulk'], true)) {
@@ -225,6 +222,9 @@ if ($method === 'POST') {
         ak_mobile_group_fail('invalid_group_action', $e->getMessage());
     } catch (Throwable $e) {
         if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
+        if ($e instanceof PDOException && ak_vgm_is_duplicate_group_name_error($e)) {
+            ak_mobile_group_fail('duplicate_group_name', 'A group with this name already exists.', 409);
+        }
         error_log('Mobile orphan-group action failed: ' . $e->getMessage());
         ak_mobile_group_fail('group_action_failed', 'The group operation could not be completed.', 500);
     }
