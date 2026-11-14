@@ -4559,3 +4559,14 @@ Contract test commit: `78be98ab32763746429b7ee26039945b89e5fe21`.
 GitHub Actions VGM Group Management Contract run `43568958708` completed **SUCCESS**. PHP syntax, JavaScript syntax and all `45 checks | PASS`, including the two new layout/data-preservation assertions. This proves repository/static contracts only, not local browser rendering.
 
 **Next acceptance:** pull latest `main` and inspect the VGM groups page at desktop and narrow/mobile widths. Confirm the creation card and groups table are centered, the table scrolls responsively when needed, group links still open the correct details page, all six columns show the expected values, and the monthly-cycle checkboxes/button still work. Report any visual or interaction defect before further changes. No SQL is required for this UI-only change.
+
+
+### Verification refinement — 2026-11-14
+
+The groups-table card now has an explicit centered container width (`max-width: 1400px; width: 100%`) rather than relying only on its full-width grid column. The contract assertion was tightened to check this exact constraint.
+
+Final layout source commit: `9dceb635a61b9d11fac989af0ab4b5930b9edc01`.
+Final contract-test commit: `266ac4d0c4c2896ea473c6cbf391b7bd363da738`.
+GitHub Actions VGM Group Management Contract run `43569070018` completed **SUCCESS** on the layout source commit. PHP syntax, JavaScript syntax and all `45 checks | PASS`.
+
+This remains source/CI verification. Local browser acceptance is still pending; do not mark visual behavior complete until the user checks the actual XAMPP page.
