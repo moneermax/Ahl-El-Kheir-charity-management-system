@@ -601,6 +601,17 @@
         const form = event.target;
         if (!samePagePost(form, event.submitter || null)) return;
         if (event.defaultPrevented) return;
+        /*
+         * Let the centralized notifications.js submit interceptor handle
+         * data-confirm forms first. It re-submits with akConfirmBypass only
+         * after the user confirms; without this hand-off the window-level
+         * same-page handler would start fetch() before the document-level
+         * confirmation listener gets a chance to cancel the original submit.
+         */
+        if (form.hasAttribute('data-confirm') && form.dataset.akConfirmBypass !== '1') {
+            akTrace('submit:defer-to-central-confirmation');
+            return;
+        }
         if (form.dataset.akSubmitting === '1') return;
 
         akTrace('submit:before-preventDefault', {action:form.getAttribute('action') || window.location.href});
