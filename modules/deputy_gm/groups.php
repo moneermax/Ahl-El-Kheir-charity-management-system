@@ -425,55 +425,76 @@ include __DIR__ . '/../../includes/header.php';
     <?php endif; ?>
 
     <div class="row g-3">
-        <?php if (!$vgm_group_details_only): ?><div class="col-lg-4 col-xl-3">
-            <div class="card mb-3">
-                <div class="card-header py-2"><strong><i class="bi bi-plus-circle"></i> إنشاء مجموعة</strong></div>
-                <div class="card-body">
-                    <form method="POST" action="group_details.php" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟"><?php echo csrf_field(); ?>
-                        <input type="hidden" name="action" value="create_group">
-                        <div class="mb-2"><label class="form-label small" for="vgmGroupName">اسم المجموعة</label><input id="vgmGroupName" type="text" class="form-control form-control-sm" name="group_name" required maxlength="150" autocomplete="off" aria-describedby="vgmGroupNameHelp"></div>
-                        <div id="vgmGroupNameHelp" class="form-text mb-2">يجب أن يكون الاسم فريداً على مستوى المنظمة (حتى 150 حرفاً).</div>
-                        <div class="mb-2"><label class="form-label small" for="vgmGroupDescription">الوصف</label><textarea id="vgmGroupDescription" class="form-control form-control-sm" name="description" rows="2" maxlength="1000" aria-describedby="vgmGroupDescriptionHelp"></textarea><div id="vgmGroupDescriptionHelp" class="form-text">اختياري، حتى 1000 حرف.</div></div>
-                        <div class="alert alert-info py-2 small mb-2">ستُنشأ المجموعة كمسودة. بعد الإنشاء ستظهر تفاصيلها لتتمكن من إضافة الأيتام وتعيين الحاضنة، ثم تفعيلها.</div>
-                        <button class="btn btn-primary btn-sm w-100"><i class="bi bi-save"></i> إنشاء كمسودة</button>
-                    </form>
-                </div>
-            </div>
-
-            <div class="card">
-                <div class="card-header py-2"><strong><i class="bi bi-list-ul"></i> المجموعات</strong></div>
-                <div class="card-body p-0">
-                    <?php if (!$groups): ?><div class="text-center text-muted py-4">لا توجد مجموعات</div><?php endif; ?>
-                    <form method="POST" class="border-bottom p-2" data-confirm="سيتم فتح دورة التوثيق والصرف للشهر الحالي للمجموعات المحددة فقط. هل تريد المتابعة؟"><?php echo csrf_field(); ?>
-                        <input type="hidden" name="action" value="open_monthly_cycle">
-                        <div class="small fw-semibold mb-2">فتح دورة الشهر الحالي</div>
-                        <?php foreach ($groups as $open_group): ?>
-                            <?php if ($open_group['status'] === 'active' && (int)$open_group['orphan_count'] > 0 && !empty($open_group['nanny_name'])): ?>
-                                <label class="d-flex align-items-center gap-2 small py-1">
-                                    <input class="form-check-input mt-0" type="checkbox" name="group_ids[]" value="<?php echo (int)$open_group['id']; ?>">
-                                    <span><?php echo htmlspecialchars($open_group['group_name']); ?> <span class="text-muted">(<?php echo htmlspecialchars($open_group['nanny_name']); ?>)</span></span>
-                                </label>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                        <button class="btn btn-sm btn-outline-primary w-100 mt-2">فتح الدورة للمحدد</button>
-                    </form>
-                    <div class="list-group list-group-flush">
-                    <?php foreach ($groups as $group): ?>
-                        <a href="group_details.php?id=<?php echo (int)$group['id']; ?>" class="list-group-item list-group-item-action <?php echo ($selected_group && (int)$selected_group['id'] === (int)$group['id']) ? 'active' : ''; ?>">
-                            <div class="d-flex justify-content-between align-items-start gap-2"><strong class="small"><?php echo htmlspecialchars($group['group_name']); ?></strong><span class="badge bg-<?php echo groupStatusClass($group['status']); ?>"><?php echo groupStatusLabel($group['status']); ?></span></div>
-                            <div class="small mt-1 <?php echo ($selected_group && (int)$selected_group['id'] === (int)$group['id']) ? '' : 'text-muted'; ?>">
-                                <?php echo (int)$group['orphan_count']; ?> عضو
-                                <?php if ($group['nanny_name']): ?> · <?php echo htmlspecialchars($group['nanny_name']); ?><?php else: ?> · بدون حاضنة<?php endif; ?>
-                                <?php if ((int)$group['disbursement_count'] > 0): ?> · <i class="bi bi-cash-stack"></i> <?php echo (int)$group['disbursement_count']; ?> صرف<?php endif; ?>
-                            </div>
-                        </a>
-                    <?php endforeach; ?>
+        <?php if (!$vgm_group_details_only): ?>
+            <div class="col-12">
+                <div class="card mb-3 mx-auto" style="max-width: 760px;">
+                    <div class="card-header py-2"><strong><i class="bi bi-plus-circle"></i> إنشاء مجموعة</strong></div>
+                    <div class="card-body">
+                        <form method="POST" action="group_details.php" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟"><?php echo csrf_field(); ?>
+                            <input type="hidden" name="action" value="create_group">
+                            <div class="mb-2"><label class="form-label small" for="vgmGroupName">اسم المجموعة</label><input id="vgmGroupName" type="text" class="form-control form-control-sm" name="group_name" required maxlength="150" autocomplete="off" aria-describedby="vgmGroupNameHelp"></div>
+                            <div id="vgmGroupNameHelp" class="form-text mb-2">يجب أن يكون الاسم فريداً على مستوى المنظمة (حتى 150 حرفاً).</div>
+                            <div class="mb-2"><label class="form-label small" for="vgmGroupDescription">الوصف</label><textarea id="vgmGroupDescription" class="form-control form-control-sm" name="description" rows="2" maxlength="1000" aria-describedby="vgmGroupDescriptionHelp"></textarea><div id="vgmGroupDescriptionHelp" class="form-text">اختياري، حتى 1000 حرف.</div></div>
+                            <div class="alert alert-info py-2 small mb-2">ستُنشأ المجموعة كمسودة. بعد الإنشاء ستظهر تفاصيلها لتتمكن من إضافة الأيتام وتعيين الحاضنة، ثم تفعيلها.</div>
+                            <button class="btn btn-primary btn-sm w-100"><i class="bi bi-save"></i> إنشاء كمسودة</button>
+                        </form>
                     </div>
                 </div>
             </div>
-        </div><?php endif; ?>
 
-        <div class="<?php echo $vgm_group_details_only ? 'col-12' : 'col-lg-8 col-xl-9'; ?>">
+            <div class="col-12">
+                <div class="card mb-3">
+                    <div class="card-header py-2"><strong><i class="bi bi-list-ul"></i> المجموعات</strong></div>
+                    <div class="card-body p-0">
+                        <form method="POST" data-confirm="سيتم فتح دورة التوثيق والصرف للشهر الحالي للمجموعات المحددة فقط. هل تريد المتابعة؟"><?php echo csrf_field(); ?>
+                            <input type="hidden" name="action" value="open_monthly_cycle">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 border-bottom p-3">
+                                <div>
+                                    <div class="fw-semibold">فتح دورة الشهر الحالي</div>
+                                    <div class="small text-muted">حدد المجموعات النشطة التي لديها أعضاء وحاضنة معيّنة.</div>
+                                </div>
+                                <button class="btn btn-sm btn-outline-primary">فتح الدورة للمحدد</button>
+                            </div>
+                            <div class="table-responsive">
+                                <table class="table table-hover table-striped align-middle text-center mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th scope="col">فتح الدورة</th>
+                                            <th scope="col">اسم المجموعة</th>
+                                            <th scope="col">الحالة</th>
+                                            <th scope="col">الأعضاء</th>
+                                            <th scope="col">الحاضنة</th>
+                                            <th scope="col">دفعات الصرف</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php if (!$groups): ?>
+                                            <tr><td colspan="6" class="text-center text-muted py-4">لا توجد مجموعات</td></tr>
+                                        <?php else: foreach ($groups as $group): ?>
+                                            <?php $can_open_cycle = $group['status'] === 'active' && (int)$group['orphan_count'] > 0 && !empty($group['nanny_name']); ?>
+                                            <tr>
+                                                <td>
+                                                    <?php if ($can_open_cycle): ?>
+                                                        <input class="form-check-input mt-0" type="checkbox" name="group_ids[]" value="<?php echo (int)$group['id']; ?>" aria-label="<?php echo htmlspecialchars('فتح الدورة لمجموعة ' . $group['group_name'], ENT_QUOTES, 'UTF-8'); ?>">
+                                                    <?php else: ?><span class="text-muted">—</span><?php endif; ?>
+                                                </td>
+                                                <td class="text-start"><a class="fw-semibold text-decoration-none" href="group_details.php?id=<?php echo (int)$group['id']; ?>"><?php echo htmlspecialchars($group['group_name']); ?></a></td>
+                                                <td><span class="badge bg-<?php echo groupStatusClass($group['status']); ?>"><?php echo groupStatusLabel($group['status']); ?></span></td>
+                                                <td><?php echo (int)$group['orphan_count']; ?></td>
+                                                <td><?php echo $group['nanny_name'] ? htmlspecialchars($group['nanny_name']) : '<span class="text-muted">بدون حاضنة</span>'; ?></td>
+                                                <td><?php echo (int)$group['disbursement_count']; ?></td>
+                                            </tr>
+                                        <?php endforeach; endif; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        <?php endif; ?>
+
+        <div class="col-12">
         <?php if ($selected_group): ?>
             <?php $status = (string)$selected_group['status']; $current_members = count($group_orphans); $has_current_disbursement = groupHasCurrentDisbursement($pdo, (int)$selected_group['id'], $current_month); ?>
             <div class="card mb-3">
