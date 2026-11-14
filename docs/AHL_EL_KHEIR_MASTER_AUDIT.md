@@ -7101,3 +7101,13 @@ Source commits on `main`: `6e111302`, `5d22422c`, `72a494eb`, `38ed2c32`, `c9194
 Verification refinement: `.github/workflows/vgm-group-management.yml` now runs `node --check` against both modified JavaScript files (`assets/js/app.js` and `assets/js/notifications.js`) in addition to the existing PHP syntax and VGM contract checks. Workflow change commit: `948626d25f22b0b5dad3cc5a7aad6bf9dd0ab6c8`. The Actions run result is not yet available through the connected GitHub interface, so this remains pending CI verification. Local browser acceptance also remains pending.
 
 Popup serialization was extended to `AKNotify.modal()` as well, so all three centralized popup entry points (`confirm`, `toast`, and `modal`) use the same queue. The VGM contract now asserts that standard modals also enqueue. Latest source/test commits: `22456c5e` and `2e4fc80c`. The existing workflow includes Node syntax checks for both changed JavaScript files; its result is still pending and cannot be inspected through the connected GitHub Actions interface.
+
+## 2026-11-14 — VGM group-creation confirmation: USER ACCEPTED
+
+The user tested the updated VGM group-creation flow and reported: “now it works normally.” The supplied page capture includes the success message “تم إنشاء المجموعة كمسودة. أضف الأعضاء ثم عيّن الحاضنة وفعّل المجموعة عند جاهزيتها.” and the selected newly created group in **مسودة** status with **0** current members and **بدون حاضنة**. This is the expected post-creation draft state.
+
+**Acceptance result:** the reported confirmation-disappears/automatic-creation symptom is no longer occurring in the user's normal UI test. Treat the group-creation confirmation fix as user-accepted. This is local browser evidence supplied by the user, not an independently observed browser session.
+
+**Scope boundary:** this acceptance covers the create-confirmation interaction and its resulting draft state only. It does not prove the separate global unique-name migration was applied, duplicate-name handling, all group membership/caregiver workflows, or the wider VGM lifecycle. The unique-name migration preflight/application remains a separate gate. Do not begin the Nanny/Accountant passes or resume the paused FM approval checkpoint until the remaining VGM acceptance work is explicitly completed.
+
+No schema or database changes were made as part of this confirmation fix.
