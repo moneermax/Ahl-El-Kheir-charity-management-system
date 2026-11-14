@@ -315,6 +315,7 @@ try {
         : (($e instanceof PDOException && ak_vgm_is_duplicate_group_name_error($e))
             ? 'اسم المجموعة مستخدم بالفعل. اختر اسماً آخر.'
             : 'تعذر تنفيذ العملية. لم يتم فقد أي بيانات.');
+    if ($action === 'create_group') $view_group_id = 0;
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
