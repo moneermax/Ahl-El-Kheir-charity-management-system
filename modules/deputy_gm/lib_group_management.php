@@ -101,9 +101,15 @@ function ak_vgm_log_group_created(PDO $pdo, int $groupId, int $actorId, string $
 }
 
 /** Identify a database unique-index collision for a generated group identity. */
-function ak_vgm_is_unique_constraint_error(PDOException $error): bool
+function ak_vgm_is_group_identity_collision(PDOException $error): bool
 {
-    return isset($error->errorInfo[1]) && (int)$error->errorInfo[1] === 1062;
+    $driverCode = isset($error->errorInfo[1]) ? (int)$error->errorInfo[1] : 0;
+    $message = strtolower((string)($error->errorInfo[2] ?? $error->getMessage()));
+    return $driverCode === 1062
+        && (
+            str_contains($message, 'uq_orphan_groups_group_code')
+            || str_contains($message, 'uq_orphan_groups_group_name')
+        );
 }
 
 /** Require the submitted account to be an active user with the Nanny role. */
