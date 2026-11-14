@@ -284,10 +284,9 @@ The same description-only rule now applies to the VGM Flutter client: its create
 The user reported two success notifications after saving a group description: a brief transient message at the top of the page followed by the expected centralized SweetAlert popup.
 
 Root cause confirmed in source:
-- groups.php rendered success/error feedback as dismissible Bootstrap .alert elements.
-- assets/js/notifications.js automatically converts .alert.alert-dismissible into a toast when inserted into the DOM.
-- The shared same-page POST handler in assets/js/app.js already has a separate, supported [data-ak-flash] extraction path and emits that flash through AKNotify.toast() after restoring the viewport.
-- Mixing the Bootstrap-alert conversion path with the dedicated flash path creates competing notification routes for the same action.
+- groups.php rendered success/error feedback as dismissible Bootstrap .alert elements, which are visible in the page before the notification script initializes.
+- On DOMContentLoaded, assets/js/notifications.js detects .alert.alert-dismissible, sends the same message to AKNotify.toast(), and removes the original alert node.
+- The user therefore sees the same feedback twice in sequence: first as a brief inline alert at the top of the page, then as the intended centralized popup. The detail forms POST to groups.php and redirect back to group_details.php; this is a normal document navigation, not the same-page POST path.
 
 Smallest fix: VGM group success/error feedback now renders as hidden [data-ak-flash] nodes with explicit message/type/duration attributes. Both a full document load and the same-page POST handler use the centralized flash contract; the VGM page no longer renders transient Bootstrap alerts for these action messages. Shared notification infrastructure and unrelated pages were not changed. No schema/database changes.
 
