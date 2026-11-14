@@ -7053,3 +7053,20 @@ The previous verification boundaries remain:
 ## 2026-11-14 — Final VGM contract rerun
 
 The VGM contract workflow was rerun on source commit `79e37315a7b09d32aaae9227065a8c818bc7c447` after adding the lifecycle transaction assertion. GitHub Actions run `43557000502` passed PHP 8.2 lint and reported `18 checks | PASS`. This is the latest VGM contract result; it supersedes the earlier 16/17-check counts.
+
+## 2026-11-14 — VGM group creation audit findings and remediation
+
+Confirmed source defects/remediation:
+1. Web creation/update did not share API length/type validation; now both use `ak_vgm_validate_group_details()`.
+2. Global uniqueness was not enforced. Added migration `2026-11-14_vgm_unique_group_names.sql`; the DB unique index is the concurrency-safe boundary. The migration preflight must return zero duplicate groups before application.
+3. All 11 VGM page POST forms lacked CSRF fields and the POST handler did not verify a token; all now emit `csrf_field()` and the handler verifies `verify_csrf()` before dispatch.
+4. Web Nanny assignment trusted the dropdown; it now verifies active user + `nanny` role server-side, under transaction and row lock.
+5. Web membership and assignment actions had checks outside their transaction/without a group lock; add/remove/transfer/assign now lock and revalidate relevant group rows and check current-month disbursement while inside the transaction.
+6. The VGM page used `data-confirm` attributes without a handler in the shared `app.js`; a page-scoped SweetAlert2 confirmation handler with native fallback now consumes those attributes. Bulk-add now calls `requestSubmit()`, not native `.submit()`, so it enters the centralized same-page POST flow.
+
+Business rule confirmed by user: group names are unique across the organization. Existing canonical dump data (generated 2026-11-13) contains four group records with distinct names under `utf8mb4_unicode_ci`; local database preflight remains mandatory.
+
+No creation audit_log event was added because the current usage calculation treats every group audit_log row as evidence of use, which would change the physical-delete-versus-archive rule for a never-used draft. Existing `created_by` and `created_at` fields retain creator/time evidence.
+
+Verification boundary: source implementation only. Local migration, syntax checks, static contract test, API integration test, and interactive browser behavior are pending user execution. No claim of runtime correctness is made yet.
+
