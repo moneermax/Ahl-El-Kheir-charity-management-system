@@ -60,6 +60,29 @@
         }
     });
 
+    /*
+     * SweetAlert2 has one active popup surface. Firing a toast while a
+     * confirmation is open destroys that confirmation. Keep notifications
+     * queued until the confirmation promise has settled, then show queued
+     * toasts one at a time.
+     */
+    var confirmationActive = false;
+    var toastQueue = [];
+    var toastQueueRunning = false;
+
+    function flushToastQueue() {
+        if (confirmationActive || toastQueueRunning || !toastQueue.length) return;
+        toastQueueRunning = true;
+        var next = toastQueue.shift();
+        Toast.fire(next.options).then(function () {
+            toastQueueRunning = false;
+            flushToastQueue();
+        }, function () {
+            toastQueueRunning = false;
+            flushToastQueue();
+        });
+    }
+
     window.AKNotify = {
         notificationToast: notificationToast,
         toast: function (type, message, duration) {
@@ -68,6 +91,11 @@
             var toastOptions = { icon: icon, title: message || '' };
             if (Number.isFinite(Number(duration)) && Number(duration) > 0) {
                 toastOptions.timer = Number(duration);
+            }
+            if (confirmationActive || toastQueueRunning || toastQueue.length) {
+                toastQueue.push({ options: toastOptions });
+                flushToastQueue();
+                return Promise.resolve({ queued: true });
             }
             return Toast.fire(toastOptions);
         },
@@ -82,26 +110,49 @@
         },
         confirm: function (message, onConfirm, options) {
             options = options || {};
-            return window.Swal.fire({
-                title: options.title || 'هل أنت متأكد؟',
-                text: message || '',
-                icon: options.icon || 'warning',
-                showCancelButton: true,
-                confirmButtonText: options.confirmButtonText || 'نعم، متابعة',
-                cancelButtonText: options.cancelButtonText || 'إلغاء',
-                reverseButtons: true,
-                focusCancel: true,
-                allowOutsideClick: false,
-                rtl: true,
-                heightAuto: false,
-                customClass: {
-                    popup: 'ak-swal-confirm',
-                    confirmButton: 'ak-swal-confirm-btn',
-                    cancelButton: 'ak-swal-cancel-btn'
+            if (confirmationActive) {
+                return Promise.resolve({ isConfirmed: false, isDismissed: true, reason: 'confirmation-active' });
+            }
+
+            confirmationActive = true;
+            var confirmation;
+            try {
+                confirmation = window.Swal.fire({
+                    title: options.title || 'هل أنت متأكد؟',
+                    text: message || '',
+                    icon: options.icon || 'warning',
+                    showCancelButton: true,
+                    confirmButtonText: options.confirmButtonText || 'نعم، متابعة',
+                    cancelButtonText: options.cancelButtonText || 'إلغاء',
+                    reverseButtons: true,
+                    focusCancel: true,
+                    allowOutsideClick: false,
+                    rtl: true,
+                    heightAuto: false,
+                    customClass: {
+                        popup: 'ak-swal-confirm',
+                        confirmButton: 'ak-swal-confirm-btn',
+                        cancelButton: 'ak-swal-cancel-btn'
+                    }
+                });
+            } catch (error) {
+                confirmationActive = false;
+                flushToastQueue();
+                return Promise.reject(error);
+            }
+
+            return Promise.resolve(confirmation).then(function (result) {
+                try {
+                    if (result && result.isConfirmed && typeof onConfirm === 'function') onConfirm();
+                    return result;
+                } finally {
+                    confirmationActive = false;
+                    flushToastQueue();
                 }
-            }).then(function (result) {
-                if (result.isConfirmed && typeof onConfirm === 'function') onConfirm();
-                return result;
+            }, function (error) {
+                confirmationActive = false;
+                flushToastQueue();
+                throw error;
             });
         }
     };
