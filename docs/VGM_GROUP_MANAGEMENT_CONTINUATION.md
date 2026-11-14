@@ -260,3 +260,7 @@ Source changes are committed to `main`; no local database migration or Apache/br
 3. In the VGM UI, create two drafts with different descriptions and confirm generated names/codes are distinct, no name field exists, creation navigates to details, and the code appears in list/details.
 4. Edit the description and confirm name/code remain unchanged. Confirm historical group names remain unchanged.
 5. Continue the remaining VGM functional acceptance only after this gate; do not start Nanny/Accountant or resume the paused FM checkpoint.
+
+### Scope clarification — web and Flutter VGM clients
+
+The same description-only rule now applies to the VGM Flutter client: its create/edit dialog no longer asks for a group name, and the group list/details display the generated code. Its widget test now asserts that the submitted payload contains the description but no `group_name`. The old `2026-11-14_vgm_unique_group_names.sql` migration was designed for manually entered names; it is not a prerequisite for the new generated-identity behavior. If already applied, leave it in place. The required schema change for this feature is `2026-11-14_vgm_generated_group_identity.sql`.
