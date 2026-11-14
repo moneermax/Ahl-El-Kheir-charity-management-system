@@ -101,13 +101,16 @@ $checks = [
         && !str_contains($src['web'], 'alert-danger alert-dismissible')
         && str_contains($src['app'], "incoming.querySelectorAll('[data-ak-flash]')")
         && str_contains($src['notifications'], "document.querySelectorAll('[data-ak-flash]')"),
-    'group settings are separated from the summary card and constrained to a centered responsive width' => str_contains($src['web'], 'class="row justify-content-center mb-3"')
-        && str_contains($src['web'], 'class="col-12 col-lg-10 col-xl-8"')
+    'group settings are separated, compact, and constrained to a centered responsive width' => str_contains($src['web'], 'class="row justify-content-center mb-2"')
+        && str_contains($src['web'], 'class="col-12 col-lg-8 col-xl-7"')
         && str_contains($src['web'], 'إعدادات المجموعة')
-        && str_contains($src['web'], 'class="row g-3 align-items-start"'),
+        && str_contains($src['web'], '— تعديل الوصف وإدارة تعيين الحاضنة')
+        && str_contains($src['web'], 'class="card-body p-2"')
+        && str_contains($src['web'], 'class="row g-2 align-items-start"'),
     'description and caregiver controls remain compact and top-aligned after caregiver selection' => str_contains($src['web'], 'class="col-12 col-md-6"')
         && str_contains($src['web'], 'class="input-group input-group-sm flex-nowrap"')
-        && str_contains($src['web'], 'style="min-height: 1.25rem;"')
+        && str_contains($src['web'], 'class="form-text small mt-1"')
+        && !str_contains($src['web'], 'min-height: 1.25rem')
         && str_contains($src['web'], 'name="description"')
         && str_contains($src['web'], 'name="nanny_id"')
         && !str_contains($src['web'], 'class="row g-2 align-items-end"'),
