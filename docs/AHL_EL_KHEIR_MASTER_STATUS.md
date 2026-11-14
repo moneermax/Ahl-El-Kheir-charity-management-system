@@ -6809,3 +6809,20 @@ The previous verification boundaries remain:
 ## 2026-11-14 — Final VGM contract rerun
 
 The VGM contract workflow was rerun on source commit `79e37315a7b09d32aaae9227065a8c818bc7c447` after adding the lifecycle transaction assertion. GitHub Actions run `43557000502` passed PHP 8.2 lint and reported `18 checks | PASS`. This is the latest VGM contract result; it supersedes the earlier 16/17-check counts.
+
+## 2026-11-14 — VGM group creation hardening (source implemented; local acceptance pending)
+
+Implemented on `main`:
+- Global unique index migration for `orphan_groups.group_name` with a duplicate preflight query.
+- Shared web/API validation and consistent 150-character name / 1000-character description bounds.
+- Friendly duplicate-name handling, including a concurrent unique-index collision.
+- CSRF checks and hidden tokens across all VGM web POST forms.
+- Server-side active-Nanny validation and transactional group locking for web assignment.
+- Transactional group locking and in-transaction current-month disbursement checks for web member add/remove/transfer.
+- Functional VGM confirmation popups, fallback confirmation, and bulk-add routed through `requestSubmit()` / centralized same-page POST.
+- Clearer create-as-draft guidance.
+
+Migration: `database/migrations/2026-11-14_vgm_unique_group_names.sql`.
+
+Status: source changes committed; migration application, PHP lint, contract/integration harnesses, and real browser acceptance are **PENDING**. The 2026-11-13 canonical SQL snapshot showed four distinct group names, but the local database must pass the migration preflight independently. Do not proceed to Nanny/Accountant until VGM testing is accepted.
+
