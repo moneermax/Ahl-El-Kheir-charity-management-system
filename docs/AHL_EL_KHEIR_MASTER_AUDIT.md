@@ -7066,7 +7066,7 @@ Confirmed source defects/remediation:
 
 Business rule confirmed by user: group names are unique across the organization. Existing canonical dump data (generated 2026-11-13) contains four group records with distinct names under `utf8mb4_unicode_ci`; local database preflight remains mandatory.
 
-No creation audit_log event was added because the current usage calculation treats every group audit_log row as evidence of use, which would change the physical-delete-versus-archive rule for a never-used draft. Existing `created_by` and `created_at` fields retain creator/time evidence.
+A `VGM_CREATE_GROUP` audit_log event is now inserted atomically with the draft. Web and mobile `workflow_history` calculations exclude only this creation event, so a draft with no members, nanny assignments, disbursements or later workflow events remains eligible for physical deletion. The creator/time fields remain in `orphan_groups`.
 
 Verification boundary: source implementation only. Local migration, syntax checks, static contract test, API integration test, and interactive browser behavior are pending user execution. No claim of runtime correctness is made yet.
 
