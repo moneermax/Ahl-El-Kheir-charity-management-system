@@ -30,8 +30,10 @@ $checks = [
     'notification happens after commit' => strpos(substr($src['helper'], strpos($src['helper'], 'function ak_vgm_open_monthly_cycles')), '$pdo->commit();') < strpos(substr($src['helper'], strpos($src['helper'], 'function ak_vgm_open_monthly_cycles')), 'ak_transaction_review_notify_event('),
     'web supports individual/bulk selected groups' => str_contains($src['web'], 'name="group_ids[]"') && str_contains($src['web'], "ak_vgm_open_monthly_cycles"),
     'mobile API supports monthly opening' => str_contains($src['api'], "'open_monthly_cycle'") && str_contains($src['api'], 'ak_vgm_open_monthly_cycles'),
+    'mobile API rejects an opening with no eligible groups' => str_contains($src['api'], 'no_groups_opened'),
     'used groups are archived, not physically deleted' => str_contains($src['helper'], "SET status = 'archived', is_active = 0") && str_contains($src['helper'], 'UPDATE nanny_group_assignments SET end_date'),
     'archive blocks unfinished disbursements' => str_contains($src['helper'], "status NOT IN ('received', 'returned', 'cancelled', 'voided')"),
+    'archive blocks an opened but unfinished verification cycle' => str_contains($src['helper'], 'ak_vgm_assert_group_archivable') && str_contains($src['helper'], 'VGM_OPEN_MONTHLY_CYCLE'),
     'web transfer capability remains' => str_contains($src['web'], 'elseif ($action === \'transfer_orphan\')'),
     'mobile transfer capability remains' => str_contains($src['api'], 'elseif ($action === \'transfer_orphan\')'),
 ];

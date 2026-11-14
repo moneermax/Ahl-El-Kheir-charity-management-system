@@ -80,7 +80,16 @@ if ($method === 'POST') {
             $rawIds = $input['group_ids'] ?? ($groupId > 0 ? [$groupId] : []);
             if (!is_array($rawIds)) throw new DomainException('A list of group IDs is required.');
             $result = ak_vgm_open_monthly_cycles($pdo, $rawIds, $month, $actorId);
-            ak_api_json(200, ['ok' => true, 'data' => ['action' => $action, 'opened' => $result['opened'], 'skipped' => $result['skipped'], 'notification_attempts' => $result['notification_attempts']]]);
+            if (!$result['opened']) {
+                ak_mobile_group_fail('no_groups_opened', 'No selected group met the monthly-opening requirements.', 422);
+            }
+            ak_api_json(200, ['ok' => true, 'data' => [
+                'action' => $action,
+                'message' => 'Monthly cycle opened for ' . count($result['opened']) . ' group(s).',
+                'opened' => $result['opened'],
+                'skipped' => $result['skipped'],
+                'notification_attempts' => $result['notification_attempts'],
+            ]]);
         }
         if ($action === 'delete_group') {
             $result = ak_vgm_delete_or_archive_group($pdo, $groupId, $actorId, trim((string)($input['reason'] ?? '')));

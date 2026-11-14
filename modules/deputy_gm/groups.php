@@ -166,9 +166,7 @@ try {
                 $success_message = 'تم تفعيل المجموعة';
             } else {
                 if ($new_status === 'archived') {
-                    $open_batch = $pdo->prepare("SELECT id FROM monthly_disbursements WHERE group_id = :id AND status NOT IN ('received','returned','cancelled','voided') LIMIT 1");
-                    $open_batch->execute(['id' => $group_id]);
-                    if ($open_batch->fetchColumn()) throw new RuntimeException('لا يمكن أرشفة المجموعة قبل إكمال أو إلغاء دفعة الصرف المفتوحة.');
+                    ak_vgm_assert_group_archivable($pdo, $group_id, (string)$group['verification_status']);
                 }
                 if ($new_status === 'cancelled' && $has_financial_history) {
                     throw new RuntimeException('لا يمكن إلغاء مجموعة لها سجل صرف مالي. استخدم الإغلاق بدلاً من ذلك.');

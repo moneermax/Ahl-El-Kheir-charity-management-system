@@ -4445,3 +4445,9 @@ This is a source implementation checkpoint only. The static PHP contract and Flu
 3. User pulls `main`, then perform VGM browser/mobile acceptance using test-only groups: first opening, duplicate-open rejection, missing/disabled Nanny rejection, previous cycle incomplete rejection, completed prior cycle opening, notification appearance, archive with member-history preservation, archive blocked by open batch, and never-used draft deletion.
 4. Verify the existing transfer path still works without attempting a return transfer into a previously used target group.
 5. Only then move to the Nanny pass. Do not change Nanny or Accountant behavior during this VGM checkpoint.
+
+## 2026-11-14 — VGM group management verification boundary
+
+Additional safety check after source review: archiving a used group is also blocked when its monthly verification cycle is still open or submitted/approved/transferred/returned, even if no disbursement row exists yet. A pending group can be archived only when there is no VGM month-opening audit event. This prevents the archive action from cutting off a Nanny workflow that has started but has not reached a terminal state.
+
+The shared guard is used by both the web lifecycle archive action and the safe-delete/archive helper used by the web and mobile API.

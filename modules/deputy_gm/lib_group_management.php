@@ -32,6 +32,34 @@ function ak_vgm_group_is_used(array $usage): bool
     return false;
 }
 
+function ak_vgm_assert_group_archivable(PDO $pdo, int $groupId, string $verificationStatus): void
+{
+    if (in_array($verificationStatus, ['submitted', 'approved', 'transferred', 'returned'], true)) {
+        throw new RuntimeException('لا يمكن أرشفة المجموعة أثناء وجود دورة توثيق أو صرف غير مغلقة.');
+    }
+    if ($verificationStatus === 'pending') {
+        $opened = $pdo->prepare(
+            "SELECT 1 FROM audit_log
+             WHERE entity_type = 'orphan_groups' AND entity_id = :id
+               AND action = 'VGM_OPEN_MONTHLY_CYCLE'
+             LIMIT 1"
+        );
+        $opened->execute(['id' => $groupId]);
+        if ($opened->fetchColumn()) {
+            throw new RuntimeException('لا يمكن أرشفة المجموعة بعد فتح دورة شهرية لم تُغلق بعد.');
+        }
+    }
+    $openBatch = $pdo->prepare(
+        "SELECT id FROM monthly_disbursements
+         WHERE group_id = :id AND status NOT IN ('received', 'returned', 'cancelled', 'voided')
+         LIMIT 1 FOR UPDATE"
+    );
+    $openBatch->execute(['id' => $groupId]);
+    if ($openBatch->fetchColumn()) {
+        throw new RuntimeException('لا يمكن أرشفة المجموعة قبل إكمال أو إلغاء دفعة الصرف المفتوحة.');
+    }
+}
+
 /**
  * Delete a never-used group; archive a used group without deleting any
  * membership, nanny-assignment, disbursement, or workflow history.
@@ -43,7 +71,7 @@ function ak_vgm_delete_or_archive_group(PDO $pdo, int $groupId, int $actorId, st
 
     $pdo->beginTransaction();
     try {
-        $stmt = $pdo->prepare('SELECT id, status FROM orphan_groups WHERE id = :id FOR UPDATE');
+        $stmt = $pdo->prepare('SELECT id, status, verification_status FROM orphan_groups WHERE id = :id FOR UPDATE');
         $stmt->execute(['id' => $groupId]);
         $group = $stmt->fetch(PDO::FETCH_ASSOC);
         if (!$group) throw new RuntimeException('المجموعة غير موجودة');
@@ -59,15 +87,7 @@ function ak_vgm_delete_or_archive_group(PDO $pdo, int $groupId, int $actorId, st
             return 'deleted';
         }
 
-        $openBatch = $pdo->prepare(
-            "SELECT id, status FROM monthly_disbursements
-             WHERE group_id = :id AND status NOT IN ('received', 'returned', 'cancelled', 'voided')
-             LIMIT 1 FOR UPDATE"
-        );
-        $openBatch->execute(['id' => $groupId]);
-        if ($openBatch->fetch(PDO::FETCH_ASSOC)) {
-            throw new RuntimeException('لا يمكن أرشفة المجموعة قبل إكمال أو إلغاء دفعة الصرف المفتوحة.');
-        }
+        ak_vgm_assert_group_archivable($pdo, $groupId, (string)$group['verification_status']);
 
         $archiveReason = trim($reason);
         if ($archiveReason === '') $archiveReason = 'أرشفة المجموعة بواسطة نائب المدير العام مع الحفاظ على كامل السجل';
