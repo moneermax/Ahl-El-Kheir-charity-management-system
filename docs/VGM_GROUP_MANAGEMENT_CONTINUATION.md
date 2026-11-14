@@ -326,3 +326,18 @@ Corrective layout:
 
 Source commit: `662883091298806f939ebbe271955677e23ef12c`.
 A focused contract update asserts the separated/constrained card and stable alignment. Local PHP syntax, CI, and browser acceptance remain pending. Do not mark the visual issue closed until the user checks before/after caregiver selection and desktop/mobile widths.
+
+
+## 2026-11-14 — VGM group settings spacing refinement
+
+The user correctly identified that the prior settings-card revision still wasted space: its title and explanatory text were stacked, the card body and field row used generous spacing, and the caregiver helper reserved an empty line. The layout has now been tightened:
+- Settings title and explanatory phrase share one header line and wrap only when the viewport requires it.
+- Settings card width is reduced to `col-lg-8 col-xl-7`.
+- Card body padding is reduced to `p-2`; field row gap and bottom margin are reduced to `g-2` and `mb-2`.
+- Removed the artificial minimum-height caregiver helper row; the current assignment appears only when present.
+- Existing field columns, small input groups, POST actions, CSRF, validation, and permissions remain unchanged.
+
+Source commit: `7c90e1d335e6474c09f1e8f9a5314ac79cfb65f1`.
+Contract assertion commit: `ced9e55e656fb01be0da3e8e22f70049f1252c23`.
+
+This is repository-source evidence only. CI, PHP syntax, local XAMPP rendering, and browser acceptance have not yet been run for this refinement. The user must review the resulting page before the visual issue can be closed.
