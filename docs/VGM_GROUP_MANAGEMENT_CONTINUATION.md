@@ -223,3 +223,18 @@ Contract commit: `326d1d1bfe5b0e01e6f131220c283b210efd1aa6`.
 GitHub Actions VGM Group Management Contract run `43570051595` completed **SUCCESS**. PHP syntax, JavaScript syntax, and `48 checks | PASS`, including three new assertions for the title banner, single-row creation form, and guidance placement. This is repository/CI verification only; local XAMPP browser appearance and interaction remain pending.
 
 **Next acceptance:** pull latest `main`; inspect the title banner, current-month badge, compact creation form (desktop and mobile widths), and guidance panel directly beneath the title. Confirm group creation still opens the new group details page and the table/monthly-cycle controls remain usable. No SQL is needed for this presentation-only change.
+
+
+## 2026-11-14 — VGM group page visual acceptance confirmed
+
+The user reviewed the latest local XAMPP rendering and confirmed that all requested visual changes are good:
+- the page-title banner and current-month badge;
+- the compact responsive, single-row group creation form;
+- the guidance/protection panel directly below the title;
+- the centered responsive groups table and separated group-details page presentation.
+
+This closes the visual-review gate only. It does **not** establish that the unique-name migration has been applied, nor does it prove duplicate-name validation, CSRF rejection, group editing, caregiver assignment, membership add/remove/transfer, lifecycle actions, or monthly-cycle processing. Do not mark the full VGM workflow closed yet.
+
+**Next exact gate:** inspect the local Git status, synchronize `main` safely if needed, then run the read-only duplicate-name preflight from `database/migrations/2026-11-14_vgm_unique_group_names.sql` against the actual `ahl_el_kheir` database. The preflight must return zero rows before applying the unique index. If it returns any rows, stop and review the duplicate names; do not rename or delete records automatically. Only after a clean preflight should the migration be applied, followed by the remaining focused VGM functional acceptance checklist.
+
+No database operation was performed as part of recording this visual acceptance.
