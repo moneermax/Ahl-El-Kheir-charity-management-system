@@ -207,3 +207,19 @@ Final contract-test commit: `266ac4d0c4c2896ea473c6cbf391b7bd363da738`.
 GitHub Actions VGM Group Management Contract run `43569070018` completed **SUCCESS** on the layout source commit. PHP syntax, JavaScript syntax and all `45 checks | PASS`.
 
 This remains source/CI verification. Local browser acceptance is still pending; do not mark visual behavior complete until the user checks the actual XAMPP page.
+
+
+## 2026-11-14 — VGM page header and compact group creation form (source/CI verified; browser acceptance pending)
+
+Updated `modules/deputy_gm/groups.php` in response to the next visual review:
+- Restored a colored page-title banner using the primary background, white title/subtitle, and a contrasting current-month badge. The requested title, subtitle, and current payout month remain visible.
+- Reworked “إنشاء مجموعة” into a compact responsive horizontal form: group name, optional description (single-line input, retaining the 1000-character limit), and submit button share one row at desktop widths and wrap on narrow screens. Removed the oversized textarea and full-width button.
+- Moved the group-creation explanation and all four protection rules into a compact guidance panel immediately below the page-title banner. Removed the old empty-state panel (“اختر مجموعة لعرض تفاصيلها”) so it no longer occupies space beneath the table.
+- Preserved the responsive centered groups table and its monthly-cycle selection behavior. No schema/database changes.
+
+Source commits: `2444882dac8887bfc148d8225be9a1d4201a5d95` (banner + compact form), `726771e6642d4691ad9ac3101dda58c12f2e7574` (guidance panel moved directly below title).
+Contract commit: `326d1d1bfe5b0e01e6f131220c283b210efd1aa6`.
+
+GitHub Actions VGM Group Management Contract run `43570051595` completed **SUCCESS**. PHP syntax, JavaScript syntax, and `48 checks | PASS`, including three new assertions for the title banner, single-row creation form, and guidance placement. This is repository/CI verification only; local XAMPP browser appearance and interaction remain pending.
+
+**Next acceptance:** pull latest `main`; inspect the title banner, current-month badge, compact creation form (desktop and mobile widths), and guidance panel directly beneath the title. Confirm group creation still opens the new group details page and the table/monthly-cycle controls remain usable. No SQL is needed for this presentation-only change.
