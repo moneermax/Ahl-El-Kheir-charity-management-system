@@ -550,32 +550,36 @@ include __DIR__ . '/../../includes/header.php';
                         <div class="col-md-3"><div class="border rounded p-2"><div class="small text-muted">دفعات الصرف</div><strong><?php echo (int)$group_usage['disbursement_history']; ?></strong></div></div>
                     </div>
                     <?php if ($has_current_disbursement): ?><div class="alert alert-warning py-2 small mb-3"><i class="bi bi-shield-lock"></i> <strong>حماية الصرف:</strong> تم إنشاء صرف للشهر الحالي، لذلك يمنع النظام تعديل أعضاء هذه المجموعة حتى لا تتغير البيانات المالية بأثر رجعي.</div><?php endif; ?>
-                    <p class="text-muted small mb-3"><?php echo nl2br(htmlspecialchars($selected_group['description'] ?: 'لا يوجد وصف')); ?></p>
-                    <form method="POST" action="groups.php" class="row g-2 mb-3"><?php echo csrf_field(); ?>
-                        <input type="hidden" name="action" value="update_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
-                        <div class="col-md-10">
-                            <label class="form-label small mb-1">وصف المجموعة</label>
-                            <input class="form-control form-control-sm" name="description" maxlength="1000" value="<?php echo htmlspecialchars($selected_group['description'] ?? ''); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>>
+                    <div class="row g-2 align-items-end">
+                        <div class="col-12 col-lg-6">
+                            <form method="POST" action="groups.php" class="h-100"><?php echo csrf_field(); ?>
+                                <input type="hidden" name="action" value="update_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
+                                <label class="form-label small mb-1">وصف المجموعة</label>
+                                <div class="input-group input-group-sm">
+                                    <input class="form-control" name="description" maxlength="1000" value="<?php echo htmlspecialchars($selected_group['description'] ?? ''); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>>
+                                    <button class="btn btn-outline-primary" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>>حفظ الوصف</button>
+                                </div>
+                            </form>
                         </div>
-                        <div class="col-md-2"><button class="btn btn-outline-primary btn-sm w-100" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>>حفظ الوصف</button></div>
-                    </form>
+                        <?php if (groupCanChangeMembers($status)): ?>
+                            <?php $current_nanny = $group_history[0] ?? null; ?>
+                            <div class="col-12 col-lg-6">
+                                <form method="POST" action="groups.php"><?php echo csrf_field(); ?>
+                                    <input type="hidden" name="action" value="assign_nanny"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
+                                    <label class="form-label small mb-1">الحاضنة الحالية وتعيين الحاضنة</label>
+                                    <div class="input-group input-group-sm">
+                                        <select class="form-select" name="nanny_id" required><option value="">-- اختر الحاضنة --</option><?php foreach ($nannies as $nanny): ?><option value="<?php echo (int)$nanny['id']; ?>"><?php echo htmlspecialchars($nanny['full_name']); ?></option><?php endforeach; ?></select>
+                                        <button class="btn btn-primary"><i class="bi bi-check-circle"></i> تعيين</button>
+                                    </div>
+                                    <?php if ($current_nanny && empty($current_nanny['end_date'])): ?>
+                                        <div class="form-text"><i class="bi bi-person-check"></i> الحالية: <?php echo htmlspecialchars($current_nanny['nanny_name']); ?> — منذ <?php echo htmlspecialchars($current_nanny['start_date']); ?></div>
+                                    <?php endif; ?>
+                                </form>
+                            </div>
+                        <?php endif; ?>
+                    </div>
                 </div>
             </div>
-
-            <?php if (groupCanChangeMembers($status)): ?>
-            <div class="card mb-3">
-                <div class="card-header py-2"><strong><i class="bi bi-person-badge"></i> الحاضنة الحالية وتعيين الحاضنة</strong></div>
-                <div class="card-body">
-                    <?php $current_nanny = $group_history[0] ?? null; ?>
-                    <?php if ($current_nanny && empty($current_nanny['end_date'])): ?><div class="alert alert-info py-2 mb-2"><i class="bi bi-person-check"></i> <strong>الحاضنة الحالية:</strong> <?php echo htmlspecialchars($current_nanny['nanny_name']); ?> <span class="small">(منذ <?php echo htmlspecialchars($current_nanny['start_date']); ?>)</span></div><?php endif; ?>
-                    <form method="POST" action="groups.php" class="row g-2"><?php echo csrf_field(); ?>
-                        <input type="hidden" name="action" value="assign_nanny"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
-                        <div class="col-md-8"><select class="form-select form-select-sm" name="nanny_id" required><option value="">-- اختر الحاضنة --</option><?php foreach ($nannies as $nanny): ?><option value="<?php echo (int)$nanny['id']; ?>"><?php echo htmlspecialchars($nanny['full_name']); ?></option><?php endforeach; ?></select></div>
-                        <div class="col-md-4"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-check-circle"></i> تعيين</button></div>
-                    </form>
-                </div>
-            </div>
-            <?php endif; ?>
 
             <div class="card mb-3">
                 <div class="card-header py-2 d-flex justify-content-between"><strong>الأعضاء الحاليون</strong><span class="badge bg-secondary"><?php echo $current_members; ?></span></div>
