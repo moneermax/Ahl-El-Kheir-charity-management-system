@@ -4514,3 +4514,21 @@ The previous verification boundaries remain:
 ## 2026-11-14 — Final VGM contract rerun
 
 The VGM contract workflow was rerun on source commit `79e37315a7b09d32aaae9227065a8c818bc7c447` after adding the lifecycle transaction assertion. GitHub Actions run `43557000502` passed PHP 8.2 lint and reported `18 checks | PASS`. This is the latest VGM contract result; it supersedes the earlier 16/17-check counts.
+
+### 2026-11-14 — VGM group creation hardening checkpoint
+
+The VGM group-creation and web-management source audit identified inconsistent validation, absent CSRF enforcement, missing active-Nanny validation on the web path, and transaction/row-lock gaps in web membership/assignment changes. The web page also stored `data-confirm` on forms without a VGM page handler, and bulk-add called native `.submit()`, bypassing the centralized same-page POST handler.
+
+Implemented on `main` (local runtime verification pending):
+- Global group-name uniqueness migration: `database/migrations/2026-11-14_vgm_unique_group_names.sql`, unique index `uq_orphan_groups_group_name`.
+- Shared web/API name and description validation (required name, max 150 characters; optional description, max 1000 characters), duplicate lookup, and friendly handling of concurrent duplicate-key collisions.
+- CSRF verification for every VGM web POST and a CSRF field in all 11 page forms.
+- Server-side active-Nanny role/account validation for web assignment, inside a transaction with the group row locked and revalidated.
+- Web add/remove/transfer membership operations now acquire group-row locks and recheck the current-month disbursement boundary inside their transactions.
+- VGM page confirmation dialogs are wired to the existing SweetAlert2 dependency with a native-confirm fallback; bulk-add uses `requestSubmit()` so the shared same-page POST flow handles it.
+- Creation form now explains global uniqueness, draft status and the next steps; validation errors remain visible in the page response.
+
+The canonical schema dump snapshot dated 2026-11-13 contained four `orphan_groups` records and no duplicate names under its `utf8mb4_unicode_ci` collation. The migration includes a duplicate preflight query; run it against the actual local database before applying the unique index. No group-creation audit row was added: `created_by`/`created_at` already record creator/time, and the current safe-delete rule counts all `audit_log` rows as usage, so a generic creation event would unintentionally force never-used drafts into archive behavior.
+
+Verification still required locally after pull and migration: PHP lint for the three VGM PHP files; `php tools/test_vgm_group_management_contract.php`; existing mobile API auth integration harness; browser acceptance of create/duplicate/update/CSRF/confirmation/bulk-add flows. No local Apache/MariaDB/browser runtime was available to this implementation session. Do not treat this checkpoint as runtime-verified or move to Nanny/Accountant until VGM acceptance passes.
+
