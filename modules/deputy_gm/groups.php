@@ -108,13 +108,16 @@ try {
 
         elseif ($action === 'create_group') {
             [$group_name, $description] = ak_vgm_validate_group_details($pdo, $_POST['group_name'] ?? null, $_POST['description'] ?? '');
+            $pdo->beginTransaction();
             $stmt = $pdo->prepare(
                 "INSERT INTO orphan_groups (group_name, description, created_by, is_active, status, updated_at)
                  VALUES (:name, :description, :created_by, 0, 'draft', NOW())"
             );
             $stmt->execute(['name' => $group_name, 'description' => $description, 'created_by' => $actor_id]);
             $view_group_id = (int) $pdo->lastInsertId();
-            $success_message = 'تم إنشاء المجموعة كمسودة. أضف الأعضاء ثم فعّل المجموعة عند جاهزيتها.';
+            ak_vgm_log_group_created($pdo, $view_group_id, $actor_id, $group_name, $description);
+            $pdo->commit();
+            $success_message = 'تم إنشاء المجموعة كمسودة. أضف الأعضاء ثم عيّن الحاضنة وفعّل المجموعة عند جاهزيتها.';
         }
 
         elseif ($action === 'update_group') {
