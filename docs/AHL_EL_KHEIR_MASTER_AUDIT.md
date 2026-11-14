@@ -7115,3 +7115,9 @@ No schema or database changes were made as part of this confirmation fix.
 ## 2026-11-14 — VGM dedicated group details route audit
 
 The current VGM page had combined group creation, group listing, selected-group details, caregiver controls and both member tables. The source now gates the create/list sidebar off on the dedicated details route and resolves the selected group by its route ID. The create form posts cross-page to the details route and redirects after the existing creation transaction/audit; group links open the route. All group-detail forms post to the existing `groups.php` controller and redirect back to the group details (or list after deletion), preserving CSRF and business guards. Static inspection: 11 forms / 11 CSRF fields; all eight forms in the details block and the bulk-add form post to the controller route. No schema/data changes. PHP syntax CI passed; first contract failure was isolated to two interpolated test assertions and corrected in `d9740e65bb090af215051f3fcde9690362ce9c41`; rerun pending. Browser acceptance not yet performed.
+
+### Verification update — 2026-11-14
+
+Final source hardening commit: `165d7d5b01f593e2028cb9074b2c4de1e920e047`. If group creation fails after the insert attempt has assigned a tentative last-insert ID, the error path now clears that ID before redirecting, so a failed creation returns to the create/list page rather than a nonexistent details URL.
+
+GitHub Actions VGM Group Management Contract run `43568227445` completed **SUCCESS** on the final source commit. PHP 8.2 lint passed for the shared helper, `groups.php`, `group_details.php`, API endpoint and contract script; JavaScript syntax passed; the contract reports `43 checks | PASS`. This is CI/source verification only. Local Apache/XAMPP browser acceptance remains pending.
