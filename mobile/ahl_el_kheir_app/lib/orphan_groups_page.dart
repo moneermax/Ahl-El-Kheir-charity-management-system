@@ -281,7 +281,7 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
         selected: _i(g['id']) == selectedGroupId,
         leading: const Icon(Icons.groups_rounded),
         title: Text(_s(g['group_name'])),
-        subtitle: Text(_s(g['orphan_count']) + (en ? ' members • ' : ' عضو • ') + (_s(g['nanny_name']).isEmpty ? (en ? 'No nanny' : 'بدون حاضنة') : _s(g['nanny_name']))),
+        subtitle: Text((_s(g['group_code']).isEmpty ? '' : _s(g['group_code']) + ' • ') + _s(g['orphan_count']) + (en ? ' members • ' : ' عضو • ') + (_s(g['nanny_name']).isEmpty ? (en ? 'No nanny' : 'بدون حاضنة') : _s(g['nanny_name']))),
         trailing: _chip(_s(g['status'])),
         onTap: saving ? null : () => _load(groupId: _i(g['id'])),
       )),
@@ -306,7 +306,14 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
     }
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
       Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        Row(children: [Expanded(child: Text(_s(current['group_name']), style: Theme.of(context).textTheme.titleLarge)), _chip(status)]),
+        Row(children: [
+          Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+            Text(_s(current['group_name']), style: Theme.of(context).textTheme.titleLarge),
+            if (_s(current['group_code']).isNotEmpty)
+              Text(_s(current['group_code']), style: Theme.of(context).textTheme.bodySmall),
+          ])),
+          _chip(status),
+        ]),
         if (_s(current['description']).isNotEmpty) Padding(padding: const EdgeInsets.only(top: 8), child: Text(_s(current['description']))),
         const SizedBox(height: 12),
         Wrap(spacing: 8, runSpacing: 8, children: [
@@ -413,7 +420,6 @@ class _OrphanGroupEditDialog extends StatefulWidget {
 }
 
 class _OrphanGroupEditDialogState extends State<_OrphanGroupEditDialog> {
-  late final TextEditingController _name;
   late final TextEditingController _description;
 
   bool get en => widget.english;
@@ -421,13 +427,11 @@ class _OrphanGroupEditDialogState extends State<_OrphanGroupEditDialog> {
   @override
   void initState() {
     super.initState();
-    _name = TextEditingController(text: widget.existing?['group_name']?.toString() ?? '');
     _description = TextEditingController(text: widget.existing?['description']?.toString() ?? '');
   }
 
   @override
   void dispose() {
-    _name.dispose();
     _description.dispose();
     super.dispose();
   }
@@ -435,24 +439,20 @@ class _OrphanGroupEditDialogState extends State<_OrphanGroupEditDialog> {
   @override
   Widget build(BuildContext context) => AlertDialog(
     title: Text(en
-        ? (widget.existing == null ? 'Create group draft' : 'Edit group')
-        : (widget.existing == null ? 'إنشاء مجموعة كمسودة' : 'تعديل المجموعة')),
-    content: SizedBox(width: 440, child: Column(mainAxisSize: MainAxisSize.min, children: [
-      TextField(controller: _name, maxLength: 150,
-        decoration: InputDecoration(labelText: en ? 'Group name' : 'اسم المجموعة')),
-      TextField(controller: _description, maxLength: 1000, minLines: 2, maxLines: 4,
-        decoration: InputDecoration(labelText: en ? 'Description' : 'الوصف')),
-    ])),
+        ? (widget.existing == null ? 'Create group draft' : 'Edit group description')
+        : (widget.existing == null ? 'إنشاء مجموعة كمسودة' : 'تعديل وصف المجموعة')),
+    content: SizedBox(width: 440, child: TextField(
+      controller: _description,
+      maxLength: 1000,
+      minLines: 2,
+      maxLines: 4,
+      decoration: InputDecoration(labelText: en ? 'Description' : 'وصف المجموعة'),
+    )),
     actions: [
       TextButton(onPressed: () => Navigator.pop(context),
         child: Text(en ? 'Cancel' : 'إلغاء')),
       FilledButton(onPressed: () {
-        if (_name.text.trim().isNotEmpty) {
-          Navigator.pop(context, {
-            'group_name': _name.text.trim(),
-            'description': _description.text.trim(),
-          });
-        }
+        Navigator.pop(context, {'description': _description.text.trim()});
       }, child: Text(en ? 'Save' : 'حفظ')),
     ],
   );
