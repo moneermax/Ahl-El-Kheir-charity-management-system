@@ -4,32 +4,76 @@
  * All database structure changes belong in versioned migrations.
  */
 
-/**
- * Validate and normalize group details for every web/API write path.
- * The database unique index remains the final concurrency-safe uniqueness
- * boundary; this query provides an immediate, user-friendly validation error.
- */
-function ak_vgm_validate_group_details(PDO $pdo, $rawName, $rawDescription, int $excludeGroupId = 0): array
+/** Validate the only human-entered group field. */
+function ak_vgm_validate_group_description($rawDescription): string
 {
-    if (!is_string($rawName) || !is_string($rawDescription)) {
-        throw new DomainException('اسم المجموعة والوصف يجب أن يكونا نصاً صالحاً.');
+    if (!is_string($rawDescription)) {
+        throw new DomainException('وصف المجموعة يجب أن يكون نصاً صالحاً.');
     }
-
-    $name = trim($rawName);
     $description = trim($rawDescription);
-    if ($name === '') throw new DomainException('اسم المجموعة مطلوب.');
-    if (mb_strlen($name, 'UTF-8') > 150) throw new DomainException('اسم المجموعة يجب ألا يتجاوز 150 حرفاً.');
-    if (mb_strlen($description, 'UTF-8') > 1000) throw new DomainException('وصف المجموعة يجب ألا يتجاوز 1000 حرف.');
-
-    $duplicate = $pdo->prepare(
-        'SELECT id FROM orphan_groups WHERE group_name = ? AND id <> ? LIMIT 1'
-    );
-    $duplicate->execute([$name, $excludeGroupId]);
-    if ($duplicate->fetchColumn()) {
-        throw new DomainException('اسم المجموعة مستخدم بالفعل. اختر اسماً آخر.');
+    if (mb_strlen($description, 'UTF-8') > 1000) {
+        throw new DomainException('وصف المجموعة يجب ألا يتجاوز 1000 حرف.');
     }
+    return $description;
+}
 
-    return [$name, $description];
+/**
+ * Create a draft with a database-ID-derived name and code.
+ * The caller owns the transaction so creation and its audit event commit
+ * atomically. Temporary values exist only inside that transaction.
+ */
+function ak_vgm_create_group(PDO $pdo, $rawDescription, int $actorId): array
+{
+    if (!$pdo->inTransaction()) {
+        throw new RuntimeException('يجب إنشاء المجموعة داخل معاملة قاعدة بيانات.');
+    }
+    if ($actorId < 1) throw new DomainException('مستخدم إنشاء المجموعة غير صالح.');
+
+    $description = ak_vgm_validate_group_description($rawDescription);
+    $temporaryName = '__VGM_PENDING__' . bin2hex(random_bytes(16));
+    $temporaryCode = 'TMP-' . strtoupper(bin2hex(random_bytes(12)));
+
+    $insert = $pdo->prepare(
+        "INSERT INTO orphan_groups
+         (group_name, group_code, description, created_by, is_active, status, updated_at)
+         VALUES (:name, :code, :description, :created_by, 0, 'draft', NOW())"
+    );
+    $insert->execute([
+        'name' => $temporaryName,
+        'code' => $temporaryCode,
+        'description' => $description,
+        'created_by' => $actorId,
+    ]);
+
+    $groupId = (int)$pdo->lastInsertId();
+    if ($groupId < 1) throw new RuntimeException('تعذر إنشاء رقم المجموعة.');
+
+    $groupCode = 'GRP-' . str_pad((string)$groupId, 6, '0', STR_PAD_LEFT);
+    $baseName = 'مجموعة ' . $groupCode;
+    $groupName = $baseName;
+    $exists = $pdo->prepare('SELECT 1 FROM orphan_groups WHERE group_name = :name AND id <> :id LIMIT 1');
+
+    // Preserve every legacy name. If one already uses this generated label,
+    // add a deterministic suffix while retaining the unique group code.
+    for ($suffix = 2; $suffix <= 1000; $suffix++) {
+        $exists->execute(['name' => $groupName, 'id' => $groupId]);
+        if (!$exists->fetchColumn()) break;
+        $groupName = $baseName . ' (' . $suffix . ')';
+    }
+    $exists->execute(['name' => $groupName, 'id' => $groupId]);
+    if ($exists->fetchColumn()) throw new RuntimeException('تعذر توليد اسم فريد للمجموعة.');
+
+    $update = $pdo->prepare(
+        'UPDATE orphan_groups SET group_name = :name, group_code = :code, updated_at = NOW() WHERE id = :id'
+    );
+    $update->execute(['name' => $groupName, 'code' => $groupCode, 'id' => $groupId]);
+
+    return [
+        'id' => $groupId,
+        'group_name' => $groupName,
+        'group_code' => $groupCode,
+        'description' => $description,
+    ];
 }
 
 /**
@@ -37,7 +81,7 @@ function ak_vgm_validate_group_details(PDO $pdo, $rawName, $rawDescription, int 
  * Creation metadata remains visible in orphan_groups; this event is excluded
  * from "used group" calculations so a never-used draft can still be deleted.
  */
-function ak_vgm_log_group_created(PDO $pdo, int $groupId, int $actorId, string $name, string $description): void
+function ak_vgm_log_group_created(PDO $pdo, int $groupId, int $actorId, string $name, string $code, string $description): void
 {
     $stmt = $pdo->prepare(
         "INSERT INTO audit_log
@@ -48,7 +92,7 @@ function ak_vgm_log_group_created(PDO $pdo, int $groupId, int $actorId, string $
         $actorId,
         $groupId,
         json_encode(
-            ['group_name' => $name, 'description' => $description, 'status' => 'draft'],
+            ['group_name' => $name, 'group_code' => $code, 'description' => $description, 'status' => 'draft'],
             JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
         ),
         $_SERVER['REMOTE_ADDR'] ?? 'cli',
