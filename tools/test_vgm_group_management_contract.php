@@ -9,6 +9,7 @@ $root = dirname(__DIR__);
 $files = [
     'helper' => $root . '/modules/deputy_gm/lib_group_management.php',
     'web' => $root . '/modules/deputy_gm/groups.php',
+    'details' => $root . '/modules/deputy_gm/group_details.php',
     'api' => $root . '/api/v1/deputy_gm/groups.php',
     'notifications' => $root . '/assets/js/notifications.js',
     'app' => $root . '/assets/js/app.js',
@@ -46,6 +47,11 @@ $checks = [
         && str_contains($src['web'], 'ak_vgm_validate_group_details($pdo')
         && str_contains($src['api'], 'ak_vgm_validate_group_details('),
     'web rejects POST without valid CSRF token' => str_contains($src['web'], 'if (!verify_csrf())'),
+    'dedicated group details route reuses the protected VGM controller' => is_file($files['details']) && str_contains((string)file_get_contents($files['details']), '$vgm_group_details_only = true;') && str_contains((string)file_get_contents($files['details']), "require __DIR__ . '/groups.php';"),
+    'group creation posts to a separate details route and redirects to the created group' => str_contains($src['web'], 'action="group_details.php"') && str_contains($src['web'], "header('Location: ' . APP_URL . 'modules/deputy_gm/group_details.php?id=' . $view_group_id)"),
+    'group list links open dedicated group details pages' => str_contains($src['web'], 'href="group_details.php?id='),
+    'group detail actions use full navigation back to the details page' => str_contains($src['web'], '<form method="POST" action="groups.php"') && str_contains($src['web'], "header('Location: ' . APP_URL . 'modules/deputy_gm/group_details.php?id=' . $group_id)"),
+    'group details are excluded from the create/list page' => str_contains($src['web'], '$view_group_id = $vgm_group_details_only ? (int) ($_GET[\'id\'] ?? 0) : 0;') && str_contains($src['web'], '<?php if (!$vgm_group_details_only): ?>'),
     'every VGM web POST form includes CSRF token' => substr_count($src['web'], '<form') === substr_count($src['web'], 'csrf_field()'),
     'web nanny assignment validates active Nanny server-side' => str_contains($src['web'], 'ak_vgm_assert_active_nanny($pdo'),
     'shared active-Nanny validation checks role and account state' => str_contains($src['helper'], "r.code = 'nanny'") && str_contains($src['helper'], 'u.is_active = 1'),
