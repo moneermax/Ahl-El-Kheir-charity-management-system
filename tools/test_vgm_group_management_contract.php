@@ -11,6 +11,7 @@ $files = [
     'web' => $root . '/modules/deputy_gm/groups.php',
     'api' => $root . '/api/v1/deputy_gm/groups.php',
     'notifications' => $root . '/assets/js/notifications.js',
+    'app' => $root . '/assets/js/app.js',
 ];
 foreach ($files as $name => $path) {
     if (!is_file($path)) {
@@ -54,10 +55,12 @@ $checks = [
         && str_contains($src['web'], 'اسم المجموعة مستخدم بالفعل')
         && str_contains($src['api'], "'duplicate_group_name'"),
     'VGM confirmation popups use the centralized notification handler' => str_contains($src['web'], 'data-confirm=') && str_contains($src['notifications'], "getAttribute('data-confirm')") && str_contains($src['notifications'], 'showConfirmation(message, function ()'),
+    'same-page POST waits for confirmation before starting fetch' => str_contains($src['app'], "form.hasAttribute('data-confirm') && form.dataset.akConfirmBypass !== '1'") && str_contains($src['notifications'], "form.dataset.akConfirmBypass = '1'"),
     'bulk confirmation submits only through the confirmed callback' => str_contains($src['web'], 'window.AKNotify.confirm(confirmationMessage, submit') && str_contains($src['web'], "getElementById('bulkAddForm').requestSubmit()"),
     'empty bulk selection uses the correct toast argument order' => str_contains($src['web'], "AKNotify.toast('warning', 'يرجى اختيار يتيم واحد على الأقل')"),
     'bulk member form uses requestSubmit and shared same-page POST handling' => str_contains($src['web'], "getElementById('bulkAddForm').requestSubmit()"),
     'mobile usage summary includes workflow history used by safe archive logic' => str_contains($src['api'], "'workflow_history' => (int)") && str_contains($src['api'], 'FROM group_workflow_audit_log') && str_contains($src['api'], "entity_type = 'orphan_groups'"),
+    'web and API creation writes the audit event' => str_contains($src['web'], 'ak_vgm_log_group_created($pdo') && str_contains($src['api'], 'ak_vgm_log_group_created($pdo'),
     'group creation audit is excluded from used-group history' => str_contains($src['helper'], 'function ak_vgm_log_group_created')
         && str_contains($src['helper'], "action <> 'VGM_CREATE_GROUP'")
         && str_contains($src['api'], "action <> 'VGM_CREATE_GROUP'"),
