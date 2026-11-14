@@ -6855,3 +6855,6 @@ Committed source hardening:
 - The VGM source-contract test now checks these boundaries and explicit `isConfirmed` handling.
 
 Commits on `main`: `6e111302`, `5d22422c`, `72a494eb`, `38ed2c32`, `c9194984`, `9f28af41`. No schema, migration, or database data changed. The patch has not yet been PHP/static-contract tested or exercised in the local browser; do not mark it runtime-verified. Next acceptance is a normal UI cancellation (must create zero groups) followed by one explicit confirmation (must create exactly one draft). Do not ask the user for browser-console or terminal diagnostics. The unique-name migration gate remains separate and pending local preflight/application.
+
+
+Verification refinement: `.github/workflows/vgm-group-management.yml` now runs `node --check` against both modified JavaScript files (`assets/js/app.js` and `assets/js/notifications.js`) in addition to the existing PHP syntax and VGM contract checks. Workflow change commit: `948626d25f22b0b5dad3cc5a7aad6bf9dd0ab6c8`. The Actions run result is not yet available through the connected GitHub interface, so this remains pending CI verification. Local browser acceptance also remains pending.
