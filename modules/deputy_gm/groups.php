@@ -408,13 +408,13 @@ include __DIR__ . '/../../includes/header.php';
 ?>
 
 <div class="container-fluid py-4">
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2 bg-primary text-white rounded-3 p-3 shadow-sm">
         <div>
             <h2 class="mb-1"><i class="bi bi-people-fill"></i> <?php echo $vgm_group_details_only ? 'تفاصيل المجموعة' : 'إدارة مجموعات الأيتام'; ?></h2>
-            <div class="text-muted small"><?php echo $vgm_group_details_only ? 'بيانات المجموعة والأعضاء والحاضنة والإجراءات' : 'إنشاء المجموعات ومتابعة حالتها'; ?></div>
+            <div class="small text-white-50"><?php echo $vgm_group_details_only ? 'بيانات المجموعة والأعضاء والحاضنة والإجراءات' : 'إنشاء المجموعات ومتابعة حالتها'; ?></div>
         </div>
-        <?php if ($vgm_group_details_only): ?><a class="btn btn-outline-secondary btn-sm" href="groups.php"><i class="bi bi-arrow-right"></i> العودة إلى المجموعات</a><?php endif; ?>
-        <div class="small text-muted">دورة الصرف الحالية: <strong><?php echo htmlspecialchars($current_month); ?></strong></div>
+        <?php if ($vgm_group_details_only): ?><a class="btn btn-outline-light btn-sm" href="groups.php"><i class="bi bi-arrow-right"></i> العودة إلى المجموعات</a><?php endif; ?>
+        <div class="small text-white">دورة الصرف الحالية: <strong class="badge bg-light text-primary fs-6"><?php echo htmlspecialchars($current_month); ?></strong></div>
     </div>
 
     <?php if ($success_message): ?>
@@ -427,17 +427,24 @@ include __DIR__ . '/../../includes/header.php';
     <div class="row g-3">
         <?php if (!$vgm_group_details_only): ?>
             <div class="col-12">
-                <div class="card mb-3 mx-auto" style="max-width: 760px;">
+                <div class="card mb-3 mx-auto" style="max-width: 1400px; width: 100%;">
                     <div class="card-header py-2"><strong><i class="bi bi-plus-circle"></i> إنشاء مجموعة</strong></div>
-                    <div class="card-body">
-                        <form method="POST" action="group_details.php" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟"><?php echo csrf_field(); ?>
+                    <div class="card-body py-2">
+                        <form method="POST" action="group_details.php" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟" class="row g-2 align-items-end"><?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="create_group">
-                            <div class="mb-2"><label class="form-label small" for="vgmGroupName">اسم المجموعة</label><input id="vgmGroupName" type="text" class="form-control form-control-sm" name="group_name" required maxlength="150" autocomplete="off" aria-describedby="vgmGroupNameHelp"></div>
-                            <div id="vgmGroupNameHelp" class="form-text mb-2">يجب أن يكون الاسم فريداً على مستوى المنظمة (حتى 150 حرفاً).</div>
-                            <div class="mb-2"><label class="form-label small" for="vgmGroupDescription">الوصف</label><textarea id="vgmGroupDescription" class="form-control form-control-sm" name="description" rows="2" maxlength="1000" aria-describedby="vgmGroupDescriptionHelp"></textarea><div id="vgmGroupDescriptionHelp" class="form-text">اختياري، حتى 1000 حرف.</div></div>
-                            <div class="alert alert-info py-2 small mb-2">ستُنشأ المجموعة كمسودة. بعد الإنشاء ستظهر تفاصيلها لتتمكن من إضافة الأيتام وتعيين الحاضنة، ثم تفعيلها.</div>
-                            <button class="btn btn-primary btn-sm w-100"><i class="bi bi-save"></i> إنشاء كمسودة</button>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small mb-1" for="vgmGroupName">اسم المجموعة</label>
+                                <input id="vgmGroupName" type="text" class="form-control form-control-sm" name="group_name" required maxlength="150" autocomplete="off" placeholder="اسم فريد للمجموعة">
+                            </div>
+                            <div class="col-12 col-md-5">
+                                <label class="form-label small mb-1" for="vgmGroupDescription">الوصف (اختياري)</label>
+                                <input id="vgmGroupDescription" type="text" class="form-control form-control-sm" name="description" maxlength="1000" placeholder="وصف مختصر للمجموعة">
+                            </div>
+                            <div class="col-12 col-md-3">
+                                <button class="btn btn-primary btn-sm w-100"><i class="bi bi-save"></i> إنشاء كمسودة</button>
+                            </div>
                         </form>
+                        <div class="form-text mt-2">اسم المجموعة يجب أن يكون فريداً على مستوى المنظمة. ستُنشأ كمسودة، ثم تنتقل إلى صفحة التفاصيل لإضافة الأيتام وتعيين الحاضنة وتفعيلها.</div>
                     </div>
                 </div>
             </div>
@@ -565,7 +572,21 @@ include __DIR__ . '/../../includes/header.php';
         <?php elseif ($vgm_group_details_only): ?>
             <div class="alert alert-danger">المجموعة غير موجودة أو لا يمكن الوصول إليها. <a href="groups.php">العودة إلى قائمة المجموعات</a></div>
         <?php else: ?>
-            <div class="card h-100"><div class="card-body text-center py-5"><i class="bi bi-folder2-open display-5 text-muted"></i><h4 class="mt-3">اختر مجموعة لعرض تفاصيلها</h4><p class="text-muted">يمكنك إنشاء مجموعة جديدة كمسودة، ثم إضافة الأعضاء وتعيين الحاضنة وتفعيلها.</p><div class="row justify-content-center mt-4"><div class="col-md-8"><div class="alert alert-light border text-start small mb-0"><strong>قواعد الحماية:</strong><br>• الحذف النهائي متاح فقط للمجموعة التي لم تُستخدم مطلقاً.<br>• المجموعة المستخدمة لا تُحذف؛ تُغلق أو تُلغى مع بقاء التاريخ.<br>• لا يتم تعديل أعضاء مجموعة بعد إنشاء صرف الشهر الحالي.<br>• نقل اليتيم يحفظ نهاية العضوية القديمة وبداية الجديدة.</div></div></div></div></div>
+            <div class="alert alert-light border mx-auto mb-3" style="max-width: 1400px; width: 100%;">
+                <div class="d-flex flex-wrap align-items-start gap-2">
+                    <i class="bi bi-info-circle text-primary mt-1"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold mb-1">إرشادات إدارة المجموعات</div>
+                        <div class="small text-muted mb-2">يمكنك إنشاء مجموعة جديدة كمسودة، ثم فتح صفحة تفاصيلها لإضافة الأيتام وتعيين الحاضنة وتفعيلها.</div>
+                        <div class="row g-2 small">
+                            <div class="col-12 col-md-6">• الحذف النهائي متاح فقط للمجموعة التي لم تُستخدم مطلقاً.</div>
+                            <div class="col-12 col-md-6">• المجموعة المستخدمة لا تُحذف؛ تُغلق أو تُلغى مع بقاء التاريخ.</div>
+                            <div class="col-12 col-md-6">• لا يتم تعديل أعضاء مجموعة بعد إنشاء صرف الشهر الحالي.</div>
+                            <div class="col-12 col-md-6">• نقل اليتيم يحفظ نهاية العضوية القديمة وبداية الجديدة.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         <?php endif; ?>
         </div>
     </div>
