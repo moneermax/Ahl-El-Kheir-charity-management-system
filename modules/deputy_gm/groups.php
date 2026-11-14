@@ -443,7 +443,7 @@ include __DIR__ . '/../../includes/header.php';
             </div>
 
             <div class="col-12">
-                <div class="card mb-3">
+                <div class="card mb-3 mx-auto" style="max-width: 1400px; width: 100%;">
                     <div class="card-header py-2"><strong><i class="bi bi-list-ul"></i> المجموعات</strong></div>
                     <div class="card-body p-0">
                         <form method="POST" data-confirm="سيتم فتح دورة التوثيق والصرف للشهر الحالي للمجموعات المحددة فقط. هل تريد المتابعة؟"><?php echo csrf_field(); ?>
