@@ -4631,3 +4631,17 @@ The same description-only rule now applies to the VGM Flutter client: its create
 - Mobile API integration run `43576662118` exercised the latest identity implementation. All generated-group assertions passed, including code derivation, distinct identities, immutable name/code, description updates, audit code, and safe deletion. The overall workflow remains **FAIL** only at the known unrelated SQL-backup assertion (MariaDB root invoked without the configured password).
 - Flutter analysis passed. All VGM orphan-group widget tests passed, including description-only creation and code display. The full Flutter suite remains **FAIL** because the unrelated existing `payroll_management_page_test.dart` expects 10 where the current UI exposes 11; 187 tests passed and 1 failed. No payroll source/test changes were made. APK build was skipped after the suite failure.
 - Local generated-identity migration and Apache/XAMPP browser acceptance have not been performed. Source/CI evidence must not be described as local runtime acceptance.
+
+
+## Immediate continuation — VGM family-level group membership and monthly verification carry-forward (2026-11-14)
+
+Continue the agreed open requirement documented in `docs/VGM_GROUP_MANAGEMENT_CONTINUATION.md`.
+
+The user approved:
+- VGM selects a family, not an individual child. Selecting the family adds all its active children with active sponsorships to the chosen group atomically.
+- Any family with a current membership in any group is excluded from other groups' available-family lists and rejected server-side in web and mobile/API actions, regardless of monthly disbursement. Preserve historical ended memberships. Transfer must be atomic and retain old membership history. Protect against concurrent cross-group assignment.
+- For monthly Nanny verification, previous month's three flags (orphan, mother contact, bank) become the new month's initial state only if no explicit current-month verification row exists. Explicit current-month pre-verification wins. Current-month edits must not change prior-month records and must preserve audit history. Do not misrepresent old notes/timestamps as current verification.
+
+Important evidence boundary: `IMP-FAM-001901` was shown fully verified with timestamp 2026-11-13 21:17 before the 2026-11-14 cycle opening. This is consistent with current-month pre-verification and is not proof of duplicate membership. Inspect its actual local membership history read-only before concluding. Source review found current web/mobile membership checks depend on a current-month disbursement and `get_latest_verification_status()` reads exact family/month only.
+
+Start by reading the four mandatory canonical docs and the VGM continuation document from current `main`. Inspect current repository head and relevant complete web/mobile add/list/transfer code, schema keys/constraints, Nanny pre-verification writer, cycle-opening code, and focused tests. Do not infer schema or implement from snippets. Inspect local DB membership rows only when local access is available; do not ask user to paste large dumps. Then make the smallest evidence-backed implementation and add focused tests for family atomicity, web/API parity, transfers/history/concurrency, and monthly carry-forward/current-month precedence. Lint, run focused tests/CI, and request local XAMPP acceptance where required. No source/schema/data changes have yet been made for this requirement.
