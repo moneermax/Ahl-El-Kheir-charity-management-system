@@ -138,6 +138,7 @@ try {
 
         elseif (in_array($action, ['activate_group', 'suspend_group', 'close_group', 'cancel_group', 'archive_group'], true)) {
             if ($group_id <= 0) throw new RuntimeException('المجموعة غير محددة');
+            $pdo->beginTransaction();
             $stmt = $pdo->prepare('SELECT * FROM orphan_groups WHERE id = :id FOR UPDATE');
             $stmt->execute(['id' => $group_id]);
             $group = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -190,6 +191,7 @@ try {
                     'archived' => 'تم أرشفة المجموعة'
                 ][$new_status];
             }
+            $pdo->commit();
         }
 
         elseif ($action === 'assign_nanny') {

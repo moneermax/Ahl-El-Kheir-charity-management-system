@@ -35,6 +35,7 @@ $checks = [
     'used groups are archived, not physically deleted' => str_contains($src['helper'], "SET status = 'archived', is_active = 0") && str_contains($src['helper'], 'UPDATE nanny_group_assignments SET end_date'),
     'archive blocks unfinished disbursements' => str_contains($src['helper'], "status NOT IN ('received', 'returned', 'cancelled', 'voided')"),
     'archive blocks an opened but unfinished verification cycle' => str_contains($src['helper'], 'ak_vgm_assert_group_archivable') && str_contains($src['helper'], 'VGM_OPEN_MONTHLY_CYCLE'),
+    'web lifecycle archive runs inside a transaction' => str_contains($src['web'], 'in_array($action, [\'activate_group\'') && str_contains($src['web'], '$pdo->beginTransaction();') && str_contains($src['web'], '$pdo->commit();'),
     'web transfer capability remains' => str_contains($src['web'], 'elseif ($action === \'transfer_orphan\')'),
     'mobile transfer capability remains' => str_contains($src['api'], 'elseif ($action === \'transfer_orphan\')'),
 ];
