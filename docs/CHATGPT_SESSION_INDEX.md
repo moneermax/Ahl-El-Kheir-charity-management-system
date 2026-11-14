@@ -4546,3 +4546,18 @@ Confirmation timing fix: the shared `app.js` window-capture same-page submit han
 - Mobile API integration workflow: the new migration was imported/applied successfully in CI; PHP syntax, earlier integration stages, and all VGM group assertions passed, including exact/case-insensitive duplicate rejection, length bounds, creation audit, and safe deletion of a never-used draft. The overall job remains **FAIL** at the unrelated pre-existing assertion `administrator can create a real SQL backup on the disposable database`; MariaDB logs show `Access denied for user 'root'@'localhost' (using password: NO)`. The same failure is present in an earlier run before these VGM changes (run 247), so it is not evidence of a VGM regression and was not modified here.
 
 Local database migration and browser acceptance remain pending. The user must run the duplicate preflight against their actual local database before applying the migration.
+
+
+### 2026-11-14 — VGM create confirmation race hardening (source committed; runtime acceptance pending)
+
+The previous same-page POST confirmation design relied on the `app.js` window-capture handler deferring `data-confirm` forms and the `notifications.js` document-capture handler opening the modal. The POST handler and confirmation gate therefore lived at different event levels. The create-page symptom reported by the user (confirmation disappears and a success notification appears without an affirmative click) is consistent with a POST request starting while a confirmation popup is active; SweetAlert2 uses one active popup surface and a toast can destroy an open dialog.
+
+Source hardening committed to `main`:
+- `assets/js/app.js` now owns the confirmation gate for same-page POST forms before its own fetch path. It cancels and stops the original submit event, rejects duplicate pending submits, calls `AKNotify.confirm`, and only calls `requestSubmit()` inside the confirmation callback. Missing confirmation support fails closed; no POST is started.
+- The one-use `akConfirmBypass` is cleared after synchronous resubmission handling so it cannot remain stale if the resubmission is blocked.
+- `assets/js/notifications.js` serializes `AKNotify.confirm` and `AKNotify.toast` through one popup queue. A toast cannot replace an active confirmation, and queued toasts display sequentially.
+- `tools/test_vgm_group_management_contract.php` now asserts the same-page confirmation gate, duplicate-submit guard, explicit `isConfirmed` callback, one-use bypass cleanup, and serialized popup queue.
+
+Commits: `6e111302`, `5d22422c`, `72a494eb`, `38ed2c32`, `c9194984`, `9f28af41`. These are source commits on `main`; no database/schema changes were made. PHP/static contract execution and local browser runtime acceptance have not yet been run for this latest patch. Do not call the symptom runtime-fixed until tested in the local VGM page. The user's staged monthly-data-entry files and untracked backups/receipts were not touched.
+
+Next: after the user pulls latest `main`, test only through the normal VGM page UI: click “إنشاء كمسودة”, verify the confirmation remains visible, cancel and confirm that no group appears; then repeat and explicitly confirm, verifying exactly one draft and one success notification. Do not ask the user to run DevTools or shell diagnostics. Keep the separate unique-name migration preflight/application gate in force. Do not proceed to Nanny/Accountant or resume the paused FM checkpoint.
