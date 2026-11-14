@@ -163,3 +163,18 @@ The user tested the updated VGM group-creation flow and reported: “now it work
 **Scope boundary:** this acceptance covers the create-confirmation interaction and its resulting draft state only. It does not prove the separate global unique-name migration was applied, duplicate-name handling, all group membership/caregiver workflows, or the wider VGM lifecycle. The unique-name migration preflight/application remains a separate gate. Do not begin the Nanny/Accountant passes or resume the paused FM approval checkpoint until the remaining VGM acceptance work is explicitly completed.
 
 No schema or database changes were made as part of this confirmation fix.
+
+## 2026-11-14 — Dedicated VGM group details page (source implementation; local acceptance pending)
+
+The VGM web workflow is separated into two page roles:
+- `modules/deputy_gm/groups.php` is the create/list page. It no longer selects or renders a group's details, caregiver controls, current-members table, or add-members table.
+- New `modules/deputy_gm/group_details.php?id={group_id}` is the dedicated group workspace. It reuses the existing authenticated VGM controller and renders the selected group's fields, lifecycle actions, caregiver assignment/history, current members, and eligible-orphan add-members table.
+
+After creation, the create form posts to the separate details route; the existing transaction and creation audit are preserved, then the user is redirected to the new draft's details page. Group-list links open the same route. Detail forms post to the existing `groups.php` controller using a full page navigation, then use a session flash + redirect back to the same details page. Transfers return to the target group's details; deletion/archive returns to the list. Existing CSRF checks, role gate, member/caregiver locks, current-month disbursement guards, and historical membership behavior remain in the existing controller. No schema or data changes.
+
+Verification:
+- GitHub Actions PHP syntax step passed for `groups.php`, new `group_details.php`, the shared helper, API, and contract script.
+- The first contract run failed only because two newly added test assertions used double-quoted PHP strings and interpolated variable names. This was a test assertion defect, not a source syntax failure. The assertions were corrected in commit `d9740e65bb090af215051f3fcde9690362ce9c41`; rerun status is pending at this checkpoint.
+- Static source inspection confirms 11 web POST forms and 11 CSRF fields; all eight forms in the group-details block and the bulk add form post to `groups.php`, ensuring navigation back to the dedicated page instead of a same-page content swap.
+
+**Not yet accepted:** local XAMPP/browser flow has not been tested. After CI passes, pull `main` and test: create -> details page; list -> details page; edit group fields; assign/change caregiver; add multiple members; remove/transfer a member; lifecycle action; and ensure the create/list page never displays member tables. Keep the unique-name migration preflight/application as a separate pending gate. Do not proceed to Nanny/Accountant or resume the paused FM approval checkpoint.
