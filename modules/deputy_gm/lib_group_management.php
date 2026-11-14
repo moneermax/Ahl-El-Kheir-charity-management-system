@@ -101,7 +101,7 @@ function ak_vgm_log_group_created(PDO $pdo, int $groupId, int $actorId, string $
 }
 
 /** Identify the database unique-index collision for a group name. */
-function ak_vgm_is_duplicate_group_name_error(PDOException $error): bool
+function ak_vgm_is_unique_constraint_error(PDOException $error): bool
 {
     return isset($error->errorInfo[1]) && (int)$error->errorInfo[1] === 1062;
 }
