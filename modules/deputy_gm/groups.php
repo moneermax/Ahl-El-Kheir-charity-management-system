@@ -553,15 +553,15 @@ include __DIR__ . '/../../includes/header.php';
                                     </div>
             </div>
 
-            <div class="row justify-content-center mb-3">
-                <div class="col-12 col-lg-10 col-xl-8">
+            <div class="row justify-content-center mb-2">
+                <div class="col-12 col-lg-8 col-xl-7">
                     <div class="card border">
-                        <div class="card-header py-2">
+                        <div class="card-header py-2 d-flex align-items-center flex-wrap gap-2">
                             <strong><i class="bi bi-sliders"></i> إعدادات المجموعة</strong>
-                            <div class="small text-muted mt-1">تعديل الوصف وإدارة تعيين الحاضنة</div>
+                            <span class="small text-muted">— تعديل الوصف وإدارة تعيين الحاضنة</span>
                         </div>
-                        <div class="card-body py-3">
-                            <div class="row g-3 align-items-start">
+                        <div class="card-body p-2">
+                            <div class="row g-2 align-items-start">
                                 <div class="col-12 col-md-6">
                                     <form method="POST" action="groups.php"><?php echo csrf_field(); ?>
                                         <input type="hidden" name="action" value="update_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
@@ -582,7 +582,7 @@ include __DIR__ . '/../../includes/header.php';
                                                 <select class="form-select" name="nanny_id" required><option value="">-- اختر الحاضنة --</option><?php foreach ($nannies as $nanny): ?><option value="<?php echo (int)$nanny['id']; ?>"><?php echo htmlspecialchars($nanny['full_name']); ?></option><?php endforeach; ?></select>
                                                 <button class="btn btn-primary text-nowrap"><i class="bi bi-check-circle"></i> تعيين</button>
                                             </div>
-                                            <div class="form-text" style="min-height: 1.25rem;">
+                                            <div class="form-text small mt-1">
                                                 <?php if ($current_nanny && empty($current_nanny['end_date'])): ?><i class="bi bi-person-check"></i> الحالية: <?php echo htmlspecialchars($current_nanny['nanny_name']); ?> — منذ <?php echo htmlspecialchars($current_nanny['start_date']); ?><?php endif; ?>
                                             </div>
                                         </form>
