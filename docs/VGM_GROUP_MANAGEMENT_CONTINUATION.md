@@ -148,3 +148,6 @@ Source commits on `main`: `6e111302`, `5d22422c`, `72a494eb`, `38ed2c32`, `c9194
 4. Repeat only if the first run shows a concrete failure; inspect the exact failing path before changing more code.
 
 Do not ask the user to run SQL or browser-console snippets for this confirmation issue. The global unique-name migration remains a separate prerequisite: its duplicate preflight must be checked before applying it. Do not begin Nanny/Accountant or resume the paused FM approval checkpoint.
+
+
+Verification refinement: `.github/workflows/vgm-group-management.yml` now runs `node --check` against both modified JavaScript files (`assets/js/app.js` and `assets/js/notifications.js`) in addition to the existing PHP syntax and VGM contract checks. Workflow change commit: `948626d25f22b0b5dad3cc5a7aad6bf9dd0ab6c8`. The Actions run result is not yet available through the connected GitHub interface, so this remains pending CI verification. Local browser acceptance also remains pending.
