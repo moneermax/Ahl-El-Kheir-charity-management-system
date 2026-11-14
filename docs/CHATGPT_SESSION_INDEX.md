@@ -4689,3 +4689,7 @@ Verification remains pending: GitHub Actions contract run and local Apache/brows
 ### VGM duplicate notification — CI verification
 
 GitHub Actions VGM Group Management Contract run 43580321071 passed on commit a601168b090c9a49b04866fd7911a79ed80971bc: PHP syntax, JavaScript syntax, and all 53 static contract checks passed, including the assertion that group feedback uses the single shared flash channel. Local Apache/browser acceptance remains pending; do not mark the duplicate notification issue closed until the user confirms one popup after saving a description.
+
+### 2026-11-14 — VGM group settings spacing refinement
+
+The group-details settings card received a second, tighter layout pass after the user identified remaining wasted space. The heading and explanatory phrase now share one line; the card width, body padding, row gap and bottom margin are reduced; and the empty reserved caregiver-helper line was removed. Source commit: `7c90e1d335e6474c09f1e8f9a5314ac79cfb65f1`; focused contract assertion commit: `ced9e55e656fb01be0da3e8e22f70049f1252c23`. Local browser acceptance and CI remain pending. See `docs/VGM_GROUP_MANAGEMENT_CONTINUATION.md`.
