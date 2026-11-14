@@ -32,6 +32,12 @@ function ak_vgm_validate_group_details(PDO $pdo, $rawName, $rawDescription, int 
     return [$name, $description];
 }
 
+/** Identify the database unique-index collision for a group name. */
+function ak_vgm_is_duplicate_group_name_error(PDOException $error): bool
+{
+    return isset($error->errorInfo[1]) && (int)$error->errorInfo[1] === 1062;
+}
+
 /** Require the submitted account to be an active user with the Nanny role. */
 function ak_vgm_assert_active_nanny(PDO $pdo, int $nannyId): void
 {
