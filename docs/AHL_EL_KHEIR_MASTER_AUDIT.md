@@ -7096,3 +7096,6 @@ The earlier implementation split same-page confirmation across the `app.js` wind
 4. The VGM contract test now checks the confirmation gate, callback condition, duplicate-submit guard, bypass cleanup, and popup queue.
 
 Source commits on `main`: `6e111302`, `5d22422c`, `72a494eb`, `38ed2c32`, `c9194984`, `9f28af41`. This is source remediation, not yet a verified runtime fix. No local browser, PHP lint, static contract, or database test has been performed for these commits. No schema/data changes were made. Acceptance must prove cancel = no group and confirm = exactly one draft. The user's local database unique-name migration preflight remains a separate pending prerequisite.
+
+
+Verification refinement: `.github/workflows/vgm-group-management.yml` now runs `node --check` against both modified JavaScript files (`assets/js/app.js` and `assets/js/notifications.js`) in addition to the existing PHP syntax and VGM contract checks. Workflow change commit: `948626d25f22b0b5dad3cc5a7aad6bf9dd0ab6c8`. The Actions run result is not yet available through the connected GitHub interface, so this remains pending CI verification. Local browser acceptance also remains pending.
