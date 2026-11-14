@@ -4,6 +4,64 @@
  * All database structure changes belong in versioned migrations.
  */
 
+/**
+ * Validate and normalize group details for every web/API write path.
+ * The database unique index remains the final concurrency-safe uniqueness
+ * boundary; this query provides an immediate, user-friendly validation error.
+ */
+function ak_vgm_validate_group_details(PDO $pdo, $rawName, $rawDescription, int $excludeGroupId = 0): array
+{
+    if (!is_string($rawName) || !is_string($rawDescription)) {
+        throw new DomainException('اسم المجموعة والوصف يجب أن يكونا نصاً صالحاً.');
+    }
+
+    $name = trim($rawName);
+    $description = trim($rawDescription);
+    if ($name === '') throw new DomainException('اسم المجموعة مطلوب.');
+    if (mb_strlen($name, 'UTF-8') > 150) throw new DomainException('اسم المجموعة يجب ألا يتجاوز 150 حرفاً.');
+    if (mb_strlen($description, 'UTF-8') > 1000) throw new DomainException('وصف المجموعة يجب ألا يتجاوز 1000 حرف.');
+
+    $duplicate = $pdo->prepare(
+        'SELECT id FROM orphan_groups WHERE group_name = ? AND id <> ? LIMIT 1'
+    );
+    $duplicate->execute([$name, $excludeGroupId]);
+    if ($duplicate->fetchColumn()) {
+        throw new DomainException('اسم المجموعة مستخدم بالفعل. اختر اسماً آخر.');
+    }
+
+    return [$name, $description];
+}
+
+/** Require the submitted account to be an active user with the Nanny role. */
+function ak_vgm_assert_active_nanny(PDO $pdo, int $nannyId): void
+{
+    if ($nannyId < 1) throw new DomainException('يرجى اختيار حاضنة صالحة.');
+    $stmt = $pdo->prepare(
+        "SELECT u.id FROM users u
+         JOIN roles r ON r.id = u.role_id
+         WHERE u.id = ? AND r.code = 'nanny' AND u.is_active = 1
+         LIMIT 1 FOR UPDATE"
+    );
+    $stmt->execute([$nannyId]);
+    if (!$stmt->fetchColumn()) {
+        throw new DomainException('الحساب المحدد ليس لحاضنة نشطة.');
+    }
+}
+
+/** Lock and revalidate a group before changing its members or nanny. */
+function ak_vgm_lock_operational_group(PDO $pdo, int $groupId): array
+{
+    if ($groupId < 1) throw new DomainException('المجموعة غير محددة.');
+    $stmt = $pdo->prepare('SELECT id, status FROM orphan_groups WHERE id = ? FOR UPDATE');
+    $stmt->execute([$groupId]);
+    $group = $stmt->fetch(PDO::FETCH_ASSOC);
+    if (!$group) throw new DomainException('المجموعة غير موجودة.');
+    if (!in_array((string)$group['status'], ['draft', 'active', 'empty'], true)) {
+        throw new DomainException('لا يمكن تعديل أعضاء أو حاضنة مجموعة غير تشغيلية.');
+    }
+    return $group;
+}
+
 function ak_vgm_group_usage(PDO $pdo, int $groupId): array
 {
     $stmt = $pdo->prepare(
