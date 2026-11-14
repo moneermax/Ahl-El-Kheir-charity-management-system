@@ -6826,3 +6826,8 @@ Migration: `database/migrations/2026-11-14_vgm_unique_group_names.sql`.
 
 Status: source changes committed; migration application, PHP lint, contract/integration harnesses, and real browser acceptance are **PENDING**. The 2026-11-13 canonical SQL snapshot showed four distinct group names, but the local database must pass the migration preflight independently. Do not proceed to Nanny/Accountant until VGM testing is accepted.
 
+### UI confirmation and mobile usage follow-up correction — 2026-11-14
+
+A second source pass inspected `assets/js/notifications.js` and confirmed the centralized handler already processes the page's `data-confirm` form attributes; no custom VGM confirmation handler is needed. A redundant page-scoped handler was removed to prevent duplicate confirmation dialogs. The bulk-add code had a real API-contract defect: it passed an options object to `AKNotify.confirm(message, onConfirm, options)` and treated the returned result object as a boolean, which could submit even after cancellation. It now calls the centralized API with a callback that runs only on confirmation, retains a SweetAlert/native fallback, and calls `requestSubmit()`. The no-selection toast argument order was also corrected to `toast(type, message)`.
+
+The mobile usage summary was also corrected to include `workflow_history` using the same two audit sources as the web safe-archive calculation. The Flutter page already consumes this field, so no Flutter source change was necessary. Local runtime/browser verification remains pending.
