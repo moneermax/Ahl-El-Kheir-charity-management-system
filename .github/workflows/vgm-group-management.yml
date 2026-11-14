@@ -36,5 +36,9 @@ jobs:
           php -l modules/deputy_gm/groups.php
           php -l api/v1/deputy_gm/groups.php
           php -l tools/test_vgm_group_management_contract.php
+      - name: JavaScript syntax
+        run: |
+          node --check assets/js/app.js
+          node --check assets/js/notifications.js
       - name: VGM group workflow contract
         run: php tools/test_vgm_group_management_contract.php
