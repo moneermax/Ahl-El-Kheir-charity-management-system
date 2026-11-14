@@ -71,7 +71,9 @@ $checks = [
     'shared active-Nanny validation checks role and account state' => str_contains($src['helper'], "r.code = 'nanny'") && str_contains($src['helper'], 'u.is_active = 1'),
     'web member additions lock and revalidate group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group(\$pdo, \$group_id)") && str_contains($src['web'], '$pdo->beginTransaction();'),
     'web nanny assignment locks and revalidates group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group(\$pdo, \$group_id)") && str_contains($src['web'], 'ak_vgm_assert_active_nanny($pdo'),
-    'unique group identity collisions have explicit web/API handling' => str_contains($src['helper'], 'ak_vgm_is_unique_constraint_error')
+    'unique group identity collisions have explicit web/API handling' => str_contains($src['helper'], 'ak_vgm_is_group_identity_collision')
+        && str_contains($src['helper'], 'uq_orphan_groups_group_code')
+        && str_contains($src['helper'], 'uq_orphan_groups_group_name')
         && str_contains($src['web'], 'تعذر تخصيص رمز فريد للمجموعة')
         && str_contains($src['api'], "'group_identity_collision'"),
     'VGM confirmation popups use the centralized notification handler' => str_contains($src['web'], 'data-confirm=') && str_contains($src['notifications'], "getAttribute('data-confirm')") && str_contains($src['notifications'], 'showConfirmation(message, function ()'),
