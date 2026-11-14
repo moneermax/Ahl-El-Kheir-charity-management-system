@@ -73,7 +73,7 @@ $checks = [
     'group creation audit is excluded from used-group history' => str_contains($src['helper'], 'function ak_vgm_log_group_created')
         && str_contains($src['helper'], "action <> 'VGM_CREATE_GROUP'")
         && str_contains($src['api'], "action <> 'VGM_CREATE_GROUP'"),
-    'VGM create/list page renders a centered full-width groups table' => str_contains($src['web'], 'mx-auto') && str_contains($src['web'], 'table table-hover table-striped align-middle text-center') && str_contains($src['web'], 'فتح الدورة للمحدد'),
+    'VGM create/list page renders a centered full-width groups table' => str_contains($src['web'], 'style="max-width: 1400px; width: 100%;"') && str_contains($src['web'], 'table table-hover table-striped align-middle text-center') && str_contains($src['web'], 'فتح الدورة للمحدد'),
     'group table preserves detail links and group status/member/caregiver/disbursement fields' => str_contains($src['web'], 'href="group_details.php?id=') && str_contains($src['web'], 'groupStatusLabel($group[\'status\'])') && str_contains($src['web'], '$group[\'orphan_count\']') && str_contains($src['web'], '$group[\'nanny_name\']') && str_contains($src['web'], '$group[\'disbursement_count\']'),
 ];
 $failed = 0;
