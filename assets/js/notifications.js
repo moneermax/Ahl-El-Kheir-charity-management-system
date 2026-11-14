@@ -93,7 +93,9 @@
             options.confirmButtonText = options.confirmButtonText || 'حسناً';
             options.cancelButtonText = options.cancelButtonText || 'إلغاء';
             options.reverseButtons = true;
-            return window.Swal.fire(options);
+            return enqueuePopup(function () {
+                return window.Swal.fire(options);
+            });
         },
         confirm: function (message, onConfirm, options) {
             options = options || {};
