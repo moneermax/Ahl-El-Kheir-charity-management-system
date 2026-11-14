@@ -7084,3 +7084,15 @@ Confirmation timing fix: the shared `app.js` window-capture same-page submit han
 - Mobile API integration workflow: the new migration was imported/applied successfully in CI; PHP syntax, earlier integration stages, and all VGM group assertions passed, including exact/case-insensitive duplicate rejection, length bounds, creation audit, and safe deletion of a never-used draft. The overall job remains **FAIL** at the unrelated pre-existing assertion `administrator can create a real SQL backup on the disposable database`; MariaDB logs show `Access denied for user 'root'@'localhost' (using password: NO)`. The same failure is present in an earlier run before these VGM changes (run 247), so it is not evidence of a VGM regression and was not modified here.
 
 Local database migration and browser acceptance remain pending. The user must run the duplicate preflight against their actual local database before applying the migration.
+
+
+## 2026-11-14 — VGM create confirmation race: source remediation
+
+The earlier implementation split same-page confirmation across the `app.js` window-capture handler and `notifications.js` document-capture handler. The reported modal-disappears/success-toast sequence is consistent with the fetch beginning before the user has confirmed. SweetAlert2 has a single active popup surface; firing a toast while a confirmation is open destroys the confirmation. The source has been hardened at both boundaries:
+
+1. `app.js` now intercepts same-page `data-confirm` forms before its own fetch code, stops the original submit event, prevents duplicate pending submits, and resumes only from the `AKNotify.confirm` callback after the library reports `isConfirmed`. Unsupported confirmation handling fails closed.
+2. `notifications.js` now serializes central confirmations and toast notifications. A toast waits behind an active confirmation instead of destroying it; queued notifications run sequentially.
+3. The one-use bypass is cleared after the resubmission event to avoid a stale bypass.
+4. The VGM contract test now checks the confirmation gate, callback condition, duplicate-submit guard, bypass cleanup, and popup queue.
+
+Source commits on `main`: `6e111302`, `5d22422c`, `72a494eb`, `38ed2c32`, `c9194984`, `9f28af41`. This is source remediation, not yet a verified runtime fix. No local browser, PHP lint, static contract, or database test has been performed for these commits. No schema/data changes were made. Acceptance must prove cancel = no group and confirm = exactly one draft. The user's local database unique-name migration preflight remains a separate pending prerequisite.
