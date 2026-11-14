@@ -11,6 +11,7 @@ on:
       - 'config/environment.php'
       - 'database/ahl_el_kheir.sql'
       - 'database/migrations/2026-11-14_vgm_unique_group_names.sql'
+      - 'database/migrations/2026-11-14_vgm_generated_group_identity.sql'
       - 'modules/deputy_gm/lib_group_management.php'
       - 'database/migrations/2026-10-24_mobile_api_sessions.sql'
       - 'database/migrations/2026-10-25_mobile_web_handoffs.sql'
@@ -45,6 +46,7 @@ on:
       - 'config/environment.php'
       - 'database/ahl_el_kheir.sql'
       - 'database/migrations/2026-11-14_vgm_unique_group_names.sql'
+      - 'database/migrations/2026-11-14_vgm_generated_group_identity.sql'
       - 'modules/deputy_gm/lib_group_management.php'
       - 'database/migrations/2026-10-24_mobile_api_sessions.sql'
       - 'database/migrations/2026-10-25_mobile_web_handoffs.sql'
@@ -117,6 +119,7 @@ jobs:
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-25_mobile_web_handoffs.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-23_document_archive_catalogue.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-11-14_vgm_unique_group_names.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-11-14_vgm_generated_group_identity.sql
 
       - name: PHP syntax check for payroll API and shared helpers
         run: |
