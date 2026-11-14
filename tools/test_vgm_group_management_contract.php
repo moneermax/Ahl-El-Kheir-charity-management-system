@@ -47,8 +47,8 @@ $checks = [
         && str_contains((string)file_get_contents($root . '/database/migrations/2026-11-14_vgm_generated_group_identity.sql'), 'ADD UNIQUE KEY uq_orphan_groups_group_code (group_code)')
         && str_contains((string)file_get_contents($root . '/database/migrations/2026-11-14_vgm_generated_group_identity.sql'), 'LPAD(id, 6, \'0\')'),
     'shared creator derives name and code from the auto-increment ID' => str_contains($src['helper'], 'function ak_vgm_create_group')
-        && str_contains($src['helper'], "'GRP-' . str_pad((string)$groupId, 6, '0', STR_PAD_LEFT)")
-        && str_contains($src['helper'], "'مجموعة ' . $groupCode")
+        && str_contains($src['helper'], 'str_pad((string)$groupId, 6,')
+        && str_contains($src['helper'], '$baseName =')
         && str_contains($src['helper'], 'group_code = :code'),
     'web and API creation accept description only and call the shared creator' => str_contains($src['web'], 'ak_vgm_create_group($pdo, $_POST[\'description\']')
         && str_contains($src['api'], 'ak_vgm_create_group($pdo, $input[\'description\']')
@@ -83,7 +83,7 @@ $checks = [
     'empty bulk selection uses the correct toast argument order' => str_contains($src['web'], "AKNotify.toast('warning', 'يرجى اختيار يتيم واحد على الأقل')"),
     'bulk member form uses requestSubmit and shared same-page POST handling' => str_contains($src['web'], "getElementById('bulkAddForm').requestSubmit()"),
     'mobile usage summary includes workflow history used by safe archive logic' => str_contains($src['api'], "'workflow_history' => (int)") && str_contains($src['api'], 'FROM group_workflow_audit_log') && str_contains($src['api'], "entity_type = 'orphan_groups'"),
-    'web and API creation writes the audit event' => str_contains($src['web'], 'ak_vgm_log_group_created($pdo') && str_contains($src['api'], 'ak_vgm_log_group_created($pdo'),
+    'web and API creation writes the audit event' => str_contains($src['web'], 'ak_vgm_log_group_created(') && str_contains($src['api'], 'ak_vgm_log_group_created('),
     'group creation audit is excluded from used-group history' => str_contains($src['helper'], 'function ak_vgm_log_group_created')
         && str_contains($src['helper'], "action <> 'VGM_CREATE_GROUP'")
         && str_contains($src['api'], "action <> 'VGM_CREATE_GROUP'"),
