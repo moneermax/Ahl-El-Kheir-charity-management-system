@@ -43,9 +43,23 @@ $checks = [
     'mobile transfer capability remains' => str_contains($src['api'], 'elseif ($action === \'transfer_orphan\')'),
     'global group-name unique index migration exists' => is_file($root . '/database/migrations/2026-11-14_vgm_unique_group_names.sql')
         && str_contains((string)file_get_contents($root . '/database/migrations/2026-11-14_vgm_unique_group_names.sql'), 'ADD UNIQUE KEY uq_orphan_groups_group_name (group_name)'),
-    'web and API share group-name/description validation' => str_contains($src['helper'], 'function ak_vgm_validate_group_details')
-        && str_contains($src['web'], 'ak_vgm_validate_group_details($pdo')
-        && str_contains($src['api'], 'ak_vgm_validate_group_details('),
+    'generated identity migration adds a unique group code' => is_file($root . '/database/migrations/2026-11-14_vgm_generated_group_identity.sql')
+        && str_contains((string)file_get_contents($root . '/database/migrations/2026-11-14_vgm_generated_group_identity.sql'), 'ADD UNIQUE KEY uq_orphan_groups_group_code (group_code)')
+        && str_contains((string)file_get_contents($root . '/database/migrations/2026-11-14_vgm_generated_group_identity.sql'), 'LPAD(id, 6, \'0\')'),
+    'shared creator derives name and code from the auto-increment ID' => str_contains($src['helper'], 'function ak_vgm_create_group')
+        && str_contains($src['helper'], "'GRP-' . str_pad((string)$groupId, 6, '0', STR_PAD_LEFT)")
+        && str_contains($src['helper'], "'مجموعة ' . $groupCode")
+        && str_contains($src['helper'], 'group_code = :code'),
+    'web and API creation accept description only and call the shared creator' => str_contains($src['web'], 'ak_vgm_create_group($pdo, $_POST[\'description\']')
+        && str_contains($src['api'], 'ak_vgm_create_group($pdo, $input[\'description\']')
+        && !str_contains($src['web'], 'name="group_name"')
+        && !str_contains($src['api'], "\$input['group_name']"),
+    'group name and code cannot be edited by the VGM form or API' => !str_contains($src['web'], 'name="group_name"')
+        && !str_contains($src['api'], "\$input['group_name']")
+        && str_contains($src['web'], 'SET description = :description, updated_at = NOW()')
+        && str_contains($src['api'], 'SET description = ?, updated_at = NOW()'),
+    'generated code is displayed in the VGM group list and details' => str_contains($src['web'], "\$group['group_code']")
+        && str_contains($src['web'], "\$selected_group['group_code']"),
     'web rejects POST without valid CSRF token' => str_contains($src['web'], 'if (!verify_csrf())'),
     'dedicated group details route reuses the protected VGM controller' => is_file($files['details']) && str_contains((string)file_get_contents($files['details']), '$vgm_group_details_only = true;') && str_contains((string)file_get_contents($files['details']), "require __DIR__ . '/groups.php';"),
     'group creation posts to a separate details route and redirects to the created group' => str_contains($src['web'], 'action="group_details.php"') && str_contains($src['web'], 'header(\'Location: \' . APP_URL . \'modules/deputy_gm/group_details.php?id=\' . $view_group_id)'),
@@ -57,9 +71,9 @@ $checks = [
     'shared active-Nanny validation checks role and account state' => str_contains($src['helper'], "r.code = 'nanny'") && str_contains($src['helper'], 'u.is_active = 1'),
     'web member additions lock and revalidate group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group(\$pdo, \$group_id)") && str_contains($src['web'], '$pdo->beginTransaction();'),
     'web nanny assignment locks and revalidates group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group(\$pdo, \$group_id)") && str_contains($src['web'], 'ak_vgm_assert_active_nanny($pdo'),
-    'concurrent duplicate-name collision has friendly web/API handling' => str_contains($src['helper'], 'ak_vgm_is_duplicate_group_name_error')
-        && str_contains($src['web'], 'اسم المجموعة مستخدم بالفعل')
-        && str_contains($src['api'], "'duplicate_group_name'"),
+    'unique group identity collisions have explicit web/API handling' => str_contains($src['helper'], 'ak_vgm_is_unique_constraint_error')
+        && str_contains($src['web'], 'تعذر تخصيص رمز فريد للمجموعة')
+        && str_contains($src['api'], "'group_identity_collision'"),
     'VGM confirmation popups use the centralized notification handler' => str_contains($src['web'], 'data-confirm=') && str_contains($src['notifications'], "getAttribute('data-confirm')") && str_contains($src['notifications'], 'showConfirmation(message, function ()'),
     'same-page POST waits for confirmation before starting fetch' => str_contains($src['app'], "form.hasAttribute('data-confirm') && form.dataset.akConfirmBypass !== '1'") && str_contains($src['app'], 'event.stopImmediatePropagation();') && str_contains($src['app'], 'window.AKNotify.confirm') && str_contains($src['app'], 'form.requestSubmit()') && str_contains($src['notifications'], "form.dataset.akConfirmBypass = '1'"),
     'SweetAlert confirmations and toasts share a serialized popup queue' => str_contains($src['notifications'], 'var popupQueue = Promise.resolve()') && str_contains($src['notifications'], 'function enqueuePopup(showPopup)') && str_contains($src['notifications'], 'return enqueuePopup(function ()') && str_contains($src['notifications'], 'return Toast.fire(toastOptions)') && str_contains($src['notifications'], 'return window.Swal.fire({') && str_contains($src['notifications'], 'return enqueuePopup(function () {'),
@@ -76,7 +90,7 @@ $checks = [
     'VGM create/list page renders a centered full-width groups table' => str_contains($src['web'], 'style="max-width: 1400px; width: 100%;"') && str_contains($src['web'], 'table table-hover table-striped align-middle text-center') && str_contains($src['web'], 'فتح الدورة للمحدد'),
     'group table preserves detail links and group status/member/caregiver/disbursement fields' => str_contains($src['web'], 'href="group_details.php?id=') && str_contains($src['web'], 'groupStatusLabel($group[\'status\'])') && str_contains($src['web'], '$group[\'orphan_count\']') && str_contains($src['web'], '$group[\'nanny_name\']') && str_contains($src['web'], '$group[\'disbursement_count\']'),
     'VGM page title is restored as a primary background banner with current month contrast' => str_contains($src['web'], 'bg-primary text-white rounded-3 p-3 shadow-sm') && str_contains($src['web'], 'إدارة مجموعات الأيتام') && str_contains($src['web'], 'إنشاء المجموعات ومتابعة حالتها') && str_contains($src['web'], 'دورة الصرف الحالية:'),
-    'group creation fields and submit button share one compact responsive row' => str_contains($src['web'], 'class="card-body py-2"') && str_contains($src['web'], 'class="row g-2 align-items-end"') && str_contains($src['web'], 'id="vgmGroupName"') && str_contains($src['web'], 'id="vgmGroupDescription"') && str_contains($src['web'], 'col-12 col-md-3') && str_contains($src['web'], 'إنشاء كمسودة') && !str_contains($src['web'], '<textarea id="vgmGroupDescription"'),
+    'group creation form contains description only with generated identity notice' => str_contains($src['web'], 'class="card-body py-2"') && str_contains($src['web'], 'id="vgmGroupDescription"') && !str_contains($src['web'], 'id="vgmGroupName"') && !str_contains($src['web'], 'name="group_name"') && str_contains($src['web'], 'سيُنشئ النظام اسماً ورمزاً فريدين') && str_contains($src['web'], 'إنشاء كمسودة'),
     'group guidance and protection rules appear immediately after the page title' => strpos($src['web'], 'إرشادات إدارة المجموعات') > strpos($src['web'], 'إدارة مجموعات الأيتام') && strpos($src['web'], 'إرشادات إدارة المجموعات') < strpos($src['web'], 'if ($success_message)') && str_contains($src['web'], 'الحذف النهائي متاح فقط') && str_contains($src['web'], 'نقل اليتيم يحفظ نهاية العضوية القديمة'),
 
 ];
