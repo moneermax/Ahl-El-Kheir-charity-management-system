@@ -27,7 +27,13 @@ $current_month = date('Y-m');
 $actor_id = (int) Session::getUserId();
 $success_message = '';
 $error_message = '';
-$view_group_id = isset($_GET['view_group']) ? (int) $_GET['view_group'] : (int) ($_POST['view_group'] ?? 0);
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && !empty($_SESSION['vgm_group_flash'])) {
+    $success_message = (string) ($_SESSION['vgm_group_flash']['success'] ?? '');
+    $error_message = (string) ($_SESSION['vgm_group_flash']['error'] ?? '');
+    unset($_SESSION['vgm_group_flash']);
+}
+$vgm_group_details_only = $vgm_group_details_only ?? false;
+$view_group_id = $vgm_group_details_only ? (int) ($_GET['id'] ?? 0) : 0;
 
 function groupStatusLabel(string $status): string {
     return [
@@ -87,6 +93,7 @@ function syncGroupState(PDO $pdo, int $group_id, int $actor_id): void {
     }
 }
 
+$action = '';
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!verify_csrf()) throw new RuntimeException('انتهت صلاحية نموذج الصفحة أو رمز الحماية غير صالح. حدّث الصفحة ثم أعد المحاولة.');
@@ -310,6 +317,21 @@ try {
             : 'تعذر تنفيذ العملية. لم يتم فقد أي بيانات.');
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $_SESSION['vgm_group_flash'] = ['success' => $success_message, 'error' => $error_message];
+    $detailActions = ['create_group', 'update_group', 'activate_group', 'suspend_group', 'close_group', 'cancel_group', 'archive_group', 'assign_nanny', 'add_orphan', 'add_orphan_bulk', 'remove_orphan', 'transfer_orphan'];
+    if ($action === 'create_group' && $view_group_id > 0) {
+        header('Location: ' . APP_URL . 'modules/deputy_gm/group_details.php?id=' . $view_group_id);
+    } elseif ($action === 'transfer_orphan' && $view_group_id > 0) {
+        header('Location: ' . APP_URL . 'modules/deputy_gm/group_details.php?id=' . $view_group_id);
+    } elseif (in_array($action, $detailActions, true) && $action !== 'create_group' && $group_id > 0) {
+        header('Location: ' . APP_URL . 'modules/deputy_gm/group_details.php?id=' . $group_id);
+    } else {
+        header('Location: ' . APP_URL . 'modules/deputy_gm/groups.php');
+    }
+    exit();
+}
+
 $groups = dbFetchAll(
     "SELECT og.*, u.full_name AS nanny_name,
             nga.start_date AS assignment_start_date,
@@ -387,9 +409,10 @@ include __DIR__ . '/../../includes/header.php';
 <div class="container-fluid py-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
         <div>
-            <h2 class="mb-1"><i class="bi bi-people-fill"></i> إدارة مجموعات الأيتام</h2>
-            <div class="text-muted small">إدارة دورة حياة المجموعة والعضوية والحاضنة مع حماية السجلات المالية</div>
+            <h2 class="mb-1"><i class="bi bi-people-fill"></i> <?php echo $vgm_group_details_only ? 'تفاصيل المجموعة' : 'إدارة مجموعات الأيتام'; ?></h2>
+            <div class="text-muted small"><?php echo $vgm_group_details_only ? 'بيانات المجموعة والأعضاء والحاضنة والإجراءات' : 'إنشاء المجموعات ومتابعة حالتها'; ?></div>
         </div>
+        <?php if ($vgm_group_details_only): ?><a class="btn btn-outline-secondary btn-sm" href="groups.php"><i class="bi bi-arrow-right"></i> العودة إلى المجموعات</a><?php endif; ?>
         <div class="small text-muted">دورة الصرف الحالية: <strong><?php echo htmlspecialchars($current_month); ?></strong></div>
     </div>
 
@@ -401,11 +424,11 @@ include __DIR__ . '/../../includes/header.php';
     <?php endif; ?>
 
     <div class="row g-3">
-        <div class="col-lg-4 col-xl-3">
+        <?php if (!$vgm_group_details_only): ?><div class="col-lg-4 col-xl-3">
             <div class="card mb-3">
                 <div class="card-header py-2"><strong><i class="bi bi-plus-circle"></i> إنشاء مجموعة</strong></div>
                 <div class="card-body">
-                    <form method="POST" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟"><?php echo csrf_field(); ?>
+                    <form method="POST" action="group_details.php" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="create_group">
                         <div class="mb-2"><label class="form-label small" for="vgmGroupName">اسم المجموعة</label><input id="vgmGroupName" type="text" class="form-control form-control-sm" name="group_name" required maxlength="150" autocomplete="off" aria-describedby="vgmGroupNameHelp"></div>
                         <div id="vgmGroupNameHelp" class="form-text mb-2">يجب أن يكون الاسم فريداً على مستوى المنظمة (حتى 150 حرفاً).</div>
@@ -435,7 +458,7 @@ include __DIR__ . '/../../includes/header.php';
                     </form>
                     <div class="list-group list-group-flush">
                     <?php foreach ($groups as $group): ?>
-                        <a href="?view_group=<?php echo (int)$group['id']; ?>" class="list-group-item list-group-item-action <?php echo ($selected_group && (int)$selected_group['id'] === (int)$group['id']) ? 'active' : ''; ?>">
+                        <a href="group_details.php?id=<?php echo (int)$group['id']; ?>" class="list-group-item list-group-item-action <?php echo ($selected_group && (int)$selected_group['id'] === (int)$group['id']) ? 'active' : ''; ?>">
                             <div class="d-flex justify-content-between align-items-start gap-2"><strong class="small"><?php echo htmlspecialchars($group['group_name']); ?></strong><span class="badge bg-<?php echo groupStatusClass($group['status']); ?>"><?php echo groupStatusLabel($group['status']); ?></span></div>
                             <div class="small mt-1 <?php echo ($selected_group && (int)$selected_group['id'] === (int)$group['id']) ? '' : 'text-muted'; ?>">
                                 <?php echo (int)$group['orphan_count']; ?> عضو
@@ -447,16 +470,16 @@ include __DIR__ . '/../../includes/header.php';
                     </div>
                 </div>
             </div>
-        </div>
+        </div><?php endif; ?>
 
-        <div class="col-lg-8 col-xl-9">
+        <div class="<?php echo $vgm_group_details_only ? 'col-12' : 'col-lg-8 col-xl-9'; ?>">
         <?php if ($selected_group): ?>
             <?php $status = (string)$selected_group['status']; $current_members = count($group_orphans); $has_current_disbursement = groupHasCurrentDisbursement($pdo, (int)$selected_group['id'], $current_month); ?>
             <div class="card mb-3">
                 <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div><h5 class="mb-1"><i class="bi bi-folder2-open"></i> <?php echo htmlspecialchars($selected_group['group_name']); ?></h5><span class="badge bg-<?php echo groupStatusClass($status); ?>"><?php echo groupStatusLabel($status); ?></span></div>
                     <div class="d-flex gap-1 flex-wrap">
-                        <?php if (in_array($status, ['draft','empty','suspended'], true) && $current_members > 0): ?><form method="POST" class="d-inline" data-confirm="هل تريد تفعيل هذه المجموعة؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="activate_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-success btn-sm">تفعيل</button></form><?php endif; ?>
+                        <?php if (in_array($status, ['draft','empty','suspended'], true) && $current_members > 0): ?><form method="POST" action="groups.php" class="d-inline" data-confirm="هل تريد تفعيل هذه المجموعة؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="activate_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-success btn-sm">تفعيل</button></form><?php endif; ?>
                         <?php if (in_array($status, ['active','empty'], true)): ?><form method="POST" class="d-inline" data-confirm="هل تريد إيقاف المجموعة مؤقتاً؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="suspend_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-warning btn-sm">إيقاف مؤقت</button></form><?php endif; ?>
                         <?php if (in_array($status, ['active','empty','suspended'], true)): ?><form method="POST" class="d-inline" data-confirm="سيتم إغلاق المجموعة مع الاحتفاظ بكل تاريخها. هل تريد المتابعة؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="close_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-dark btn-sm">إغلاق</button></form><?php endif; ?>
                         <?php if ($status !== 'archived'): ?>
@@ -476,7 +499,7 @@ include __DIR__ . '/../../includes/header.php';
                     </div>
                     <?php if ($has_current_disbursement): ?><div class="alert alert-warning py-2 small mb-3"><i class="bi bi-shield-lock"></i> <strong>حماية الصرف:</strong> تم إنشاء صرف للشهر الحالي، لذلك يمنع النظام تعديل أعضاء هذه المجموعة حتى لا تتغير البيانات المالية بأثر رجعي.</div><?php endif; ?>
                     <p class="text-muted small mb-3"><?php echo nl2br(htmlspecialchars($selected_group['description'] ?: 'لا يوجد وصف')); ?></p>
-                    <form method="POST" class="row g-2 mb-3"><?php echo csrf_field(); ?>
+                    <form method="POST" action="groups.php" class="row g-2 mb-3"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="update_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
                         <div class="col-md-4"><input class="form-control form-control-sm" name="group_name" value="<?php echo htmlspecialchars($selected_group['group_name']); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?> required></div>
                         <div class="col-md-6"><input class="form-control form-control-sm" name="description" value="<?php echo htmlspecialchars($selected_group['description'] ?? ''); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>></div>
@@ -491,7 +514,7 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="card-body">
                     <?php $current_nanny = $group_history[0] ?? null; ?>
                     <?php if ($current_nanny && empty($current_nanny['end_date'])): ?><div class="alert alert-info py-2 mb-2"><i class="bi bi-person-check"></i> <strong>الحاضنة الحالية:</strong> <?php echo htmlspecialchars($current_nanny['nanny_name']); ?> <span class="small">(منذ <?php echo htmlspecialchars($current_nanny['start_date']); ?>)</span></div><?php endif; ?>
-                    <form method="POST" class="row g-2"><?php echo csrf_field(); ?>
+                    <form method="POST" action="groups.php" class="row g-2"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="assign_nanny"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
                         <div class="col-md-8"><select class="form-select form-select-sm" name="nanny_id" required><option value="">-- اختر الحاضنة --</option><?php foreach ($nannies as $nanny): ?><option value="<?php echo (int)$nanny['id']; ?>"><?php echo htmlspecialchars($nanny['full_name']); ?></option><?php endforeach; ?></select></div>
                         <div class="col-md-4"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-check-circle"></i> تعيين</button></div>
@@ -517,7 +540,7 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="card-body p-0"><div class="table-responsive"><table class="table table-sm mb-0"><thead><tr><th>الحاضنة</th><th>من</th><th>إلى</th><th>بواسطة</th></tr></thead><tbody>
                 <?php if (!$group_history): ?><tr><td colspan="4" class="text-center text-muted py-3">لا يوجد سجل</td></tr><?php else: foreach ($group_history as $history): ?><tr><td><?php echo htmlspecialchars($history['nanny_name']); ?></td><td><?php echo htmlspecialchars($history['start_date']); ?></td><td><?php echo $history['end_date'] ? htmlspecialchars($history['end_date']) : '<span class="badge bg-success">حالياً</span>'; ?></td><td><?php echo htmlspecialchars($history['assigned_by_name'] ?? '—'); ?></td></tr><?php endforeach; endif; ?></tbody></table></div></div>
             </div>
-        <?php else: ?>
+        <?php elseif (!$vgm_group_details_only): ?>
             <div class="card h-100"><div class="card-body text-center py-5"><i class="bi bi-folder2-open display-5 text-muted"></i><h4 class="mt-3">اختر مجموعة لعرض تفاصيلها</h4><p class="text-muted">يمكنك إنشاء مجموعة جديدة كمسودة، ثم إضافة الأعضاء وتعيين الحاضنة وتفعيلها.</p><div class="row justify-content-center mt-4"><div class="col-md-8"><div class="alert alert-light border text-start small mb-0"><strong>قواعد الحماية:</strong><br>• الحذف النهائي متاح فقط للمجموعة التي لم تُستخدم مطلقاً.<br>• المجموعة المستخدمة لا تُحذف؛ تُغلق أو تُلغى مع بقاء التاريخ.<br>• لا يتم تعديل أعضاء مجموعة بعد إنشاء صرف الشهر الحالي.<br>• نقل اليتيم يحفظ نهاية العضوية القديمة وبداية الجديدة.</div></div></div></div></div>
         <?php endif; ?>
         </div>
@@ -603,7 +626,7 @@ include __DIR__ . '/../../includes/header.php';
                         </button>
                     </div>
 
-                    <form method="POST" action="" id="bulkAddForm" style="display:none;"><?php echo csrf_field(); ?>
+                    <form method="POST" action="groups.php" id="bulkAddForm" style="display:none;"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="add_orphan_bulk">
                         <input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
                         <div id="orphansContainer"></div>
