@@ -7207,3 +7207,14 @@ The same description-only rule now applies to the VGM Flutter client: its create
 - Mobile API integration run `43576662118` exercised the latest identity implementation. All generated-group assertions passed, including code derivation, distinct identities, immutable name/code, description updates, audit code, and safe deletion. The overall workflow remains **FAIL** only at the known unrelated SQL-backup assertion (MariaDB root invoked without the configured password).
 - Flutter analysis passed. All VGM orphan-group widget tests passed, including description-only creation and code display. The full Flutter suite remains **FAIL** because the unrelated existing `payroll_management_page_test.dart` expects 10 where the current UI exposes 11; 187 tests passed and 1 failed. No payroll source/test changes were made. APK build was skipped after the suite failure.
 - Local generated-identity migration and Apache/XAMPP browser acceptance have not been performed. Source/CI evidence must not be described as local runtime acceptance.
+
+
+## 2026-11-14 — VGM family membership and verification carry-forward audit checkpoint
+
+A new VGM/Nanny requirement is agreed but not implemented. Source inspection found that VGM membership availability/add checks in web and mobile/API paths currently treat a current child membership as blocking only when the existing group has a current-month disbursement. This leaves a path for one child/family to be assigned to multiple groups before disbursement. The accepted rule is stricter: one current group per family, selected as a family unit, adding all active children with active sponsorships atomically. Enforce in UI and server-side web/API paths; preserve ended membership history and transactional transfer behavior; explicitly address concurrent requests.
+
+Verification audit: `modules/accounting/lib_group_workflow.php::get_latest_verification_status()` reads only the exact family/month row. The desired monthly behavior is previous-month flags as the new month's starting state only if no explicit current-month row exists. Existing current-month pre-verification must win. Current-month edits must not alter the previous-month record and must retain audit evidence. Verify all consumers and timestamp/note semantics before choosing read-time fallback versus materialized month row.
+
+The family `IMP-FAM-001901` appeared fully verified with timestamp 2026-11-13 21:17 before the 2026-11-14 cycle opening. That fact alone cannot establish prior group membership; local membership rows must be inspected read-only. No data correction is authorized by this audit note.
+
+No implementation or schema changes have been made. Detailed evidence and acceptance matrix are in `docs/VGM_GROUP_MANAGEMENT_CONTINUATION.md`.
