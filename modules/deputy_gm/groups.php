@@ -417,6 +417,24 @@ include __DIR__ . '/../../includes/header.php';
         <div class="small text-white">دورة الصرف الحالية: <strong class="badge bg-light text-primary fs-6"><?php echo htmlspecialchars($current_month); ?></strong></div>
     </div>
 
+    <?php if (!$vgm_group_details_only): ?>
+            <div class="alert alert-light border mx-auto mb-3" style="max-width: 1400px; width: 100%;">
+                <div class="d-flex flex-wrap align-items-start gap-2">
+                    <i class="bi bi-info-circle text-primary mt-1"></i>
+                    <div class="flex-grow-1">
+                        <div class="fw-semibold mb-1">إرشادات إدارة المجموعات</div>
+                        <div class="small text-muted mb-2">يمكنك إنشاء مجموعة جديدة كمسودة، ثم فتح صفحة تفاصيلها لإضافة الأيتام وتعيين الحاضنة وتفعيلها.</div>
+                        <div class="row g-2 small">
+                            <div class="col-12 col-md-6">• الحذف النهائي متاح فقط للمجموعة التي لم تُستخدم مطلقاً.</div>
+                            <div class="col-12 col-md-6">• المجموعة المستخدمة لا تُحذف؛ تُغلق أو تُلغى مع بقاء التاريخ.</div>
+                            <div class="col-12 col-md-6">• لا يتم تعديل أعضاء مجموعة بعد إنشاء صرف الشهر الحالي.</div>
+                            <div class="col-12 col-md-6">• نقل اليتيم يحفظ نهاية العضوية القديمة وبداية الجديدة.</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    <?php endif; ?>
+
     <?php if ($success_message): ?>
         <div class="alert alert-success alert-dismissible fade show py-2"><i class="bi bi-check-circle"></i> <?php echo htmlspecialchars($success_message); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
     <?php endif; ?>
@@ -572,21 +590,7 @@ include __DIR__ . '/../../includes/header.php';
         <?php elseif ($vgm_group_details_only): ?>
             <div class="alert alert-danger">المجموعة غير موجودة أو لا يمكن الوصول إليها. <a href="groups.php">العودة إلى قائمة المجموعات</a></div>
         <?php else: ?>
-            <div class="alert alert-light border mx-auto mb-3" style="max-width: 1400px; width: 100%;">
-                <div class="d-flex flex-wrap align-items-start gap-2">
-                    <i class="bi bi-info-circle text-primary mt-1"></i>
-                    <div class="flex-grow-1">
-                        <div class="fw-semibold mb-1">إرشادات إدارة المجموعات</div>
-                        <div class="small text-muted mb-2">يمكنك إنشاء مجموعة جديدة كمسودة، ثم فتح صفحة تفاصيلها لإضافة الأيتام وتعيين الحاضنة وتفعيلها.</div>
-                        <div class="row g-2 small">
-                            <div class="col-12 col-md-6">• الحذف النهائي متاح فقط للمجموعة التي لم تُستخدم مطلقاً.</div>
-                            <div class="col-12 col-md-6">• المجموعة المستخدمة لا تُحذف؛ تُغلق أو تُلغى مع بقاء التاريخ.</div>
-                            <div class="col-12 col-md-6">• لا يتم تعديل أعضاء مجموعة بعد إنشاء صرف الشهر الحالي.</div>
-                            <div class="col-12 col-md-6">• نقل اليتيم يحفظ نهاية العضوية القديمة وبداية الجديدة.</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+
         <?php endif; ?>
         </div>
     </div>
