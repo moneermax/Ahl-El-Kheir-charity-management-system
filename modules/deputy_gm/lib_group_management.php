@@ -32,6 +32,30 @@ function ak_vgm_validate_group_details(PDO $pdo, $rawName, $rawDescription, int 
     return [$name, $description];
 }
 
+/**
+ * Record the creation event atomically with the new draft.
+ * Creation metadata remains visible in orphan_groups; this event is excluded
+ * from "used group" calculations so a never-used draft can still be deleted.
+ */
+function ak_vgm_log_group_created(PDO $pdo, int $groupId, int $actorId, string $name, string $description): void
+{
+    $stmt = $pdo->prepare(
+        "INSERT INTO audit_log
+         (user_id, action, entity_type, entity_id, old_values, new_values, ip_address, user_agent, created_at)
+         VALUES (?, 'VGM_CREATE_GROUP', 'orphan_groups', ?, NULL, ?, ?, ?, NOW())"
+    );
+    $stmt->execute([
+        $actorId,
+        $groupId,
+        json_encode(
+            ['group_name' => $name, 'description' => $description, 'status' => 'draft'],
+            JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES
+        ),
+        $_SERVER['REMOTE_ADDR'] ?? 'cli',
+        $_SERVER['HTTP_USER_AGENT'] ?? 'cli',
+    ]);
+}
+
 /** Identify the database unique-index collision for a group name. */
 function ak_vgm_is_duplicate_group_name_error(PDOException $error): bool
 {
@@ -76,7 +100,7 @@ function ak_vgm_group_usage(PDO $pdo, int $groupId): array
             (SELECT COUNT(*) FROM nanny_group_assignments WHERE group_id = :id2) AS nanny_history,
             (SELECT COUNT(*) FROM monthly_disbursements WHERE group_id = :id3) AS disbursement_history,
             (SELECT COUNT(*) FROM group_workflow_audit_log WHERE group_id = :id4) +
-            (SELECT COUNT(*) FROM audit_log WHERE entity_type = 'orphan_groups' AND entity_id = :id5) AS workflow_history"
+            (SELECT COUNT(*) FROM audit_log WHERE entity_type = 'orphan_groups' AND entity_id = :id5 AND action <> 'VGM_CREATE_GROUP') AS workflow_history"
     );
     $stmt->execute(['id1' => $groupId, 'id2' => $groupId, 'id3' => $groupId, 'id4' => $groupId, 'id5' => $groupId]);
     $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
