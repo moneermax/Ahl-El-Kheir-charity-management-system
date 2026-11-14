@@ -178,3 +178,9 @@ Verification:
 - Static source inspection confirms 11 web POST forms and 11 CSRF fields; all eight forms in the group-details block and the bulk add form post to `groups.php`, ensuring navigation back to the dedicated page instead of a same-page content swap.
 
 **Not yet accepted:** local XAMPP/browser flow has not been tested. After CI passes, pull `main` and test: create -> details page; list -> details page; edit group fields; assign/change caregiver; add multiple members; remove/transfer a member; lifecycle action; and ensure the create/list page never displays member tables. Keep the unique-name migration preflight/application as a separate pending gate. Do not proceed to Nanny/Accountant or resume the paused FM approval checkpoint.
+
+### Verification update — 2026-11-14
+
+Final source hardening commit: `165d7d5b01f593e2028cb9074b2c4de1e920e047`. If group creation fails after the insert attempt has assigned a tentative last-insert ID, the error path now clears that ID before redirecting, so a failed creation returns to the create/list page rather than a nonexistent details URL.
+
+GitHub Actions VGM Group Management Contract run `43568227445` completed **SUCCESS** on the final source commit. PHP 8.2 lint passed for the shared helper, `groups.php`, `group_details.php`, API endpoint and contract script; JavaScript syntax passed; the contract reports `43 checks | PASS`. This is CI/source verification only. Local Apache/XAMPP browser acceptance remains pending.
