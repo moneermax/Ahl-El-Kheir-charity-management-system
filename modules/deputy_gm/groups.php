@@ -438,10 +438,10 @@ include __DIR__ . '/../../includes/header.php';
     <?php endif; ?>
 
     <?php if ($success_message): ?>
-        <div class="alert alert-success alert-dismissible fade show py-2"><i class="bi bi-check-circle"></i> <?php echo htmlspecialchars($success_message); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <div data-ak-flash="success" data-ak-message="<?php echo htmlspecialchars($success_message, ENT_QUOTES, 'UTF-8'); ?>" data-ak-duration="3200" hidden></div>
     <?php endif; ?>
     <?php if ($error_message): ?>
-        <div class="alert alert-danger alert-dismissible fade show py-2"><i class="bi bi-exclamation-triangle"></i> <?php echo htmlspecialchars($error_message); ?><button type="button" class="btn-close" data-bs-dismiss="alert"></button></div>
+        <div data-ak-flash="error" data-ak-message="<?php echo htmlspecialchars($error_message, ENT_QUOTES, 'UTF-8'); ?>" data-ak-duration="3200" hidden></div>
     <?php endif; ?>
 
     <div class="row g-3">
