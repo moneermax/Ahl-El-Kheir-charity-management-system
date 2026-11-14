@@ -4481,3 +4481,21 @@ The previous verification boundaries remain:
 ## 2026-11-14 — Final VGM contract rerun
 
 The VGM contract workflow was rerun on source commit `79e37315a7b09d32aaae9227065a8c818bc7c447` after adding the lifecycle transaction assertion. GitHub Actions run `43557000502` passed PHP 8.2 lint and reported `18 checks | PASS`. This is the latest VGM contract result; it supersedes the earlier 16/17-check counts.
+
+## Current active task — VGM group creation and page acceptance (2026-11-14)
+
+User confirmed global uniqueness of orphan-group names and requested implementation plus a review of the creation steps, page behavior, and confirmation popups.
+
+Source changes committed on `main`:
+- `database/migrations/2026-11-14_vgm_unique_group_names.sql` adds `uq_orphan_groups_group_name`; first inspect duplicate preflight results on local DB. Do not silently rename duplicates.
+- `modules/deputy_gm/lib_group_management.php`: shared name/description validation, duplicate collision detection, active-Nanny assertion, and operational-group row-lock helper.
+- `modules/deputy_gm/groups.php`: CSRF on all 11 forms and POST validation; shared create/update validation; transactional Nanny assignment; row-locked transactional member add/remove/transfer; improved create instructions; confirmation popup handler; bulk-add `requestSubmit()`.
+- `api/v1/deputy_gm/groups.php`: shared validation and active-Nanny helper; HTTP 409 duplicate-name collision response.
+- `tools/test_vgm_group_management_contract.php`: new source-contract checks for uniqueness, CSRF, shared validation, Nanny validation, locking and popup/bulk submission behavior.
+
+Current migration data evidence: canonical `database/ahl_el_kheir.sql` dump generated 2026-11-13 contains four group names and no duplicates under `utf8mb4_unicode_ci`. This is not proof about the local DB at migration time. Migration query must return zero rows.
+
+Important design decision: do not add an `audit_log` creation row without first changing usage semantics; all `audit_log` rows currently count as group usage and would make unused drafts archive-only. Creator and creation timestamp are already stored on `orphan_groups`.
+
+Next: pull main, run the duplicate preflight, apply the migration only if zero rows are returned, lint the VGM PHP files, run `tools/test_vgm_group_management_contract.php` and the existing mobile API auth integration harness, then browser-test create, duplicate rejection (including case-insensitive variant), overlength/type validation, update/duplicate rejection, invalid CSRF, create confirmation cancel/confirm, success/error feedback, bulk-add selection and same-page behavior. Inspect exact failures; do not proceed to Nanny/Accountant until VGM is accepted. Local browser/DB verification has not been performed by ChatGPT.
+
