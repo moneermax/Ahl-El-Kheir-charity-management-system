@@ -10,6 +10,7 @@ $files = [
     'helper' => $root . '/modules/deputy_gm/lib_group_management.php',
     'web' => $root . '/modules/deputy_gm/groups.php',
     'api' => $root . '/api/v1/deputy_gm/groups.php',
+    'notifications' => $root . '/assets/js/notifications.js',
 ];
 foreach ($files as $name => $path) {
     if (!is_file($path)) {
@@ -48,11 +49,13 @@ $checks = [
     'web nanny assignment validates active Nanny server-side' => str_contains($src['web'], 'ak_vgm_assert_active_nanny($pdo'),
     'shared active-Nanny validation checks role and account state' => str_contains($src['helper'], "r.code = 'nanny'") && str_contains($src['helper'], 'u.is_active = 1'),
     'web member additions lock and revalidate group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group(\$pdo, \$group_id)") && str_contains($src['web'], '$pdo->beginTransaction();'),
-    'web nanny assignment locks and revalidates group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group(\$pdo, \$group_id)") && str_contains($src['web'], "ak_vgm_assert_active_nanny($pdo"),
+    'web nanny assignment locks and revalidates group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group(\$pdo, \$group_id)") && str_contains($src['web'], 'ak_vgm_assert_active_nanny($pdo'),
     'concurrent duplicate-name collision has friendly web/API handling' => str_contains($src['helper'], 'ak_vgm_is_duplicate_group_name_error')
         && str_contains($src['web'], 'اسم المجموعة مستخدم بالفعل')
         && str_contains($src['api'], "'duplicate_group_name'"),
-    'VGM confirmation popups are wired to data-confirm forms' => str_contains($src['web'], 'form[data-confirm] button') && str_contains($src['web'], 'window.Swal.fire'),
+    'VGM confirmation popups use the centralized notification handler' => str_contains($src['web'], 'data-confirm=') && str_contains($src['notifications'], "getAttribute('data-confirm')") && str_contains($src['notifications'], 'showConfirmation(message, function ()'),
+    'bulk confirmation submits only through the confirmed callback' => str_contains($src['web'], 'window.AKNotify.confirm(confirmationMessage, submit') && str_contains($src['web'], "getElementById('bulkAddForm').requestSubmit()"),
+    'empty bulk selection uses the correct toast argument order' => str_contains($src['web'], "AKNotify.toast('warning', 'يرجى اختيار يتيم واحد على الأقل')"),
     'bulk member form uses requestSubmit and shared same-page POST handling' => str_contains($src['web'], "getElementById('bulkAddForm').requestSubmit()"),
     'mobile usage summary includes workflow history used by safe archive logic' => str_contains($src['api'], "'workflow_history' => (int)") && str_contains($src['api'], 'FROM group_workflow_audit_log') && str_contains($src['api'], "entity_type = 'orphan_groups'"),
 ];
