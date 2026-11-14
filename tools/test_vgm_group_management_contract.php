@@ -54,6 +54,7 @@ $checks = [
         && str_contains($src['api'], "'duplicate_group_name'"),
     'VGM confirmation popups are wired to data-confirm forms' => str_contains($src['web'], 'form[data-confirm] button') && str_contains($src['web'], 'window.Swal.fire'),
     'bulk member form uses requestSubmit and shared same-page POST handling' => str_contains($src['web'], "getElementById('bulkAddForm').requestSubmit()"),
+    'mobile usage summary includes workflow history used by safe archive logic' => str_contains($src['api'], "'workflow_history' => (int)") && str_contains($src['api'], 'FROM group_workflow_audit_log') && str_contains($src['api'], "entity_type = 'orphan_groups'"),
 ];
 $failed = 0;
 foreach ($checks as $label => $ok) {
