@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/_bootstrap.php';
+require_once dirname(__DIR__, 3) . '/modules/deputy_gm/lib_group_management.php';
 
 $method = strtoupper((string)($_SERVER['REQUEST_METHOD'] ?? 'GET'));
 if (!in_array($method, ['GET', 'POST'], true)) {
@@ -67,7 +68,7 @@ if ($method === 'POST') {
 
     $allowedActions = [
         'create_group', 'update_group', 'activate_group', 'suspend_group', 'close_group',
-        'delete_group', 'assign_nanny', 'add_orphan', 'add_orphan_bulk', 'remove_orphan', 'transfer_orphan',
+        'delete_group', 'open_monthly_cycle', 'assign_nanny', 'add_orphan', 'add_orphan_bulk', 'remove_orphan', 'transfer_orphan',
     ];
     if (!in_array($action, $allowedActions, true)) {
         ak_mobile_group_fail('invalid_action', 'A supported group action is required.');
@@ -75,6 +76,16 @@ if ($method === 'POST') {
 
     try {
         $pdo = db();
+        if ($action === 'open_monthly_cycle') {
+            $rawIds = $input['group_ids'] ?? ($groupId > 0 ? [$groupId] : []);
+            if (!is_array($rawIds)) throw new DomainException('A list of group IDs is required.');
+            $result = ak_vgm_open_monthly_cycles($pdo, $rawIds, $month, $actorId);
+            ak_api_json(200, ['ok' => true, 'data' => ['action' => $action, 'opened' => $result['opened'], 'skipped' => $result['skipped'], 'notification_attempts' => $result['notification_attempts']]]);
+        }
+        if ($action === 'delete_group') {
+            $result = ak_vgm_delete_or_archive_group($pdo, $groupId, $actorId, trim((string)($input['reason'] ?? '')));
+            ak_api_json(200, ['ok' => true, 'data' => ['action' => $action, 'group_id' => $groupId, 'result' => $result, 'message' => $result === 'archived' ? 'Group archived; all member and workflow history was preserved.' : 'Unused group deleted.']]);
+        }
         $pdo->beginTransaction();
 
         if ($action === 'create_group') {
@@ -126,11 +137,6 @@ if ($method === 'POST') {
                 if (!in_array($status, ['active', 'empty', 'suspended'], true)) throw new DomainException('Only active, empty, or suspended groups can be closed.');
                 dbExecute("UPDATE orphan_groups SET status = 'closed', is_active = 0, lifecycle_reason = ?, closed_at = COALESCE(closed_at, NOW()), closed_by = ?, updated_at = NOW() WHERE id = ?", [$reason, $actorId, $groupId]);
             }
-        } elseif ($action === 'delete_group') {
-            $usage = ak_mobile_group_usage($groupId);
-            if (array_sum($usage) > 0) throw new DomainException('A group with member, nanny, or disbursement history cannot be deleted. Close it instead.');
-            if (!in_array($status, ['draft', 'empty'], true)) throw new DomainException('Only a never-used draft or empty group can be deleted.');
-            dbExecute('DELETE FROM orphan_groups WHERE id = ?', [$groupId]);
         } elseif ($action === 'assign_nanny') {
             if (!ak_mobile_group_can_change_members($status)) throw new DomainException('A nanny can only be assigned to an operational group.');
             $nannyId = filter_var($input['nanny_id'] ?? null, FILTER_VALIDATE_INT);
@@ -205,7 +211,7 @@ if ($method === 'POST') {
 
         $pdo->commit();
         ak_api_json(200, ['ok' => true, 'data' => ['action' => $action, 'group_id' => $groupId, 'message' => 'Group operation completed.']]);
-    } catch (DomainException|InvalidArgumentException $e) {
+    } catch (DomainException|InvalidArgumentException|RuntimeException $e) {
         if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
         ak_mobile_group_fail('invalid_group_action', $e->getMessage());
     } catch (Throwable $e) {
@@ -219,7 +225,7 @@ $month = date('Y-m');
 $groupId = filter_var($_GET['group_id'] ?? 0, FILTER_VALIDATE_INT);
 $groupId = $groupId === false ? 0 : (int)$groupId;
 $groups = dbFetchAll(
-    "SELECT og.id, og.group_name, og.description, og.is_active, og.status, og.lifecycle_reason, og.created_at,
+    "SELECT og.id, og.group_name, og.description, og.is_active, og.status, og.verification_status, og.lifecycle_reason, og.created_at,
             COALESCE(nga.nanny_id, 0) AS nanny_id, COALESCE(u.full_name, '') AS nanny_name,
             (SELECT COUNT(*) FROM group_children gc WHERE gc.group_id = og.id AND gc.left_date IS NULL) AS orphan_count,
             (SELECT COUNT(*) FROM monthly_disbursements md WHERE md.group_id = og.id) AS disbursement_count
@@ -234,7 +240,7 @@ $data = [
     'selected_group' => null,
     'members' => [],
     'nanny_history' => [],
-    'usage' => ['member_history' => 0, 'nanny_history' => 0, 'disbursement_history' => 0],
+    'usage' => ['member_history' => 0, 'nanny_history' => 0, 'disbursement_history' => 0, 'workflow_history' => 0],
     'nannies' => dbFetchAll("SELECT u.id, u.full_name FROM users u JOIN roles r ON r.id = u.role_id WHERE r.code = 'nanny' AND u.is_active = 1 ORDER BY u.full_name"),
     'eligible_orphans' => [],
     'target_groups' => [],
@@ -261,7 +267,7 @@ if ($groupId > 0) {
          WHERE nga.group_id = ? ORDER BY nga.start_date DESC, nga.id DESC",
         [$groupId]
     );
-    $data['usage'] = ak_mobile_group_usage($groupId);
+    $data['usage'] = ak_vgm_group_usage(db(), $groupId);
     $data['has_current_disbursement'] = ak_mobile_group_has_current_disbursement($groupId, $month);
     if (ak_mobile_group_can_change_members((string)$selected['status'])) {
         $data['eligible_orphans'] = dbFetchAll(

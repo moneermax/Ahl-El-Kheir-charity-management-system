@@ -1,0 +1,36 @@
+name: VGM Group Management Contract
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'modules/deputy_gm/**'
+      - 'api/v1/deputy_gm/groups.php'
+      - 'tools/test_vgm_group_management_contract.php'
+      - '.github/workflows/vgm-group-management.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'modules/deputy_gm/**'
+      - 'api/v1/deputy_gm/groups.php'
+      - 'tools/test_vgm_group_management_contract.php'
+      - '.github/workflows/vgm-group-management.yml'
+
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+      - name: PHP syntax
+        run: |
+          php -l modules/deputy_gm/lib_group_management.php
+          php -l modules/deputy_gm/groups.php
+          php -l api/v1/deputy_gm/groups.php
+          php -l tools/test_vgm_group_management_contract.php
+      - name: VGM group workflow contract
+        run: php tools/test_vgm_group_management_contract.php

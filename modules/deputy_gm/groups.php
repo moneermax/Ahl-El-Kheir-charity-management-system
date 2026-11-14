@@ -13,6 +13,7 @@ require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/database.php';
 require_once __DIR__ . '/../../config/session.php';
 require_once __DIR__ . '/../../config/functions.php';
+require_once __DIR__ . '/lib_group_management.php';
 
 Session::start();
 $user_role = Session::getUserRole();
@@ -63,23 +64,11 @@ function groupHasCurrentDisbursement(PDO $pdo, int $group_id, string $month): bo
 }
 
 function groupUsage(PDO $pdo, int $group_id): array {
-    $stmt = $pdo->prepare(
-        'SELECT
-            (SELECT COUNT(*) FROM group_children WHERE group_id = :id1) AS member_history,
-            (SELECT COUNT(*) FROM nanny_group_assignments WHERE group_id = :id2) AS nanny_history,
-            (SELECT COUNT(*) FROM monthly_disbursements WHERE group_id = :id3) AS disbursement_history'
-    );
-    $stmt->execute(['id1' => $group_id, 'id2' => $group_id, 'id3' => $group_id]);
-    $row = $stmt->fetch(PDO::FETCH_ASSOC) ?: [];
-    return [
-        'member_history' => (int) ($row['member_history'] ?? 0),
-        'nanny_history' => (int) ($row['nanny_history'] ?? 0),
-        'disbursement_history' => (int) ($row['disbursement_history'] ?? 0)
-    ];
+    return ak_vgm_group_usage($pdo, $group_id);
 }
 
 function groupUsed(array $usage): bool {
-    return ($usage['member_history'] + $usage['nanny_history'] + $usage['disbursement_history']) > 0;
+    return ak_vgm_group_is_used($usage);
 }
 
 function syncGroupState(PDO $pdo, int $group_id, int $actor_id): void {
@@ -103,7 +92,20 @@ try {
         $action = $_POST['action'] ?? '';
         $group_id = (int) ($_POST['group_id'] ?? 0);
 
-        if ($action === 'create_group') {
+        if ($action === 'open_monthly_cycle') {
+            $raw_ids = $_POST['group_ids'] ?? [];
+            $result = ak_vgm_open_monthly_cycles($pdo, is_array($raw_ids) ? $raw_ids : [], $current_month, $actor_id);
+            if (!$result['opened']) {
+                $reasons = array_map(static fn(array $row): string => '#' . $row['id'] . ': ' . $row['reason'], $result['skipped']);
+                throw new RuntimeException('لم تُفتح أي دورة. ' . implode('؛ ', $reasons));
+            }
+            $success_message = 'تم فتح دورة شهر ' . $current_month . ' لعدد ' . count($result['opened']) . ' مجموعة، وإرسال ' . $result['notification_attempts'] . ' محاولة إرسال إشعار إلى الحاضنات.';
+            if ($result['skipped']) {
+                $success_message .= ' تم تجاوز ' . count($result['skipped']) . ' مجموعة: ' . implode('؛ ', array_map(static fn(array $row): string => '#' . $row['id'] . ' — ' . $row['reason'], $result['skipped']));
+            }
+        }
+
+        elseif ($action === 'create_group') {
             $group_name = trim((string) ($_POST['group_name'] ?? ''));
             $description = trim((string) ($_POST['description'] ?? ''));
             if ($group_name === '') {
@@ -163,6 +165,11 @@ try {
                     ->execute(['reason' => trim((string) ($_POST['reason'] ?? 'تفعيل المجموعة')), 'id' => $group_id]);
                 $success_message = 'تم تفعيل المجموعة';
             } else {
+                if ($new_status === 'archived') {
+                    $open_batch = $pdo->prepare("SELECT id FROM monthly_disbursements WHERE group_id = :id AND status NOT IN ('received','returned','cancelled','voided') LIMIT 1");
+                    $open_batch->execute(['id' => $group_id]);
+                    if ($open_batch->fetchColumn()) throw new RuntimeException('لا يمكن أرشفة المجموعة قبل إكمال أو إلغاء دفعة الصرف المفتوحة.');
+                }
                 if ($new_status === 'cancelled' && $has_financial_history) {
                     throw new RuntimeException('لا يمكن إلغاء مجموعة لها سجل صرف مالي. استخدم الإغلاق بدلاً من ذلك.');
                 }
@@ -175,6 +182,9 @@ try {
                         'actor' => $actor_id,
                         'id' => $group_id
                     ]);
+                if ($new_status === 'archived') {
+                    $pdo->prepare('UPDATE nanny_group_assignments SET end_date = CURDATE() WHERE group_id = :id AND end_date IS NULL')->execute(['id' => $group_id]);
+                }
                 $success_message = [
                     'suspended' => 'تم إيقاف المجموعة مؤقتاً',
                     'closed' => 'تم إغلاق المجموعة مع الحفاظ على كامل تاريخها',
@@ -290,19 +300,12 @@ try {
 
         elseif ($action === 'delete_group') {
             if ($group_id <= 0) throw new RuntimeException('المجموعة غير محددة');
-            $stmt = $pdo->prepare('SELECT * FROM orphan_groups WHERE id = :id FOR UPDATE');
-            $stmt->execute(['id' => $group_id]);
-            $group = $stmt->fetch(PDO::FETCH_ASSOC);
-            if (!$group) throw new RuntimeException('المجموعة غير موجودة');
-            $usage = groupUsage($pdo, $group_id);
-            if (groupUsed($usage)) {
-                throw new RuntimeException('لا يمكن حذف هذه المجموعة لأنها استُخدمت بالفعل. استخدم الإغلاق أو الإلغاء للحفاظ على السجل.');
+            $result = ak_vgm_delete_or_archive_group($pdo, $group_id, $actor_id, trim((string)($_POST['reason'] ?? '')));
+            if ($result === 'deleted') {
+                $success_message = 'تم حذف المجموعة نهائياً لأنها لم تُستخدم ولم يكن لها أي سجل مرتبط';
+            } else {
+                $success_message = 'تمت أرشفة المجموعة مع الحفاظ على جميع الأعضاء وسجلات العضوية والحاضنات والصرف.';
             }
-            if (!in_array($group['status'], ['draft', 'empty'], true)) throw new RuntimeException('الحذف متاح فقط لمجموعة لم تُستخدم مطلقاً');
-            $pdo->beginTransaction();
-            $pdo->prepare('DELETE FROM orphan_groups WHERE id = :id')->execute(['id' => $group_id]);
-            $pdo->commit();
-            $success_message = 'تم حذف المجموعة نهائياً لأنها لم تُستخدم ولم يكن لها أي سجل مرتبط';
             $view_group_id = 0;
         }
     }
@@ -419,6 +422,19 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="card-header py-2"><strong><i class="bi bi-list-ul"></i> المجموعات</strong></div>
                 <div class="card-body p-0">
                     <?php if (!$groups): ?><div class="text-center text-muted py-4">لا توجد مجموعات</div><?php endif; ?>
+                    <form method="POST" class="border-bottom p-2" data-confirm="سيتم فتح دورة التوثيق والصرف للشهر الحالي للمجموعات المحددة فقط. هل تريد المتابعة؟">
+                        <input type="hidden" name="action" value="open_monthly_cycle">
+                        <div class="small fw-semibold mb-2">فتح دورة الشهر الحالي</div>
+                        <?php foreach ($groups as $open_group): ?>
+                            <?php if ($open_group['status'] === 'active' && (int)$open_group['orphan_count'] > 0 && !empty($open_group['nanny_name'])): ?>
+                                <label class="d-flex align-items-center gap-2 small py-1">
+                                    <input class="form-check-input mt-0" type="checkbox" name="group_ids[]" value="<?php echo (int)$open_group['id']; ?>">
+                                    <span><?php echo htmlspecialchars($open_group['group_name']); ?> <span class="text-muted">(<?php echo htmlspecialchars($open_group['nanny_name']); ?>)</span></span>
+                                </label>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                        <button class="btn btn-sm btn-outline-primary w-100 mt-2">فتح الدورة للمحدد</button>
+                    </form>
                     <div class="list-group list-group-flush">
                     <?php foreach ($groups as $group): ?>
                         <a href="?view_group=<?php echo (int)$group['id']; ?>" class="list-group-item list-group-item-action <?php echo ($selected_group && (int)$selected_group['id'] === (int)$group['id']) ? 'active' : ''; ?>">
@@ -445,7 +461,12 @@ include __DIR__ . '/../../includes/header.php';
                         <?php if (in_array($status, ['draft','empty','suspended'], true) && $current_members > 0): ?><form method="POST" class="d-inline" data-confirm="هل تريد تفعيل هذه المجموعة؟"><input type="hidden" name="action" value="activate_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-success btn-sm">تفعيل</button></form><?php endif; ?>
                         <?php if (in_array($status, ['active','empty'], true)): ?><form method="POST" class="d-inline" data-confirm="هل تريد إيقاف المجموعة مؤقتاً؟"><input type="hidden" name="action" value="suspend_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-warning btn-sm">إيقاف مؤقت</button></form><?php endif; ?>
                         <?php if (in_array($status, ['active','empty','suspended'], true)): ?><form method="POST" class="d-inline" data-confirm="سيتم إغلاق المجموعة مع الاحتفاظ بكل تاريخها. هل تريد المتابعة؟"><input type="hidden" name="action" value="close_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-dark btn-sm">إغلاق</button></form><?php endif; ?>
-                        <?php if (in_array($status, ['draft','empty'], true) && !$group_usage['disbursement_history']): ?><form method="POST" class="d-inline" data-confirm="هذه العملية تحذف المجموعة نهائياً ولا يمكن التراجع عنها. لا يُسمح بها إلا لأنها لم تُستخدم. هل تريد المتابعة؟"><input type="hidden" name="action" value="delete_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-danger btn-sm">حذف نهائي</button></form><?php endif; ?>
+                        <?php if ($status !== 'archived'): ?>
+                            <form method="POST" class="d-inline" data-confirm="<?php echo groupUsed($group_usage) ? 'سيتم أرشفة المجموعة المستخدمة مع الإبقاء على جميع الأعضاء والسجلات دون حذفها. هل تريد المتابعة؟' : 'سيتم حذف المجموعة نهائياً لأنها لم تُستخدم. هل تريد المتابعة؟'; ?>">
+                                <input type="hidden" name="action" value="delete_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
+                                <button class="btn btn-outline-danger btn-sm"><?php echo groupUsed($group_usage) ? 'حذف المجموعة (أرشفة آمنة)' : 'حذف نهائي'; ?></button>
+                            </form>
+                        <?php endif; ?>
                     </div>
                 </div>
                 <div class="card-body">

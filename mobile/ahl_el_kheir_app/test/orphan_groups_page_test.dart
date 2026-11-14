@@ -132,4 +132,58 @@ void main() {
     expect(addButton.onPressed, isNull);
     expect(tester.takeException(), isNull);
   });
+  testWidgets('opens the current month for one selected active group', (tester) async {
+    Map<String, dynamic>? submitted;
+    await tester.pumpWidget(MaterialApp(
+      home: OrphanGroupsPage(
+        english: true,
+        loadPage: (id) async => groupData(
+          groups: [{'id': 7, 'group_name': 'North group', 'status': 'active', 'orphan_count': 1, 'nanny_name': 'Test nanny'}],
+          selected: {'id': 7, 'group_name': 'North group', 'description': '', 'status': 'active', 'verification_status': 'closed'},
+          canChange: true,
+        )..['nanny_history'] = [
+          {'nanny_id': 16, 'nanny_name': 'Test nanny', 'start_date': '2026-11-01', 'end_date': null},
+        ],
+        submitAction: (body) async { submitted = Map<String, dynamic>.from(body); return {'message': 'Cycle opened.'}; },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('North group').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Open current month'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    expect(submitted?['action'], 'open_monthly_cycle');
+    expect(submitted?['group_id'], 7);
+    expect(submitted?['group_ids'], [7]);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('used group offers archive while preserving its history', (tester) async {
+    Map<String, dynamic>? submitted;
+    await tester.pumpWidget(MaterialApp(
+      home: OrphanGroupsPage(
+        english: true,
+        loadPage: (id) async => groupData(
+          groups: [{'id': 7, 'group_name': 'North group', 'status': 'active', 'orphan_count': 1, 'nanny_name': 'Test nanny'}],
+          selected: {'id': 7, 'group_name': 'North group', 'description': '', 'status': 'active'},
+          members: [{'child_id': 4, 'child_name': 'Test child', 'family_name': 'Test family', 'joined_date': '2026-10-01', 'age': 8}],
+          canChange: true,
+        )..['usage'] = {'member_history': 1, 'nanny_history': 1, 'disbursement_history': 0, 'workflow_history': 0},
+        submitAction: (body) async { submitted = Map<String, dynamic>.from(body); return {'message': 'Archived.'}; },
+      ),
+    ));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('North group').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Archive group'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Confirm'));
+    await tester.pumpAndSettle();
+    expect(submitted?['action'], 'delete_group');
+    expect(submitted?['group_id'], 7);
+    expect(tester.takeException(), isNull);
+  });
+
 }

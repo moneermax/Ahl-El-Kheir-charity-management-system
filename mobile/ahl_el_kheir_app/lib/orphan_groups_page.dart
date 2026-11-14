@@ -118,13 +118,19 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
       'activate_group': en ? 'Activate group?' : 'تفعيل المجموعة؟',
       'suspend_group': en ? 'Suspend group?' : 'إيقاف المجموعة؟',
       'close_group': en ? 'Close group?' : 'إغلاق المجموعة؟',
-      'delete_group': en ? 'Delete unused group?' : 'حذف مجموعة غير مستخدمة؟',
+      'delete_group': (_i(usage['member_history']) + _i(usage['nanny_history']) + _i(usage['disbursement_history']) + _i(usage['workflow_history'])) > 0
+          ? (en ? 'Archive group and preserve history?' : 'أرشفة المجموعة مع حفظ السجل؟')
+          : (en ? 'Delete unused group?' : 'حذف مجموعة غير مستخدمة؟'),
+      'open_monthly_cycle': en ? 'Open current monthly cycle?' : 'فتح دورة الشهر الحالي؟',
     };
     final messages = {
       'activate_group': en ? 'Activate this group?' : 'هل تريد تفعيل هذه المجموعة؟',
       'suspend_group': en ? 'Temporarily suspend this group?' : 'هل تريد إيقاف المجموعة مؤقتاً؟',
       'close_group': en ? 'The group history will be preserved.' : 'سيتم الحفاظ على سجل المجموعة.',
-      'delete_group': en ? 'This permanently deletes a group with no history.' : 'سيتم حذف مجموعة لا تملك أي سجل.',
+      'delete_group': (_i(usage['member_history']) + _i(usage['nanny_history']) + _i(usage['disbursement_history']) + _i(usage['workflow_history'])) > 0
+          ? (en ? 'The group will be archived. Members, assignments and disbursement history will remain untouched.' : 'ستتم أرشفة المجموعة مع إبقاء الأعضاء وسجلات العضوية والحاضنات والصرف دون حذف.')
+          : (en ? 'This permanently deletes a group with no history.' : 'سيتم حذف مجموعة لا تملك أي سجل.'),
+      'open_monthly_cycle': en ? 'The current month will open for the assigned nanny to verify this group.' : 'سيتم فتح الشهر الحالي للحاضنة المعينة لتوثيق هذه المجموعة.',
     };
     String actionReason = reason;
     final ok = await showDialog<bool>(
@@ -133,7 +139,7 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
         title: Text(titles[action] ?? action),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           Text(messages[action] ?? ''),
-          if (action == 'suspend_group' || action == 'close_group')
+          if (action == 'suspend_group' || action == 'close_group' || action == 'delete_group')
             TextField(maxLength: 500, onChanged: (v) => actionReason = v,
               decoration: InputDecoration(labelText: en ? 'Reason (optional)' : 'السبب (اختياري)')),
         ]),
@@ -143,7 +149,10 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
         ],
       ),
     );
-    if (ok == true) await _act({'action': action, 'group_id': _i(current['id']), 'reason': actionReason});
+    if (ok == true) await _act({
+      'action': action, 'group_id': _i(current['id']), 'reason': actionReason,
+      if (action == 'open_monthly_cycle') 'group_ids': [_i(current['id'])],
+    });
   }
 
   Future<void> _assignNanny() async {
@@ -289,6 +298,8 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
     final memberHistory = _i(usage['member_history']);
     final nannyHistory = _i(usage['nanny_history']);
     final disbursementHistory = _i(usage['disbursement_history']);
+    final workflowHistory = _i(usage['workflow_history']);
+    final used = memberHistory + nannyHistory + disbursementHistory + workflowHistory > 0;
     Map<String, dynamic>? currentNanny;
     for (final n in _maps(data['nanny_history'])) {
       if (_s(n['end_date']).isEmpty) { currentNanny = n; break; }
@@ -316,8 +327,10 @@ class _OrphanGroupsPageState extends State<OrphanGroupsPage> {
             OutlinedButton.icon(onPressed: saving ? null : () => _confirm('suspend_group'), icon: const Icon(Icons.pause_rounded), label: Text(en ? 'Suspend' : 'إيقاف مؤقت')),
           if (['active','empty','suspended'].contains(status))
             OutlinedButton.icon(onPressed: saving ? null : () => _confirm('close_group'), icon: const Icon(Icons.lock_outline_rounded), label: Text(en ? 'Close' : 'إغلاق')),
-          if (['draft','empty'].contains(status) && memberHistory + nannyHistory + disbursementHistory == 0)
-            OutlinedButton.icon(onPressed: saving ? null : () => _confirm('delete_group'), icon: const Icon(Icons.delete_outline_rounded), label: Text(en ? 'Delete unused group' : 'حذف مجموعة غير مستخدمة')),
+          if (status == 'active' && currentNanny != null)
+            FilledButton.icon(onPressed: saving ? null : () => _confirm('open_monthly_cycle'), icon: const Icon(Icons.calendar_month_rounded), label: Text(en ? 'Open current month' : 'فتح دورة الشهر الحالي')),
+          if (status != 'archived')
+            OutlinedButton.icon(onPressed: saving ? null : () => _confirm('delete_group'), icon: const Icon(Icons.delete_outline_rounded), label: Text(used ? (en ? 'Archive group' : 'أرشفة المجموعة') : (en ? 'Delete unused group' : 'حذف مجموعة غير مستخدمة'))),
         ]),
       ]))),
       Card(child: Padding(padding: const EdgeInsets.all(16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
