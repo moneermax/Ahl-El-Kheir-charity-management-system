@@ -321,6 +321,16 @@ try {
             && ($groupDetail['json']['data']['selected_group']['status'] ?? '') === 'draft',
             'group detail returns the selected draft and member/history data'
         );
+        $creationAudit = $pdo->prepare(
+            "SELECT COUNT(*) FROM audit_log
+             WHERE entity_type = 'orphan_groups' AND entity_id = ? AND action = 'VGM_CREATE_GROUP'"
+        );
+        $creationAudit->execute([$testOrphanGroupId]);
+        mobileApiExpect(
+            (int)$creationAudit->fetchColumn() === 1
+            && (int)($groupDetail['json']['data']['usage']['workflow_history'] ?? -1) === 0,
+            'group creation is audited without treating a never-used draft as used'
+        );
 
         $updatedName = $groupName . ' updated';
         $groupUpdate = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
