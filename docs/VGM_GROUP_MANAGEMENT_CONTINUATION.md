@@ -278,3 +278,21 @@ The same description-only rule now applies to the VGM Flutter client: its create
 - Mobile API integration run `43576662118` exercised the latest identity implementation. All generated-group assertions passed, including code derivation, distinct identities, immutable name/code, description updates, audit code, and safe deletion. The overall workflow remains **FAIL** only at the known unrelated SQL-backup assertion (MariaDB root invoked without the configured password).
 - Flutter analysis passed. All VGM orphan-group widget tests passed, including description-only creation and code display. The full Flutter suite remains **FAIL** because the unrelated existing `payroll_management_page_test.dart` expects 10 where the current UI exposes 11; 187 tests passed and 1 failed. No payroll source/test changes were made. APK build was skipped after the suite failure.
 - Local generated-identity migration and Apache/XAMPP browser acceptance have not been performed. Source/CI evidence must not be described as local runtime acceptance.
+
+## 2026-11-14 — VGM group description update: duplicate notification fix (source committed; browser acceptance pending)
+
+The user reported two success notifications after saving a group description: a brief transient message at the top of the page followed by the expected centralized SweetAlert popup.
+
+Root cause confirmed in source:
+- groups.php rendered success/error feedback as dismissible Bootstrap .alert elements.
+- assets/js/notifications.js automatically converts .alert.alert-dismissible into a toast when inserted into the DOM.
+- The shared same-page POST handler in assets/js/app.js already has a separate, supported [data-ak-flash] extraction path and emits that flash through AKNotify.toast() after restoring the viewport.
+- Mixing the Bootstrap-alert conversion path with the dedicated flash path creates competing notification routes for the same action.
+
+Smallest fix: VGM group success/error feedback now renders as hidden [data-ak-flash] nodes with explicit message/type/duration attributes. Both a full document load and the same-page POST handler use the centralized flash contract; the VGM page no longer renders transient Bootstrap alerts for these action messages. Shared notification infrastructure and unrelated pages were not changed. No schema/database changes.
+
+Commits:
+- 4b4c7c75185459f43ccb6d649f74f11b7f28e973 — VGM flash markup fix.
+- a601168b090c9a49b04866fd7911a79ed80971bc — contract assertion for the single notification channel.
+
+A focused static contract assertion was added to tools/test_vgm_group_management_contract.php. GitHub Actions verification and local Apache/browser acceptance are pending. Do not claim the duplicate popup is runtime-resolved until the user tests saving a description and confirms exactly one popup appears.
