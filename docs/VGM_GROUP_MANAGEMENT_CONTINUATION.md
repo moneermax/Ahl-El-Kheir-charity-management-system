@@ -298,3 +298,13 @@ A focused static contract assertion was added to tools/test_vgm_group_management
 ### Automated verification result — 2026-11-14
 
 GitHub Actions VGM Group Management Contract run 43580321071 completed SUCCESS on contract commit a601168b090c9a49b04866fd7911a79ed80971bc. PHP syntax, JavaScript syntax, and all 53 static contract checks passed, including the new single-flash-channel assertion. This verifies source contracts only; it does not replace local Apache/browser acceptance.
+
+## 2026-11-14 — VGM group details controls compacted (source committed; browser acceptance pending)
+
+The group-details settings area now places the description editor and caregiver selector in two equal responsive columns within the existing group card. At large desktop widths they share one horizontal row; on narrower screens each control stacks into its own row. Both use Bootstrap small input groups with their action buttons attached to the fields. The current caregiver and assignment date remain visible as compact helper text beneath the selector.
+
+The former standalone caregiver card was removed; the same POST actions, CSRF fields, validation, role checks, and server-side workflows remain unchanged. Description editing remains available under the same status rules. No schema, data, or shared notification changes.
+
+Source commit: `992088a93f09ab19ad0722109d3117321822807f`.
+
+A focused static contract assertion was added for the paired responsive controls. Local PHP syntax/runtime and browser layout acceptance remain pending. After pulling `main`, inspect group 11 at desktop and narrow/mobile widths, verify the description save and caregiver assignment actions still work, and confirm the current caregiver/date are still shown.
