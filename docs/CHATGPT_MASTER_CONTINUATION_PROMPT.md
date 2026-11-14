@@ -4541,3 +4541,9 @@ No schema or database changes were made as part of this confirmation fix.
 ### 2026-11-14 — VGM group-details page split (source implemented; acceptance pending)
 
 Current source separates `groups.php` (create/list only) from new `group_details.php?id={id}` (group fields/actions, caregiver controls/history, current-member table and add-member table). Create redirects to the created draft; group list links open details; detail forms submit to the existing `groups.php` controller and redirect back to details using session flash. Existing role/CSRF/transaction/member and financial guards remain in place; no schema/data changes. CI PHP lint passed. First contract attempt failed because two new PHP test assertions interpolated variable names; fixed in `d9740e65bb090af215051f3fcde9690362ce9c41`; rerun pending. Local browser acceptance still required. Finish VGM acceptance before Nanny/Accountant; do not resume paused FM approval checkpoint.
+
+### Verification update — 2026-11-14
+
+Final source hardening commit: `165d7d5b01f593e2028cb9074b2c4de1e920e047`. If group creation fails after the insert attempt has assigned a tentative last-insert ID, the error path now clears that ID before redirecting, so a failed creation returns to the create/list page rather than a nonexistent details URL.
+
+GitHub Actions VGM Group Management Contract run `43568227445` completed **SUCCESS** on the final source commit. PHP 8.2 lint passed for the shared helper, `groups.php`, `group_details.php`, API endpoint and contract script; JavaScript syntax passed; the contract reports `43 checks | PASS`. This is CI/source verification only. Local Apache/XAMPP browser acceptance remains pending.
