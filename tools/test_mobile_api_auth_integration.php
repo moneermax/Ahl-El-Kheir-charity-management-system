@@ -286,6 +286,34 @@ try {
         $testOrphanGroupId = (int)($groupCreate['json']['data']['group_id'] ?? 0);
         mobileApiExpect($groupCreate['status'] === 200 && $testOrphanGroupId > 0, 'VGM can create a group as an unused draft');
 
+        $duplicateExact = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
+            'action' => 'create_group',
+            'group_name' => $groupName,
+            'description' => 'Duplicate fixture must be rejected',
+        ], $token);
+        mobileApiExpect($duplicateExact['status'] === 422, 'VGM API rejects an exact duplicate group name');
+
+        $duplicateCase = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
+            'action' => 'create_group',
+            'group_name' => strtolower($groupName),
+            'description' => 'Case-insensitive duplicate fixture must be rejected',
+        ], $token);
+        mobileApiExpect($duplicateCase['status'] === 422, 'VGM API rejects a case-insensitive duplicate group name');
+
+        $longName = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
+            'action' => 'create_group',
+            'group_name' => str_repeat('N', 151),
+            'description' => '',
+        ], $token);
+        mobileApiExpect($longName['status'] === 422, 'VGM API rejects group names longer than 150 characters');
+
+        $longDescription = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
+            'action' => 'create_group',
+            'group_name' => 'Long description fixture ' . bin2hex(random_bytes(4)),
+            'description' => str_repeat('D', 1001),
+        ], $token);
+        mobileApiExpect($longDescription['status'] === 422, 'VGM API rejects descriptions longer than 1000 characters');
+
         $groupDetail = mobileApiRequest('/api/v1/deputy_gm/groups.php?group_id=' . $testOrphanGroupId, 'GET', null, $token);
         mobileApiExpect(
             $groupDetail['status'] === 200
