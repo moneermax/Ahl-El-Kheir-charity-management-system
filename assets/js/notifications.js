@@ -61,26 +61,16 @@
     });
 
     /*
-     * SweetAlert2 has one active popup surface. Firing a toast while a
-     * confirmation is open destroys that confirmation. Keep notifications
-     * queued until the confirmation promise has settled, then show queued
-     * toasts one at a time.
+     * SweetAlert2 has one active popup surface. Serialize confirmations and
+     * toasts through one queue so a notification can never destroy a prompt
+     * that is waiting for the user's decision (or vice versa).
      */
-    var confirmationActive = false;
-    var toastQueue = [];
-    var toastQueueRunning = false;
+    var popupQueue = Promise.resolve();
 
-    function flushToastQueue() {
-        if (confirmationActive || toastQueueRunning || !toastQueue.length) return;
-        toastQueueRunning = true;
-        var next = toastQueue.shift();
-        Toast.fire(next.options).then(function () {
-            toastQueueRunning = false;
-            flushToastQueue();
-        }, function () {
-            toastQueueRunning = false;
-            flushToastQueue();
-        });
+    function enqueuePopup(showPopup) {
+        var result = popupQueue.then(showPopup, showPopup);
+        popupQueue = result.then(function () {}, function () {});
+        return result;
     }
 
     window.AKNotify = {
@@ -92,12 +82,9 @@
             if (Number.isFinite(Number(duration)) && Number(duration) > 0) {
                 toastOptions.timer = Number(duration);
             }
-            if (confirmationActive || toastQueueRunning || toastQueue.length) {
-                toastQueue.push({ options: toastOptions });
-                flushToastQueue();
-                return Promise.resolve({ queued: true });
-            }
-            return Toast.fire(toastOptions);
+            return enqueuePopup(function () {
+                return Toast.fire(toastOptions);
+            });
         },
         modal: function (options) {
             options = options || {};
@@ -110,14 +97,8 @@
         },
         confirm: function (message, onConfirm, options) {
             options = options || {};
-            if (confirmationActive) {
-                return Promise.resolve({ isConfirmed: false, isDismissed: true, reason: 'confirmation-active' });
-            }
-
-            confirmationActive = true;
-            var confirmation;
-            try {
-                confirmation = window.Swal.fire({
+            return enqueuePopup(function () {
+                return window.Swal.fire({
                     title: options.title || 'هل أنت متأكد؟',
                     text: message || '',
                     icon: options.icon || 'warning',
@@ -134,25 +115,10 @@
                         confirmButton: 'ak-swal-confirm-btn',
                         cancelButton: 'ak-swal-cancel-btn'
                     }
-                });
-            } catch (error) {
-                confirmationActive = false;
-                flushToastQueue();
-                return Promise.reject(error);
-            }
-
-            return Promise.resolve(confirmation).then(function (result) {
-                try {
+                }).then(function (result) {
                     if (result && result.isConfirmed && typeof onConfirm === 'function') onConfirm();
                     return result;
-                } finally {
-                    confirmationActive = false;
-                    flushToastQueue();
-                }
-            }, function (error) {
-                confirmationActive = false;
-                flushToastQueue();
-                throw error;
+                });
             });
         }
     };
