@@ -4580,3 +4580,9 @@ No schema or database changes were made as part of this confirmation fix.
 ### 2026-11-14 — VGM group details page split (source implementation; acceptance pending)
 
 The VGM create/list page and group workspace are now separate routes. `modules/deputy_gm/groups.php` owns creation/listing only; new `modules/deputy_gm/group_details.php?id={id}` renders group info, lifecycle options, caregiver assignment/history, current members and add-member table. Creation redirects to the created draft's details; list links open details; detail actions post through the existing controller and redirect back with session flash. No schema/data changes. PHP syntax passed in CI; the first contract run exposed two incorrectly interpolated test strings, corrected in commit `d9740e65bb090af215051f3fcde9690362ce9c41`; rerun pending. Local browser acceptance is required before closing. Do not move to Nanny/Accountant or resume the paused FM approval checkpoint yet.
+
+### Verification update — 2026-11-14
+
+Final source hardening commit: `165d7d5b01f593e2028cb9074b2c4de1e920e047`. If group creation fails after the insert attempt has assigned a tentative last-insert ID, the error path now clears that ID before redirecting, so a failed creation returns to the create/list page rather than a nonexistent details URL.
+
+GitHub Actions VGM Group Management Contract run `43568227445` completed **SUCCESS** on the final source commit. PHP 8.2 lint passed for the shared helper, `groups.php`, `group_details.php`, API endpoint and contract script; JavaScript syntax passed; the contract reports `43 checks | PASS`. This is CI/source verification only. Local Apache/XAMPP browser acceptance remains pending.
