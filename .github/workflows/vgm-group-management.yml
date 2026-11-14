@@ -7,6 +7,8 @@ on:
       - 'modules/deputy_gm/**'
       - 'api/v1/deputy_gm/groups.php'
       - 'tools/test_vgm_group_management_contract.php'
+      - 'assets/js/app.js'
+      - 'assets/js/notifications.js'
       - '.github/workflows/vgm-group-management.yml'
   pull_request:
     branches: [main]
@@ -14,6 +16,8 @@ on:
       - 'modules/deputy_gm/**'
       - 'api/v1/deputy_gm/groups.php'
       - 'tools/test_vgm_group_management_contract.php'
+      - 'assets/js/app.js'
+      - 'assets/js/notifications.js'
       - '.github/workflows/vgm-group-management.yml'
 
 jobs:
