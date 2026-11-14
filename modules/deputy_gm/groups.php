@@ -314,7 +314,7 @@ try {
     if ($pdo->inTransaction()) $pdo->rollBack();
     $error_message = $e instanceof RuntimeException || $e instanceof DomainException
         ? $e->getMessage()
-        : (($e instanceof PDOException && ak_vgm_is_duplicate_group_name_error($e))
+        : (($e instanceof PDOException && ak_vgm_is_unique_constraint_error($e))
             ? 'تعذر تخصيص رمز فريد للمجموعة. أعد المحاولة.'
             : 'تعذر تنفيذ العملية. لم يتم فقد أي بيانات.');
     if ($action === 'create_group') $view_group_id = 0;
