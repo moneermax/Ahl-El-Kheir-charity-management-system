@@ -4525,3 +4525,5 @@ Commits: `6e111302`, `5d22422c`, `72a494eb`, `38ed2c32`, `c9194984`, `9f28af41`.
 
 
 Verification refinement: `.github/workflows/vgm-group-management.yml` now runs `node --check` against both modified JavaScript files (`assets/js/app.js` and `assets/js/notifications.js`) in addition to the existing PHP syntax and VGM contract checks. Workflow change commit: `948626d25f22b0b5dad3cc5a7aad6bf9dd0ab6c8`. The Actions run result is not yet available through the connected GitHub interface, so this remains pending CI verification. Local browser acceptance also remains pending.
+
+Popup serialization was extended to `AKNotify.modal()` as well, so all three centralized popup entry points (`confirm`, `toast`, and `modal`) use the same queue. The VGM contract now asserts that standard modals also enqueue. Latest source/test commits: `22456c5e` and `2e4fc80c`. The existing workflow includes Node syntax checks for both changed JavaScript files; its result is still pending and cannot be inspected through the connected GitHub Actions interface.
