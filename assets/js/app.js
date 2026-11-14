@@ -635,14 +635,25 @@
                     delete form.dataset.akConfirmPending;
                     form.dataset.akConfirmBypass = '1';
 
-                    if (typeof form.requestSubmit === 'function') {
-                        if (submitter && submitter.form === form) form.requestSubmit(submitter);
-                        else form.requestSubmit();
-                    } else {
+                    if (typeof form.requestSubmit !== 'function') {
                         delete form.dataset.akConfirmBypass;
                         if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
                             window.AKNotify.toast('error', 'متصفحك لا يدعم إرسال النموذج الآمن. لم يتم تنفيذ الإجراء.');
                         }
+                        return;
+                    }
+
+                    try {
+                        if (submitter && submitter.form === form) form.requestSubmit(submitter);
+                        else form.requestSubmit();
+                    } catch (error) {
+                        delete form.dataset.akConfirmBypass;
+                        throw error;
+                    } finally {
+                        /* Do not leave a stale one-use bypass if validation or another
+                         * listener prevents the resubmission event from reaching
+                         * notifications.js. */
+                        if (form.dataset.akConfirmBypass === '1') delete form.dataset.akConfirmBypass;
                     }
                 })).then(function (result) {
                     if (!result || result.isConfirmed !== true) {
