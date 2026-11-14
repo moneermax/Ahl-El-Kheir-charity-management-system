@@ -6842,3 +6842,16 @@ Confirmation timing fix: the shared `app.js` window-capture same-page submit han
 - Mobile API integration workflow: the new migration was imported/applied successfully in CI; PHP syntax, earlier integration stages, and all VGM group assertions passed, including exact/case-insensitive duplicate rejection, length bounds, creation audit, and safe deletion of a never-used draft. The overall job remains **FAIL** at the unrelated pre-existing assertion `administrator can create a real SQL backup on the disposable database`; MariaDB logs show `Access denied for user 'root'@'localhost' (using password: NO)`. The same failure is present in an earlier run before these VGM changes (run 247), so it is not evidence of a VGM regression and was not modified here.
 
 Local database migration and browser acceptance remain pending. The user must run the duplicate preflight against their actual local database before applying the migration.
+
+
+## 2026-11-14 — VGM create confirmation race hardening (source committed; runtime pending)
+
+The same-page POST path previously depended on a `window`-capture deferral in `app.js` and a separate `document`-capture confirmation handler in `notifications.js`. This split left the POST/fetch path and confirmation gate at different event levels. The reported behavior (confirmation popup disappears and success notification appears without the user confirming) is consistent with the request being started while the modal is open; SweetAlert2 documents that a second popup can destroy an active dialog.
+
+Committed source hardening:
+- `app.js` now blocks same-page `data-confirm` submissions in the same window-capture handler that owns fetch. It calls `preventDefault()` and `stopImmediatePropagation()`, prevents duplicate pending submits, and invokes `requestSubmit()` only from `AKNotify.confirm`'s confirmed callback. Missing confirmation support fails closed.
+- The one-use confirmation bypass is cleaned up after the synchronous resubmission dispatch.
+- `notifications.js` serializes central confirmations and toasts through one queue, preventing an `AKNotify.toast` from replacing an active confirmation.
+- The VGM source-contract test now checks these boundaries and explicit `isConfirmed` handling.
+
+Commits on `main`: `6e111302`, `5d22422c`, `72a494eb`, `38ed2c32`, `c9194984`, `9f28af41`. No schema, migration, or database data changed. The patch has not yet been PHP/static-contract tested or exercised in the local browser; do not mark it runtime-verified. Next acceptance is a normal UI cancellation (must create zero groups) followed by one explicit confirmation (must create exactly one draft). Do not ask the user for browser-console or terminal diagnostics. The unique-name migration gate remains separate and pending local preflight/application.
