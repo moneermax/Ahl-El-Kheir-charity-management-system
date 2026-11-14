@@ -238,3 +238,25 @@ This closes the visual-review gate only. It does **not** establish that the uniq
 **Next exact gate:** inspect the local Git status, synchronize `main` safely if needed, then run the read-only duplicate-name preflight from `database/migrations/2026-11-14_vgm_unique_group_names.sql` against the actual `ahl_el_kheir` database. The preflight must return zero rows before applying the unique index. If it returns any rows, stop and review the duplicate names; do not rename or delete records automatically. Only after a clean preflight should the migration be applied, followed by the remaining focused VGM functional acceptance checklist.
 
 No database operation was performed as part of recording this visual acceptance.
+
+## 2026-11-14 — VGM generated group identity (source implementation; verification pending)
+
+The user replaced manual group-name entry with a generated identity workflow. This supersedes the earlier acceptance expectation that VGM manually supplies and varies a globally unique group name.
+
+### New requirement and implementation
+- VGM enters only the optional group description. The VGM web form no longer accepts a group name; the group-details editor can update the description only.
+- A shared creator generates identity from the database auto-increment ID: code `GRP-` + six-digit zero padding, and display name `مجموعة {group_code}`. If a preserved legacy name already occupies that display label, a generated numeric suffix is added without changing the code.
+- A new migration, `database/migrations/2026-11-14_vgm_generated_group_identity.sql`, adds `orphan_groups.group_code`, backfills existing rows from their IDs, makes the code non-null, and adds unique key `uq_orphan_groups_group_code`. Existing group names and historical records are preserved.
+- Web and mobile API create paths share the same transaction-bound creator and record both generated name and code in the creation audit. The mobile API returns the generated identity and ignores submitted manual names. Update paths cannot rename a group.
+- The groups list and details header display the code. Existing group lifecycle, membership, caregiver, and accounting protections are intended to remain unchanged.
+- The mobile API integration harness now checks generated identity, distinct codes across creations, description length, immutable name/code on update, audit data, and safe deletion of an unused generated draft. CI applies the new migration after the existing name-index migration.
+
+### Verification boundary
+Source changes are committed to `main`; no local database migration or Apache/browser runtime test has been performed. Do not claim runtime acceptance. The canonical schema dump is still the inspected baseline; the new versioned migration is the schema delta for this change. CI and local acceptance remain required.
+
+### Next acceptance
+1. Confirm GitHub Actions PHP lint, VGM contract, and mobile API integration results for the latest commits.
+2. Pull latest `main` and apply the new generated-identity migration through the project's migration procedure. Do not ask the user to reconstruct schema details or manually improvise SQL.
+3. In the VGM UI, create two drafts with different descriptions and confirm generated names/codes are distinct, no name field exists, creation navigates to details, and the code appears in list/details.
+4. Edit the description and confirm name/code remain unchanged. Confirm historical group names remain unchanged.
+5. Continue the remaining VGM functional acceptance only after this gate; do not start Nanny/Accountant or resume the paused FM checkpoint.
