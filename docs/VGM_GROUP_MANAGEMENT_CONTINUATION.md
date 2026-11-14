@@ -184,3 +184,15 @@ Verification:
 Final source hardening commit: `165d7d5b01f593e2028cb9074b2c4de1e920e047`. If group creation fails after the insert attempt has assigned a tentative last-insert ID, the error path now clears that ID before redirecting, so a failed creation returns to the create/list page rather than a nonexistent details URL.
 
 GitHub Actions VGM Group Management Contract run `43568227445` completed **SUCCESS** on the final source commit. PHP 8.2 lint passed for the shared helper, `groups.php`, `group_details.php`, API endpoint and contract script; JavaScript syntax passed; the contract reports `43 checks | PASS`. This is CI/source verification only. Local Apache/XAMPP browser acceptance remains pending.
+
+
+## 2026-11-14 — VGM groups-list table layout (source and CI verified; browser acceptance pending)
+
+The create/list page now presents the groups collection as a centered, full-width responsive Bootstrap table instead of a narrow left-side list. The table preserves each group's details link, lifecycle status, current-member count, assigned Nanny (or “بدون حاضنة”), and disbursement count. The “فتح دورة الشهر الحالي” operation remains a single CSRF-protected form around the table; selection is offered only for active groups with at least one member and an assigned Nanny, matching the previous eligibility condition. The group-creation card is centered above the table with a maximum width of 760px. The dedicated group-details route and its member tables are unchanged. No schema or database changes.
+
+Source commit: `c2db9b262ee2308739ce045e02887ee5b47edecb` (page layout).
+Contract test commit: `78be98ab32763746429b7ee26039945b89e5fe21`.
+
+GitHub Actions VGM Group Management Contract run `43568958708` completed **SUCCESS**. PHP syntax, JavaScript syntax and all `45 checks | PASS`, including the two new layout/data-preservation assertions. This proves repository/static contracts only, not local browser rendering.
+
+**Next acceptance:** pull latest `main` and inspect the VGM groups page at desktop and narrow/mobile widths. Confirm the creation card and groups table are centered, the table scrolls responsively when needed, group links still open the correct details page, all six columns show the expected values, and the monthly-cycle checkboxes/button still work. Report any visual or interaction defect before further changes. No SQL is required for this UI-only change.
