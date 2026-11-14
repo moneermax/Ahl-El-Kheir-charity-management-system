@@ -4537,3 +4537,7 @@ The user tested the updated VGM group-creation flow and reported: “now it work
 **Scope boundary:** this acceptance covers the create-confirmation interaction and its resulting draft state only. It does not prove the separate global unique-name migration was applied, duplicate-name handling, all group membership/caregiver workflows, or the wider VGM lifecycle. The unique-name migration preflight/application remains a separate gate. Do not begin the Nanny/Accountant passes or resume the paused FM approval checkpoint until the remaining VGM acceptance work is explicitly completed.
 
 No schema or database changes were made as part of this confirmation fix.
+
+### 2026-11-14 — VGM group-details page split (source implemented; acceptance pending)
+
+Current source separates `groups.php` (create/list only) from new `group_details.php?id={id}` (group fields/actions, caregiver controls/history, current-member table and add-member table). Create redirects to the created draft; group list links open details; detail forms submit to the existing `groups.php` controller and redirect back to details using session flash. Existing role/CSRF/transaction/member and financial guards remain in place; no schema/data changes. CI PHP lint passed. First contract attempt failed because two new PHP test assertions interpolated variable names; fixed in `d9740e65bb090af215051f3fcde9690362ce9c41`; rerun pending. Local browser acceptance still required. Finish VGM acceptance before Nanny/Accountant; do not resume paused FM approval checkpoint.
