@@ -341,3 +341,44 @@ Source commit: `7c90e1d335e6474c09f1e8f9a5314ac79cfb65f1`.
 Contract assertion commit: `ced9e55e656fb01be0da3e8e22f70049f1252c23`.
 
 This is repository-source evidence only. CI, PHP syntax, local XAMPP rendering, and browser acceptance have not yet been run for this refinement. The user must review the resulting page before the visual issue can be closed.
+
+
+## 2026-11-14 — Family-level group membership and monthly verification carry-forward (AGREED; implementation not started)
+
+The user approved the following VGM/Nanny business rules after reviewing the November 2026 group cycle for generated group `GRP-000011` (group ID 11), assigned to Nanny `nany1`:
+
+### 1. Family is the membership unit
+- VGM must select families, not individual children, when adding members to a group.
+- Selecting one eligible family adds **all of that family's active children that have an active sponsorship** to the selected group as one atomic operation.
+- A family already assigned to any group through a current membership must not appear in the available-family selector. Membership eligibility is not conditional on whether the other group already has a monthly disbursement.
+- Enforce the same rule server-side for web and mobile/API paths; hiding a family in the UI alone is insufficient.
+- A family must not be concurrently split across groups. Transfer must end the prior current membership(s) and establish the destination membership as one transaction, preserving history. Ended historical memberships must not disqualify the family from future assignment.
+- Review how the current child-level `group_children` model represents family membership before implementation. Do not assume a family-level table or column exists; `database/ahl_el_kheir.sql` remains schema truth. Do not add runtime DDL. If schema support is needed, use a reviewed migration.
+- Define and test the concurrency guard so two simultaneous add/transfer requests cannot create cross-group active memberships. Do not claim concurrency safety without an actual two-process test or a proven database constraint/locking design.
+
+### 2. Monthly verification carries forward
+- Preserve the existing Nanny pre-verification workflow and its ability to pre-verify families before a group cycle opens.
+- When a new month is opened, if a family has no verification record for that month, its initial three verification flags (orphan, mother contact, bank) should inherit the previous month's saved values. A fully verified family therefore remains fully verified at the start of the next month unless the Nanny changes it.
+- An explicit record already present for the new month takes precedence; do not overwrite or reset it with the previous month's state. This is essential for preserving pre-verification performed for the upcoming month.
+- Nanny changes apply to the current month only and must retain the existing audit behavior. Never mutate the prior month's verification record.
+- Verify notes/timestamps semantics before implementation. Do not blindly copy previous-month notes or timestamps as if the current month had just been verified; the UI must not misrepresent when or by whom the current-month state was confirmed.
+- Existing source observation: `modules/accounting/lib_group_workflow.php::get_latest_verification_status()` currently reads the exact `family_id + month` row from `nanny_family_verifications`; it does not itself fall back to the previous month. The current group summary calls this helper. Inspect the actual Nanny pre-verification writer and group-cycle lifecycle before selecting the smallest implementation point.
+
+### 3. Evidence observed before implementation
+- In the VGM web/API membership eligibility queries, a current `group_children` membership is excluded only when joined to a `monthly_disbursements` row for the current month. Thus an existing current membership in a group without a current-month disbursement does not reliably exclude the child from another group's available list or server-side add check.
+- The inspected mobile API `api/v1/deputy_gm/groups.php` has the same current-month-disbursement-dependent check in its add/add-bulk path. The mobile group data endpoint also builds its available-child list using this criterion.
+- `modules/accounting/lib_group_workflow.php::get_latest_verification_status()` reads the latest row for exact family/month and does not inherit a previous month.
+- Nanny notification confirms cycle opening for `GRP-000011`, month `2026-11`, and the user observed family `IMP-FAM-001901` as fully verified with timestamp `2026-11-13 21:17`. This timestamp predates cycle opening on 2026-11-14 and is consistent with pre-verification for November; it does **not** prove that the family belonged to another group. Its actual membership history must be checked in the local database before drawing that conclusion.
+- Current data model inspected in source uses child-level `group_children` rows, with family resolved through `family_children.family_id`. Family-level atomic membership therefore requires deliberate treatment of every eligible sibling child row.
+
+### 4. Implementation plan / acceptance gates
+1. Re-read the four mandatory canonical docs and this continuation document from current `main`; verify repository head and working tree before edits.
+2. Inspect complete web and mobile group list/detail/add/transfer queries and actions, the Nanny pre-verification writer, cycle-opening transaction, schema indexes/foreign keys, and existing VGM contract/mobile tests. Use targeted source and schema inspection; do not infer missing columns.
+3. Check local-only membership history for family code `IMP-FAM-001901` and identify the exact group(s), child rows, joined/left dates, and relevant verification records. Do not alter data as part of diagnosis.
+4. Implement family-level selection and server-side eligibility in web and mobile paths; atomically add all eligible sponsored active children for the family; prevent concurrent active membership across groups; preserve transfer and historical membership semantics.
+5. Implement previous-month verification fallback only when no current-month row exists, while preserving explicit current-month pre-verification and current-month edits/audit. Decide whether to materialize a current-month row or resolve fallback at read time only after inspecting all consumers and accounting snapshot semantics.
+6. Add focused contract/integration coverage: family with 1 child; family with multiple eligible siblings; inactive/unsponsored sibling exclusion; family already in a draft/active group excluded regardless of disbursement; ended historical membership eligible; family transfer; web/API parity; concurrent add race; previous-month fully verified carry-forward; partially verified carry-forward; explicit current-month pre-verification precedence; current-month edit does not mutate previous month; audit history preserved.
+7. PHP lint, JavaScript lint if touched, focused automated tests, CI, and local XAMPP/MariaDB runtime acceptance. Do not mark verified based on static checks alone.
+8. Update documentation and commit only after evidence. No database migration unless schema inspection proves one is required.
+
+**Status:** Business behavior agreed. No source, schema, or data changes have been made for this requirement. Local membership history for `IMP-FAM-001901` remains unverified. The task is open at source/schema/test audit, not implementation.
