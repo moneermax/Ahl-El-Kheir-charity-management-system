@@ -225,7 +225,7 @@ if ($method === 'POST') {
         ak_mobile_group_fail('invalid_group_action', $e->getMessage());
     } catch (Throwable $e) {
         if (isset($pdo) && $pdo instanceof PDO && $pdo->inTransaction()) $pdo->rollBack();
-        if ($e instanceof PDOException && ak_vgm_is_unique_constraint_error($e)) {
+        if ($e instanceof PDOException && ak_vgm_is_group_identity_collision($e)) {
             ak_mobile_group_fail('group_identity_collision', 'A generated group identity collided with an existing record. Please retry.', 409);
         }
         error_log('Mobile orphan-group action failed: ' . $e->getMessage());
