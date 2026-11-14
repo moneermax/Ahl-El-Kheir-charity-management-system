@@ -94,6 +94,13 @@ $checks = [
     'VGM page title is restored as a primary background banner with current month contrast' => str_contains($src['web'], 'bg-primary text-white rounded-3 p-3 shadow-sm') && str_contains($src['web'], 'إدارة مجموعات الأيتام') && str_contains($src['web'], 'إنشاء المجموعات ومتابعة حالتها') && str_contains($src['web'], 'دورة الصرف الحالية:'),
     'group creation form contains description only with generated identity notice' => str_contains($src['web'], 'class="card-body py-2"') && str_contains($src['web'], 'id="vgmGroupDescription"') && !str_contains($src['web'], 'id="vgmGroupName"') && !str_contains($src['web'], 'name="group_name"') && str_contains($src['web'], 'سيُنشئ النظام اسماً ورمزاً فريدين') && str_contains($src['web'], 'إنشاء كمسودة'),
     'group guidance and protection rules appear immediately after the page title' => strpos($src['web'], 'إرشادات إدارة المجموعات') > strpos($src['web'], 'إدارة مجموعات الأيتام') && strpos($src['web'], 'إرشادات إدارة المجموعات') < strpos($src['web'], 'if ($success_message)') && str_contains($src['web'], 'الحذف النهائي متاح فقط') && str_contains($src['web'], 'نقل اليتيم يحفظ نهاية العضوية القديمة'),
+    'VGM success and error feedback use the single shared flash channel instead of transient Bootstrap alerts' => str_contains($src['web'], 'data-ak-flash="success"')
+        && str_contains($src['web'], 'data-ak-flash="error"')
+        && str_contains($src['web'], 'data-ak-message=')
+        && !str_contains($src['web'], 'alert-success alert-dismissible')
+        && !str_contains($src['web'], 'alert-danger alert-dismissible')
+        && str_contains($src['app'], "incoming.querySelectorAll('[data-ak-flash]')")
+        && str_contains($src['notifications'], "document.querySelectorAll('[data-ak-flash]')"),
 
 ];
 $failed = 0;
