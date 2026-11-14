@@ -56,16 +56,16 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('creates a draft group through the authenticated action callback', (tester) async {
+  testWidgets('creates a draft with generated identity and description only', (tester) async {
     Map<String, dynamic>? submitted;
     await tester.pumpWidget(MaterialApp(
       home: OrphanGroupsPage(
         english: true,
         loadPage: (id) async => groupData(
           groups: id == 9
-              ? [{'id': 9, 'group_name': 'New mobile group', 'status': 'draft', 'orphan_count': 0, 'nanny_name': ''}]
+              ? [{'id': 9, 'group_name': 'مجموعة GRP-000009', 'group_code': 'GRP-000009', 'status': 'draft', 'orphan_count': 0, 'nanny_name': ''}]
               : [],
-          selected: id == 9 ? {'id': 9, 'group_name': 'New mobile group', 'description': '', 'status': 'draft'} : null,
+          selected: id == 9 ? {'id': 9, 'group_name': 'مجموعة GRP-000009', 'group_code': 'GRP-000009', 'description': 'Created from Flutter', 'status': 'draft'} : null,
         ),
         submitAction: (body) async {
           submitted = Map<String, dynamic>.from(body);
@@ -76,14 +76,16 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.byTooltip('Create group'));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField).at(0), 'New mobile group');
-    await tester.enterText(find.byType(TextField).at(1), 'Created from Flutter');
+    expect(find.text('Group name'), findsNothing);
+    expect(find.byType(TextField), findsOneWidget);
+    await tester.enterText(find.byType(TextField).first, 'Created from Flutter');
     await tester.tap(find.text('Save'));
     await tester.pumpAndSettle();
     expect(submitted?['action'], 'create_group');
-    expect(submitted?['group_name'], 'New mobile group');
+    expect(submitted?.containsKey('group_name'), isFalse);
     expect(submitted?['description'], 'Created from Flutter');
-    expect(find.text('New mobile group'), findsWidgets);
+    expect(find.text('مجموعة GRP-000009'), findsWidgets);
+    expect(find.text('GRP-000009'), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 
