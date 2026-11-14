@@ -28,7 +28,7 @@ function ak_mobile_group_usage(int $groupId): array
             (SELECT COUNT(*) FROM nanny_group_assignments WHERE group_id = ?) AS nanny_history,
             (SELECT COUNT(*) FROM monthly_disbursements WHERE group_id = ?) AS disbursement_history,
             (SELECT COUNT(*) FROM group_workflow_audit_log WHERE group_id = ?) +
-            (SELECT COUNT(*) FROM audit_log WHERE entity_type = 'orphan_groups' AND entity_id = ?) AS workflow_history",
+            (SELECT COUNT(*) FROM audit_log WHERE entity_type = 'orphan_groups' AND entity_id = ? AND action <> 'VGM_CREATE_GROUP') AS workflow_history",
         [$groupId, $groupId, $groupId, $groupId, $groupId]
     ) ?: [];
     return [
@@ -112,6 +112,7 @@ if ($method === 'POST') {
                 [$name, $description, $actorId]
             );
             $newId = (int)$pdo->lastInsertId();
+            ak_vgm_log_group_created($pdo, $newId, $actorId, $name, $description);
             $pdo->commit();
             ak_api_json(200, ['ok' => true, 'data' => ['action' => $action, 'group_id' => $newId, 'message' => 'Group created as a draft.']]);
         }
