@@ -4674,3 +4674,14 @@ The same description-only rule now applies to the VGM Flutter client: its create
 - Mobile API integration run `43576662118` exercised the latest identity implementation. All generated-group assertions passed, including code derivation, distinct identities, immutable name/code, description updates, audit code, and safe deletion. The overall workflow remains **FAIL** only at the known unrelated SQL-backup assertion (MariaDB root invoked without the configured password).
 - Flutter analysis passed. All VGM orphan-group widget tests passed, including description-only creation and code display. The full Flutter suite remains **FAIL** because the unrelated existing `payroll_management_page_test.dart` expects 10 where the current UI exposes 11; 187 tests passed and 1 failed. No payroll source/test changes were made. APK build was skipped after the suite failure.
 - Local generated-identity migration and Apache/XAMPP browser acceptance have not been performed. Source/CI evidence must not be described as local runtime acceptance.
+
+
+## 2026-11-14 — VGM group description duplicate notification
+
+Source root cause: VGM groups.php emitted action feedback as dismissible Bootstrap alerts, while assets/js/notifications.js converts those alerts into transient toasts. The shared same-page POST flow in assets/js/app.js separately extracts [data-ak-flash] nodes and emits them through AKNotify. These competing paths caused the reported duplicate feedback.
+
+Fix committed on main: VGM success/error feedback now uses only hidden [data-ak-flash] nodes, handled by the established shared flash mechanisms. No global notification code, schema, or database behavior changed. Contract test now asserts the single-channel markup.
+
+Commits: 4b4c7c75185459f43ccb6d649f74f11b7f28e973 (source), a601168b090c9a49b04866fd7911a79ed80971bc (contract), 980204f6e261fd693c81e9a16b97bdbfba95a819 (module continuation documentation).
+
+Verification remains pending: GitHub Actions contract run and local Apache/browser acceptance. After pulling main, save a group description once and confirm exactly one centralized popup appears. Do not mark the issue closed until that browser check passes.
