@@ -602,14 +602,64 @@
         if (!samePagePost(form, event.submitter || null)) return;
         if (event.defaultPrevented) return;
         /*
-         * Let the centralized notifications.js submit interceptor handle
-         * data-confirm forms first. It re-submits with akConfirmBypass only
-         * after the user confirms; without this hand-off the window-level
-         * same-page handler would start fetch() before the document-level
-         * confirmation listener gets a chance to cancel the original submit.
+         * Confirm same-page POSTs here, at the same capture boundary that
+         * owns fetch(). This avoids a window -> document hand-off where a
+         * competing submit listener could start the request before the
+         * document-level confirmation listener runs.
+         *
+         * The notifications.js listener consumes akConfirmBypass on the
+         * confirmed resubmission. A cancelled/dismissed confirmation never
+         * reaches fetch() and never changes the page.
          */
         if (form.hasAttribute('data-confirm') && form.dataset.akConfirmBypass !== '1') {
-            akTrace('submit:defer-to-central-confirmation');
+            event.preventDefault();
+            event.stopImmediatePropagation();
+
+            if (form.dataset.akConfirmPending === '1') return;
+            form.dataset.akConfirmPending = '1';
+
+            const message = form.getAttribute('data-confirm') || 'هل تريد المتابعة؟';
+            const submitter = event.submitter || null;
+            const confirm = window.AKNotify && window.AKNotify.confirm;
+
+            if (typeof confirm !== 'function') {
+                delete form.dataset.akConfirmPending;
+                if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                    window.AKNotify.toast('error', 'تعذر فتح نافذة التأكيد. لم يتم تنفيذ الإجراء.');
+                }
+                return;
+            }
+
+            try {
+                Promise.resolve(confirm.call(window.AKNotify, message, function () {
+                    delete form.dataset.akConfirmPending;
+                    form.dataset.akConfirmBypass = '1';
+
+                    if (typeof form.requestSubmit === 'function') {
+                        if (submitter && submitter.form === form) form.requestSubmit(submitter);
+                        else form.requestSubmit();
+                    } else {
+                        delete form.dataset.akConfirmBypass;
+                        if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                            window.AKNotify.toast('error', 'متصفحك لا يدعم إرسال النموذج الآمن. لم يتم تنفيذ الإجراء.');
+                        }
+                    }
+                })).then(function (result) {
+                    if (!result || result.isConfirmed !== true) {
+                        delete form.dataset.akConfirmPending;
+                    }
+                }).catch(function () {
+                    delete form.dataset.akConfirmPending;
+                    if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                        window.AKNotify.toast('error', 'تعذر إكمال نافذة التأكيد. لم يتم تنفيذ الإجراء.');
+                    }
+                });
+            } catch (error) {
+                delete form.dataset.akConfirmPending;
+                if (window.AKNotify && typeof window.AKNotify.toast === 'function') {
+                    window.AKNotify.toast('error', 'تعذر إكمال نافذة التأكيد. لم يتم تنفيذ الإجراء.');
+                }
+            }
             return;
         }
         if (form.dataset.akSubmitting === '1') return;
