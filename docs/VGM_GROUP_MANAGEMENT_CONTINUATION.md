@@ -86,3 +86,29 @@ The previous verification boundaries remain:
 ## 2026-11-14 — Final VGM contract rerun
 
 The VGM contract workflow was rerun on source commit `79e37315a7b09d32aaae9227065a8c818bc7c447` after adding the lifecycle transaction assertion. GitHub Actions run `43557000502` passed PHP 8.2 lint and reported `18 checks | PASS`. This is the latest VGM contract result; it supersedes the earlier 16/17-check counts.
+
+## 2026-11-14 — Group creation hardening checkpoint (source implemented; local acceptance pending)
+
+### Confirmed business rule
+Group names must be unique globally across the organization. The unique comparison follows the table collation `utf8mb4_unicode_ci` (case/accent-insensitive). The form/API trim outer whitespace before validation.
+
+### Implementation
+- Migration: `database/migrations/2026-11-14_vgm_unique_group_names.sql` adds unique key `uq_orphan_groups_group_name`. Its preflight query must return no rows against the local database before the ALTER is applied.
+- Shared helper `ak_vgm_validate_group_details()` validates string input, required name, name <=150 chars and description <=1000 chars, and reports existing duplicates. The DB index remains authoritative for concurrent requests.
+- Web and API create/update use the same helper. Web and API convert unique-index collision to a clear duplicate-name response.
+- Web POSTs now require CSRF and all 11 forms carry the token.
+- Web Nanny assignment validates active account + role in the transaction and locks/revalidates the group.
+- Web member add/remove/transfer now lock group rows and recheck current-month disbursement restrictions inside the transaction.
+- Creation UI explains uniqueness, draft status and the follow-on steps. Confirmation popups consume existing `data-confirm` attributes; bulk add uses `requestSubmit()` to preserve same-page AJAX behavior.
+
+### Audit semantics
+No generic creation audit event was added. `created_by` and `created_at` already record the creator/time, while the safe-delete usage query counts every `audit_log` row as usage. Adding a creation event without changing that usage rule would turn every never-used draft into an archive-only record.
+
+### Acceptance checklist — NOT YET VERIFIED LOCALLY
+1. Pull latest `main`; inspect the local DB duplicate preflight output.
+2. If zero rows, apply the migration. If duplicates exist, stop and resolve names with the user before altering the table.
+3. PHP lint: `modules/deputy_gm/lib_group_management.php`, `modules/deputy_gm/groups.php`, `api/v1/deputy_gm/groups.php`.
+4. Run `php tools/test_vgm_group_management_contract.php` and the existing `tools/test_mobile_api_auth_integration.php` harness.
+5. Browser test: create unique name; duplicate exact and case/accent variant; max length and overlength/type attempts; duplicate rename; invalid CSRF; confirmation cancel/confirm; visible success/error feedback; create -> selected draft details; bulk selection and submission; confirm page remains in-place and selection result updates correctly.
+6. Inspect any failure before changing code. Do not move to Nanny/Accountant until this VGM acceptance gate is passed.
+
