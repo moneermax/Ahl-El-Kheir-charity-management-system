@@ -614,40 +614,6 @@ include __DIR__ . '/../../includes/header.php';
 
 <script>
 (function () {
-    if (!window.__akVgmConfirmBound) {
-        window.__akVgmConfirmBound = true;
-        document.addEventListener('click', function (event) {
-            const button = event.target.closest('form[data-confirm] button:not([type="button"]), form[data-confirm] button[type="submit"]');
-            if (!button || !button.form) return;
-            const form = button.form;
-            if (form.dataset.akConfirmPending === '1') return;
-            event.preventDefault();
-            const message = form.getAttribute('data-confirm') || 'هل تريد المتابعة؟';
-            const submitConfirmed = function () { form.requestSubmit(button); };
-            if (window.Swal && typeof window.Swal.fire === 'function') {
-                form.dataset.akConfirmPending = '1';
-                window.Swal.fire({
-                    title: 'تأكيد الإجراء',
-                    text: message,
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'نعم، متابعة',
-                    cancelButtonText: 'إلغاء',
-                    reverseButtons: true,
-                    focusCancel: true,
-                    rtl: true
-                }).then(function (result) {
-                    delete form.dataset.akConfirmPending;
-                    if (result.isConfirmed) submitConfirmed();
-                }).catch(function () {
-                    delete form.dataset.akConfirmPending;
-                    window.alert('تعذر فتح نافذة التأكيد. لم يتم تنفيذ الإجراء.');
-                });
-            } else if (window.confirm(message)) {
-                submitConfirmed();
-            }
-        }, true);
-    }
     const search = document.getElementById('orphanSearch');
     const clear = document.getElementById('clearSearch');
     const selectAll = document.getElementById('selectAll');
@@ -730,7 +696,7 @@ include __DIR__ . '/../../includes/header.php';
         const checked = Array.from(document.querySelectorAll('.orphan-checkbox:checked'));
         if (!checked.length) {
             if (window.AKNotify && typeof AKNotify.toast === 'function') {
-                AKNotify.toast('يرجى اختيار يتيم واحد على الأقل', 'warning');
+                AKNotify.toast('warning', 'يرجى اختيار يتيم واحد على الأقل');
             }
             return;
         }
@@ -748,28 +714,27 @@ include __DIR__ . '/../../includes/header.php';
             document.getElementById('bulkAddForm').requestSubmit();
         };
 
-        if (window.AKNotify && typeof AKNotify.confirm === 'function') {
-            AKNotify.confirm({
+        const confirmationMessage = 'هل تريد إضافة ' + checked.length + ' يتيم للمجموعة؟';
+        if (window.AKNotify && typeof window.AKNotify.confirm === 'function') {
+            window.AKNotify.confirm(confirmationMessage, submit, {
                 title: 'إضافة أيتام للمجموعة',
-                text: 'هل تريد إضافة ' + checked.length + ' يتيم للمجموعة؟',
                 icon: 'question',
                 confirmButtonText: 'نعم، إضافة',
                 cancelButtonText: 'إلغاء'
-            }).then(function (confirmed) {
-                if (confirmed) submit();
             });
-        } else {
-            if (window.Swal && typeof Swal.fire === 'function') {
-                Swal.fire({
-                    title: 'إضافة أيتام للمجموعة',
-                    text: 'هل تريد إضافة ' + checked.length + ' يتيم للمجموعة؟',
-                    icon: 'question',
-                    showCancelButton: true,
-                    confirmButtonText: 'نعم، إضافة',
-                    cancelButtonText: 'إلغاء',
-                    reverseButtons: true
-                }).then(function (result) { if (result.isConfirmed) submit(); });
-            }
+        } else if (window.Swal && typeof window.Swal.fire === 'function') {
+            window.Swal.fire({
+                title: 'إضافة أيتام للمجموعة',
+                text: confirmationMessage,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'نعم، إضافة',
+                cancelButtonText: 'إلغاء',
+                reverseButtons: true,
+                rtl: true
+            }).then(function (result) { if (result.isConfirmed) submit(); });
+        } else if (window.confirm(confirmationMessage)) {
+            submit();
         }
     });
 
