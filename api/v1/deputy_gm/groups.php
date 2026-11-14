@@ -23,16 +23,19 @@ function ak_mobile_group_can_change_members(string $status): bool
 function ak_mobile_group_usage(int $groupId): array
 {
     $row = dbFetchOne(
-        'SELECT
+        "SELECT
             (SELECT COUNT(*) FROM group_children WHERE group_id = ?) AS member_history,
             (SELECT COUNT(*) FROM nanny_group_assignments WHERE group_id = ?) AS nanny_history,
-            (SELECT COUNT(*) FROM monthly_disbursements WHERE group_id = ?) AS disbursement_history',
-        [$groupId, $groupId, $groupId]
+            (SELECT COUNT(*) FROM monthly_disbursements WHERE group_id = ?) AS disbursement_history,
+            (SELECT COUNT(*) FROM group_workflow_audit_log WHERE group_id = ?) +
+            (SELECT COUNT(*) FROM audit_log WHERE entity_type = 'orphan_groups' AND entity_id = ?) AS workflow_history",
+        [$groupId, $groupId, $groupId, $groupId, $groupId]
     ) ?: [];
     return [
         'member_history' => (int)($row['member_history'] ?? 0),
         'nanny_history' => (int)($row['nanny_history'] ?? 0),
         'disbursement_history' => (int)($row['disbursement_history'] ?? 0),
+        'workflow_history' => (int)($row['workflow_history'] ?? 0),
     ];
 }
 
