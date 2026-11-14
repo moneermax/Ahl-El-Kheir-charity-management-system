@@ -101,12 +101,16 @@ $checks = [
         && !str_contains($src['web'], 'alert-danger alert-dismissible')
         && str_contains($src['app'], "incoming.querySelectorAll('[data-ak-flash]')")
         && str_contains($src['notifications'], "document.querySelectorAll('[data-ak-flash]')"),
-    'group description and caregiver controls share a compact responsive row' => str_contains($src['web'], 'class="row g-2 align-items-end"')
-        && str_contains($src['web'], 'class="col-12 col-lg-6"')
-        && str_contains($src['web'], 'class="input-group input-group-sm"')
-        && str_contains($src['web'], 'الحاضنة الحالية وتعيين الحاضنة')
+    'group settings are separated from the summary card and constrained to a centered responsive width' => str_contains($src['web'], 'class="row justify-content-center mb-3"')
+        && str_contains($src['web'], 'class="col-12 col-lg-10 col-xl-8"')
+        && str_contains($src['web'], 'إعدادات المجموعة')
+        && str_contains($src['web'], 'class="row g-3 align-items-start"'),
+    'description and caregiver controls remain compact and top-aligned after caregiver selection' => str_contains($src['web'], 'class="col-12 col-md-6"')
+        && str_contains($src['web'], 'class="input-group input-group-sm flex-nowrap"')
+        && str_contains($src['web'], 'style="min-height: 1.25rem;"')
         && str_contains($src['web'], 'name="description"')
-        && str_contains($src['web'], 'name="nanny_id"'),
+        && str_contains($src['web'], 'name="nanny_id"')
+        && !str_contains($src['web'], 'class="row g-2 align-items-end"'),
 
 ];
 $failed = 0;
