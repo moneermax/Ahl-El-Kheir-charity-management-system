@@ -114,22 +114,24 @@ try {
         }
 
         elseif ($action === 'create_group') {
-            [$group_name, $description] = ak_vgm_validate_group_details($pdo, $_POST['group_name'] ?? null, $_POST['description'] ?? '');
             $pdo->beginTransaction();
-            $stmt = $pdo->prepare(
-                "INSERT INTO orphan_groups (group_name, description, created_by, is_active, status, updated_at)
-                 VALUES (:name, :description, :created_by, 0, 'draft', NOW())"
+            $created_group = ak_vgm_create_group($pdo, $_POST['description'] ?? '', $actor_id);
+            $view_group_id = (int)$created_group['id'];
+            ak_vgm_log_group_created(
+                $pdo,
+                $view_group_id,
+                $actor_id,
+                (string)$created_group['group_name'],
+                (string)$created_group['group_code'],
+                (string)$created_group['description']
             );
-            $stmt->execute(['name' => $group_name, 'description' => $description, 'created_by' => $actor_id]);
-            $view_group_id = (int) $pdo->lastInsertId();
-            ak_vgm_log_group_created($pdo, $view_group_id, $actor_id, $group_name, $description);
             $pdo->commit();
             $success_message = 'تم إنشاء المجموعة كمسودة. أضف الأعضاء ثم عيّن الحاضنة وفعّل المجموعة عند جاهزيتها.';
         }
 
         elseif ($action === 'update_group') {
             if ($group_id <= 0) throw new RuntimeException('بيانات المجموعة غير مكتملة');
-            [$name, $description] = ak_vgm_validate_group_details($pdo, $_POST['group_name'] ?? null, $_POST['description'] ?? '', $group_id);
+            $description = ak_vgm_validate_group_description($_POST['description'] ?? '');
             $stmt = $pdo->prepare('SELECT status FROM orphan_groups WHERE id = :id');
             $stmt->execute(['id' => $group_id]);
             $status = $stmt->fetchColumn();
@@ -137,9 +139,9 @@ try {
             if (in_array($status, ['closed', 'cancelled', 'archived'], true)) {
                 throw new RuntimeException('لا يمكن تعديل مجموعة مغلقة أو ملغاة أو مؤرشفة');
             }
-            $pdo->prepare('UPDATE orphan_groups SET group_name = :name, description = :description, updated_at = NOW() WHERE id = :id')
-                ->execute(['name' => $name, 'description' => $description, 'id' => $group_id]);
-            $success_message = 'تم تحديث بيانات المجموعة';
+            $pdo->prepare('UPDATE orphan_groups SET description = :description, updated_at = NOW() WHERE id = :id')
+                ->execute(['description' => $description, 'id' => $group_id]);
+            $success_message = 'تم تحديث وصف المجموعة';
         }
 
         elseif (in_array($action, ['activate_group', 'suspend_group', 'close_group', 'cancel_group', 'archive_group'], true)) {
@@ -313,7 +315,7 @@ try {
     $error_message = $e instanceof RuntimeException || $e instanceof DomainException
         ? $e->getMessage()
         : (($e instanceof PDOException && ak_vgm_is_duplicate_group_name_error($e))
-            ? 'اسم المجموعة مستخدم بالفعل. اختر اسماً آخر.'
+            ? 'تعذر تخصيص رمز فريد للمجموعة. أعد المحاولة.'
             : 'تعذر تنفيذ العملية. لم يتم فقد أي بيانات.');
     if ($action === 'create_group') $view_group_id = 0;
 }
@@ -448,21 +450,17 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="card mb-3 mx-auto" style="max-width: 1400px; width: 100%;">
                     <div class="card-header py-2"><strong><i class="bi bi-plus-circle"></i> إنشاء مجموعة</strong></div>
                     <div class="card-body py-2">
-                        <form method="POST" action="group_details.php" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟" class="row g-2 align-items-end"><?php echo csrf_field(); ?>
+                        <form method="POST" action="group_details.php" data-confirm="سيُنشئ النظام اسماً ورمزاً فريدين للمجموعة. هل تريد المتابعة؟" class="row g-2 align-items-end"><?php echo csrf_field(); ?>
                             <input type="hidden" name="action" value="create_group">
-                            <div class="col-12 col-md-4">
-                                <label class="form-label small mb-1" for="vgmGroupName">اسم المجموعة</label>
-                                <input id="vgmGroupName" type="text" class="form-control form-control-sm" name="group_name" required maxlength="150" autocomplete="off" placeholder="اسم فريد للمجموعة">
-                            </div>
-                            <div class="col-12 col-md-5">
-                                <label class="form-label small mb-1" for="vgmGroupDescription">الوصف (اختياري)</label>
-                                <input id="vgmGroupDescription" type="text" class="form-control form-control-sm" name="description" maxlength="1000" placeholder="وصف مختصر للمجموعة">
+                            <div class="col-12 col-md-9">
+                                <label class="form-label small mb-1" for="vgmGroupDescription">وصف المجموعة (اختياري)</label>
+                                <input id="vgmGroupDescription" type="text" class="form-control form-control-sm" name="description" maxlength="1000" placeholder="اكتب وصفاً مختصراً للمجموعة">
                             </div>
                             <div class="col-12 col-md-3">
                                 <button class="btn btn-primary btn-sm w-100"><i class="bi bi-save"></i> إنشاء كمسودة</button>
                             </div>
                         </form>
-                        <div class="form-text mt-2">اسم المجموعة يجب أن يكون فريداً على مستوى المنظمة. ستُنشأ كمسودة، ثم تنتقل إلى صفحة التفاصيل لإضافة الأيتام وتعيين الحاضنة وتفعيلها.</div>
+                        <div class="form-text mt-2">سيُنشئ النظام اسم المجموعة ورمزها تلقائياً. ستُنشأ كمسودة، ثم تنتقل إلى صفحة التفاصيل لإضافة الأيتام وتعيين الحاضنة وتفعيلها.</div>
                     </div>
                 </div>
             </div>
@@ -503,7 +501,10 @@ include __DIR__ . '/../../includes/header.php';
                                                         <input class="form-check-input mt-0" type="checkbox" name="group_ids[]" value="<?php echo (int)$group['id']; ?>" aria-label="<?php echo htmlspecialchars('فتح الدورة لمجموعة ' . $group['group_name'], ENT_QUOTES, 'UTF-8'); ?>">
                                                     <?php else: ?><span class="text-muted">—</span><?php endif; ?>
                                                 </td>
-                                                <td class="text-start"><a class="fw-semibold text-decoration-none" href="group_details.php?id=<?php echo (int)$group['id']; ?>"><?php echo htmlspecialchars($group['group_name']); ?></a></td>
+                                                <td class="text-start">
+                                                    <a class="fw-semibold text-decoration-none" href="group_details.php?id=<?php echo (int)$group['id']; ?>"><?php echo htmlspecialchars($group['group_name']); ?></a>
+                                                    <?php if (!empty($group['group_code'])): ?><div class="small text-muted font-monospace"><?php echo htmlspecialchars($group['group_code']); ?></div><?php endif; ?>
+                                                </td>
                                                 <td><span class="badge bg-<?php echo groupStatusClass($group['status']); ?>"><?php echo groupStatusLabel($group['status']); ?></span></td>
                                                 <td><?php echo (int)$group['orphan_count']; ?></td>
                                                 <td><?php echo $group['nanny_name'] ? htmlspecialchars($group['nanny_name']) : '<span class="text-muted">بدون حاضنة</span>'; ?></td>
@@ -524,7 +525,11 @@ include __DIR__ . '/../../includes/header.php';
             <?php $status = (string)$selected_group['status']; $current_members = count($group_orphans); $has_current_disbursement = groupHasCurrentDisbursement($pdo, (int)$selected_group['id'], $current_month); ?>
             <div class="card mb-3">
                 <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <div><h5 class="mb-1"><i class="bi bi-folder2-open"></i> <?php echo htmlspecialchars($selected_group['group_name']); ?></h5><span class="badge bg-<?php echo groupStatusClass($status); ?>"><?php echo groupStatusLabel($status); ?></span></div>
+                    <div>
+                        <h5 class="mb-1"><i class="bi bi-folder2-open"></i> <?php echo htmlspecialchars($selected_group['group_name']); ?></h5>
+                        <span class="badge bg-<?php echo groupStatusClass($status); ?>"><?php echo groupStatusLabel($status); ?></span>
+                        <?php if (!empty($selected_group['group_code'])): ?><span class="badge bg-light text-dark font-monospace"><?php echo htmlspecialchars($selected_group['group_code']); ?></span><?php endif; ?>
+                    </div>
                     <div class="d-flex gap-1 flex-wrap">
                         <?php if (in_array($status, ['draft','empty','suspended'], true) && $current_members > 0): ?><form method="POST" action="groups.php" class="d-inline" data-confirm="هل تريد تفعيل هذه المجموعة؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="activate_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-success btn-sm">تفعيل</button></form><?php endif; ?>
                         <?php if (in_array($status, ['active','empty'], true)): ?><form method="POST" action="groups.php" class="d-inline" data-confirm="هل تريد إيقاف المجموعة مؤقتاً؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="suspend_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-warning btn-sm">إيقاف مؤقت</button></form><?php endif; ?>
@@ -548,9 +553,11 @@ include __DIR__ . '/../../includes/header.php';
                     <p class="text-muted small mb-3"><?php echo nl2br(htmlspecialchars($selected_group['description'] ?: 'لا يوجد وصف')); ?></p>
                     <form method="POST" action="groups.php" class="row g-2 mb-3"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="update_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
-                        <div class="col-md-4"><input class="form-control form-control-sm" name="group_name" value="<?php echo htmlspecialchars($selected_group['group_name']); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?> required></div>
-                        <div class="col-md-6"><input class="form-control form-control-sm" name="description" value="<?php echo htmlspecialchars($selected_group['description'] ?? ''); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>></div>
-                        <div class="col-md-2"><button class="btn btn-outline-primary btn-sm w-100" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>>حفظ البيانات</button></div>
+                        <div class="col-md-10">
+                            <label class="form-label small mb-1">وصف المجموعة</label>
+                            <input class="form-control form-control-sm" name="description" maxlength="1000" value="<?php echo htmlspecialchars($selected_group['description'] ?? ''); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>>
+                        </div>
+                        <div class="col-md-2"><button class="btn btn-outline-primary btn-sm w-100" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>>حفظ الوصف</button></div>
                     </form>
                 </div>
             </div>
