@@ -75,6 +75,10 @@ $checks = [
         && str_contains($src['api'], "action <> 'VGM_CREATE_GROUP'"),
     'VGM create/list page renders a centered full-width groups table' => str_contains($src['web'], 'style="max-width: 1400px; width: 100%;"') && str_contains($src['web'], 'table table-hover table-striped align-middle text-center') && str_contains($src['web'], 'فتح الدورة للمحدد'),
     'group table preserves detail links and group status/member/caregiver/disbursement fields' => str_contains($src['web'], 'href="group_details.php?id=') && str_contains($src['web'], 'groupStatusLabel($group[\'status\'])') && str_contains($src['web'], '$group[\'orphan_count\']') && str_contains($src['web'], '$group[\'nanny_name\']') && str_contains($src['web'], '$group[\'disbursement_count\']'),
+    'VGM page title is restored as a primary background banner with current month contrast' => str_contains($src['web'], 'bg-primary text-white rounded-3 p-3 shadow-sm') && str_contains($src['web'], 'إدارة مجموعات الأيتام') && str_contains($src['web'], 'إنشاء المجموعات ومتابعة حالتها') && str_contains($src['web'], 'دورة الصرف الحالية:'),
+    'group creation fields and submit button share one compact responsive row' => str_contains($src['web'], 'class="card-body py-2"') && str_contains($src['web'], 'class="row g-2 align-items-end"') && str_contains($src['web'], 'id="vgmGroupName"') && str_contains($src['web'], 'id="vgmGroupDescription"') && str_contains($src['web'], 'col-12 col-md-3') && str_contains($src['web'], 'إنشاء كمسودة') && !str_contains($src['web'], '<textarea id="vgmGroupDescription"'),
+    'group guidance and protection rules appear immediately after the page title' => strpos($src['web'], 'إرشادات إدارة المجموعات') > strpos($src['web'], 'إدارة مجموعات الأيتام') && strpos($src['web'], 'إرشادات إدارة المجموعات') < strpos($src['web'], 'if ($success_message)') && str_contains($src['web'], 'الحذف النهائي متاح فقط') && str_contains($src['web'], 'نقل اليتيم يحفظ نهاية العضوية القديمة'),
+
 ];
 $failed = 0;
 foreach ($checks as $label => $ok) {
