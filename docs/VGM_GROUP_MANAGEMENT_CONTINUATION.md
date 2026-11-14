@@ -308,3 +308,21 @@ The former standalone caregiver card was removed; the same POST actions, CSRF fi
 Source commit: `992088a93f09ab19ad0722109d3117321822807f`.
 
 A focused static contract assertion was added for the paired responsive controls. Local PHP syntax/runtime and browser layout acceptance remain pending. After pulling `main`, inspect group 11 at desktop and narrow/mobile widths, verify the description save and caregiver assignment actions still work, and confirm the current caregiver/date are still shown.
+
+
+## 2026-11-14 — VGM group settings layout correction (source committed; browser acceptance pending)
+
+The user reported that the caregiver selector and description editor lost horizontal alignment after a caregiver was selected, and that the controls occupied too much of the page width.
+
+Source review identified the layout weakness: the caregiver's current-assignment helper text appears only after assignment, while the previous shared row used `align-items-end`. That conditional extra content changed the caregiver column height and caused the bottom-aligned input groups to shift relative to one another.
+
+Corrective layout:
+- Closed the original full-width group summary card before rendering the editable settings.
+- Moved description and caregiver assignment into a distinct, centered settings card.
+- Constrained the card to Bootstrap `col-lg-10 col-xl-8` (full width only on small screens).
+- Set the two fields to equal `col-md-6` columns, top-aligned with `align-items-start`; input groups remain small and non-wrapping.
+- Reserved a small helper-text line below the caregiver selector so the current caregiver/date does not move the input row when it appears.
+- Kept the existing POST actions, CSRF fields, status checks, and server-side workflows unchanged.
+
+Source commit: `662883091298806f939ebbe271955677e23ef12c`.
+A focused contract update asserts the separated/constrained card and stable alignment. Local PHP syntax, CI, and browser acceptance remain pending. Do not mark the visual issue closed until the user checks before/after caregiver selection and desktop/mobile widths.
