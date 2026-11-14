@@ -10,6 +10,8 @@ on:
       - 'config/database.php'
       - 'config/environment.php'
       - 'database/ahl_el_kheir.sql'
+      - 'database/migrations/2026-11-14_vgm_unique_group_names.sql'
+      - 'modules/deputy_gm/lib_group_management.php'
       - 'database/migrations/2026-10-24_mobile_api_sessions.sql'
       - 'database/migrations/2026-10-25_mobile_web_handoffs.sql'
       - 'database/migrations/2026-09-17_fina_standalone_schema.sql'
@@ -42,6 +44,8 @@ on:
       - 'config/database.php'
       - 'config/environment.php'
       - 'database/ahl_el_kheir.sql'
+      - 'database/migrations/2026-11-14_vgm_unique_group_names.sql'
+      - 'modules/deputy_gm/lib_group_management.php'
       - 'database/migrations/2026-10-24_mobile_api_sessions.sql'
       - 'database/migrations/2026-10-25_mobile_web_handoffs.sql'
       - 'database/migrations/2026-10-12_hr_employee_incentives_ledger.sql'
@@ -112,6 +116,7 @@ jobs:
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-24_mobile_api_sessions.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-25_mobile_web_handoffs.sql
           mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-10-23_document_archive_catalogue.sql
+          mysql --host=127.0.0.1 --port=3306 --user=root --database=mobile_api_auth_test < database/migrations/2026-11-14_vgm_unique_group_names.sql
 
       - name: PHP syntax check for payroll API and shared helpers
         run: |
@@ -124,6 +129,7 @@ jobs:
           php -l api/v1/accounting/trial_balance.php
           php -l api/v1/administration/winback.php
           php -l api/v1/deputy_gm/groups.php
+          php -l modules/deputy_gm/lib_group_management.php
           php -l api/v1/suspensions/index.php
           php -l api/v1/suspensions/case_service.php
           php -l api/v1/fina/report.php
