@@ -38,6 +38,22 @@ $checks = [
     'web lifecycle archive runs inside a transaction' => str_contains($src['web'], 'in_array($action, [\'activate_group\'') && str_contains($src['web'], '$pdo->beginTransaction();') && str_contains($src['web'], '$pdo->commit();'),
     'web transfer capability remains' => str_contains($src['web'], 'elseif ($action === \'transfer_orphan\')'),
     'mobile transfer capability remains' => str_contains($src['api'], 'elseif ($action === \'transfer_orphan\')'),
+    'global group-name unique index migration exists' => is_file($root . '/database/migrations/2026-11-14_vgm_unique_group_names.sql')
+        && str_contains((string)file_get_contents($root . '/database/migrations/2026-11-14_vgm_unique_group_names.sql'), 'ADD UNIQUE KEY uq_orphan_groups_group_name (group_name)'),
+    'web and API share group-name/description validation' => str_contains($src['helper'], 'function ak_vgm_validate_group_details')
+        && str_contains($src['web'], 'ak_vgm_validate_group_details($pdo')
+        && str_contains($src['api'], 'ak_vgm_validate_group_details('),
+    'web rejects POST without valid CSRF token' => str_contains($src['web'], 'if (!verify_csrf())'),
+    'every VGM web POST form includes CSRF token' => substr_count($src['web'], '<form') === substr_count($src['web'], 'csrf_field()'),
+    'web nanny assignment validates active Nanny server-side' => str_contains($src['web'], 'ak_vgm_assert_active_nanny($pdo'),
+    'shared active-Nanny validation checks role and account state' => str_contains($src['helper'], "r.code = 'nanny'") && str_contains($src['helper'], 'u.is_active = 1'),
+    'web member additions lock and revalidate group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group($pdo, $group_id)") && str_contains($src['web'], '$pdo->beginTransaction();'),
+    'web nanny assignment locks and revalidates group inside transaction' => str_contains($src['web'], "ak_vgm_lock_operational_group($pdo, $group_id)") && str_contains($src['web'], "ak_vgm_assert_active_nanny($pdo"),
+    'concurrent duplicate-name collision has friendly web/API handling' => str_contains($src['helper'], 'ak_vgm_is_duplicate_group_name_error')
+        && str_contains($src['web'], 'اسم المجموعة مستخدم بالفعل')
+        && str_contains($src['api'], "'duplicate_group_name'"),
+    'VGM confirmation popups are wired to data-confirm forms' => str_contains($src['web'], 'form[data-confirm] button') && str_contains($src['web'], 'window.Swal.fire'),
+    'bulk member form uses requestSubmit and shared same-page POST handling' => str_contains($src['web'], "getElementById('bulkAddForm').requestSubmit()"),
 ];
 $failed = 0;
 foreach ($checks as $label => $ok) {
