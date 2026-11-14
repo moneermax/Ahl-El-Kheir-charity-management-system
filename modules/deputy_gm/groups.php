@@ -89,6 +89,7 @@ function syncGroupState(PDO $pdo, int $group_id, int $actor_id): void {
 
 try {
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (!verify_csrf()) throw new RuntimeException('انتهت صلاحية نموذج الصفحة أو رمز الحماية غير صالح. حدّث الصفحة ثم أعد المحاولة.');
         $action = $_POST['action'] ?? '';
         $group_id = (int) ($_POST['group_id'] ?? 0);
 
@@ -106,11 +107,7 @@ try {
         }
 
         elseif ($action === 'create_group') {
-            $group_name = trim((string) ($_POST['group_name'] ?? ''));
-            $description = trim((string) ($_POST['description'] ?? ''));
-            if ($group_name === '') {
-                throw new RuntimeException('اسم المجموعة مطلوب');
-            }
+            [$group_name, $description] = ak_vgm_validate_group_details($pdo, $_POST['group_name'] ?? null, $_POST['description'] ?? '');
             $stmt = $pdo->prepare(
                 "INSERT INTO orphan_groups (group_name, description, created_by, is_active, status, updated_at)
                  VALUES (:name, :description, :created_by, 0, 'draft', NOW())"
@@ -121,9 +118,8 @@ try {
         }
 
         elseif ($action === 'update_group') {
-            $name = trim((string) ($_POST['group_name'] ?? ''));
-            $description = trim((string) ($_POST['description'] ?? ''));
-            if ($group_id <= 0 || $name === '') throw new RuntimeException('بيانات المجموعة غير مكتملة');
+            if ($group_id <= 0) throw new RuntimeException('بيانات المجموعة غير مكتملة');
+            [$name, $description] = ak_vgm_validate_group_details($pdo, $_POST['group_name'] ?? null, $_POST['description'] ?? '', $group_id);
             $stmt = $pdo->prepare('SELECT status FROM orphan_groups WHERE id = :id');
             $stmt->execute(['id' => $group_id]);
             $status = $stmt->fetchColumn();
@@ -195,33 +191,27 @@ try {
         }
 
         elseif ($action === 'assign_nanny') {
-            $nanny_id = (int) ($_POST['nanny_id'] ?? 0);
-            if ($group_id <= 0 || $nanny_id <= 0) throw new RuntimeException('يرجى اختيار المجموعة والحاضنة');
-            $stmt = $pdo->prepare('SELECT status FROM orphan_groups WHERE id = :id');
-            $stmt->execute(['id' => $group_id]);
-            $status = $stmt->fetchColumn();
-            if (!$status || !groupCanChangeMembers($status)) throw new RuntimeException('لا يمكن تعيين حاضنة لمجموعة غير تشغيلية');
+            $nanny_id = filter_var($_POST['nanny_id'] ?? null, FILTER_VALIDATE_INT);
+            if ($group_id <= 0 || !$nanny_id || $nanny_id < 1) throw new RuntimeException('يرجى اختيار المجموعة والحاضنة');
             $pdo->beginTransaction();
+            ak_vgm_lock_operational_group($pdo, $group_id);
+            ak_vgm_assert_active_nanny($pdo, (int)$nanny_id);
             $pdo->prepare('UPDATE nanny_group_assignments SET end_date = CURDATE() WHERE group_id = :id AND end_date IS NULL')->execute(['id' => $group_id]);
-            $pdo->prepare('INSERT INTO nanny_group_assignments (group_id, nanny_id, start_date, assigned_by) VALUES (:group_id, :nanny_id, CURDATE(), :actor)')->execute(['group_id' => $group_id, 'nanny_id' => $nanny_id, 'actor' => $actor_id]);
+            $pdo->prepare('INSERT INTO nanny_group_assignments (group_id, nanny_id, start_date, assigned_by) VALUES (:group_id, :nanny_id, CURDATE(), :actor)')->execute(['group_id' => $group_id, 'nanny_id' => (int)$nanny_id, 'actor' => $actor_id]);
             $pdo->commit();
             $success_message = 'تم تحديث الحاضنة مع الحفاظ على سجل التعيينات السابق';
         }
 
         elseif (in_array($action, ['add_orphan', 'add_orphan_bulk'], true)) {
             if ($group_id <= 0) throw new RuntimeException('المجموعة غير محددة');
-            $stmt = $pdo->prepare('SELECT status FROM orphan_groups WHERE id = :id');
-            $stmt->execute(['id' => $group_id]);
-            $status = $stmt->fetchColumn();
-            if (!$status || !groupCanChangeMembers($status)) throw new RuntimeException('لا يمكن إضافة أعضاء إلى مجموعة غير تشغيلية');
+            $pdo->beginTransaction();
+            ak_vgm_lock_operational_group($pdo, $group_id);
             if (groupHasCurrentDisbursement($pdo, $group_id, $current_month)) {
                 throw new RuntimeException('لا يمكن تعديل أعضاء هذه المجموعة بعد إنشاء صرف الشهر الحالي. يتم نقل أي تغيير مالي إلى دورة الشهر التالية.');
             }
             $child_ids = $action === 'add_orphan' ? [(int) ($_POST['child_id'] ?? 0)] : array_map('intval', (array) ($_POST['child_ids'] ?? []));
             $child_ids = array_values(array_unique(array_filter($child_ids)));
             if (!$child_ids) throw new RuntimeException('لم يتم اختيار أي يتيم');
-
-            $pdo->beginTransaction();
             $check = $pdo->prepare(
                 "SELECT fc.id
                  FROM family_children fc
@@ -255,17 +245,16 @@ try {
         elseif ($action === 'remove_orphan') {
             $child_id = (int) ($_POST['child_id'] ?? 0);
             if ($group_id <= 0 || $child_id <= 0) throw new RuntimeException('بيانات الإزالة غير مكتملة');
+            $pdo->beginTransaction();
+            ak_vgm_lock_operational_group($pdo, $group_id);
             if (groupHasCurrentDisbursement($pdo, $group_id, $current_month)) {
                 throw new RuntimeException('لا يمكن إزالة عضو من المجموعة بعد إنشاء صرف الشهر الحالي. يحافظ النظام على سجل الصرف ولا يعدله بأثر رجعي.');
             }
-            $stmt = $pdo->prepare('SELECT status FROM orphan_groups WHERE id = :id');
-            $stmt->execute(['id' => $group_id]);
-            $status = $stmt->fetchColumn();
-            if (!$status || !groupCanChangeMembers($status)) throw new RuntimeException('لا يمكن تعديل أعضاء مجموعة غير تشغيلية');
             $stmt = $pdo->prepare('UPDATE group_children SET left_date = CURDATE() WHERE group_id = :group_id AND child_id = :child_id AND left_date IS NULL');
             $stmt->execute(['group_id' => $group_id, 'child_id' => $child_id]);
             if ($stmt->rowCount() === 0) throw new RuntimeException('العضو غير موجود كعضو حالي في هذه المجموعة');
             syncGroupState($pdo, $group_id, $actor_id);
+            $pdo->commit();
             $success_message = 'تم إزالة اليتيم من المجموعة مع الحفاظ على سجل العضوية';
         }
 
@@ -273,18 +262,18 @@ try {
             $child_id = (int) ($_POST['child_id'] ?? 0);
             $target_group_id = (int) ($_POST['target_group_id'] ?? 0);
             if ($group_id <= 0 || $child_id <= 0 || $target_group_id <= 0 || $target_group_id === $group_id) throw new RuntimeException('بيانات النقل غير مكتملة');
-            if (groupHasCurrentDisbursement($pdo, $group_id, $current_month) || groupHasCurrentDisbursement($pdo, $target_group_id, $current_month)) {
-                throw new RuntimeException('لا يمكن نقل عضو بين مجموعات مرتبطة بصرف الشهر الحالي. يتم تنفيذ التغيير من الدورة التالية.');
-            }
-            $statuses = $pdo->prepare('SELECT id, status FROM orphan_groups WHERE id IN (:source, :target)');
+            $pdo->beginTransaction();
+            $statuses = $pdo->prepare('SELECT id, status FROM orphan_groups WHERE id IN (:source, :target) ORDER BY id FOR UPDATE');
             $statuses->execute(['source' => $group_id, 'target' => $target_group_id]);
             $status_map = [];
             foreach ($statuses->fetchAll(PDO::FETCH_ASSOC) as $row) $status_map[(int) $row['id']] = $row['status'];
             if (!isset($status_map[$group_id], $status_map[$target_group_id]) || !groupCanChangeMembers($status_map[$group_id]) || !groupCanChangeMembers($status_map[$target_group_id])) {
                 throw new RuntimeException('النقل متاح فقط بين مجموعات تشغيلية');
             }
-            $pdo->beginTransaction();
-            $check = $pdo->prepare('SELECT 1 FROM group_children WHERE group_id = :group_id AND child_id = :child_id AND left_date IS NULL LIMIT 1');
+            if (groupHasCurrentDisbursement($pdo, $group_id, $current_month) || groupHasCurrentDisbursement($pdo, $target_group_id, $current_month)) {
+                throw new RuntimeException('لا يمكن نقل عضو بين مجموعات مرتبطة بصرف الشهر الحالي. يتم تنفيذ التغيير من الدورة التالية.');
+            }
+            $check = $pdo->prepare('SELECT 1 FROM group_children WHERE group_id = :group_id AND child_id = :child_id AND left_date IS NULL LIMIT 1 FOR UPDATE');
             $check->execute(['group_id' => $group_id, 'child_id' => $child_id]);
             if (!$check->fetchColumn()) throw new RuntimeException('اليتيم ليس عضواً حالياً في المجموعة المصدر');
             $check->execute(['group_id' => $target_group_id, 'child_id' => $child_id]);
@@ -311,7 +300,11 @@ try {
     }
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
-    $error_message = $e instanceof RuntimeException ? $e->getMessage() : 'تعذر تنفيذ العملية. لم يتم فقد أي بيانات.';
+    $error_message = $e instanceof RuntimeException || $e instanceof DomainException
+        ? $e->getMessage()
+        : (($e instanceof PDOException && ak_vgm_is_duplicate_group_name_error($e))
+            ? 'اسم المجموعة مستخدم بالفعل. اختر اسماً آخر.'
+            : 'تعذر تنفيذ العملية. لم يتم فقد أي بيانات.');
 }
 
 $groups = dbFetchAll(
@@ -409,10 +402,12 @@ include __DIR__ . '/../../includes/header.php';
             <div class="card mb-3">
                 <div class="card-header py-2"><strong><i class="bi bi-plus-circle"></i> إنشاء مجموعة</strong></div>
                 <div class="card-body">
-                    <form method="POST" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟">
+                    <form method="POST" data-confirm="هل تريد إنشاء مجموعة جديدة كمسودة؟"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="create_group">
-                        <div class="mb-2"><label class="form-label small">اسم المجموعة</label><input type="text" class="form-control form-control-sm" name="group_name" required maxlength="150"></div>
-                        <div class="mb-2"><label class="form-label small">الوصف</label><textarea class="form-control form-control-sm" name="description" rows="2" maxlength="1000"></textarea></div>
+                        <div class="mb-2"><label class="form-label small" for="vgmGroupName">اسم المجموعة</label><input id="vgmGroupName" type="text" class="form-control form-control-sm" name="group_name" required maxlength="150" autocomplete="off" aria-describedby="vgmGroupNameHelp"></div>
+                        <div id="vgmGroupNameHelp" class="form-text mb-2">يجب أن يكون الاسم فريداً على مستوى المنظمة (حتى 150 حرفاً).</div>
+                        <div class="mb-2"><label class="form-label small" for="vgmGroupDescription">الوصف</label><textarea id="vgmGroupDescription" class="form-control form-control-sm" name="description" rows="2" maxlength="1000" aria-describedby="vgmGroupDescriptionHelp"></textarea><div id="vgmGroupDescriptionHelp" class="form-text">اختياري، حتى 1000 حرف.</div></div>
+                        <div class="alert alert-info py-2 small mb-2">ستُنشأ المجموعة كمسودة. بعد الإنشاء ستظهر تفاصيلها لتتمكن من إضافة الأيتام وتعيين الحاضنة، ثم تفعيلها.</div>
                         <button class="btn btn-primary btn-sm w-100"><i class="bi bi-save"></i> إنشاء كمسودة</button>
                     </form>
                 </div>
@@ -422,7 +417,7 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="card-header py-2"><strong><i class="bi bi-list-ul"></i> المجموعات</strong></div>
                 <div class="card-body p-0">
                     <?php if (!$groups): ?><div class="text-center text-muted py-4">لا توجد مجموعات</div><?php endif; ?>
-                    <form method="POST" class="border-bottom p-2" data-confirm="سيتم فتح دورة التوثيق والصرف للشهر الحالي للمجموعات المحددة فقط. هل تريد المتابعة؟">
+                    <form method="POST" class="border-bottom p-2" data-confirm="سيتم فتح دورة التوثيق والصرف للشهر الحالي للمجموعات المحددة فقط. هل تريد المتابعة؟"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="open_monthly_cycle">
                         <div class="small fw-semibold mb-2">فتح دورة الشهر الحالي</div>
                         <?php foreach ($groups as $open_group): ?>
@@ -458,11 +453,11 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-2">
                     <div><h5 class="mb-1"><i class="bi bi-folder2-open"></i> <?php echo htmlspecialchars($selected_group['group_name']); ?></h5><span class="badge bg-<?php echo groupStatusClass($status); ?>"><?php echo groupStatusLabel($status); ?></span></div>
                     <div class="d-flex gap-1 flex-wrap">
-                        <?php if (in_array($status, ['draft','empty','suspended'], true) && $current_members > 0): ?><form method="POST" class="d-inline" data-confirm="هل تريد تفعيل هذه المجموعة؟"><input type="hidden" name="action" value="activate_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-success btn-sm">تفعيل</button></form><?php endif; ?>
-                        <?php if (in_array($status, ['active','empty'], true)): ?><form method="POST" class="d-inline" data-confirm="هل تريد إيقاف المجموعة مؤقتاً؟"><input type="hidden" name="action" value="suspend_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-warning btn-sm">إيقاف مؤقت</button></form><?php endif; ?>
-                        <?php if (in_array($status, ['active','empty','suspended'], true)): ?><form method="POST" class="d-inline" data-confirm="سيتم إغلاق المجموعة مع الاحتفاظ بكل تاريخها. هل تريد المتابعة؟"><input type="hidden" name="action" value="close_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-dark btn-sm">إغلاق</button></form><?php endif; ?>
+                        <?php if (in_array($status, ['draft','empty','suspended'], true) && $current_members > 0): ?><form method="POST" class="d-inline" data-confirm="هل تريد تفعيل هذه المجموعة؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="activate_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-success btn-sm">تفعيل</button></form><?php endif; ?>
+                        <?php if (in_array($status, ['active','empty'], true)): ?><form method="POST" class="d-inline" data-confirm="هل تريد إيقاف المجموعة مؤقتاً؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="suspend_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-warning btn-sm">إيقاف مؤقت</button></form><?php endif; ?>
+                        <?php if (in_array($status, ['active','empty','suspended'], true)): ?><form method="POST" class="d-inline" data-confirm="سيتم إغلاق المجموعة مع الاحتفاظ بكل تاريخها. هل تريد المتابعة؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="close_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><button class="btn btn-outline-dark btn-sm">إغلاق</button></form><?php endif; ?>
                         <?php if ($status !== 'archived'): ?>
-                            <form method="POST" class="d-inline" data-confirm="<?php echo groupUsed($group_usage) ? 'سيتم أرشفة المجموعة المستخدمة مع الإبقاء على جميع الأعضاء والسجلات دون حذفها. هل تريد المتابعة؟' : 'سيتم حذف المجموعة نهائياً لأنها لم تُستخدم. هل تريد المتابعة؟'; ?>">
+                            <form method="POST" class="d-inline" data-confirm="<?php echo groupUsed($group_usage) ? 'سيتم أرشفة المجموعة المستخدمة مع الإبقاء على جميع الأعضاء والسجلات دون حذفها. هل تريد المتابعة؟' : 'سيتم حذف المجموعة نهائياً لأنها لم تُستخدم. هل تريد المتابعة؟'; ?>"><?php echo csrf_field(); ?>
                                 <input type="hidden" name="action" value="delete_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
                                 <button class="btn btn-outline-danger btn-sm"><?php echo groupUsed($group_usage) ? 'حذف المجموعة (أرشفة آمنة)' : 'حذف نهائي'; ?></button>
                             </form>
@@ -478,7 +473,7 @@ include __DIR__ . '/../../includes/header.php';
                     </div>
                     <?php if ($has_current_disbursement): ?><div class="alert alert-warning py-2 small mb-3"><i class="bi bi-shield-lock"></i> <strong>حماية الصرف:</strong> تم إنشاء صرف للشهر الحالي، لذلك يمنع النظام تعديل أعضاء هذه المجموعة حتى لا تتغير البيانات المالية بأثر رجعي.</div><?php endif; ?>
                     <p class="text-muted small mb-3"><?php echo nl2br(htmlspecialchars($selected_group['description'] ?: 'لا يوجد وصف')); ?></p>
-                    <form method="POST" class="row g-2 mb-3">
+                    <form method="POST" class="row g-2 mb-3"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="update_group"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
                         <div class="col-md-4"><input class="form-control form-control-sm" name="group_name" value="<?php echo htmlspecialchars($selected_group['group_name']); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?> required></div>
                         <div class="col-md-6"><input class="form-control form-control-sm" name="description" value="<?php echo htmlspecialchars($selected_group['description'] ?? ''); ?>" <?php echo in_array($status,['closed','cancelled','archived'],true) ? 'disabled' : ''; ?>></div>
@@ -493,7 +488,7 @@ include __DIR__ . '/../../includes/header.php';
                 <div class="card-body">
                     <?php $current_nanny = $group_history[0] ?? null; ?>
                     <?php if ($current_nanny && empty($current_nanny['end_date'])): ?><div class="alert alert-info py-2 mb-2"><i class="bi bi-person-check"></i> <strong>الحاضنة الحالية:</strong> <?php echo htmlspecialchars($current_nanny['nanny_name']); ?> <span class="small">(منذ <?php echo htmlspecialchars($current_nanny['start_date']); ?>)</span></div><?php endif; ?>
-                    <form method="POST" class="row g-2">
+                    <form method="POST" class="row g-2"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="assign_nanny"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
                         <div class="col-md-8"><select class="form-select form-select-sm" name="nanny_id" required><option value="">-- اختر الحاضنة --</option><?php foreach ($nannies as $nanny): ?><option value="<?php echo (int)$nanny['id']; ?>"><?php echo htmlspecialchars($nanny['full_name']); ?></option><?php endforeach; ?></select></div>
                         <div class="col-md-4"><button class="btn btn-primary btn-sm w-100"><i class="bi bi-check-circle"></i> تعيين</button></div>
@@ -508,8 +503,8 @@ include __DIR__ . '/../../includes/header.php';
                     <?php if (!$group_orphans): ?><div class="text-center text-muted py-4">لا يوجد أعضاء حاليون. استخدم قسم «إضافة أيتام جدد» أسفل الصفحة.</div><?php else: ?>
                     <div class="table-responsive"><table class="table table-sm table-hover align-middle mb-0"><thead><tr><th>اليتيم</th><th>الأسرة</th><th>العمر</th><th>الانضمام</th><th class="text-end">الإجراءات</th></tr></thead><tbody>
                     <?php foreach ($group_orphans as $orphan): ?><tr><td><?php echo htmlspecialchars($orphan['child_name']); ?></td><td><?php echo htmlspecialchars($orphan['family_name']); ?></td><td><?php echo (int)$orphan['age']; ?></td><td><?php echo htmlspecialchars($orphan['joined_date']); ?></td><td class="text-end">
-                        <?php if (groupCanChangeMembers($status) && !$has_current_disbursement): ?><form method="POST" class="d-inline" data-confirm="هل تريد نقل هذا اليتيم إلى مجموعة أخرى؟"><input type="hidden" name="action" value="transfer_orphan"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><input type="hidden" name="child_id" value="<?php echo (int)$orphan['child_id']; ?>"><select name="target_group_id" class="form-select form-select-sm d-inline-block" style="width:180px" required><option value="">نقل إلى...</option><?php foreach ($target_groups as $target): ?><option value="<?php echo (int)$target['id']; ?>"><?php echo htmlspecialchars($target['group_name']); ?> (<?php echo (int)$target['orphan_count']; ?>)</option><?php endforeach; ?></select><button class="btn btn-outline-primary btn-sm">نقل</button></form>
-                        <form method="POST" class="d-inline" data-confirm="سيتم إنهاء العضوية الحالية مع الاحتفاظ بسجلها. هل تريد المتابعة؟"><input type="hidden" name="action" value="remove_orphan"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><input type="hidden" name="child_id" value="<?php echo (int)$orphan['child_id']; ?>"><button class="btn btn-outline-danger btn-sm">إزالة</button></form><?php endif; ?>
+                        <?php if (groupCanChangeMembers($status) && !$has_current_disbursement): ?><form method="POST" class="d-inline" data-confirm="هل تريد نقل هذا اليتيم إلى مجموعة أخرى؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="transfer_orphan"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><input type="hidden" name="child_id" value="<?php echo (int)$orphan['child_id']; ?>"><select name="target_group_id" class="form-select form-select-sm d-inline-block" style="width:180px" required><option value="">نقل إلى...</option><?php foreach ($target_groups as $target): ?><option value="<?php echo (int)$target['id']; ?>"><?php echo htmlspecialchars($target['group_name']); ?> (<?php echo (int)$target['orphan_count']; ?>)</option><?php endforeach; ?></select><button class="btn btn-outline-primary btn-sm">نقل</button></form>
+                        <form method="POST" class="d-inline" data-confirm="سيتم إنهاء العضوية الحالية مع الاحتفاظ بسجلها. هل تريد المتابعة؟"><?php echo csrf_field(); ?><input type="hidden" name="action" value="remove_orphan"><input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>"><input type="hidden" name="child_id" value="<?php echo (int)$orphan['child_id']; ?>"><button class="btn btn-outline-danger btn-sm">إزالة</button></form><?php endif; ?>
                     </td></tr><?php endforeach; ?></tbody></table></div><?php endif; ?>
                 </div>
             </div>
@@ -605,7 +600,7 @@ include __DIR__ . '/../../includes/header.php';
                         </button>
                     </div>
 
-                    <form method="POST" action="" id="bulkAddForm" style="display:none;">
+                    <form method="POST" action="" id="bulkAddForm" style="display:none;"><?php echo csrf_field(); ?>
                         <input type="hidden" name="action" value="add_orphan_bulk">
                         <input type="hidden" name="group_id" value="<?php echo (int)$selected_group['id']; ?>">
                         <div id="orphansContainer"></div>
@@ -619,6 +614,40 @@ include __DIR__ . '/../../includes/header.php';
 
 <script>
 (function () {
+    if (!window.__akVgmConfirmBound) {
+        window.__akVgmConfirmBound = true;
+        document.addEventListener('click', function (event) {
+            const button = event.target.closest('form[data-confirm] button:not([type="button"]), form[data-confirm] button[type="submit"]');
+            if (!button || !button.form) return;
+            const form = button.form;
+            if (form.dataset.akConfirmPending === '1') return;
+            event.preventDefault();
+            const message = form.getAttribute('data-confirm') || 'هل تريد المتابعة؟';
+            const submitConfirmed = function () { form.requestSubmit(button); };
+            if (window.Swal && typeof window.Swal.fire === 'function') {
+                form.dataset.akConfirmPending = '1';
+                window.Swal.fire({
+                    title: 'تأكيد الإجراء',
+                    text: message,
+                    icon: 'question',
+                    showCancelButton: true,
+                    confirmButtonText: 'نعم، متابعة',
+                    cancelButtonText: 'إلغاء',
+                    reverseButtons: true,
+                    focusCancel: true,
+                    rtl: true
+                }).then(function (result) {
+                    delete form.dataset.akConfirmPending;
+                    if (result.isConfirmed) submitConfirmed();
+                }).catch(function () {
+                    delete form.dataset.akConfirmPending;
+                    window.alert('تعذر فتح نافذة التأكيد. لم يتم تنفيذ الإجراء.');
+                });
+            } else if (window.confirm(message)) {
+                submitConfirmed();
+            }
+        }, true);
+    }
     const search = document.getElementById('orphanSearch');
     const clear = document.getElementById('clearSearch');
     const selectAll = document.getElementById('selectAll');
@@ -716,7 +745,7 @@ include __DIR__ . '/../../includes/header.php';
                 input.value = cb.value;
                 container.appendChild(input);
             });
-            document.getElementById('bulkAddForm').submit();
+            document.getElementById('bulkAddForm').requestSubmit();
         };
 
         if (window.AKNotify && typeof AKNotify.confirm === 'function') {
