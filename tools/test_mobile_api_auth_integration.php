@@ -277,39 +277,47 @@ try {
             'VGM can read orphan groups and lifecycle summaries'
         );
 
-        $groupName = 'Mobile API group fixture ' . bin2hex(random_bytes(5));
         $groupCreate = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
             'action' => 'create_group',
-            'group_name' => $groupName,
+            'group_name' => 'This supplied name must be ignored',
             'description' => 'Disposable API integration fixture',
         ], $token);
         $testOrphanGroupId = (int)($groupCreate['json']['data']['group_id'] ?? 0);
-        mobileApiExpect($groupCreate['status'] === 200 && $testOrphanGroupId > 0, 'VGM can create a group as an unused draft');
+        $generatedName = (string)($groupCreate['json']['data']['group_name'] ?? '');
+        $generatedCode = (string)($groupCreate['json']['data']['group_code'] ?? '');
+        mobileApiExpect(
+            $groupCreate['status'] === 200
+            && $testOrphanGroupId > 0
+            && preg_match('/^GRP-\\d{6,}$/', $generatedCode) === 1
+            && $generatedName === 'مجموعة ' . $generatedCode,
+            'VGM creates a draft with an ID-derived name and unique code, ignoring supplied names'
+        );
 
-        $duplicateExact = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
+        $secondGroupCreate = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
             'action' => 'create_group',
-            'group_name' => $groupName,
-            'description' => 'Duplicate fixture must be rejected',
+            'description' => 'Second disposable generated-identity fixture',
         ], $token);
-        mobileApiExpect($duplicateExact['status'] === 422, 'VGM API rejects an exact duplicate group name');
-
-        $duplicateCase = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
-            'action' => 'create_group',
-            'group_name' => strtolower($groupName),
-            'description' => 'Case-insensitive duplicate fixture must be rejected',
+        $secondGroupId = (int)($secondGroupCreate['json']['data']['group_id'] ?? 0);
+        $secondGroupCode = (string)($secondGroupCreate['json']['data']['group_code'] ?? '');
+        mobileApiExpect(
+            $secondGroupCreate['status'] === 200
+            && $secondGroupId > $testOrphanGroupId
+            && $secondGroupCode !== ''
+            && $secondGroupCode !== $generatedCode,
+            'separate group creations receive distinct generated names and codes'
+        );
+        $deleteSecondGroup = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
+            'action' => 'delete_group',
+            'group_id' => $secondGroupId,
         ], $token);
-        mobileApiExpect($duplicateCase['status'] === 422, 'VGM API rejects a case-insensitive duplicate group name');
-
-        $longName = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
-            'action' => 'create_group',
-            'group_name' => str_repeat('N', 151),
-            'description' => '',
-        ], $token);
-        mobileApiExpect($longName['status'] === 422, 'VGM API rejects group names longer than 150 characters');
+        mobileApiExpect(
+            $deleteSecondGroup['status'] === 200
+            && ($deleteSecondGroup['json']['data']['result'] ?? '') === 'deleted',
+            'unused generated-identity fixture can still be safely deleted'
+        );
 
         $longDescription = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
             'action' => 'create_group',
-            'group_name' => 'Long description fixture ' . bin2hex(random_bytes(4)),
             'description' => str_repeat('D', 1001),
         ], $token);
         mobileApiExpect($longDescription['status'] === 422, 'VGM API rejects descriptions longer than 1000 characters');
@@ -318,28 +326,36 @@ try {
         mobileApiExpect(
             $groupDetail['status'] === 200
             && (int)($groupDetail['json']['data']['selected_group']['id'] ?? 0) === $testOrphanGroupId
-            && ($groupDetail['json']['data']['selected_group']['status'] ?? '') === 'draft',
-            'group detail returns the selected draft and member/history data'
+            && ($groupDetail['json']['data']['selected_group']['status'] ?? '') === 'draft'
+            && ($groupDetail['json']['data']['selected_group']['group_code'] ?? '') === $generatedCode,
+            'group detail returns the selected draft and its generated code'
         );
         $creationAudit = $pdo->prepare(
-            "SELECT COUNT(*) FROM audit_log
+            "SELECT new_values FROM audit_log
              WHERE entity_type = 'orphan_groups' AND entity_id = ? AND action = 'VGM_CREATE_GROUP'"
         );
         $creationAudit->execute([$testOrphanGroupId]);
+        $creationAuditValues = json_decode((string)$creationAudit->fetchColumn(), true);
         mobileApiExpect(
-            (int)$creationAudit->fetchColumn() === 1
+            ($creationAuditValues['group_code'] ?? '') === $generatedCode
             && (int)($groupDetail['json']['data']['usage']['workflow_history'] ?? -1) === 0,
-            'group creation is audited without treating a never-used draft as used'
+            'group creation audit stores the generated code without treating a never-used draft as used'
         );
 
-        $updatedName = $groupName . ' updated';
         $groupUpdate = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
             'action' => 'update_group',
             'group_id' => $testOrphanGroupId,
-            'group_name' => $updatedName,
+            'group_name' => 'Attempted manual rename must be ignored',
             'description' => 'Updated disposable fixture',
         ], $token);
-        mobileApiExpect($groupUpdate['status'] === 200, 'VGM can edit an unused draft group');
+        $afterUpdate = mobileApiRequest('/api/v1/deputy_gm/groups.php?group_id=' . $testOrphanGroupId, 'GET', null, $token);
+        mobileApiExpect(
+            $groupUpdate['status'] === 200
+            && ($afterUpdate['json']['data']['selected_group']['group_name'] ?? '') === $generatedName
+            && ($afterUpdate['json']['data']['selected_group']['group_code'] ?? '') === $generatedCode
+            && ($afterUpdate['json']['data']['selected_group']['description'] ?? '') === 'Updated disposable fixture',
+            'VGM can edit description while generated name and code remain immutable'
+        );
 
         $activateEmpty = mobileApiRequest('/api/v1/deputy_gm/groups.php', 'POST', [
             'action' => 'activate_group',
