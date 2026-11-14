@@ -102,7 +102,7 @@ Group names must be unique globally across the organization. The unique comparis
 - Creation UI explains uniqueness, draft status and the follow-on steps. Confirmation popups consume existing `data-confirm` attributes; bulk add uses `requestSubmit()` to preserve same-page AJAX behavior.
 
 ### Audit semantics
-No generic creation audit event was added. `created_by` and `created_at` already record the creator/time, while the safe-delete usage query counts every `audit_log` row as usage. Adding a creation event without changing that usage rule would turn every never-used draft into an archive-only record.
+Creation now records a `VGM_CREATE_GROUP` audit event in the same transaction as the new draft. The web and mobile usage summaries exclude this one event from `workflow_history`, so creation alone does not make the group “used” and a never-used draft remains physically deletable. `created_by` and `created_at` remain on the group row.
 
 ### Acceptance checklist — NOT YET VERIFIED LOCALLY
 1. Pull latest `main`; inspect the local DB duplicate preflight output.
