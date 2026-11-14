@@ -7031,7 +7031,7 @@ Implementation commits on `main`:
 - `75c901e225d6b2375af555913e5dc702582015c2` — archive guard for unfinished verification cycles and explicit mobile API response when no selected group is eligible.
 
 Verified CI:
-- GitHub Actions run `43556748481` — dedicated VGM Group Management Contract passed. PHP 8.2 lint passed for the shared helper, web VGM page, mobile API endpoint and contract test. The source-contract suite reported `17 checks | PASS`.
+- GitHub Actions run `43556748481` — dedicated VGM Group Management Contract passed. PHP 8.2 lint passed for the shared helper, web VGM page, mobile API endpoint and contract test. The source-contract suite reported `18 checks | PASS`.
 - Flutter analyzer passed in run `43556576331`. All six tests in `orphan_groups_page_test.dart` passed, including the new individual month-opening and used-group archive tests. The full Flutter suite did not pass: one unrelated existing test, `payroll_management_page_test.dart`, expected 10 widgets but found 11. APK build was skipped. Do not alter that payroll test as part of this VGM task.
 - Mobile API auth integration run `43556748512` passed schema import, migration, PHP lint and all earlier service checks. The VGM-specific endpoint assertions passed (Nanny denied; VGM list/create/detail/edit; never-used draft deletion). The overall job failed only at the separate existing assertion `administrator can create a real SQL backup on the disposable database`. This run did not exercise the new month-opening action or archive of a used group; do not treat those as runtime-proven.
 
@@ -7043,9 +7043,13 @@ Next gate remains local VGM acceptance only. Do not start the Nanny or Accountan
 
 Commit `79e37315a7b09d32aaae9227065a8c818bc7c447` wraps the VGM lifecycle status transitions (including the retained `archive_group` POST path) in a database transaction, so its row lock and archive-cycle guard are effective and exceptions roll back the status change. The contract suite now also checks this transaction boundary and distinguishes terminal older batches from the latest successfully closed cycle.
 
-GitHub Actions run `43556927883` passed on this commit: PHP 8.2 lint passed for the shared helper, VGM web page, mobile API and contract script; the VGM contract result is `17 checks | PASS`.
+GitHub Actions run `43556927883` passed on this commit: PHP 8.2 lint passed for the shared helper, VGM web page, mobile API and contract script; the VGM contract result is `18 checks | PASS`.
 
 The previous verification boundaries remain:
 - Flutter analyzer passed and all six VGM group widget tests passed. The complete Flutter suite failed only in the unrelated existing payroll screen test (`payroll_management_page_test.dart`, expected 10 widgets, actual 11); APK build was skipped.
 - Mobile API auth integration's VGM assertions passed, including unused-draft deletion. The job failed only at the separate SQL-backup assertion for the disposable database. The new monthly-opening and used-group-archive paths have not been runtime-exercised by that integration test.
 - Local XAMPP/Apache/database acceptance is still pending. Do not treat static contract tests or widget tests as end-to-end proof.
+
+## 2026-11-14 — Final VGM contract rerun
+
+The VGM contract workflow was rerun on source commit `79e37315a7b09d32aaae9227065a8c818bc7c447` after adding the lifecycle transaction assertion. GitHub Actions run `43557000502` passed PHP 8.2 lint and reported `18 checks | PASS`. This is the latest VGM contract result; it supersedes the earlier 16/17-check counts.
