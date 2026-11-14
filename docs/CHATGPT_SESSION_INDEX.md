@@ -4532,3 +4532,8 @@ The canonical schema dump snapshot dated 2026-11-13 contained four `orphan_group
 
 Verification still required locally after pull and migration: PHP lint for the three VGM PHP files; `php tools/test_vgm_group_management_contract.php`; existing mobile API auth integration harness; browser acceptance of create/duplicate/update/CSRF/confirmation/bulk-add flows. No local Apache/MariaDB/browser runtime was available to this implementation session. Do not treat this checkpoint as runtime-verified or move to Nanny/Accountant until VGM acceptance passes.
 
+### UI confirmation and mobile usage follow-up correction — 2026-11-14
+
+A second source pass inspected `assets/js/notifications.js` and confirmed the centralized handler already processes the page's `data-confirm` form attributes; no custom VGM confirmation handler is needed. A redundant page-scoped handler was removed to prevent duplicate confirmation dialogs. The bulk-add code had a real API-contract defect: it passed an options object to `AKNotify.confirm(message, onConfirm, options)` and treated the returned result object as a boolean, which could submit even after cancellation. It now calls the centralized API with a callback that runs only on confirmation, retains a SweetAlert/native fallback, and calls `requestSubmit()`. The no-selection toast argument order was also corrected to `toast(type, message)`.
+
+The mobile usage summary was also corrected to include `workflow_history` using the same two audit sources as the web safe-archive calculation. The Flutter page already consumes this field, so no Flutter source change was necessary. Local runtime/browser verification remains pending.
