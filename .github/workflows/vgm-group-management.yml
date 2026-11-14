@@ -34,6 +34,7 @@ jobs:
         run: |
           php -l modules/deputy_gm/lib_group_management.php
           php -l modules/deputy_gm/groups.php
+          php -l modules/deputy_gm/group_details.php
           php -l api/v1/deputy_gm/groups.php
           php -l tools/test_vgm_group_management_contract.php
       - name: JavaScript syntax
