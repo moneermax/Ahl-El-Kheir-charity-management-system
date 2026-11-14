@@ -4693,3 +4693,14 @@ GitHub Actions VGM Group Management Contract run 43580321071 passed on commit a6
 ### 2026-11-14 — VGM group settings spacing refinement
 
 The group-details settings card received a second, tighter layout pass after the user identified remaining wasted space. The heading and explanatory phrase now share one line; the card width, body padding, row gap and bottom margin are reduced; and the empty reserved caregiver-helper line was removed. Source commit: `7c90e1d335e6474c09f1e8f9a5314ac79cfb65f1`; focused contract assertion commit: `ced9e55e656fb01be0da3e8e22f70049f1252c23`. Local browser acceptance and CI remain pending. See `docs/VGM_GROUP_MANAGEMENT_CONTINUATION.md`.
+
+
+## 2026-11-14 — VGM family-level membership and monthly verification carry-forward
+
+New agreed requirement; implementation has not started. See `docs/VGM_GROUP_MANAGEMENT_CONTINUATION.md` section “Family-level group membership and monthly verification carry-forward”. VGM will select a family as one unit; selecting it adds all active children with active sponsorships atomically. A family with any current group membership must be excluded from all other groups' available-family lists and rejected server-side in both web and mobile/API paths, regardless of whether a monthly disbursement exists. Transfers must preserve history and end the old current membership while establishing the destination membership atomically. Historical ended memberships remain eligible.
+
+Monthly Nanny verification must carry the previous month's three saved flags into the new month only when no explicit record exists for the new month. Explicit current-month pre-verification takes precedence; current-month edits must not mutate prior-month records and must retain audit behavior. Do not copy notes/timestamps blindly.
+
+Source evidence: current web/mobile membership checks are conditional on a current-month disbursement; `modules/accounting/lib_group_workflow.php::get_latest_verification_status()` reads only the exact family/month record. `IMP-FAM-001901` displayed a fully verified November state timestamped 2026-11-13, before cycle opening; this is consistent with pre-verification and does not establish duplicate group membership. Its local membership history still needs read-only inspection.
+
+Next: re-read mandatory docs/current main, inspect complete web/mobile membership and transfer paths, schema constraints, Nanny pre-verification writer and cycle lifecycle; inspect local membership history for `IMP-FAM-001901`; then implement the smallest safe change with web/API parity and focused concurrency/carry-forward tests. No code/schema/data change has been made for this requirement.
