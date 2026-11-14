@@ -4685,3 +4685,7 @@ Fix committed on main: VGM success/error feedback now uses only hidden [data-ak-
 Commits: 4b4c7c75185459f43ccb6d649f74f11b7f28e973 (source), a601168b090c9a49b04866fd7911a79ed80971bc (contract), 980204f6e261fd693c81e9a16b97bdbfba95a819 (module continuation documentation).
 
 Verification remains pending: GitHub Actions contract run and local Apache/browser acceptance. After pulling main, save a group description once and confirm exactly one centralized popup appears. Do not mark the issue closed until that browser check passes.
+
+### VGM duplicate notification — CI verification
+
+GitHub Actions VGM Group Management Contract run 43580321071 passed on commit a601168b090c9a49b04866fd7911a79ed80971bc: PHP syntax, JavaScript syntax, and all 53 static contract checks passed, including the assertion that group feedback uses the single shared flash channel. Local Apache/browser acceptance remains pending; do not mark the duplicate notification issue closed until the user confirms one popup after saving a description.
