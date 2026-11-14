@@ -101,6 +101,12 @@ $checks = [
         && !str_contains($src['web'], 'alert-danger alert-dismissible')
         && str_contains($src['app'], "incoming.querySelectorAll('[data-ak-flash]')")
         && str_contains($src['notifications'], "document.querySelectorAll('[data-ak-flash]')"),
+    'group description and caregiver controls share a compact responsive row' => str_contains($src['web'], 'class="row g-2 align-items-end"')
+        && str_contains($src['web'], 'class="col-12 col-lg-6"')
+        && str_contains($src['web'], 'class="input-group input-group-sm"')
+        && str_contains($src['web'], 'الحاضنة الحالية وتعيين الحاضنة')
+        && str_contains($src['web'], 'name="description"')
+        && str_contains($src['web'], 'name="nanny_id"'),
 
 ];
 $failed = 0;
