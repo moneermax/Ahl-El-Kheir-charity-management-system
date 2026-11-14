@@ -7080,7 +7080,7 @@ Confirmation timing fix: the shared `app.js` window-capture same-page submit han
 
 ### Automated verification evidence — 2026-11-14
 
-- VGM Group Management Contract workflow: **PASS** after the shared confirmation hand-off and creation-audit assertions (latest successful run at commit `42736b3bcfc3e2e44320824aa43a33342096ea54`). PHP syntax checks and the 31 static contract checks passed.
+- VGM Group Management Contract workflow: **PASS** after the shared confirmation hand-off and creation-audit assertions (latest successful run at commit `42736b3bcfc3e2e44320824aa43a33342096ea54`). PHP syntax checks and the 35 static contract checks passed.
 - Mobile API integration workflow: the new migration was imported/applied successfully in CI; PHP syntax, earlier integration stages, and all VGM group assertions passed, including exact/case-insensitive duplicate rejection, length bounds, creation audit, and safe deletion of a never-used draft. The overall job remains **FAIL** at the unrelated pre-existing assertion `administrator can create a real SQL backup on the disposable database`; MariaDB logs show `Access denied for user 'root'@'localhost' (using password: NO)`. The same failure is present in an earlier run before these VGM changes (run 247), so it is not evidence of a VGM regression and was not modified here.
 
 Local database migration and browser acceptance remain pending. The user must run the duplicate preflight against their actual local database before applying the migration.
