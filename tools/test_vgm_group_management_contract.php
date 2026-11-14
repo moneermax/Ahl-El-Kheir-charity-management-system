@@ -58,6 +58,9 @@ $checks = [
     'empty bulk selection uses the correct toast argument order' => str_contains($src['web'], "AKNotify.toast('warning', 'يرجى اختيار يتيم واحد على الأقل')"),
     'bulk member form uses requestSubmit and shared same-page POST handling' => str_contains($src['web'], "getElementById('bulkAddForm').requestSubmit()"),
     'mobile usage summary includes workflow history used by safe archive logic' => str_contains($src['api'], "'workflow_history' => (int)") && str_contains($src['api'], 'FROM group_workflow_audit_log') && str_contains($src['api'], "entity_type = 'orphan_groups'"),
+    'group creation audit is excluded from used-group history' => str_contains($src['helper'], 'function ak_vgm_log_group_created')
+        && str_contains($src['helper'], "action <> 'VGM_CREATE_GROUP'")
+        && str_contains($src['api'], "action <> 'VGM_CREATE_GROUP'"),
 ];
 $failed = 0;
 foreach ($checks as $label => $ok) {
