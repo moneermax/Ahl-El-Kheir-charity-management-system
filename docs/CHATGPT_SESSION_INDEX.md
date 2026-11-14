@@ -4678,7 +4678,7 @@ The same description-only rule now applies to the VGM Flutter client: its create
 
 ## 2026-11-14 — VGM group description duplicate notification
 
-Source root cause: VGM groups.php emitted action feedback as dismissible Bootstrap alerts, while assets/js/notifications.js converts those alerts into transient toasts. The shared same-page POST flow in assets/js/app.js separately extracts [data-ak-flash] nodes and emits them through AKNotify. These competing paths caused the reported duplicate feedback.
+Source root cause: VGM groups.php emitted action feedback as dismissible Bootstrap alerts. The browser briefly displayed the inline alert, then assets/js/notifications.js converted that same message into the centralized AKNotify toast and removed the original alert. This produced the observed sequence of two presentations of one message; the detail form's POST/redirect is a normal document navigation, not the shared same-page POST flow.
 
 Fix committed on main: VGM success/error feedback now uses only hidden [data-ak-flash] nodes, handled by the established shared flash mechanisms. No global notification code, schema, or database behavior changed. Contract test now asserts the single-channel markup.
 
